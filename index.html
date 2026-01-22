@@ -2087,6 +2087,12 @@ function parseMoney(x) {
   const n = parseFloat(s);
   return isFinite(n) ? n : 0;
 }
+
+// Expenses should always be treated as positive numbers.
+function normExpense(v){
+  const n = Number(v);
+  return isFinite(n) ? Math.abs(n) : 0;
+}
 function genId() {
   return "id_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
 }
@@ -2371,7 +2377,30 @@ function loadIncomeChart() {
 const SOLD_KEY = "soldInventory";
 let soldProfitChartObj, soldItemsChartObj;
 
-function readSold() { return JSON.parse(localStorage.getItem(SOLD_KEY)) || []; }
+function readSold() {
+  const arr = JSON.parse(localStorage.getItem(SOLD_KEY)) || [];
+  // Normalize legacy data: ensure cost/fees/ship are positive and profit is recalculated.
+  let changed = false;
+  const fixed = arr.map(r=>{
+    if(!r || typeof r !== "object") return r;
+    const sale = Number(r.sale||r.price||0) || 0;
+    const cost = normExpense(r.cost||0);
+    const fees = normExpense(r.fees||r.fee||0);
+    const ship = normExpense(r.ship||r.shipping||0);
+    const profit = sale - cost - fees - ship;
+
+    const out = {...r};
+    if(out.cost !== cost){ out.cost = cost; changed = true; }
+    if(out.fees !== fees){ out.fees = fees; changed = true; }
+    if(out.ship !== ship){ out.ship = ship; changed = true; }
+    if(out.profit !== profit){ out.profit = profit; changed = true; }
+    return out;
+  });
+  if(changed){
+    try{ localStorage.setItem(SOLD_KEY, JSON.stringify(fixed)); }catch(e){}
+  }
+  return fixed;
+}
 function writeSold(arr) { localStorage.setItem(SOLD_KEY, JSON.stringify(arr)); }
 try{ updateBudgetPanel(); }catch(e){}
 
@@ -2527,9 +2556,9 @@ function importSoldCSV() {
         const type = (iType !== -1) ? normalizeType(row[iType]) : "";
         const platform = String(row[iPlatform] || "").trim() || "Unknown";
         const sale = parseMoney(row[iSale]);
-        const cost = iCost !== -1 ? parseMoney(row[iCost]) : 0;
-        const fees = iFees !== -1 ? parseMoney(row[iFees]) : 0;
-        const ship = iShip !== -1 ? parseMoney(row[iShip]) : 0;
+        const cost = iCost !== -1 ? normExpense(parseMoney(row[iCost])) : 0;
+        const fees = iFees !== -1 ? normExpense(parseMoney(row[iFees])) : 0;
+        const ship = iShip !== -1 ? normExpense(parseMoney(row[iShip])) : 0;
         const profit = sale - cost - fees - ship;
 
         if (!item || !isFinite(sale)) continue;
@@ -2563,9 +2592,9 @@ function addSoldManually() {
   const type = (document.getElementById("manualType")?.value || "").trim();
   const platform = (manualPlatform.value || "").trim() || "Manual";
   const sale = Number(manualSale.value) || 0;
-  const cost = Number(manualCost.value) || 0;
-  const fees = Number(manualFees.value) || 0;
-  const ship = Number(manualShip.value) || 0;
+  const cost = normExpense(manualCost.value);
+  const fees = normExpense(manualFees.value);
+  const ship = normExpense(manualShip.value);
 
   if (!d || !item || !sale) return;
 
@@ -3249,8 +3278,8 @@ function confirmMarkSold() {
   const type = (document.getElementById("msType")?.value || "").trim();
   const platform = (document.getElementById("msPlatform").value || "").trim() || "Unknown";
   const sale = Number(document.getElementById("msSale").value) || 0;
-  const fees = Number(document.getElementById("msFees").value) || 0;
-  const ship = Number(document.getElementById("msShip").value) || 0;
+  const fees = normExpense(document.getElementById("msFees").value);
+  const ship = normExpense(document.getElementById("msShip").value);
 
   if (!soldDate || !item || !sale) return;
 
@@ -3259,7 +3288,7 @@ function confirmMarkSold() {
   if (invIdx === -1) return;
   const inv = invArr[invIdx];
 
-  const cost = Number(inv.cost) || 0;
+  const cost = normExpense(inv.cost);
   const profit = sale - cost - fees - ship;
 
   // Add to sold
@@ -3713,9 +3742,9 @@ function _sumSoldForMonth(rows, y, m){
     if(!dt) return;
     if(dt.getFullYear()!=y || dt.getMonth()!=m) return;
     const sale=Number(r.sale||r.price||0)||0;
-    const cost=Number(r.cost||0)||0;
-    const fees=Number(r.fees||0)||0;
-    const ship=Number(r.shipping||r.ship||0)||0;
+    const cost=normExpense(r.cost||0);
+    const fees=normExpense(r.fees||0);
+    const ship=normExpense(r.shipping||r.ship||0);
     sales += sale;
     profit += (sale - cost - fees - ship);
   });
