@@ -1683,7 +1683,9 @@ button:hover{
             <label for="syncIncomeToggle" class="muted">Also update Income graph from sold data</label>
           </div>
 
-          <button onclick="importSoldCSV()">Import CSV</button>
+          <button onclick="importSoldCSV();
+normalizeSoldDates();
+updateBudgetPanel();">Import CSV</button>
 
           <div class="divider"></div>
 
@@ -2527,7 +2529,9 @@ function formatDate(d) {
   return `${y}-${m}-${day}`;
 }
 
-function importSoldCSV() {
+function importSoldCSV();
+normalizeSoldDates();
+updateBudgetPanel(); {
   const f = document.getElementById("soldFile").files[0];
   const msg = document.getElementById("soldImportMsg");
   if (!f) { msg.textContent = "Choose a CSV first."; msg.style.color="var(--yellow)"; return; }
@@ -3975,6 +3979,26 @@ function addProfitOverlay(incomeChartInstance){
   incomeChartInstance.update();
 }
 
+
+// === Normalize sold dates so budget math can see them ===
+function normalizeSoldDates(){
+  const sold = JSON.parse(localStorage.getItem("soldInventory") || "[]");
+  let changed = false;
+
+  sold.forEach(s=>{
+    if(typeof s.date === "string"){
+      const d = new Date(s.date);
+      if(!isNaN(d)){
+        s.date = d.toISOString().slice(0,10);
+        changed = true;
+      }
+    }
+  });
+
+  if(changed){
+    localStorage.setItem("soldInventory", JSON.stringify(sold));
+  }
+}
 </script>
 
 </body>
