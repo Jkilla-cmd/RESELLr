@@ -1303,7 +1303,7 @@ button:hover{
             <div class="stat green" id="nextBudgetStat">HOLDS: $0</div>
           </div>
 
-          <div class="muted" id="budgetLogicNote" style="font-size:12px;margin-bottom:6px;">Budget uses last completed month and Tools logic (65% inventory / 20% buffer / 15% holds).</div>
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;"><label class="muted" style="font-size:12px;"><input type="radio" name="budgetSource" value="closed" checked> Last completed month</label><label class="muted" style="font-size:12px;"><input type="radio" name="budgetSource" value="current"> Current month (live)</label></div><div class="muted" id="budgetLogicNote" style="font-size:12px;margin-bottom:6px;">Budget uses last completed month and Tools logic (65% inventory / 20% buffer / 15% holds).</div>
 <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;">
             <div class="pill" style="display:flex;align-items:center;gap:10px;">
               <span class="muted" style="font-size:12px;">Reinvest %</span>
@@ -3773,23 +3773,33 @@ function updateBudgetPanel(){
   const pace = day>0 ? (mtdSales/day) : 0;
   const projSales = pace * daysInMonth;
 
-  // === Authoritative budget source: LAST COMPLETED MONTH ===
-  const lastMonthDate = new Date(y, m, 1);
-  lastMonthDate.setMonth(lastMonthDate.getMonth()-1);
-  const ly = lastMonthDate.getFullYear();
-  const lm = lastMonthDate.getMonth();
+  // === Budget source (toggle) ===
+  const source = document.querySelector('input[name="budgetSource"]:checked')?.value || 'closed';
 
-  const sumsLM=_sumSoldForMonth(sold, ly, lm);
-  const lastGross = sumsLM.sales;
+  let baseGross = 0;
+  let baseLabel = '';
 
-  // Tools logic constants
+  if(source === 'current'){
+    baseGross = mtdSales;
+    baseLabel = 'current month (live)';
+  }else{
+    const lastMonthDate = new Date(y, m, 1);
+    lastMonthDate.setMonth(lastMonthDate.getMonth()-1);
+    const ly = lastMonthDate.getFullYear();
+    const lm = lastMonthDate.getMonth();
+    const sumsLM=_sumSoldForMonth(sold, ly, lm);
+    baseGross = sumsLM.sales;
+    baseLabel = new Date(ly, lm, 1).toLocaleString(undefined, { month:'short', year:'numeric' });
+  }
+
   const INVENTORY_PCT = 0.65;
   const BUFFER_PCT = 0.20;
   const HOLDS_PCT = 0.15;
 
-  const invBudget = lastGross * INVENTORY_PCT;
-  const profitBuffer = lastGross * BUFFER_PCT;
-  const holds = lastGross * HOLDS_PCT;
+  const invBudget = baseGross * INVENTORY_PCT;
+  const profitBuffer = baseGross * BUFFER_PCT;
+  const holds = baseGross * HOLDS_PCT;
+
 
   const monthPill=document.getElementById('budgetMonthPill');
   if(monthPill) monthPill.textContent = 'For ' + _getNextMonthLabel(now);
@@ -3818,7 +3828,7 @@ function updateBudgetPanel(){
   const note=document.getElementById('budgetLogicNote');
   if(note){
     const lmLabel = new Date(ly, lm, 1).toLocaleString(undefined, { month:'short', year:'numeric' });
-    note.textContent = `Budget uses last completed month (${lmLabel}) and Tools logic (65% inventory / 20% buffer / 15% holds).`;
+    note.textContent = `Budget uses ${baseLabel} and Tools logic (65% inventory / 20% buffer / 15% holds).`;
   }
 
   const fill=document.getElementById('monthProgressFill');
