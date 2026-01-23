@@ -3806,8 +3806,9 @@ function updateBudgetPanel(){
   const pace = day>0 ? (mtdSales/day) : 0;
   const projSales = pace * daysInMonth;
 
-  // === Budget source (toggle) ===
-  const source = document.querySelector('input[name="budgetSource"]:checked')?.value || 'closed';
+  // === Budget source (toggle with fallback) ===
+  const srcEl = document.querySelector('input[name="budgetSource"]:checked');
+  const source = srcEl ? srcEl.value : 'closed';
 
   let baseGross = 0;
   let baseLabel = '';
@@ -3815,14 +3816,20 @@ function updateBudgetPanel(){
   if(source === 'current'){
     baseGross = mtdSales;
     baseLabel = 'current month (live)';
-  }else{
+  } else {
     const lastMonthDate = new Date(y, m, 1);
     lastMonthDate.setMonth(lastMonthDate.getMonth()-1);
     const ly = lastMonthDate.getFullYear();
     const lm = lastMonthDate.getMonth();
-    const sumsLM=_sumSoldForMonth(sold, ly, lm);
+    const sumsLM = _sumSoldForMonth(sold, ly, lm);
     baseGross = sumsLM.sales;
-    baseLabel = new Date(ly, lm, 1).toLocaleString(undefined, { month:'short', year:'numeric' });
+
+    if(baseGross === 0){
+      baseGross = mtdSales;
+      baseLabel = 'current month (fallback – no closed month data)';
+    } else {
+      baseLabel = new Date(ly, lm, 1).toLocaleString(undefined, { month:'short', year:'numeric' });
+    }
   }
 
   const INVENTORY_PCT = 0.65;
@@ -3832,6 +3839,7 @@ function updateBudgetPanel(){
   const invBudget = baseGross * INVENTORY_PCT;
   const profitBuffer = baseGross * BUFFER_PCT;
   const holds = baseGross * HOLDS_PCT;
+
 
 
   const monthPill=document.getElementById('budgetMonthPill');
