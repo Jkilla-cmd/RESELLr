@@ -180,6 +180,40 @@ function forceResizeHandles(){
 document.addEventListener("DOMContentLoaded", ()=>setTimeout(forceResizeHandles,200));
 document.addEventListener("click", ()=>setTimeout(forceResizeHandles,200));
 
+
+/* === Unified Budget Logic (Dashboard ↔ Tools) === */
+function getToolsBudgetUnified(){
+  try{
+    const gross = typeof calcGrossMonth === 'function' ? calcGrossMonth() : 0;
+    const bufferPctEl = document.getElementById('profitBufferPct');
+    const holdPctEl = document.getElementById('holdPct');
+    const bufferPct = bufferPctEl ? Number(bufferPctEl.value || 0)/100 : 0;
+    const holdPct = holdPctEl ? Number(holdPctEl.value || 0)/100 : 0;
+    const buffer = gross * bufferPct;
+    const holds = gross * holdPct;
+    return Math.max(0, gross - buffer - holds);
+  }catch(e){ return 0; }
+}
+
+function updateDashboardBudgetUnified(){
+  const chk = document.getElementById('useToolsBudget');
+  if(!chk) return;
+  let budget = 0;
+  if(chk.checked){
+    budget = getToolsBudgetUnified();
+  }else if(typeof getSimpleBudget === 'function'){
+    budget = getSimpleBudget();
+  }
+  const el = document.getElementById('nextMonthBudgetValue');
+  if(el) el.textContent = '$' + Number(budget||0).toFixed(2);
+}
+
+document.addEventListener('change', (e)=>{
+  if(e.target && e.target.id === 'useToolsBudget'){
+    updateDashboardBudgetUnified();
+  }
+});
+
 </script>
 
 <style>
@@ -3909,6 +3943,40 @@ function addProfitOverlay(incomeChartInstance){
   });
   incomeChartInstance.update();
 }
+
+
+/* === Unified Budget Logic (Dashboard ↔ Tools) === */
+function getToolsBudgetUnified(){
+  try{
+    const gross = typeof calcGrossMonth === 'function' ? calcGrossMonth() : 0;
+    const bufferPctEl = document.getElementById('profitBufferPct');
+    const holdPctEl = document.getElementById('holdPct');
+    const bufferPct = bufferPctEl ? Number(bufferPctEl.value || 0)/100 : 0;
+    const holdPct = holdPctEl ? Number(holdPctEl.value || 0)/100 : 0;
+    const buffer = gross * bufferPct;
+    const holds = gross * holdPct;
+    return Math.max(0, gross - buffer - holds);
+  }catch(e){ return 0; }
+}
+
+function updateDashboardBudgetUnified(){
+  const chk = document.getElementById('useToolsBudget');
+  if(!chk) return;
+  let budget = 0;
+  if(chk.checked){
+    budget = getToolsBudgetUnified();
+  }else if(typeof getSimpleBudget === 'function'){
+    budget = getSimpleBudget();
+  }
+  const el = document.getElementById('nextMonthBudgetValue');
+  if(el) el.textContent = '$' + Number(budget||0).toFixed(2);
+}
+
+document.addEventListener('change', (e)=>{
+  if(e.target && e.target.id === 'useToolsBudget'){
+    updateDashboardBudgetUnified();
+  }
+});
 
 </script>
 
