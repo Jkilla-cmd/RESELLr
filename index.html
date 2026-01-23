@@ -180,40 +180,6 @@ function forceResizeHandles(){
 document.addEventListener("DOMContentLoaded", ()=>setTimeout(forceResizeHandles,200));
 document.addEventListener("click", ()=>setTimeout(forceResizeHandles,200));
 
-
-/* === Unified Budget Logic (Dashboard ↔ Tools) === */
-function getToolsBudgetUnified(){
-  try{
-    const gross = typeof calcGrossMonth === 'function' ? calcGrossMonth() : 0;
-    const bufferPctEl = document.getElementById('profitBufferPct');
-    const holdPctEl = document.getElementById('holdPct');
-    const bufferPct = bufferPctEl ? Number(bufferPctEl.value || 0)/100 : 0;
-    const holdPct = holdPctEl ? Number(holdPctEl.value || 0)/100 : 0;
-    const buffer = gross * bufferPct;
-    const holds = gross * holdPct;
-    return Math.max(0, gross - buffer - holds);
-  }catch(e){ return 0; }
-}
-
-function updateDashboardBudgetUnified(){
-  const chk = document.getElementById('useToolsBudget');
-  if(!chk) return;
-  let budget = 0;
-  if(chk.checked){
-    budget = getToolsBudgetUnified();
-  }else if(typeof getSimpleBudget === 'function'){
-    budget = getSimpleBudget();
-  }
-  const el = document.getElementById('nextMonthBudgetValue');
-  if(el) el.textContent = '$' + Number(budget||0).toFixed(2);
-}
-
-document.addEventListener('change', (e)=>{
-  if(e.target && e.target.id === 'useToolsBudget'){
-    updateDashboardBudgetUnified();
-  }
-});
-
 </script>
 
 <style>
@@ -1325,15 +1291,20 @@ button:hover{
             <h3 style="margin:0;">Next Month Inventory Budget</h3>
             <span class="pill muted" id="budgetMonthPill" style="height:30px;display:flex;align-items:center;">—</span>
           </div>
+          <div class="muted" id="budgetSubLine" style="font-size:12px;margin:6px 0 10px 0;">—</div>
 
           <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-            <div class="stat blue" id="mtdSalesStat">MTD SALES: $0</div>
-            <div class="stat muted" id="mtdProfitStat">MTD PROFIT: $0</div>
-            <div class="stat yellow" id="projSalesStat">PROJ SALES: $0</div>
-            <div class="stat green" id="nextBudgetStat">NEXT BUDGET: $0</div>
           </div>
 
-          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;">
+          <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div class="stat blue" id="mtdSalesStat">LAST MONTH GROSS: $0</div>
+            <div class="stat muted" id="mtdProfitStat">INVENTORY BUDGET: $0</div>
+            <div class="stat yellow" id="projSalesStat">PROFIT BUFFER: $0</div>
+            <div class="stat green" id="nextBudgetStat">HOLDS: $0</div>
+          </div>
+
+          <div class="muted" id="budgetLogicNote" style="font-size:12px;margin-bottom:6px;">Budget uses last completed month and Tools logic (65% inventory / 20% buffer / 15% holds).</div>
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;">
             <div class="pill" style="display:flex;align-items:center;gap:10px;">
               <span class="muted" style="font-size:12px;">Reinvest %</span>
               <input id="reinvestPct" type="range" min="0" max="100" value="50" style="width:140px;">
@@ -3795,58 +3766,67 @@ function updateBudgetPanel(){
   const day=now.getDate();
   const daysInMonth=new Date(y, m+1, 0).getDate();
 
-  const sums=_sumSoldForMonth(sold, y, m);
-  const mtdSales=sums.sales;
-  const mtdProfit=sums.profit;
+  // Month-to-date (for pacing info only)
+  const sumsMTD=_sumSoldForMonth(sold, y, m);
+  const mtdSales=sumsMTD.sales;
+  const mtdProfit=sumsMTD.profit;
   const pace = day>0 ? (mtdSales/day) : 0;
   const projSales = pace * daysInMonth;
 
-  const pctEl=document.getElementById('reinvestPct');
-  const pctLabel=document.getElementById('reinvestPctLabel');
-  const modeEl=document.getElementById('budgetMode');
-  let pct=50;
-  if(pctEl) pct = parseInt(pctEl.value||'50',10)||50;
-  if(pctLabel) pctLabel.textContent = pct+'%';
-  try{ localStorage.setItem('resellr_reinvest_pct', String(pct)); }catch(e){}
+  // === Authoritative budget source: LAST COMPLETED MONTH ===
+  const lastMonthDate = new Date(y, m, 1);
+  lastMonthDate.setMonth(lastMonthDate.getMonth()-1);
+  const ly = lastMonthDate.getFullYear();
+  const lm = lastMonthDate.getMonth();
 
-  const mode = modeEl ? modeEl.value : 'projected';
-  const baseSales = (mode==='mtd') ? mtdSales : projSales;
-  const nextBudget = baseSales * (pct/100);
+  const sumsLM=_sumSoldForMonth(sold, ly, lm);
+  const lastGross = sumsLM.sales;
+
+  // Tools logic constants
+  const INVENTORY_PCT = 0.65;
+  const BUFFER_PCT = 0.20;
+  const HOLDS_PCT = 0.15;
+
+  const invBudget = lastGross * INVENTORY_PCT;
+  const profitBuffer = lastGross * BUFFER_PCT;
+  const holds = lastGross * HOLDS_PCT;
 
   const monthPill=document.getElementById('budgetMonthPill');
   if(monthPill) monthPill.textContent = 'For ' + _getNextMonthLabel(now);
 
+  const sub=document.getElementById('budgetSubLine');
+  if(sub){
+    const lmLabel = new Date(ly, lm, 1).toLocaleString(undefined, { month:'short', year:'numeric' });
+    sub.textContent = `Based on last completed month (${lmLabel}). MTD sales: ${formatDollars(mtdSales)} · Projected: ${formatDollars(projSales)}`;
+  }
+
+  // Update stats (Tools parity)
   const setText=(id, txt)=>{ const el=document.getElementById(id); if(el) el.textContent=txt; };
-  if(typeof formatDollars==='function'){
-    setText('mtdSalesStat', 'MTD SALES: ' + formatDollars(mtdSales));
-    setText('mtdProfitStat','MTD PROFIT: ' + formatDollars(mtdProfit));
-    setText('projSalesStat','PROJ SALES: ' + formatDollars(projSales));
-    setText('nextBudgetStat','NEXT BUDGET: ' + formatDollars(nextBudget));
-  }else{
-    const fd=(v)=>'$'+(Math.round((v||0)*100)/100).toLocaleString();
-    setText('mtdSalesStat', 'MTD SALES: ' + fd(mtdSales));
-    setText('mtdProfitStat','MTD PROFIT: ' + fd(mtdProfit));
-    setText('projSalesStat','PROJ SALES: ' + fd(projSales));
-    setText('nextBudgetStat','NEXT BUDGET: ' + fd(nextBudget));
+  setText('mtdSalesStat', 'LAST MONTH GROSS: ' + formatDollars(lastGross));
+  setText('mtdProfitStat','INVENTORY BUDGET: ' + formatDollars(invBudget));
+  setText('projSalesStat','PROFIT BUFFER: ' + formatDollars(profitBuffer));
+  setText('nextBudgetStat','HOLDS: ' + formatDollars(holds));
+
+  // Disable the reinvest/mode controls (kept for UI continuity)
+  const pctEl=document.getElementById('reinvestPct');
+  const pctLabel=document.getElementById('reinvestPctLabel');
+  const modeEl=document.getElementById('budgetMode');
+  if(pctEl){ pctEl.value = String(Math.round(INVENTORY_PCT*100)); pctEl.disabled = true; }
+  if(pctLabel) pctLabel.textContent = Math.round(INVENTORY_PCT*100) + '%';
+  if(modeEl){ modeEl.value = 'mtd'; modeEl.disabled = true; }
+
+  const note=document.getElementById('budgetLogicNote');
+  if(note){
+    const lmLabel = new Date(ly, lm, 1).toLocaleString(undefined, { month:'short', year:'numeric' });
+    note.textContent = `Budget uses last completed month (${lmLabel}) and Tools logic (65% inventory / 20% buffer / 15% holds).`;
   }
 
   const fill=document.getElementById('monthProgressFill');
   const lbl=document.getElementById('monthProgressLabel');
   const pctMonth=Math.max(0, Math.min(100, (day/daysInMonth)*100));
   if(fill) fill.style.width = pctMonth.toFixed(0)+'%';
-  if(lbl) lbl.textContent = day+' / '+daysInMonth+' days ('+pctMonth.toFixed(0)+'%) • Mode: ' + (mode==='mtd'?'If month ended today':'Projected at current pace');
+  if(lbl) lbl.textContent = pctMonth.toFixed(0)+'% of month elapsed';
 }
-function safeBudgetRefresh(){ try{ updateBudgetPanel(); }catch(e){} }
-
-function initBudgetPanel(){
-  const pctEl=document.getElementById('reinvestPct');
-  const modeEl=document.getElementById('budgetMode');
-  try{ const saved=localStorage.getItem('resellr_reinvest_pct'); if(saved && pctEl) pctEl.value=saved; }catch(e){}
-  if(pctEl) pctEl.addEventListener('input', updateBudgetPanel);
-  if(modeEl) modeEl.addEventListener('change', updateBudgetPanel);
-  updateBudgetPanel();
-}
-
 
 /* ========= BOOT ========= */
 window.onload = () => {
@@ -3943,40 +3923,6 @@ function addProfitOverlay(incomeChartInstance){
   });
   incomeChartInstance.update();
 }
-
-
-/* === Unified Budget Logic (Dashboard ↔ Tools) === */
-function getToolsBudgetUnified(){
-  try{
-    const gross = typeof calcGrossMonth === 'function' ? calcGrossMonth() : 0;
-    const bufferPctEl = document.getElementById('profitBufferPct');
-    const holdPctEl = document.getElementById('holdPct');
-    const bufferPct = bufferPctEl ? Number(bufferPctEl.value || 0)/100 : 0;
-    const holdPct = holdPctEl ? Number(holdPctEl.value || 0)/100 : 0;
-    const buffer = gross * bufferPct;
-    const holds = gross * holdPct;
-    return Math.max(0, gross - buffer - holds);
-  }catch(e){ return 0; }
-}
-
-function updateDashboardBudgetUnified(){
-  const chk = document.getElementById('useToolsBudget');
-  if(!chk) return;
-  let budget = 0;
-  if(chk.checked){
-    budget = getToolsBudgetUnified();
-  }else if(typeof getSimpleBudget === 'function'){
-    budget = getSimpleBudget();
-  }
-  const el = document.getElementById('nextMonthBudgetValue');
-  if(el) el.textContent = '$' + Number(budget||0).toFixed(2);
-}
-
-document.addEventListener('change', (e)=>{
-  if(e.target && e.target.id === 'useToolsBudget'){
-    updateDashboardBudgetUnified();
-  }
-});
 
 </script>
 
