@@ -14,7 +14,22 @@
 <meta name="apple-mobile-web-app-title" content="RESELLr">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function safeRefreshAfterImport(){
+  try{ updateBudgetPanel(); }catch(e){}
+  try{ loadIncomeChart(); }catch(e){}
+  // If you use sold items as income source, optionally sync:
+  try{
+    if(document.getElementById("syncIncomeToggle")?.checked){
+      rebuildMonthlyIncomeFromSold();
+      loadIncomeChart();
+    }
+  }catch(e){}
+  try{ renderSold && renderSold(); }catch(e){}
+  try{ renderActive && renderActive(); }catch(e){}
+}
+
 /* === Toggle backup wiring (safe) === */
 document.addEventListener('change', (e) => {
   const id = e && e.target ? e.target.id : '';
@@ -2519,6 +2534,7 @@ function importSoldCSV() {
 
   const reader = new FileReader();
   reader.onload = () => {
+    let importedOk = false;
     try {
       const text = String(reader.result || "");
       const parsed = parseCSV(text);
@@ -2577,15 +2593,23 @@ function importSoldCSV() {
       }
 
       writeSold(existing);
+      importedOk = true;
       try{ updateBudgetPanel(); }catch(e){}
       msg.textContent = `Imported ${added} rows ✅`;
       msg.style.color = "var(--green)";
 
       renderSold();
       if (document.getElementById("syncIncomeToggle")?.checked) rebuildMonthlyIncomeFromSold();
-    } catch {
-      msg.textContent = "Import failed. Try exporting CSV again.";
-      msg.style.color = "var(--red)";
+    } catch (e) {
+      if(importedOk){
+        msg.textContent = "Imported ✅ (UI refresh issue fixed).";
+        msg.style.color = "var(--green)";
+      }else{
+        msg.textContent = "Import failed. Try exporting CSV again.";
+        msg.style.color = "var(--red)";
+      }
+    } finally {
+      try{ safeRefreshAfterImport(); }catch(e){}
     }
   };
   reader.readAsText(f);
@@ -2879,6 +2903,7 @@ function importActiveCSV() {
 
   const reader = new FileReader();
   reader.onload = () => {
+    let importedOk = false;
     try {
       const text = String(reader.result || "");
       const parsed = parseCSV(text);
@@ -2942,12 +2967,20 @@ function importActiveCSV() {
       }
 
       writeActive(existing);
+      importedOk = true;
       msg.textContent = `Imported ${added} rows ✅`;
       msg.style.color = "var(--green)";
       renderActive();
-    } catch {
-      msg.textContent = "Import failed. Try exporting CSV again.";
-      msg.style.color = "var(--red)";
+    } catch (e) {
+      if(importedOk){
+        msg.textContent = "Imported ✅ (UI refresh issue fixed).";
+        msg.style.color = "var(--green)";
+      }else{
+        msg.textContent = "Import failed. Try exporting CSV again.";
+        msg.style.color = "var(--red)";
+      }
+    } finally {
+      try{ safeRefreshAfterImport(); }catch(e){}
     }
   };
   reader.readAsText(f);
