@@ -1683,7 +1683,8 @@ button:hover{
             <label for="syncIncomeToggle" class="muted">Also update Income graph from sold data</label>
           </div>
 
-          <button onclick="importSoldCSV()">Import CSV</button>
+          <button onclick="importSoldCSV();
+updateBudgetPanel();">Import CSV</button>
 
           <div class="divider"></div>
 
@@ -2527,7 +2528,8 @@ function formatDate(d) {
   return `${y}-${m}-${day}`;
 }
 
-function importSoldCSV() {
+function importSoldCSV();
+updateBudgetPanel(); {
   const f = document.getElementById("soldFile").files[0];
   const msg = document.getElementById("soldImportMsg");
   if (!f) { msg.textContent = "Choose a CSV first."; msg.style.color="var(--yellow)"; return; }
@@ -3773,32 +3775,25 @@ function _parseDateSafe(ds){
   if(m){ d=new Date(+m[1], +m[2]-1, +m[3]); if(!isNaN(d.getTime())) return d; }
   return null;
 }
-function _sumSoldForMonth(sold, year, month){
-  let sales = 0;
-  let profit = 0;
-
-  sold.forEach(item=>{
-    const d = new Date(item.date);
-    if(isNaN(d)) return;
-    if(d.getFullYear() !== year || d.getMonth() !== month) return;
-
-    // normalize sale value (CSV uses 'sale')
-    const sale = Number(item.sale || item.sold || item.price || item.total || 0);
-    const cost = Number(item.cost || 0);
-    const fees = Number(item.fees || 0);
-    const ship = Number(item.ship || 0);
-
+function _sumSoldForMonth(rows, y, m){
+  let sales=0, profit=0;
+  (rows||[]).forEach(r=>{
+    const dt=_parseDateSafe(r.date||r.soldDate||r.sold_date||r.saleDate||'');
+    if(!dt) return;
+    if(dt.getFullYear()!=y || dt.getMonth()!=m) return;
+    const sale=Number(r.sale||r.price||0)||0;
+    const cost=normExpense(r.cost||0);
+    const fees=normExpense(r.fees||0);
+    const ship=normExpense(r.shipping||r.ship||0);
     sales += sale;
     profit += (sale - cost - fees - ship);
   });
-
-  return { sales, profit };
+  return {sales, profit};
 }
-
 function updateBudgetPanel(){
   const panel=document.getElementById('budgetPanel');
   if(!panel) return;
-  const sold = (typeof readSold==='function') ? readSold() : (JSON.parse(localStorage.getItem('soldInventory')||'[]')||[]);
+  const sold = readSold();
 
   const now=new Date();
   const y=now.getFullYear();
