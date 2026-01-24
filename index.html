@@ -3806,8 +3806,9 @@ function updateBudgetPanel(){
   const pace = day>0 ? (mtdSales/day) : 0;
   const projSales = pace * daysInMonth;
 
-  // === Budget source (toggle) ===
-  const source = document.querySelector('input[name="budgetSource"]:checked')?.value || 'closed';
+  // === Budget source (toggle with fallback) ===
+  const srcEl = document.querySelector('input[name="budgetSource"]:checked');
+  const source = srcEl ? srcEl.value : 'closed';
 
   let baseGross = 0;
   let baseLabel = '';
@@ -3815,23 +3816,52 @@ function updateBudgetPanel(){
   if(source === 'current'){
     baseGross = mtdSales;
     baseLabel = 'current month (live)';
-  }else{
+  } else {
     const lastMonthDate = new Date(y, m, 1);
     lastMonthDate.setMonth(lastMonthDate.getMonth()-1);
     const ly = lastMonthDate.getFullYear();
     const lm = lastMonthDate.getMonth();
-    const sumsLM=_sumSoldForMonth(sold, ly, lm);
+    const sumsLM = _sumSoldForMonth(sold, ly, lm);
     baseGross = sumsLM.sales;
-    baseLabel = new Date(ly, lm, 1).toLocaleString(undefined, { month:'short', year:'numeric' });
+
+    if(baseGross === 0){
+      baseGross = mtdSales;
+      baseLabel = 'current month (fallback – no closed month data)';
+    } else {
+      baseLabel = new Date(ly, lm, 1).toLocaleString(undefined, { month:'short', year:'numeric' });
+    }
   }
 
   const INVENTORY_PCT = 0.65;
   const BUFFER_PCT = 0.20;
   const HOLDS_PCT = 0.15;
 
-  const invBudget = baseGross * INVENTORY_PCT;
+  
+  // If closed month has no sales, fall back to the most recent month in your sold data
+  if(source !== 'current' && baseGross === 0){
+    let bestKey = null;
+    for(const it of sold){
+      const ds = it.date || it.soldDate || it.sold_date || it.saleDate || it.sold || '';
+      const d = new Date(ds);
+      if(isNaN(d)) continue;
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      if(bestKey === null || key > bestKey) bestKey = key;
+    }
+    if(bestKey){
+      const [fy,fm] = bestKey.split('-');
+      const yy = Number(fy);
+      const mm = Number(fm)-1;
+      const sumsFB = _sumSoldForMonth(sold, yy, mm);
+      if(sumsFB.sales > 0){
+        baseGross = sumsFB.sales;
+        baseLabel = `most recent month with sales (${new Date(yy, mm, 1).toLocaleString(undefined,{month:'short',year:'numeric'})})`;
+      }
+    }
+  }
+const invBudget = baseGross * INVENTORY_PCT;
   const profitBuffer = baseGross * BUFFER_PCT;
   const holds = baseGross * HOLDS_PCT;
+
 
 
   const monthPill=document.getElementById('budgetMonthPill');
