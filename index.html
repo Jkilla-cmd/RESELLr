@@ -14,7 +14,173 @@
 <meta name="apple-mobile-web-app-title" content="RESELLr">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js">
+/* === Toggle backup wiring (safe) === */
+document.addEventListener('change', (e) => {
+  const id = e && e.target ? e.target.id : '';
+  if(id === 'togNet' || id === 'togGross' || id === 'togMargin'){
+    try{ loadIncomeChart(); }catch(err){}
+  }
+});
+
+
+/* === Dashboard resize + save/reset (safe) === */
+const DASH_LAYOUT_KEY = "dashboardLayoutV1";
+
+function _dashPanels(){
+  const dash = document.querySelector("#secDashboard .grid");
+  if(!dash) return [];
+  return Array.from(dash.querySelectorAll(".panel"));
+}
+
+function applyDashboardLayout(){
+  try{
+    const raw = localStorage.getItem(DASH_LAYOUT_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    _dashPanels().forEach((p, idx)=>{
+      const key = p.id || p.getAttribute("data-panel-key") || ("panel_"+idx);
+      const s = data[key];
+      if(!s) return;
+      if(s.basis) p.style.flexBasis = s.basis;
+      if(s.height) p.style.height = s.height;
+    });
+  }catch(e){}
+}
+
+function saveDashboardLayout(){
+  try{
+    const data = {};
+    _dashPanels().forEach((p, idx)=>{
+      const key = p.id || p.getAttribute("data-panel-key") || ("panel_"+idx);
+      data[key] = {
+        basis: p.style.flexBasis || "",
+        height: p.style.height || ""
+      };
+    });
+    localStorage.setItem(DASH_LAYOUT_KEY, JSON.stringify(data));
+    showToast("Layout saved");
+  }catch(e){
+    showToast("Could not save layout");
+  }
+}
+
+function resetDashboardLayout(){
+  try{
+    localStorage.removeItem(DASH_LAYOUT_KEY);
+    _dashPanels().forEach(p=>{
+      p.style.flexBasis = "";
+      p.style.height = "";
+    });
+    // Re-apply defaults (income panel wide)
+    _markIncomeWide();
+    showToast("Layout reset");
+  }catch(e){
+    showToast("Could not reset layout");
+  }
+}
+
+function _markIncomeWide(){
+  // make panel containing incomeChart default wide
+  const incomeCanvas = document.getElementById("incomeChart");
+  if(!incomeCanvas) return;
+  const panel = incomeCanvas.closest(".panel");
+  if(panel) panel.classList.add("panel-wide");
+}
+
+function setupDashboardResize(){
+  const dash = document.querySelector("#secDashboard .grid");
+  if(!dash) return;
+
+  // Add keys for panels without ids
+  _dashPanels().forEach((p, idx)=>{
+    if(!p.id && !p.getAttribute("data-panel-key")){
+      p.setAttribute("data-panel-key", "panel_"+idx);
+    }
+  });
+
+  _markIncomeWide();
+
+  _dashPanels().forEach((panel)=>{
+    if(panel.querySelector(".resize-handle")) return;
+    const h = document.createElement("div");
+    h.className = "resize-handle";
+    h.setAttribute("aria-hidden","true");
+    panel.appendChild(h);
+
+    const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+
+    const startDrag = (x,y)=>{
+      panel.classList.add("resizing");
+      const rect = panel.getBoundingClientRect();
+      const startW = rect.width;
+      const startH = rect.height;
+      const startX = x;
+      const startY = y;
+
+      const move = (mx,my)=>{
+        const dx = mx - startX;
+        const dy = my - startY;
+        const newW = clamp(startW + dx, 320, window.innerWidth - 40);
+        const newH = clamp(startH + dy, 220, window.innerHeight - 140);
+        panel.style.flexBasis = newW + "px";
+        panel.style.height = newH + "px";
+
+        // nudge Chart.js
+        try{ if(window.incomeChartObj) window.incomeChartObj.resize(); }catch(e){}
+      };
+
+      const onMove = (e)=>move(e.clientX, e.clientY);
+      const onUp = ()=>{
+        panel.classList.remove("resizing");
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    };
+
+    h.addEventListener("mousedown", (e)=>{
+      e.preventDefault();
+      startDrag(e.clientX, e.clientY);
+    });
+  });
+
+  applyDashboardLayout();
+}
+
+// Ensure resize setup runs after app initializes and dashboard exists
+document.addEventListener("DOMContentLoaded", ()=>{
+  try{ setupDashboardResize(); }catch(e){}
+});
+
+// Also run when user navigates back to Dashboard (in case of lazy DOM)
+document.addEventListener("click", (e)=>{
+  const t = e.target;
+  if(!t) return;
+  if(t.matches('[data-target="secDashboard"], #navDashboard, .nav-item[data-target="secDashboard"]')){
+    setTimeout(()=>{ try{ setupDashboardResize(); }catch(e){} }, 50);
+  }
+});
+
+
+/* === Force inject resize handles if missing === */
+function forceResizeHandles(){
+  const dash = document.querySelector("#secDashboard .grid");
+  if(!dash) return;
+  dash.querySelectorAll(".panel").forEach(p=>{
+    if(!p.querySelector(".resize-handle")){
+      const h=document.createElement("div");
+      h.className="resize-handle";
+      h.setAttribute("aria-hidden","true");
+      p.appendChild(h);
+    }
+  });
+}
+document.addEventListener("DOMContentLoaded", ()=>setTimeout(forceResizeHandles,200));
+document.addEventListener("click", ()=>setTimeout(forceResizeHandles,200));
+
+</script>
 
 <style>
 
@@ -177,7 +343,7 @@ button.small { width: auto; padding: 8px 10px; border-radius: 10px; }
 }
 .lockBox {
   width: 100%;
-  max-width: 460px;
+  max-width: 520px;
   background: var(--panel);
   border: 1px solid var(--border);
   padding: 16px;
@@ -417,39 +583,6 @@ tr:hover td { background: rgba(56,189,248,0.04); }
 .modal .box .btnRow button { width:auto; }
 
 
-
-/* Buy Me a Coffee – custom logo */
-.bmc-float {
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
-  z-index: 10050;
-  display: none; /* shown only on Dashboard */
-}
-.bmc-float.is-hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(10px);
-}
-.bmc-float a { display:block; }
-.bmc-float img {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: rgba(0,0,0,0.35);
-  box-shadow: 0 14px 40px rgba(0,0,0,0.45);
-  transition: transform .15s ease, box-shadow .15s ease, opacity .2s ease;
-  display:block;
-}
-@keyframes bmcPulse {
-  0% { transform: translateY(-2px) scale(1.03); }
-  50% { transform: translateY(-2px) scale(1.08); }
-  100% { transform: translateY(-2px) scale(1.03); }
-}
-.bmc-float img:hover {
-  animation: bmcPulse 0.9s ease-in-out infinite;
-  box-shadow: 0 18px 55px rgba(0,0,0,0.6);
-}
 
 
 /* Hacker Cyan vibe: terminal depth + scanlines */
@@ -787,60 +920,95 @@ button:hover{
 
 
 /* ===== Disable Buy Me a Coffee (safe) ===== */
-.bmc-float, #bmc, #buymeacoffee, .buymeacoffee, [data-bmc], a[href*="buymeacoffee.com"]{
-  display:none !important;
-  visibility:hidden !important;
-  pointer-events:none !important;
-}
 
 
-/* ===== RSS ticker ===== */
-.rssTicker{
-  border:1px solid rgba(56,189,248,0.14);
-  background: rgba(2,6,23,0.16);
-  border-radius: 14px;
-  padding: 10px;
-  overflow: hidden;
-  max-height: 180px;
-}
-.rssTicker ul{
-  margin:0;
-  padding:0;
-  list-style:none;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-.rssItem{
-  display:flex;
-  gap:10px;
-  align-items:flex-start;
-}
-.rssItem a{
-  text-decoration:none;
-}
-.rssItem a:hover{
-  text-decoration:underline;
-}
-.rssDate{
-  font-size:11px;
-  opacity:0.65;
-  min-width: 78px;
-  flex: 0 0 auto;
-}
-.rssTitle{
-  font-size:12px;
-  line-height:1.35;
-}
+
 /* soft auto-scroll on larger lists */
 @media (prefers-reduced-motion: no-preference){
-  .rssTicker.is-scrolling ul{
-    animation: rssScroll 18s linear infinite;
   }
-  @keyframes rssScroll{
     0%{ transform: translateY(0); }
     100%{ transform: translateY(-40%); }
   }
+}
+
+
+/* === Full-width Dashboard Graphs === */
+#secDashboard .income-full,
+#secDashboard .profit-full{
+  grid-column: 1 / -1;
+}
+#secDashboard .income-full .chart-wrap,
+#secDashboard .profit-full .chart-wrap{
+  height: 360px;
+}
+@media (max-width: 900px){
+  #secDashboard .income-full,
+  #secDashboard .profit-full{
+    grid-column: auto;
+  }
+  #secDashboard .income-full .chart-wrap,
+  #secDashboard .profit-full .chart-wrap{
+    height: 260px;
+  }
+}
+
+
+/* === Dashboard full-width panels (centered max-width) === */
+#secDashboard .full-span{ grid-column: 1 / -1; }
+@media (max-width: 900px){ #secDashboard .full-span{ grid-column: auto; } }
+
+
+/* === Login sizing fix === */
+.lockBox{
+  max-width: 520px !important;
+}
+@media (max-width: 520px){
+  .lockBox{ max-width: 92vw !important; }
+}
+
+
+/* === Dashboard: resizable panels (flex layout) === */
+#secDashboard .grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  align-items:flex-start;
+}
+#secDashboard .panel{
+  flex: 1 1 360px;
+  min-width: 320px;
+  min-height: 220px;
+  position: relative;
+}
+#secDashboard .panel.panel-wide{
+  flex-basis: 760px;
+}
+#secDashboard .resize-handle{
+  position:absolute;
+  right:10px;
+  bottom:10px;
+  width:14px;
+  height:14px;
+  cursor:nwse-resize;
+  opacity:.65;
+  border-right:2px solid rgba(148,163,184,.55);
+  border-bottom:2px solid rgba(148,163,184,.55);
+  border-radius:2px;
+}
+#secDashboard .panel.resizing{ user-select:none; }
+@media (max-width: 900px){
+  #secDashboard .grid{ display:block; }
+  #secDashboard .panel{ min-width:0; width:100%; }
+  #secDashboard .resize-handle{ display:none; }
+}
+
+
+/* === FORCE resize handles visible === */
+#secDashboard .panel::after{ display:none; }
+#secDashboard .resize-handle{
+  display:block !important;
+  opacity:1 !important;
+  z-index:10;
 }
 
 </style>
@@ -1118,35 +1286,73 @@ button:hover{
           <div class="stat blue" id="inventoryStat"></div>
         </div>
 
-
-        <div class="panel" id="rssPanel">
+        <div class="panel" id="budgetPanel">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
-            <h3 style="margin:0;">Comic News Feed</h3>
-            <button class="btn tiny" id="rssRefreshBtn" type="button" title="Refresh feed">Refresh</button>
+            <h3 style="margin:0;">Next Month Inventory Budget</h3>
+            <span class="pill muted" id="budgetMonthPill" style="height:30px;display:flex;align-items:center;">—</span>
+          </div>
+          <div class="muted" id="budgetSubLine" style="font-size:12px;margin:6px 0 10px 0;">—</div>
+
+          <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
           </div>
 
-          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
-            <select class="pill" id="rssPreset" style="min-width:210px;">
-              <option value="">Choose a feed…</option>
-              <option value="https://www.cbr.com/feed/">CBR (all)</option>
-              <option value="https://bleedingcool.com/comics/feed/">Bleeding Cool (comics)</option>
-              <option value="https://www.newsarama.com/rss/">Newsarama</option>
-            </select>
-            <input class="pill" id="rssCustom" placeholder="Or paste an RSS URL…" style="flex:1;min-width:220px;" />
+          <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div class="stat blue" id="mtdSalesStat">LAST MONTH GROSS: $0</div>
+            <div class="stat muted" id="mtdProfitStat">INVENTORY BUDGET: $0</div>
+            <div class="stat yellow" id="projSalesStat">PROFIT BUFFER: $0</div>
+            <div class="stat green" id="nextBudgetStat">HOLDS: $0</div>
           </div>
 
-          <div class="rssTicker" id="rssTicker">
-            <div class="muted">Pick a feed and tap <b>Refresh</b>…</div>
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;"><label class="muted" style="font-size:12px;"><input type="radio" name="budgetSource" value="closed" checked> Last completed month</label><label class="muted" style="font-size:12px;"><input type="radio" name="budgetSource" value="current"> Current month (live)</label></div><div class="muted" id="budgetLogicNote" style="font-size:12px;margin-bottom:6px;">Budget uses last completed month and Tools logic (65% inventory / 20% buffer / 15% holds).</div>
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;">
+            <div class="pill" style="display:flex;align-items:center;gap:10px;">
+              <span class="muted" style="font-size:12px;">Reinvest %</span>
+              <input id="reinvestPct" type="range" min="0" max="100" value="50" style="width:140px;">
+              <span id="reinvestPctLabel" style="font-size:12px;">50%</span>
+            </div>
+
+            <div class="pill" style="display:flex;align-items:center;gap:10px;">
+              <span class="muted" style="font-size:12px;">Mode</span>
+              <select id="budgetMode" class="pill" style="height:32px;padding:4px 10px;">
+                <option value="projected">Projected</option>
+                <option value="mtd">If month ended today</option>
+              </select>
+            </div>
           </div>
 
-          <div class="muted" style="font-size:11px;line-height:1.45;margin-top:10px;">
-            Tip: Some publishers change RSS URLs. If a preset stops working, paste a different RSS feed link above.
+          <div class="muted" style="font-size:12px;line-height:1.45;margin-bottom:8px;">
+            Estimates what you can spend for <b>next month</b> using what you’ve sold <b>so far this month</b>. It auto-rolls forward each month.
+          </div>
+
+          <div style="margin-top:10px;">
+            <div class="muted" style="font-size:12px;margin-bottom:6px;">Month progress</div>
+            <div class="progressBar"><div class="progressFill" id="monthProgressFill" style="width:0%"></div></div>
+            <div class="muted" style="font-size:11px;margin-top:6px;" id="monthProgressLabel">—</div>
           </div>
         </div>
 
-
-        <div class="panel">
+        <div class="panel income-full">
           <h3>Income Graph</h3>
+
+          <div class="stat muted" id="bestWorstStat" style="margin-top:6px;">—</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0 8px;">
+            <div class="pill" style="display:flex;align-items:center;gap:8px;">
+              <label class="muted" style="font-size:12px;">Goal</label>
+              <span class="muted" style="font-size:12px;">$300/mo</span>
+            </div>
+            <div class="pill" style="display:flex;align-items:center;gap:10px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;">
+                <input type="checkbox" id="togNet" checked onchange="try{loadIncomeChart();}catch(e){}"> Net Profit
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;">
+                <input type="checkbox" id="togGross" onchange="try{loadIncomeChart();}catch(e){}"> Gross Profit
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;">
+                <input type="checkbox" id="togMargin" onchange="try{loadIncomeChart();}catch(e){}"> Margin %
+              </label>
+            </div>
+          </div>
+
 
           <label>Year Filter</label>
           <select id="yearFilter" onchange="loadIncomeChart()">
@@ -1164,7 +1370,7 @@ button:hover{
           <button class="danger" onclick="resetMonthlyIncome()">Reset Month Data</button>
           <div class="stat muted" id="monthCountStat"></div>
         </div>
-      </div>
+</div>
     </section>
 
     <!-- INVENTORY -->
@@ -1570,7 +1776,18 @@ button:hover{
           <div class="divider"></div>
           <div class="stat muted">Supports + − × ÷ and parentheses.</div>
         </div>
-      </div>
+      
+        <div class="panel">
+          <h3>Layout (Dashboard)</h3>
+          <div class="muted" style="font-size:12px;line-height:1.5">
+            Resize dashboard panels by dragging the corner handle (desktop). You can save your layout so it sticks after refresh.
+          </div>
+          <div style="height:10px"></div>
+          <button onclick="saveDashboardLayout()">Save Layout</button>
+          <div style="height:8px"></div>
+          <button class="secondary" onclick="resetDashboardLayout()">Reset Layout</button>
+        </div>
+</div>
     </section>
 
     <!-- SETTINGS -->
@@ -1664,13 +1881,19 @@ function showSection(sectionId) {
 
   if (isMobile()) closeSidebar();
 
+  // Always start each tab at the top (prevents sections appearing "at the bottom")
+  try { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); } catch (e) { window.scrollTo(0, 0); }
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+
+  // Refresh budget panel when returning to Dashboard
+  if (sectionId === 'secDashboard') { try { updateBudgetPanel(); } catch (e) {} }
+
   setTimeout(() => {
     if (incomeChartObj) incomeChartObj.resize();
     if (soldProfitChartObj) soldProfitChartObj.resize();
     if (soldItemsChartObj) soldItemsChartObj.resize();
   }, 80);
-
-  updateBmcVisibility();
 }
 
 function toggleSidebar() {
@@ -1869,6 +2092,12 @@ function parseMoney(x) {
   const n = parseFloat(s);
   return isFinite(n) ? n : 0;
 }
+
+// Expenses should always be treated as positive numbers.
+function normExpense(v){
+  const n = Number(v);
+  return isFinite(n) ? Math.abs(n) : 0;
+}
 function genId() {
   return "id_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
 }
@@ -1900,6 +2129,13 @@ function addMonthlyIncome() {
   monthLabel.value = "";
   monthIncome.value = "";
   loadIncomeChart();
+
+  // Analytics toggles (safe)
+  ["togNet","togGross","togMargin"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener("change", () => { try{ loadIncomeChart(); }catch(e){} });
+  });
+
 }
 function resetMonthlyIncome() { localStorage.removeItem("monthlyIncome"); loadIncomeChart(); }
 
@@ -1957,27 +2193,171 @@ function loadIncomeChart() {
   const selectedYear = document.getElementById("yearFilter")?.value || "ALL";
   const data = selectedYear === "ALL" ? raw : raw.filter(d => extractYear(d.label) === selectedYear);
 
+  const labels = data.map(d => d.label);
+  const income = data.map(d => Number(d.income || 0));
+
+  // Sold rows live in localStorage via SOLD_KEY; use the app's readSold() helper (not window.state)
+  const sold = (typeof readSold === "function") ? readSold() : [];
+  const map = {};
+  for(const it of sold){
+    const ds = it.date || it.soldDate || it.sold || "";
+    const d = new Date(ds);
+    if(isNaN(d)) continue;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const sale = Number(it.sale || 0);
+    const cost = Number(it.cost || 0);
+    const fees = Number(it.fees || 0);
+    const ship = Number(it.ship || it.shipping || 0);
+    if(!map[key]) map[key] = { gross:0, net:0 };
+    map[key].gross += (sale - cost);
+    map[key].net += (sale - cost - fees - ship);
+  }
+
+  function labelToKey(lbl){
+    if(!lbl) return null;
+    const s = String(lbl).trim();
+
+    // YYYY-MM
+    let m = s.match(/^(\d{4})-(\d{2})$/);
+    if(m) return s;
+
+    // YYYY-MM-DD -> YYYY-MM
+    m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(m) return `${m[1]}-${m[2]}`;
+
+    // "Jan 2026" / "January 2026"
+    m = s.match(/^([A-Za-z]{3,9})\s+(\d{4})$/);
+    if(m){
+      const mon = m[1].toLowerCase();
+      const year = m[2];
+      const map = {
+        jan:1, january:1,
+        feb:2, february:2,
+        mar:3, march:3,
+        apr:4, april:4,
+        may:5,
+        jun:6, june:6,
+        jul:7, july:7,
+        aug:8, august:8,
+        sep:9, sept:9, september:9,
+        oct:10, october:10,
+        nov:11, november:11,
+        dec:12, december:12
+      };
+      const mm = map[mon];
+      if(mm) return `${year}-${String(mm).padStart(2,'0')}`;
+    }
+
+    // Fallback Date parse
+    const dd = new Date(s);
+    if(!isNaN(dd)) return `${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}`;
+
+    return null;
+  }
+
+  const gross = labels.map(l => {
+    const k = labelToKey(l);
+    return k && map[k] ? map[k].gross : 0;
+  });
+  const net = labels.map(l => {
+    const k = labelToKey(l);
+    return k && map[k] ? map[k].net : 0;
+  });
+  const margin = labels.map((_,i)=> income[i] ? (net[i] / income[i]) * 100 : 0);
+  const goal = labels.map(()=>300);
+
+  const stat = document.getElementById("bestWorstStat");
+  if(stat && labels.length){
+    let best = 0, worst = 0;
+    for(let i=1;i<net.length;i++){
+      if(net[i] > net[best]) best = i;
+      if(net[i] < net[worst]) worst = i;
+    }
+    stat.innerHTML = `🟢 Best Month: <b>${labels[best] || "—"}</b> (${formatDollars(net[best]||0)}) &nbsp; | &nbsp; 🔴 Worst Month: <b>${labels[worst] || "—"}</b> (${formatDollars(net[worst]||0)})`;
+  } else if(stat){
+    stat.textContent = "—";
+  }
+
+  const showNet = document.getElementById("togNet")?.checked ?? true;
+  const showGross = document.getElementById("togGross")?.checked ?? false;
+  const showMargin = document.getElementById("togMargin")?.checked ?? false;
+
   if (incomeChartObj) incomeChartObj.destroy();
+
+  const datasets = [{
+    label: "Income",
+    data: income,
+    borderColor: "#38bdf8",
+    borderWidth: 2,
+    tension: 0.35,
+    pointRadius: 3,
+    pointHoverRadius: 5
+  }];
+
+  if(showGross){
+    datasets.push({
+      label: "Gross Profit",
+      data: gross,
+      borderColor: "#fbbf24",
+      borderWidth: 2,
+      tension: 0.35,
+      pointRadius: 2,
+      pointHoverRadius: 4
+    });
+  }
+  if(showNet){
+    datasets.push({
+      label: "Net Profit",
+      data: net,
+      borderColor: "#22c55e",
+      borderWidth: 2,
+      tension: 0.35,
+      pointRadius: 2,
+      pointHoverRadius: 4
+    });
+  }
+
+  datasets.push({
+    label: "Goal ($300/mo)",
+    data: goal,
+    borderColor: "#ef4444",
+    borderDash: [6,6],
+    borderWidth: 2,
+    pointRadius: 0,
+    tension: 0
+  });
+
+  if(showMargin){
+    datasets.push({
+      label: "Profit Margin %",
+      data: margin,
+      borderColor: "#e5e7eb",
+      borderDash: [4,4],
+      borderWidth: 2,
+      pointRadius: 2,
+      tension: 0.35,
+      yAxisID: "y1"
+    });
+  }
 
   incomeChartObj = new Chart(incomeChart, {
     type: "line",
-    data: {
-      labels: data.map(d => d.label),
-      datasets: [{
-        data: data.map(d => d.income),
-        borderColor: "#38bdf8",
-        borderWidth: 2,
-        tension: 0.35,
-        pointRadius: 3,
-        pointHoverRadius: 5
-      }]
-    },
+    data: { labels, datasets },
     plugins: [yearSeparatorPlugin],
     options: {
       maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: (ctx) => ` ${formatDollars(ctx.parsed.y)}` } }
+        legend: { display: true, labels: { color: "#9ca3af" } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const name = ctx.dataset.label || "";
+              if(name.includes("%")) return ` ${name}: ${ctx.parsed.y.toFixed(1)}%`;
+              return ` ${name}: ${formatDollars(ctx.parsed.y)}`;
+            }
+          }
+        }
       },
       scales: {
         x: { ticks: { color: "#6b7280" }, grid: { color: "rgba(31,41,55,0.55)" } },
@@ -1985,6 +2365,13 @@ function loadIncomeChart() {
           beginAtZero: true,
           ticks: { color: "#6b7280", callback: (value) => formatDollars(value) },
           grid: { color: "rgba(31,41,55,0.55)" }
+        },
+        y1: {
+          position: "right",
+          display: showMargin,
+          beginAtZero: true,
+          ticks: { color: "#6b7280", callback: (v) => `${v}%` },
+          grid: { drawOnChartArea: false }
         }
       }
     }
@@ -1995,8 +2382,32 @@ function loadIncomeChart() {
 const SOLD_KEY = "soldInventory";
 let soldProfitChartObj, soldItemsChartObj;
 
-function readSold() { return JSON.parse(localStorage.getItem(SOLD_KEY)) || []; }
+function readSold() {
+  const arr = JSON.parse(localStorage.getItem(SOLD_KEY)) || [];
+  // Normalize legacy data: ensure cost/fees/ship are positive and profit is recalculated.
+  let changed = false;
+  const fixed = arr.map(r=>{
+    if(!r || typeof r !== "object") return r;
+    const sale = Number(r.sale||r.price||0) || 0;
+    const cost = normExpense(r.cost||0);
+    const fees = normExpense(r.fees||r.fee||0);
+    const ship = normExpense(r.ship||r.shipping||0);
+    const profit = sale - cost - fees - ship;
+
+    const out = {...r};
+    if(out.cost !== cost){ out.cost = cost; changed = true; }
+    if(out.fees !== fees){ out.fees = fees; changed = true; }
+    if(out.ship !== ship){ out.ship = ship; changed = true; }
+    if(out.profit !== profit){ out.profit = profit; changed = true; }
+    return out;
+  });
+  if(changed){
+    try{ localStorage.setItem(SOLD_KEY, JSON.stringify(fixed)); }catch(e){}
+  }
+  return fixed;
+}
 function writeSold(arr) { localStorage.setItem(SOLD_KEY, JSON.stringify(arr)); }
+try{ updateBudgetPanel(); }catch(e){}
 
 /* Build monthlyIncome from sold rows (sale totals by month) */
 function rebuildMonthlyIncomeFromSold() {
@@ -2025,6 +2436,8 @@ function rebuildMonthlyIncomeFromSold() {
   localStorage.setItem("monthlyIncome", JSON.stringify(monthly));
   loadIncomeChart();
 }
+try{ updateBudgetPanel(); }catch(e){}
+
 
 function parseCSV(text) {
   const rows = [];
@@ -2148,9 +2561,9 @@ function importSoldCSV() {
         const type = (iType !== -1) ? normalizeType(row[iType]) : "";
         const platform = String(row[iPlatform] || "").trim() || "Unknown";
         const sale = parseMoney(row[iSale]);
-        const cost = iCost !== -1 ? parseMoney(row[iCost]) : 0;
-        const fees = iFees !== -1 ? parseMoney(row[iFees]) : 0;
-        const ship = iShip !== -1 ? parseMoney(row[iShip]) : 0;
+        const cost = iCost !== -1 ? normExpense(parseMoney(row[iCost])) : 0;
+        const fees = iFees !== -1 ? normExpense(parseMoney(row[iFees])) : 0;
+        const ship = iShip !== -1 ? normExpense(parseMoney(row[iShip])) : 0;
         const profit = sale - cost - fees - ship;
 
         if (!item || !isFinite(sale)) continue;
@@ -2164,6 +2577,7 @@ function importSoldCSV() {
       }
 
       writeSold(existing);
+      try{ updateBudgetPanel(); }catch(e){}
       msg.textContent = `Imported ${added} rows ✅`;
       msg.style.color = "var(--green)";
 
@@ -2183,9 +2597,9 @@ function addSoldManually() {
   const type = (document.getElementById("manualType")?.value || "").trim();
   const platform = (manualPlatform.value || "").trim() || "Manual";
   const sale = Number(manualSale.value) || 0;
-  const cost = Number(manualCost.value) || 0;
-  const fees = Number(manualFees.value) || 0;
-  const ship = Number(manualShip.value) || 0;
+  const cost = normExpense(manualCost.value);
+  const fees = normExpense(manualFees.value);
+  const ship = normExpense(manualShip.value);
 
   if (!d || !item || !sale) return;
 
@@ -2343,6 +2757,8 @@ function renderSold() {
 
   try{ updateSoldSummaryAndCharts(); }catch(e){}
   try{ updateNetWorth(); }catch(e){}
+
+  safeBudgetRefresh();
 }
 
 
@@ -2701,6 +3117,8 @@ function renderActive() {
     tbody.appendChild(tr);
   }
   try{ updateNetWorth(); }catch(e){}
+
+  safeBudgetRefresh();
 }
 
 
@@ -2865,8 +3283,8 @@ function confirmMarkSold() {
   const type = (document.getElementById("msType")?.value || "").trim();
   const platform = (document.getElementById("msPlatform").value || "").trim() || "Unknown";
   const sale = Number(document.getElementById("msSale").value) || 0;
-  const fees = Number(document.getElementById("msFees").value) || 0;
-  const ship = Number(document.getElementById("msShip").value) || 0;
+  const fees = normExpense(document.getElementById("msFees").value);
+  const ship = normExpense(document.getElementById("msShip").value);
 
   if (!soldDate || !item || !sale) return;
 
@@ -2875,7 +3293,7 @@ function confirmMarkSold() {
   if (invIdx === -1) return;
   const inv = invArr[invIdx];
 
-  const cost = Number(inv.cost) || 0;
+  const cost = normExpense(inv.cost);
   const profit = sale - cost - fees - ship;
 
   // Add to sold
@@ -2966,40 +3384,7 @@ function setTheme(theme) {
 let _lastScrollY = 0;
 let _scrollTick = false;
 
-function setBmcVisible(visible) {
-  const el = document.querySelector(".bmc-float");
-  if (!el) return;
-  el.style.display = visible ? "block" : "none";
-  if (!visible) el.classList.add("is-hidden");
-  if (visible) el.classList.remove("is-hidden");
-}
 
-function updateBmcVisibility() {
-  const isLocked = !!document.getElementById("lockScreen") && document.getElementById("lockScreen").classList.contains("show");
-  const activeSection = document.querySelector(".section.active")?.id || "secDashboard";
-  const shouldShow = (!isLocked) && (activeSection === "secDashboard");
-  setBmcVisible(shouldShow);
-}
-
-function onScrollBmc() {
-  if (_scrollTick) return;
-  _scrollTick = true;
-
-  requestAnimationFrame(() => {
-    const el = document.querySelector(".bmc-float");
-    if (!el || el.style.display === "none") { _scrollTick = false; return; }
-
-    const y = window.scrollY || document.documentElement.scrollTop || 0;
-    const delta = y - _lastScrollY;
-
-    // Hide when scrolling down a bit, show when scrolling up
-    if (delta > 10) el.classList.add("is-hidden");
-    if (delta < -10) el.classList.remove("is-hidden");
-
-    _lastScrollY = y;
-    _scrollTick = false;
-  });
-}
 
 
 /* Keep support button in sync with lock screen */
@@ -3008,8 +3393,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const lock = document.getElementById("lockScreen");
   if (!lock) return;
-  const obs = new MutationObserver(() => updateBmcVisibility());
-  obs.observe(lock, { attributes: true, attributeFilter: ["class"] });
 });
 
 
@@ -3337,92 +3720,123 @@ function initNetWorthUI(){
 
 
 
-/* ========= RSS FEED (comic news) ========= */
-async function loadComicRSS(){
-  const ticker = document.getElementById("rssTicker");
-  const preset = document.getElementById("rssPreset");
-  const custom = document.getElementById("rssCustom");
-  if(!ticker) return;
 
-  const url = (custom && custom.value.trim()) || (preset && preset.value) || "";
-  if(!url){
-    ticker.innerHTML = '<div class="muted">Pick a feed and tap <b>Refresh</b>…</div>';
-    return;
-  }
 
-  ticker.innerHTML = '<div class="muted">Loading…</div>';
-  try{
-    // CORS-safe text proxy
-    const proxyUrl = "https://r.jina.ai/http://r.jina.ai/" + url.replace(/^https?:\/\//,"https://");
-    const res = await fetch(proxyUrl, { cache: "no-store" });
-    if(!res.ok) throw new Error("Fetch failed");
-    const text = await res.text();
 
-    // Proxy returns the raw page content. For RSS this should include XML.
-    // Extract the first "<rss" or "<feed" onward, as some proxies prepend headers.
-    const rssStart = text.search(/<rss[\s>]|<feed[\s>]/i);
-    const xmlText = rssStart >= 0 ? text.slice(rssStart) : text;
-
-    const doc = new DOMParser().parseFromString(xmlText, "text/xml");
-    const items = Array.from(doc.querySelectorAll("item")).slice(0, 12);
-
-    // Atom fallback
-    const entries = items.length ? [] : Array.from(doc.querySelectorAll("entry")).slice(0, 12);
-
-    const rows = [];
-    if(items.length){
-      for(const it of items){
-        const title = (it.querySelector("title")?.textContent || "").trim();
-        const link = (it.querySelector("link")?.textContent || "").trim();
-        const pub = (it.querySelector("pubDate")?.textContent || "").trim();
-        if(!title || !link) continue;
-        rows.push({title, link, pub});
-      }
-    }else{
-      for(const en of entries){
-        const title = (en.querySelector("title")?.textContent || "").trim();
-        const linkEl = en.querySelector("link");
-        const link = (linkEl?.getAttribute("href") || linkEl?.textContent || "").trim();
-        const pub = (en.querySelector("updated")?.textContent || en.querySelector("published")?.textContent || "").trim();
-        if(!title || !link) continue;
-        rows.push({title, link, pub});
-      }
-    }
-
-    if(!rows.length) throw new Error("No items parsed");
-
-    const fmtDate = (s)=>{
-      if(!s) return "";
-      const d = new Date(s);
-      if(isNaN(d.getTime())) return "";
-      return d.toLocaleDateString(undefined, { month:"short", day:"numeric" });
-    };
-
-    ticker.classList.toggle("is-scrolling", rows.length >= 8);
-
-    ticker.innerHTML = `<ul>${rows.map(r=>`
-      <li class="rssItem">
-        <div class="rssDate">${fmtDate(r.pub) || ""}</div>
-        <div class="rssTitle"><a href="${r.link}" target="_blank" rel="noopener">${escapeHtml(r.title)}</a></div>
-      </li>
-    `).join("")}</ul>`;
-
-  }catch(e){
-    ticker.classList.remove("is-scrolling");
-    ticker.innerHTML = '<div class="muted">Feed could not be loaded. Try a different RSS URL.</div>';
-  }
+/* ========= NEXT MONTH INVENTORY BUDGET ========= */
+function _getNextMonthLabel(d){
+  const nm = new Date(d.getFullYear(), d.getMonth()+1, 1);
+  return nm.toLocaleString(undefined,{month:'long', year:'numeric'});
 }
-
-document.addEventListener("DOMContentLoaded", ()=>{
-  const btn = document.getElementById("rssRefreshBtn");
-  const preset = document.getElementById("rssPreset");
-  if(btn) btn.addEventListener("click", loadComicRSS);
-  if(preset) preset.addEventListener("change", ()=>{
-    const custom = document.getElementById("rssCustom");
-    if(custom) custom.value = "";
+function _parseDateSafe(ds){
+  if(!ds) return null;
+  if(ds instanceof Date) return isNaN(ds.getTime())?null:ds;
+  const s = String(ds).trim();
+  let d = new Date(s);
+  if(!isNaN(d.getTime())) return d;
+  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m){ d=new Date(+m[3], +m[1]-1, +m[2]); if(!isNaN(d.getTime())) return d; }
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(m){ d=new Date(+m[1], +m[2]-1, +m[3]); if(!isNaN(d.getTime())) return d; }
+  return null;
+}
+function _sumSoldForMonth(rows, y, m){
+  let sales=0, profit=0;
+  (rows||[]).forEach(r=>{
+    const dt=_parseDateSafe(r.date||r.soldDate||r.sold_date||r.saleDate||'');
+    if(!dt) return;
+    if(dt.getFullYear()!=y || dt.getMonth()!=m) return;
+    const sale=Number(r.sale||r.price||0)||0;
+    const cost=normExpense(r.cost||0);
+    const fees=normExpense(r.fees||0);
+    const ship=normExpense(r.shipping||r.ship||0);
+    sales += sale;
+    profit += (sale - cost - fees - ship);
   });
-});
+  return {sales, profit};
+}
+function updateBudgetPanel(){
+  const panel=document.getElementById('budgetPanel');
+  if(!panel) return;
+  const sold = (typeof readSold==='function') ? readSold() : (JSON.parse(localStorage.getItem('soldInventory')||'[]')||[]);
 
+  const now=new Date();
+  const y=now.getFullYear();
+  const m=now.getMonth();
+  const day=now.getDate();
+  const daysInMonth=new Date(y, m+1, 0).getDate();
+
+  // Month-to-date (for pacing info only)
+  const sumsMTD=_sumSoldForMonth(sold, y, m);
+  const mtdSales=sumsMTD.sales;
+  const mtdProfit=sumsMTD.profit;
+  const pace = day>0 ? (mtdSales/day) : 0;
+  const projSales = pace * daysInMonth;
+
+  // === Budget source (toggle) ===
+  const source = document.querySelector('input[name="budgetSource"]:checked')?.value || 'closed';
+
+  let baseGross = 0;
+  let baseLabel = '';
+
+  if(source === 'current'){
+    baseGross = mtdSales;
+    baseLabel = 'current month (live)';
+  }else{
+    const lastMonthDate = new Date(y, m, 1);
+    lastMonthDate.setMonth(lastMonthDate.getMonth()-1);
+    const ly = lastMonthDate.getFullYear();
+    const lm = lastMonthDate.getMonth();
+    const sumsLM=_sumSoldForMonth(sold, ly, lm);
+    baseGross = sumsLM.sales;
+    baseLabel = new Date(ly, lm, 1).toLocaleString(undefined, { month:'short', year:'numeric' });
+  }
+
+  const INVENTORY_PCT = 0.65;
+  const BUFFER_PCT = 0.20;
+  const HOLDS_PCT = 0.15;
+
+  const invBudget = baseGross * INVENTORY_PCT;
+  const profitBuffer = baseGross * BUFFER_PCT;
+  const holds = baseGross * HOLDS_PCT;
+
+
+  const monthPill=document.getElementById('budgetMonthPill');
+  if(monthPill) monthPill.textContent = 'For ' + _getNextMonthLabel(now);
+
+  const sub=document.getElementById('budgetSubLine');
+  if(sub){
+    const lmLabel = new Date(ly, lm, 1).toLocaleString(undefined, { month:'short', year:'numeric' });
+    sub.textContent = `Based on last completed month (${lmLabel}). MTD sales: ${formatDollars(mtdSales)} · Projected: ${formatDollars(projSales)}`;
+  }
+
+  // Update stats (Tools parity)
+  const setText=(id, txt)=>{ const el=document.getElementById(id); if(el) el.textContent=txt; };
+  setText('mtdSalesStat', 'LAST MONTH GROSS: ' + formatDollars(lastGross));
+  setText('mtdProfitStat','INVENTORY BUDGET: ' + formatDollars(invBudget));
+  setText('projSalesStat','PROFIT BUFFER: ' + formatDollars(profitBuffer));
+  setText('nextBudgetStat','HOLDS: ' + formatDollars(holds));
+
+  // Disable the reinvest/mode controls (kept for UI continuity)
+  const pctEl=document.getElementById('reinvestPct');
+  const pctLabel=document.getElementById('reinvestPctLabel');
+  const modeEl=document.getElementById('budgetMode');
+  if(pctEl){ pctEl.value = String(Math.round(INVENTORY_PCT*100)); pctEl.disabled = true; }
+  if(pctLabel) pctLabel.textContent = Math.round(INVENTORY_PCT*100) + '%';
+  if(modeEl){ modeEl.value = 'mtd'; modeEl.disabled = true; }
+
+  const note=document.getElementById('budgetLogicNote');
+  if(note){
+    const lmLabel = new Date(ly, lm, 1).toLocaleString(undefined, { month:'short', year:'numeric' });
+    note.textContent = `Budget uses ${baseLabel} and Tools logic (65% inventory / 20% buffer / 15% holds).`;
+  }
+
+  const fill=document.getElementById('monthProgressFill');
+  const lbl=document.getElementById('monthProgressLabel');
+  const pctMonth=Math.max(0, Math.min(100, (day/daysInMonth)*100));
+  if(fill) fill.style.width = pctMonth.toFixed(0)+'%';
+  if(lbl) lbl.textContent = pctMonth.toFixed(0)+'% of month elapsed';
+}
 
 /* ========= BOOT ========= */
 window.onload = () => {
@@ -3435,18 +3849,92 @@ window.onload = () => {
   renderActive();
   renderSold();
   loadIncomeChart();
-  showSection('secDashboard');
+  initBudgetPanel();
+  renderProfitGraph();
+showSection('secDashboard');
 };
 
+
+/* ========= PROFIT GRAPH ========= */
+let profitChart;
+function renderProfitGraph(){
+  const ctx = document.getElementById("profitChart");
+  if(!ctx) return;
+
+  const soldItems =
+    (window.state && Array.isArray(window.state.sold) ? window.state.sold : []) || [];
+
+  const byMonth = {};
+  soldItems.forEach(it=>{
+    const d = new Date(it.date || it.soldDate || it.sold || "");
+    if(isNaN(d)) return;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const sale = parseFloat(it.sale||0);
+    const cost = parseFloat(it.cost||0);
+    const fees = parseFloat(it.fees||0);
+    const ship = parseFloat(it.ship||0);
+    const profit = sale - cost - fees - ship;
+    byMonth[key] = (byMonth[key]||0) + profit;
+  });
+
+  const labels = Object.keys(byMonth).sort();
+  const data = labels.map(k=>byMonth[k]);
+
+  if(profitChart) profitChart.destroy();
+  profitChart = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        backgroundColor: data.map(v => v >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)'),
+        label:'Net Profit',
+        data,
+        borderWidth:0
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      scales:{
+        y:{ ticks:{ callback:v=>'$'+v } }
+      }
+    }
+  });
+}
+
+
+/* === Overlay Profit Line on Income Graph === */
+function addProfitOverlay(incomeChartInstance){
+  if(!incomeChartInstance) return;
+  const soldItems = (window.state && window.state.sold) ? window.state.sold : [];
+  const byMonth = {};
+  soldItems.forEach(it=>{
+    const d = new Date(it.date || it.soldDate || it.sold || "");
+    if(isNaN(d)) return;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const sale = parseFloat(it.sale||0);
+    const cost = parseFloat(it.cost||0);
+    const fees = parseFloat(it.fees||0);
+    const ship = parseFloat(it.ship||0);
+    byMonth[key] = (byMonth[key]||0) + (sale-cost-fees-ship);
+  });
+
+  const labels = incomeChartInstance.data.labels;
+  const profitData = labels.map(l => byMonth[l] || 0);
+
+  incomeChartInstance.data.datasets.push({
+    type:'line',
+    label:'Net Profit',
+    data: profitData,
+    borderColor:'rgba(34,197,94,0.9)',
+    backgroundColor:'rgba(34,197,94,0.2)',
+    tension:0.3,
+    yAxisID:'y'
+  });
+  incomeChartInstance.update();
+}
+
 </script>
-
-
-<!-- Buy Me a Coffee -->
-<div class="bmc-float">
-  <a href="https://buymeacoffee.com/jac0bb" target="_blank" rel="noopener">
-    <span><img src="./icons/bmc-logo.png" alt=""></span>
-  </a>
-</div>
 
 </body>
 </html>
