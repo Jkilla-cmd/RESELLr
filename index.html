@@ -1683,8 +1683,7 @@ button:hover{
             <label for="syncIncomeToggle" class="muted">Also update Income graph from sold data</label>
           </div>
 
-          <button onclick="importSoldCSV();
-updateBudgetPanel();">Import CSV</button>
+          <button onclick="importSoldCSV()">Import CSV</button>
 
           <div class="divider"></div>
 
@@ -2528,8 +2527,7 @@ function formatDate(d) {
   return `${y}-${m}-${day}`;
 }
 
-function importSoldCSV();
-updateBudgetPanel(); {
+function importSoldCSV() {
   const f = document.getElementById("soldFile").files[0];
   const msg = document.getElementById("soldImportMsg");
   if (!f) { msg.textContent = "Choose a CSV first."; msg.style.color="var(--yellow)"; return; }
@@ -3793,7 +3791,7 @@ function _sumSoldForMonth(rows, y, m){
 function updateBudgetPanel(){
   const panel=document.getElementById('budgetPanel');
   if(!panel) return;
-  const sold = readSold();
+  const sold = (typeof readSold==='function') ? readSold() : (JSON.parse(localStorage.getItem('soldInventory')||'[]')||[]);
 
   const now=new Date();
   const y=now.getFullYear();
