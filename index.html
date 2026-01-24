@@ -1838,6 +1838,15 @@ button:hover{
 </div>
 
 <script>
+// === Canonical Inventory Budget Calculator (Tools + Dashboard) ===
+function calculateInventoryBudget(gross, reinvestPct){
+  const inventory = gross * (reinvestPct / 100);
+  const profitBuffer = gross * 0.20;
+  const holds = gross * 0.15;
+  return { inventory, profitBuffer, holds };
+}
+
+
 
 /* ========= PWA SERVICE WORKER ========= */
 if ("serviceWorker" in navigator) {
