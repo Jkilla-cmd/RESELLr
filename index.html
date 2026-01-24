@@ -2410,17 +2410,6 @@ function readSold() {
     const profit = sale - cost - fees - ship;
 
     const out = {...r};
-
-    // Normalize date to YYYY-MM-DD so month bucketing works everywhere
-    const rawDate = (r.date || r.soldDate || r.sold_on || r.soldOn || r.day || "").toString().trim();
-    if(rawDate){
-      const d = new Date(rawDate);
-      if(!isNaN(d)){
-        const iso = d.toISOString().slice(0,10);
-        if(out.date !== iso){ out.date = iso; changed = true; }
-      }
-    }
-
     if(out.cost !== cost){ out.cost = cost; changed = true; }
     if(out.fees !== fees){ out.fees = fees; changed = true; }
     if(out.ship !== ship){ out.ship = ship; changed = true; }
@@ -3802,7 +3791,7 @@ function _sumSoldForMonth(rows, y, m){
 function updateBudgetPanel(){
   const panel=document.getElementById('budgetPanel');
   if(!panel) return;
-  const sold = (typeof readSold==='function') ? readSold() : (JSON.parse(localStorage.getItem('soldInventory')||'[]')||[]);
+  const sold = readSold();
 
   const now=new Date();
   const y=now.getFullYear();
