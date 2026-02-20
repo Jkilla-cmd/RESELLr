@@ -1011,6 +1011,92 @@ button:hover{
   z-index:10;
 }
 
+
+/* ===== UniFi OS THEME (Dashboard + Tables) ===== */
+:root {
+  --bg:#0e1116;
+  --panel:#151a21;
+  --panel2:#1b2230;
+  --border:#232a36;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --accent:#4f9cf9;
+  --green:#22c55e;
+  --red:#ef4444;
+}
+
+body {
+  background:var(--bg);
+  color:var(--text);
+  font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+
+/* Panels */
+.panel, .card {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+  box-shadow:none;
+}
+
+/* Headings */
+.panel h3, .card h3 {
+  font-size:12px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+/* Dashboard grid */
+.dashboard-grid {
+  display:grid;
+  grid-template-columns:1fr;
+  gap:16px;
+}
+
+/* Tables */
+table {
+  width:100%;
+  border-collapse:collapse;
+}
+
+thead th {
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--muted);
+  font-weight:500;
+  padding:10px 8px;
+  border-bottom:1px solid var(--border);
+  background:var(--panel);
+}
+
+tbody td {
+  font-size:13px;
+  padding:8px;
+  border-bottom:1px solid #1f2937;
+}
+
+tbody tr:hover td {
+  background:rgba(79,156,249,0.06);
+}
+
+/* Numeric alignment */
+td.num { text-align:right; font-variant-numeric:tabular-nums; }
+
+/* Profit colors */
+td.profit.pos { color:var(--green); }
+td.profit.neg { color:var(--red); }
+
+/* Badges */
+.badge {
+  font-size:11px;
+  padding:2px 6px;
+  border-radius:4px;
+  background:var(--panel2);
+  color:var(--muted);
+}
+
 </style>
 </head>
 
