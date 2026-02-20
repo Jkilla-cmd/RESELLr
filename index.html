@@ -1260,16 +1260,7 @@ button:hover{
               <div class="nw-card">
                 <div class="nw-label">Realized Profit</div>
                 <div class="nw-value" id="nwRealized">$0.00</div>
-              
-              <div class="nw-card">
-                <div class="nw-label">YTD Net Profit</div>
-                <div class="nw-value" id="nwYtdProfit">$0.00</div>
               </div>
-              <div class="nw-card">
-                <div class="nw-label">Cost + Net Profit</div>
-                <div class="nw-value" id="nwCostPlusProfit">$0.00</div>
-              </div>
-</div>
             </div>
 
             <div class="stat muted" style="margin-top:10px" id="nwAsOf"></div>
@@ -1847,12 +1838,6 @@ button:hover{
 </div>
 
 <script>
-function fmtMoney(n){
-  const v = Number(n)||0;
-  return v.toLocaleString(undefined,{style:'currency',currency:'USD'});
-}
-
-
 // === Canonical Inventory Budget Calculator (Tools + Dashboard) ===
 function calculateInventoryBudget(gross, reinvestPct){
   const inventory = gross * (reinvestPct / 100);
@@ -3682,10 +3667,6 @@ function updateNetWorth(){
 
   const { invCost, invValue } = sumActiveValue(conservative);
   const realized = sumRealizedProfit(range);
-  const ytdRealized = sumRealizedProfit('ytd');
-  const soldAll = readSold();
-  const soldCostAll = soldAll.reduce((s,r)=> s + (Number(r.cost)||0), 0);
-  const costPlusProfit = soldCostAll + realized;
 
   const unrealized = invValue - invCost;
   const netWorth = invValue + realized;
@@ -3699,8 +3680,6 @@ function updateNetWorth(){
   setText("nwInvCost", formatDollars(invCost));
   setText("nwUnrealized", formatDollars(unrealized));
   setText("nwRealized", formatDollars(realized));
-  setText("nwYtdProfit", fmtMoney(ytdRealized));
-  setText("nwCostPlusProfit", fmtMoney(costPlusProfit));
   setText("nwTotal", formatDollars(netWorth));
   const asOf = document.getElementById("nwAsOf");
   if (asOf) asOf.textContent = `As of ${new Date().toLocaleString()}`;
