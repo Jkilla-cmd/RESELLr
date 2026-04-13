@@ -1372,6 +1372,23 @@ td.profit.neg { color:var(--red); }
           <div class="stat blue" id="inventoryStat"></div>
         </div>
 
+        <div class="panel" id="ytdSummaryPanel">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+            <h3 style="margin:0;">YTD Sold Summary</h3>
+            <span class="pill muted" id="ytdYearPill" style="height:30px;display:flex;align-items:center;">—</span>
+          </div>
+
+          <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="stat yellow" id="ytdCostSoldStat">YTD COST OF SOLD: $0</div>
+            <div class="stat green" id="ytdProfitStat">YTD PROFIT: $0</div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="muted" style="font-size:12px;line-height:1.45;">
+            Cost of sold = what you paid for items sold this year. Profit = sale minus cost, fees, and shipping this year.
+          </div>
+        </div>
+
         <div class="panel" id="budgetPanel">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
             <h3 style="margin:0;">Next Month Inventory Budget</h3>
@@ -2790,6 +2807,7 @@ function renderSold() {
 
   try{ updateSoldSummaryAndCharts(); }catch(e){}
   try{ updateNetWorth(); }catch(e){}
+  try{ updateDashboardYTD(); }catch(e){}
 
   safeBudgetRefresh();
 }
@@ -3788,6 +3806,48 @@ function _sumSoldForMonth(rows, y, m){
   });
   return {sales, profit};
 }
+
+function getYTDSoldTotals(){
+  const sold = (typeof readSold === 'function') ? readSold() : [];
+  const now = new Date();
+  const y = now.getFullYear();
+
+  let cost = 0;
+  let profit = 0;
+  let sales = 0;
+  let count = 0;
+
+  sold.forEach(r => {
+    const ds = r && (r.date || r.soldDate || r.sold || "");
+    const d = new Date(ds);
+    if (isNaN(d)) return;
+    if (d.getFullYear() !== y) return;
+
+    const sale = Number(r.sale || 0) || 0;
+    const itemCost = normExpense(r.cost || 0);
+    const fees = normExpense(r.fees || r.fee || 0);
+    const ship = normExpense(r.ship || r.shipping || 0);
+
+    sales += sale;
+    cost += itemCost;
+    profit += (sale - itemCost - fees - ship);
+    count += 1;
+  });
+
+  return { year: y, sales, cost, profit, count };
+}
+
+function updateDashboardYTD(){
+  const totals = getYTDSoldTotals();
+  const yearPill = document.getElementById('ytdYearPill');
+  const costEl = document.getElementById('ytdCostSoldStat');
+  const profitEl = document.getElementById('ytdProfitStat');
+
+  if (yearPill) yearPill.textContent = String(totals.year);
+  if (costEl) costEl.textContent = 'YTD COST OF SOLD: ' + formatDollars(totals.cost);
+  if (profitEl) profitEl.textContent = 'YTD PROFIT: ' + formatDollars(totals.profit);
+}
+
 function updateBudgetPanel(){
   const panel=document.getElementById('budgetPanel');
   if(!panel) return;
@@ -3864,6 +3924,7 @@ window.onload = () => {
   renderSold();
   loadIncomeChart();
   initBudgetPanel();
+  try{ updateDashboardYTD(); }catch(e){}
   renderProfitGraph();
 showSection('secDashboard');
 };
