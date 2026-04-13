@@ -1373,19 +1373,27 @@ td.profit.neg { color:var(--red); }
         </div>
 
         <div class="panel" id="ytdSummaryPanel">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
             <h3 style="margin:0;">YTD Sold Summary</h3>
-            <span class="pill muted" id="ytdYearPill" style="height:30px;display:flex;align-items:center;">—</span>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <label class="muted" for="ytdYearSelect" style="font-size:12px;">Year</label>
+              <select id="ytdYearSelect" onchange="updateDashboardYTD()" style="width:auto;min-width:110px;margin:0;height:30px;padding:4px 10px;">
+                <option value="CURRENT">Current Year</option>
+              </select>
+              <span class="pill muted" id="ytdYearPill" style="height:30px;display:flex;align-items:center;">—</span>
+            </div>
           </div>
 
           <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="stat blue" id="ytdIncomeStat">YTD TOTAL INCOME: $0</div>
             <div class="stat yellow" id="ytdCostSoldStat">YTD COST OF SOLD: $0</div>
             <div class="stat green" id="ytdProfitStat">YTD PROFIT: $0</div>
+            <div class="stat muted" id="ytdItemsStat">YTD ITEMS SOLD: 0</div>
           </div>
 
           <div class="divider"></div>
           <div class="muted" style="font-size:12px;line-height:1.45;">
-            Cost of sold = what you paid for items sold this year. Profit = sale minus cost, fees, and shipping this year.
+            Income = total sales for the selected year. Cost of sold = what you paid for items sold that year. Profit = sale minus cost, fees, and shipping.
           </div>
         </div>
 
@@ -3807,10 +3815,40 @@ function _sumSoldForMonth(rows, y, m){
   return {sales, profit};
 }
 
-function getYTDSoldTotals(){
-  const sold = (typeof readSold === 'function') ? readSold() : [];
+function getSelectedYTDYear(){
   const now = new Date();
-  const y = now.getFullYear();
+  const sel = document.getElementById('ytdYearSelect');
+  const raw = sel ? String(sel.value || 'CURRENT') : 'CURRENT';
+  if (raw === 'CURRENT') return now.getFullYear();
+  const y = parseInt(raw, 10);
+  return Number.isFinite(y) ? y : now.getFullYear();
+}
+
+function refreshYTDYearOptions(){
+  const sel = document.getElementById('ytdYearSelect');
+  if (!sel) return;
+
+  const sold = (typeof readSold === 'function') ? readSold() : [];
+  const currentYear = new Date().getFullYear();
+  const previous = sel.value || 'CURRENT';
+  const years = Array.from(new Set(
+    sold.map(r => {
+      const ds = (r && (r.date || r.soldDate || r.sold || '')) || '';
+      const d = new Date(ds);
+      return isNaN(d) ? null : d.getFullYear();
+    }).filter(Boolean)
+  )).sort((a,b)=>b-a);
+
+  if (!years.includes(currentYear)) years.unshift(currentYear);
+
+  sel.innerHTML = '<option value="CURRENT">Current Year</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+  const valid = Array.from(sel.options).some(o => o.value === previous);
+  sel.value = valid ? previous : 'CURRENT';
+}
+
+function getYTDSoldTotals(yearOverride){
+  const sold = (typeof readSold === 'function') ? readSold() : [];
+  const y = Number.isFinite(yearOverride) ? yearOverride : getSelectedYTDYear();
 
   let cost = 0;
   let profit = 0;
@@ -3838,14 +3876,19 @@ function getYTDSoldTotals(){
 }
 
 function updateDashboardYTD(){
+  refreshYTDYearOptions();
   const totals = getYTDSoldTotals();
   const yearPill = document.getElementById('ytdYearPill');
+  const incomeEl = document.getElementById('ytdIncomeStat');
   const costEl = document.getElementById('ytdCostSoldStat');
   const profitEl = document.getElementById('ytdProfitStat');
+  const itemsEl = document.getElementById('ytdItemsStat');
 
   if (yearPill) yearPill.textContent = String(totals.year);
+  if (incomeEl) incomeEl.textContent = 'YTD TOTAL INCOME: ' + formatDollars(totals.sales);
   if (costEl) costEl.textContent = 'YTD COST OF SOLD: ' + formatDollars(totals.cost);
   if (profitEl) profitEl.textContent = 'YTD PROFIT: ' + formatDollars(totals.profit);
+  if (itemsEl) itemsEl.textContent = 'YTD ITEMS SOLD: ' + String(totals.count);
 }
 
 function updateBudgetPanel(){
