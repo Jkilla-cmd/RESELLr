@@ -2227,7 +2227,7 @@ function addMonthlyIncome() {
   });
 
 }
-function resetMonthlyIncome() { localStorage.removeItem("monthlyIncome"); loadIncomeChart(); }
+function resetMonthlyIncome() { try{ localStorage.removeItem("monthlyIncome"); }catch(e){} loadIncomeChart(); }
 
 function refreshYearFilter(data) {
   const select = document.getElementById("yearFilter");
@@ -2275,96 +2275,61 @@ const yearSeparatorPlugin = {
   }
 };
 
+function getMonthlySeriesFromSold() {
+  const sold = (typeof readSold === "function") ? readSold() : [];
+  const buckets = {};
+
+  for (const it of sold) {
+    const ds = it.date || it.soldDate || it.sold || "";
+    const d = new Date(ds);
+    if (isNaN(d)) continue;
+
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const key = `${year}-${String(month + 1).padStart(2, "0")}`;
+    const label = `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][month]} ${year}`;
+
+    const sale = Number(it.sale || 0);
+    const cost = normExpense(it.cost || 0);
+    const fees = normExpense(it.fees || it.fee || 0);
+    const ship = normExpense(it.ship || it.shipping || 0);
+
+    if (!buckets[key]) {
+      buckets[key] = { key, label, income: 0, gross: 0, net: 0 };
+    }
+
+    buckets[key].income += sale;
+    buckets[key].gross += (sale - cost);
+    buckets[key].net += (sale - cost - fees - ship);
+  }
+
+  return Object.values(buckets).sort((a, b) => a.key.localeCompare(b.key));
+}
+
 function loadIncomeChart() {
-  const raw = JSON.parse(localStorage.getItem("monthlyIncome")) || [];
+  const raw = getMonthlySeriesFromSold();
   monthCountStat.textContent = `MONTHS STORED: ${raw.length}`;
-  refreshYearFilter(raw);
+  refreshYearFilter(raw.map(d => ({ label: d.label })));
 
   const selectedYear = document.getElementById("yearFilter")?.value || "ALL";
   const data = selectedYear === "ALL" ? raw : raw.filter(d => extractYear(d.label) === selectedYear);
 
   const labels = data.map(d => d.label);
-  const income = data.map(d => Number(d.income || 0));
-
-  // Sold rows live in localStorage via SOLD_KEY; use the app's readSold() helper (not window.state)
-  const sold = (typeof readSold === "function") ? readSold() : [];
-  const map = {};
-  for(const it of sold){
-    const ds = it.date || it.soldDate || it.sold || "";
-    const d = new Date(ds);
-    if(isNaN(d)) continue;
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    const sale = Number(it.sale || 0);
-    const cost = Number(it.cost || 0);
-    const fees = Number(it.fees || 0);
-    const ship = Number(it.ship || it.shipping || 0);
-    if(!map[key]) map[key] = { gross:0, net:0 };
-    map[key].gross += (sale - cost);
-    map[key].net += (sale - cost - fees - ship);
-  }
-
-  function labelToKey(lbl){
-    if(!lbl) return null;
-    const s = String(lbl).trim();
-
-    // YYYY-MM
-    let m = s.match(/^(\d{4})-(\d{2})$/);
-    if(m) return s;
-
-    // YYYY-MM-DD -> YYYY-MM
-    m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if(m) return `${m[1]}-${m[2]}`;
-
-    // "Jan 2026" / "January 2026"
-    m = s.match(/^([A-Za-z]{3,9})\s+(\d{4})$/);
-    if(m){
-      const mon = m[1].toLowerCase();
-      const year = m[2];
-      const map = {
-        jan:1, january:1,
-        feb:2, february:2,
-        mar:3, march:3,
-        apr:4, april:4,
-        may:5,
-        jun:6, june:6,
-        jul:7, july:7,
-        aug:8, august:8,
-        sep:9, sept:9, september:9,
-        oct:10, october:10,
-        nov:11, november:11,
-        dec:12, december:12
-      };
-      const mm = map[mon];
-      if(mm) return `${year}-${String(mm).padStart(2,'0')}`;
-    }
-
-    // Fallback Date parse
-    const dd = new Date(s);
-    if(!isNaN(dd)) return `${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}`;
-
-    return null;
-  }
-
-  const gross = labels.map(l => {
-    const k = labelToKey(l);
-    return k && map[k] ? map[k].gross : 0;
-  });
-  const net = labels.map(l => {
-    const k = labelToKey(l);
-    return k && map[k] ? map[k].net : 0;
-  });
-  const margin = labels.map((_,i)=> income[i] ? (net[i] / income[i]) * 100 : 0);
-  const goal = labels.map(()=>300);
+  const income = data.map(d => +d.income.toFixed(2));
+  const gross = data.map(d => +d.gross.toFixed(2));
+  const net = data.map(d => +d.net.toFixed(2));
+  const margin = labels.map((_, i) => income[i] ? (net[i] / income[i]) * 100 : 0);
+  const goal = labels.map(() => 300);
 
   const stat = document.getElementById("bestWorstStat");
-  if(stat && labels.length){
+  if (stat && labels.length) {
     let best = 0, worst = 0;
-    for(let i=1;i<net.length;i++){
-      if(net[i] > net[best]) best = i;
-      if(net[i] < net[worst]) worst = i;
+    for (let i = 1; i < net.length; i++) {
+      if (net[i] > net[best]) best = i;
+      if (net[i] < net[worst]) worst = i;
     }
-    stat.innerHTML = `🟢 Best Month: <b>${labels[best] || "—"}</b> (${formatDollars(net[best]||0)}) &nbsp; | &nbsp; 🔴 Worst Month: <b>${labels[worst] || "—"}</b> (${formatDollars(net[worst]||0)})`;
-  } else if(stat){
+    stat.innerHTML = `🟢 Best Month: <b>${labels[best] || "—"}</b> (${formatDollars(net[best] || 0)}) &nbsp; | &nbsp; 🔴 Worst Month: <b>${labels[worst] || "—"}</b> (${formatDollars(net[worst] || 0)})`;
+  } else if (stat) {
     stat.textContent = "—";
   }
 
@@ -2384,7 +2349,7 @@ function loadIncomeChart() {
     pointHoverRadius: 5
   }];
 
-  if(showGross){
+  if (showGross) {
     datasets.push({
       label: "Gross Profit",
       data: gross,
@@ -2395,7 +2360,7 @@ function loadIncomeChart() {
       pointHoverRadius: 4
     });
   }
-  if(showNet){
+  if (showNet) {
     datasets.push({
       label: "Net Profit",
       data: net,
@@ -2411,18 +2376,18 @@ function loadIncomeChart() {
     label: "Goal ($300/mo)",
     data: goal,
     borderColor: "#ef4444",
-    borderDash: [6,6],
+    borderDash: [6, 6],
     borderWidth: 2,
     pointRadius: 0,
     tension: 0
   });
 
-  if(showMargin){
+  if (showMargin) {
     datasets.push({
       label: "Profit Margin %",
       data: margin,
       borderColor: "#e5e7eb",
-      borderDash: [4,4],
+      borderDash: [4, 4],
       borderWidth: 2,
       pointRadius: 2,
       tension: 0.35,
@@ -2443,7 +2408,7 @@ function loadIncomeChart() {
           callbacks: {
             label: (ctx) => {
               const name = ctx.dataset.label || "";
-              if(name.includes("%")) return ` ${name}: ${ctx.parsed.y.toFixed(1)}%`;
+              if (name.includes("%")) return ` ${name}: ${ctx.parsed.y.toFixed(1)}%`;
               return ` ${name}: ${formatDollars(ctx.parsed.y)}`;
             }
           }
@@ -2499,31 +2464,9 @@ function readSold() {
 function writeSold(arr) { localStorage.setItem(SOLD_KEY, JSON.stringify(arr)); }
 try{ updateBudgetPanel(); }catch(e){}
 
-/* Build monthlyIncome from sold rows (sale totals by month) */
+/* Refresh dashboard chart from sold rows */
 function rebuildMonthlyIncomeFromSold() {
-  const sold = readSold();
-  const map = {};
-
-  sold.forEach(row => {
-    if (!row.date) return;
-    const sale = Number(row.sale) || 0;
-    const ym = String(row.date).slice(0, 7); // YYYY-MM
-    if (!/^\d{4}-\d{2}$/.test(ym)) return;
-    if (!map[ym]) map[ym] = 0;
-    map[ym] += sale;
-  });
-
-  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const monthly = Object.entries(map)
-    .sort(([a],[b]) => a.localeCompare(b))
-    .map(([ym, total]) => {
-      const [y, m] = ym.split("-");
-      const mi = Math.max(1, Math.min(12, parseInt(m, 10))) - 1;
-      const label = `${monthNames[mi]} ${y}`;
-      return { label, income: Number(total) || 0 };
-    });
-
-  localStorage.setItem("monthlyIncome", JSON.stringify(monthly));
+  try { localStorage.removeItem("monthlyIncome"); } catch(e) {}
   loadIncomeChart();
 }
 try{ updateBudgetPanel(); }catch(e){}
