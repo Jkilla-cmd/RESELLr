@@ -1366,25 +1366,6 @@ td.profit.neg { color:var(--red); }
           </div>
         </div>
 
-        <div class="panel">
-        <div style="display:flex;justify-content:center;margin-bottom:14px;"><img src="./icons/icon-192.png" alt="RESELLr" style="width:54px;height:54px;border-radius:14px;border:1px solid var(--border);box-shadow:0 10px 25px rgba(0,0,0,0.35);"></div>
-
-          <h3>Current Balance</h3>
-
-          <label>Earnings ($)</label>
-          <input type="number" id="earningsBalance" />
-
-          <label>Inventory Allowance ($)</label>
-          <input type="number" id="inventoryAllowance" />
-
-          <button onclick="saveBalances()">Save</button>
-
-          <div class="divider"></div>
-
-          <div class="stat green" id="earningsStat"></div>
-          <div class="stat blue" id="inventoryStat"></div>
-        </div>
-
         <div class="panel" id="ytdSummaryPanel">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
             <h3 style="margin:0;">YTD Sold Summary</h3>
@@ -1619,7 +1600,7 @@ td.profit.neg { color:var(--red); }
           </div>
 
           <div class="divider"></div>
-          <div class="stat muted">Actions: <span class="pill">✏️ edit</span> <span class="pill">✅ sold</span> <span class="pill">🗑 delete</span></div>
+          <div class="stat muted">Actions: <span class="pill">✏️ edit</span> <span class="pill">✅ sold</span> <span class="pill">🧊 move to holds</span> <span class="pill">🗑 delete</span></div>
         </div>
       </div>
     </section>
@@ -3181,6 +3162,33 @@ function moveHoldToInventory(id) {
   showToast("Moved hold item to inventory");
 }
 
+function moveActiveToHolds(id) {
+  const active = readActive();
+  const idx = active.findIndex(x => x && x._id === id);
+  if (idx === -1) return;
+
+  const item = active[idx];
+  const holds = readHolds();
+  holds.push({
+    _id: genId(),
+    date: item.date || "",
+    item: item.item || "",
+    type: item.type || "",
+    platform: item.platform || "",
+    cost: Number(item.cost) || 0,
+    value: Number(item.list) || 0,
+    qty: Number(item.qty) || 1,
+    notes: item.notes ? `${item.notes} | moved from inventory` : "moved from inventory"
+  });
+
+  active.splice(idx, 1);
+  writeHolds(holds);
+  writeActive(active);
+  renderHolds();
+  renderActive();
+  showToast("Moved inventory item to holds");
+}
+
 function renderHolds() {
   const all = readHolds();
   refreshHoldsFilters(all);
@@ -3479,9 +3487,10 @@ function importHoldsCSV() {
 
 function exportHoldsCSV() {
   const rows = readHolds();
-  const out = [
-    ["date","item","type","platform","cost","value","qty","notes"],
-    ...rows.map(r => [
+  const header = ["date","item","type","platform","cost","value","qty","notes"];
+  const lines = [toCSVRow(header)];
+  rows.slice().sort((a,b)=>String(a.date || "").localeCompare(String(b.date || ""))).forEach(r => {
+    lines.push(toCSVRow([
       r.date || "",
       r.item || "",
       r.type || "",
@@ -3490,9 +3499,9 @@ function exportHoldsCSV() {
       Number(r.value || 0),
       Number(r.qty || 1),
       r.notes || ""
-    ])
-  ];
-  downloadCSV("inventory_holds.csv", out);
+    ]));
+  });
+  downloadTextFile("inventory_holds.csv", lines.join("\n"), "text/csv");
 }
 
 function exportActiveCSV() {
@@ -3655,6 +3664,14 @@ function renderActive() {
     sbtn.style.marginLeft = "8px";
     sbtn.onclick = () => openMarkSoldModal(r._id);
 
+    const hbtn = document.createElement("span");
+    hbtn.className = "yellow";
+    hbtn.title = "Move to Holds";
+    hbtn.textContent = "🧊";
+    hbtn.style.marginLeft = "8px";
+    hbtn.style.cursor = "pointer";
+    hbtn.onclick = () => moveActiveToHolds(r._id);
+
     const d = document.createElement("span");
     d.className = "trash";
     d.title = "Delete";
@@ -3662,7 +3679,7 @@ function renderActive() {
     d.style.marginLeft = "8px";
     d.onclick = () => deleteActiveById(r._id);
 
-    action.appendChild(e); action.appendChild(sbtn); action.appendChild(d);
+    action.appendChild(e); action.appendChild(sbtn); action.appendChild(hbtn); action.appendChild(d);
     tr.appendChild(action);
 
     tbody.appendChild(tr);
