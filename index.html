@@ -1382,13 +1382,13 @@ td.profit.neg { color:var(--red); }
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;">
             <div class="pill" style="display:flex;align-items:center;gap:10px;">
               <span class="muted" style="font-size:12px;">Reinvest %</span>
-              <input id="reinvestPct" type="range" min="0" max="100" value="50" style="width:140px;">
+              <input id="reinvestPct" type="range" min="0" max="100" value="50" style="width:140px;" oninput="updateBudgetPanel()" onchange="updateBudgetPanel()">
               <span id="reinvestPctLabel" style="font-size:12px;">50%</span>
             </div>
 
             <div class="pill" style="display:flex;align-items:center;gap:10px;">
               <span class="muted" style="font-size:12px;">Mode</span>
-              <select id="budgetMode" class="pill" style="height:32px;padding:4px 10px;">
+              <select id="budgetMode" class="pill" style="height:32px;padding:4px 10px;" onchange="updateBudgetPanel()">
                 <option value="projected">Projected</option>
                 <option value="mtd">If month ended today</option>
               </select>
@@ -2516,7 +2516,14 @@ function updateDashboardMonthMatch(){
   const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const label = `${monthNames[Math.max(0, Math.min(11, Number(month)-1))]} ${year}`;
   mainEl.textContent = `${label.toUpperCase()} NET PROFIT (SOLD MATCH): ${formatDollars(m.net)}`;
-  subEl.textContent = `Gross: ${formatDollars(m.gross)} • Items: ${m.items} • Uses the same sold-row formula as the Sold tab.`;
+  const raw = getMonthlySeriesFromSold();
+  const chartMonth = raw.find(x => x && x.key === m.monthKey) || { gross:0, net:0 };
+  const delta = Math.abs((Number(chartMonth.net)||0) - (Number(m.net)||0));
+  let sub = `Gross: ${formatDollars(m.gross)} • Items: ${m.items} • Uses the same sold-row formula as the Sold tab.`;
+  if (delta > 0.009) {
+    sub += ` • Chart mismatch detected: ${formatDollars(chartMonth.net||0)} shown vs ${formatDollars(m.net)} sold-match.`;
+  }
+  subEl.textContent = sub;
   mainEl.classList.remove("profit-pos","profit-neg","profit-zero");
   if (m.net > 0) mainEl.classList.add("profit-pos");
   else if (m.net < 0) mainEl.classList.add("profit-neg");
@@ -2524,6 +2531,7 @@ function updateDashboardMonthMatch(){
 }
 
 function loadIncomeChart() {
+  try{ localStorage.removeItem("monthlyIncome"); }catch(e){}
   const raw = getMonthlySeriesFromSold();
   monthCountStat.textContent = `MONTHS STORED: ${raw.length}`;
   refreshYearFilter(raw.map(d => ({ label: d.label })));
@@ -2551,6 +2559,7 @@ function loadIncomeChart() {
   }
 
   try{ updateDashboardMonthMatch(); }catch(e){}
+  try{ updateBudgetPanel(); }catch(e){}
 
   const showNet = document.getElementById("togNet")?.checked ?? true;
   const showGross = document.getElementById("togGross")?.checked ?? false;
@@ -4577,8 +4586,16 @@ function initBudgetPanel(){
   const pctEl=document.getElementById('reinvestPct');
   const modeEl=document.getElementById('budgetMode');
   try{ const saved=localStorage.getItem('resellr_reinvest_pct'); if(saved && pctEl) pctEl.value=saved; }catch(e){}
-  if(pctEl) pctEl.addEventListener('input', updateBudgetPanel);
-  if(modeEl) modeEl.addEventListener('change', updateBudgetPanel);
+  if(pctEl){
+    pctEl.addEventListener('input', updateBudgetPanel);
+    pctEl.addEventListener('change', updateBudgetPanel);
+    pctEl.oninput = updateBudgetPanel;
+    pctEl.onchange = updateBudgetPanel;
+  }
+  if(modeEl){
+    modeEl.addEventListener('change', updateBudgetPanel);
+    modeEl.onchange = updateBudgetPanel;
+  }
   updateBudgetPanel();
 }
 
