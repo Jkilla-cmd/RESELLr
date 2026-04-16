@@ -1294,6 +1294,7 @@ td.profit.neg { color:var(--red); }
     <div class="nav" id="nav">
       <button class="active" data-target="secDashboard" onclick="showSection('secDashboard')">📊 Dashboard</button>
       <button data-target="secInventory" onclick="showSection('secInventory')">📋 Inventory</button>
+      <button data-target="secHolds" onclick="showSection('secHolds')">🧊 Inventory Holds</button>
       <button data-target="secSold" onclick="showSection('secSold')">📦 Sold</button>
       <button data-target="secImportExport" onclick="showSection('secImportExport')">⬆️⬇️ Import / Export</button>
       <button data-target="secTools" onclick="showSection('secTools')">🧮 Tools</button>
@@ -1468,7 +1469,15 @@ td.profit.neg { color:var(--red); }
           </div>
         </div>
 
-        <div class="panel income-full">
+                <div class="panel" id="holdsDashboardPanel">
+          <h3>Inventory Holds</h3>
+          <div class="stat yellow" id="holdsCountStat">HOLDS ITEMS: 0</div>
+          <div class="stat green" id="holdsCostStat">HOLDS COST: $0.00</div>
+          <div class="stat blue" id="holdsValueStat">HOLDS VALUE: $0.00</div>
+          <div class="stat muted" id="holdsAvgValueStat">AVG VALUE/ITEM: $0.00</div>
+        </div>
+
+<div class="panel income-full">
           <h3>Income Graph</h3>
 
           <div class="stat muted" id="bestWorstStat" style="margin-top:6px;">—</div>
@@ -1615,6 +1624,110 @@ td.profit.neg { color:var(--red); }
       </div>
     </section>
 
+    <!-- HOLDS -->
+    <section id="secHolds" class="section">
+      <div class="grid">
+        <div class="panel">
+          <h3>Inventory Holds Summary</h3>
+
+          <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+            <div>
+              <label>Year</label>
+              <select id="holdsYearFilter" onchange="renderHolds()">
+                <option value="ALL">ALL</option>
+              </select>
+            </div>
+            <div>
+              <label>Month</label>
+              <select id="holdsMonthFilter" onchange="renderHolds()">
+                <option value="ALL">ALL</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="stat blue" id="holdsPanelCountStat">HOLD ITEMS: 0</div>
+          <div class="stat green" id="holdsPanelCostStat">HOLD COST: $0.00</div>
+          <div class="stat yellow" id="holdsPanelValueStat">HOLD VALUE: $0.00</div>
+          <div class="stat muted" id="holdsPanelAvgCostStat">AVG COST/ITEM: $0.00</div>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:16px;">
+        <div class="panel">
+          <h3>Add Hold Item Manually</h3>
+
+          <label>Acquired Date</label>
+          <input type="date" id="holdDate">
+
+          <label>Item</label>
+          <input type="text" id="holdItem" placeholder="e.g. Metal Gear Solid #1 RI">
+
+          <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+            <div>
+              <label>Type</label>
+              <select id="holdType">
+                <option value="">—</option>
+                <option value="Comic">Comic</option>
+                <option value="Card">Card</option>
+                <option value="Other">Other</option>
+              </select>
+
+              <label>Platform / Source</label>
+              <input type="text" id="holdPlatform" placeholder="garage sale, eBay, Mercari">
+            </div>
+            <div>
+              <label>Cost ($)</label>
+              <input type="number" id="holdCost" step="0.01">
+            </div>
+            <div>
+              <label>Value ($)</label>
+              <input type="number" id="holdValue" step="0.01">
+            </div>
+            <div>
+              <label>Qty</label>
+              <input type="number" id="holdQty" value="1">
+            </div>
+          </div>
+
+          <label>Notes</label>
+          <input type="text" id="holdNotes" placeholder="why holding, target, condition, etc.">
+
+          <button onclick="addHoldManually()">Add to Inventory Holds</button>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:16px;">
+        <div class="panel">
+          <h3>Inventory Hold Items</h3>
+          <div class="inline-row" style="margin:10px 0 12px 0;">
+            <input id="holdsSearchTop" type="text" placeholder="Search hold inventory…" oninput="setHoldsSearch(this.value)" style="width:100%;">
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Item</th>
+                  <th>Type</th>
+                  <th>Platform</th>
+                  <th>Cost</th>
+                  <th>Value</th>
+                  <th>Qty</th>
+                  <th>Notes</th>
+                  <th class="action-cell"></th>
+                </tr>
+              </thead>
+              <tbody id="holdsTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="divider"></div>
+          <div class="stat muted">Actions: <span class="pill">✏️ edit</span> <span class="pill">📋 move to inventory</span> <span class="pill">🗑 delete</span></div>
+        </div>
+      </div>
+    </section>
 
     <!-- SOLD -->
     <section id="secSold" class="section">
@@ -1788,6 +1901,28 @@ td.profit.neg { color:var(--red); }
           <div class="stat muted" id="activeImportMsg" style="margin-top:10px;"></div>
         </div>
         <div class="panel">
+          <h3>Inventory Holds Import / Export</h3>
+          <div class="stat muted" style="line-height:1.5">
+            Required columns: <span class="blue">date, item</span><br>
+            Recommended: <span class="blue">type, platform, cost, value, qty, notes</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <label>CSV File</label>
+          <input type="file" id="holdsFile" accept=".csv,text/csv" />
+
+          <button onclick="importHoldsCSV()">Import Holds CSV</button>
+
+          <div class="divider"></div>
+
+          <button onclick="exportHoldsCSV()">Export Holds (CSV)</button>
+          <div style="height:10px"></div>
+          <button class="danger" onclick="clearHolds()">Clear Holds</button>
+
+          <div class="stat muted" id="holdsImportMsg" style="margin-top:10px;"></div>
+        </div>
+        <div class="panel">
           <h3>Sold Import / Export</h3>
 
           <div class="stat muted" style="line-height:1.5">
@@ -1826,6 +1961,7 @@ td.profit.neg { color:var(--red); }
           <h3>Tips</h3>
           <div class="stat muted" style="line-height:1.7">
             • Inventory import expects <span class="blue">date, item</span> and supports <span class="blue">type, platform, cost, list, qty, notes</span>.<br>
+            • Inventory Holds import expects <span class="blue">date, item</span> and supports <span class="blue">type, platform, cost, value, qty, notes</span>.<br>
             • Sold import expects <span class="blue">date, item, platform, sale</span> and supports <span class="blue">type, cost, fees, shipping</span>.<br>
             • <span class="blue">Type</span> accepts: Comic / Card / Other.<br>
             • Exports download as CSV and can be opened in Excel or Google Sheets.
@@ -2021,7 +2157,7 @@ function showSection(sectionId) {
 
   setActiveNav(sectionId);
 
-  const titleMap = { secDashboard:"Dashboard", secInventory:"Inventory", secSold:"Sold", secTools:"Tools", secSettings:"Settings", secImportExport:"Import / Export" };
+  const titleMap = { secDashboard:"Dashboard", secInventory:"Inventory", secHolds:"Inventory Holds", secSold:"Sold", secTools:"Tools", secSettings:"Settings", secImportExport:"Import / Export" };
   const t = document.getElementById("topbarTitle");
   if (t) t.textContent = titleMap[sectionId] || "RESELLr";
 
@@ -2912,6 +3048,205 @@ function factoryReset() {
 
 
 
+/* ========= Inventory Holds ========= */
+const HOLDS_KEY = "inventoryHolds";
+
+function readHolds() { return JSON.parse(localStorage.getItem(HOLDS_KEY)) || []; }
+function writeHolds(arr) { localStorage.setItem(HOLDS_KEY, JSON.stringify(arr)); }
+
+let holdsSearchTerm = "";
+function setHoldsSearch(val){
+  holdsSearchTerm = (val || "").trim().toLowerCase();
+  renderHolds();
+}
+function matchesHoldsSearch(obj){
+  if (!holdsSearchTerm) return true;
+  const hay = [obj.item, obj.notes, obj.platform, obj.type].join(" ").toLowerCase();
+  return hay.includes(holdsSearchTerm);
+}
+
+function addHoldManually() {
+  const d = (document.getElementById("holdDate")?.value || "").trim();
+  const item = (document.getElementById("holdItem")?.value || "").trim();
+  const type = (document.getElementById("holdType")?.value || "").trim();
+  const platform = (document.getElementById("holdPlatform")?.value || "").trim();
+  const cost = Number(document.getElementById("holdCost")?.value) || 0;
+  const value = Number(document.getElementById("holdValue")?.value) || 0;
+  const qty = parseInt(document.getElementById("holdQty")?.value || "1", 10) || 1;
+  const notes = (document.getElementById("holdNotes")?.value || "").trim();
+
+  if (!d || !item) return;
+
+  const all = readHolds();
+  all.push({ _id: genId(), date: d, item, type, platform, cost, value, qty, notes });
+  writeHolds(all);
+  renderHolds();
+
+  document.getElementById("holdDate").value = "";
+  document.getElementById("holdItem").value = "";
+  document.getElementById("holdType").value = "";
+  document.getElementById("holdPlatform").value = "";
+  document.getElementById("holdCost").value = "";
+  document.getElementById("holdValue").value = "";
+  document.getElementById("holdQty").value = "1";
+  document.getElementById("holdNotes").value = "";
+}
+
+function refreshHoldsFilters(data) {
+  const yearSel = document.getElementById("holdsYearFilter");
+  const monthSel = document.getElementById("holdsMonthFilter");
+  if (!yearSel || !monthSel) return;
+
+  const years = Array.from(new Set(data.map(x => extractYear(x.date)).filter(Boolean))).sort();
+  const months = Array.from(new Set(data.map(x => monthKey(x.date)).filter(Boolean))).sort();
+
+  const yCur = yearSel.value || "ALL";
+  const mCur = monthSel.value || "ALL";
+
+  yearSel.innerHTML = `<option value="ALL">ALL</option>` + years.map(y => `<option value="${y}">${y}</option>`).join("");
+
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  monthSel.innerHTML = `<option value="ALL">ALL</option>` + months.map(ym => {
+    const parts = ym.split("-");
+    const y = parts[0];
+    const mi = Math.max(1, Math.min(12, parseInt(parts[1], 10))) - 1;
+    const label = `${monthNames[mi]} ${y}`;
+    return `<option value="${ym}">${label}</option>`;
+  }).join("");
+
+  if ([...yearSel.options].some(o => o.value === yCur)) yearSel.value = yCur;
+  if ([...monthSel.options].some(o => o.value === mCur)) monthSel.value = mCur;
+}
+
+function updateHoldsDashboard(filtered, all) {
+  const count = filtered.reduce((s,x)=> s + (Number(x.qty)||1), 0);
+  const cost = filtered.reduce((s,x)=> s + ((Number(x.cost)||0) * (Number(x.qty)||1)), 0);
+  const value = filtered.reduce((s,x)=> s + ((Number(x.value)||0) * (Number(x.qty)||1)), 0);
+  const avgValue = count ? value / count : 0;
+
+  const countEl = document.getElementById("holdsCountStat");
+  const costEl = document.getElementById("holdsCostStat");
+  const valueEl = document.getElementById("holdsValueStat");
+  const avgEl = document.getElementById("holdsAvgValueStat");
+  if (countEl) countEl.textContent = `HOLDS ITEMS: ${all.reduce((s,x)=> s + (Number(x.qty)||1), 0)}`;
+  if (costEl) costEl.textContent = `HOLDS COST: ${formatDollars(all.reduce((s,x)=> s + ((Number(x.cost)||0) * (Number(x.qty)||1)), 0))}`;
+  if (valueEl) valueEl.textContent = `HOLDS VALUE: ${formatDollars(all.reduce((s,x)=> s + ((Number(x.value)||0) * (Number(x.qty)||1)), 0))}`;
+  if (avgEl) avgEl.textContent = `AVG VALUE/ITEM: ${formatDollars((all.reduce((s,x)=> s + ((Number(x.value)||0) * (Number(x.qty)||1)), 0)) / Math.max(1, all.reduce((s,x)=> s + (Number(x.qty)||1), 0)))}`;
+
+  const pCount = document.getElementById("holdsPanelCountStat");
+  const pCost = document.getElementById("holdsPanelCostStat");
+  const pValue = document.getElementById("holdsPanelValueStat");
+  const pAvg = document.getElementById("holdsPanelAvgCostStat");
+  if (pCount) pCount.textContent = `HOLD ITEMS: ${count}`;
+  if (pCost) pCost.textContent = `HOLD COST: ${formatDollars(cost)}`;
+  if (pValue) pValue.textContent = `HOLD VALUE: ${formatDollars(value)}`;
+  if (pAvg) pAvg.textContent = `AVG COST/ITEM: ${formatDollars(count ? (cost / count) : 0)}`;
+}
+
+function deleteHoldById(id) {
+  const all = readHolds();
+  const idx = all.findIndex(x => x._id === id);
+  if (idx === -1) return;
+  const removed = all[idx];
+  all.splice(idx, 1);
+  writeHolds(all);
+  showUndo("Hold deleted.", { key: HOLDS_KEY, item: removed, index: idx });
+  renderHolds();
+}
+
+function moveHoldToInventory(id) {
+  const holds = readHolds();
+  const idx = holds.findIndex(x => x._id === id);
+  if (idx === -1) return;
+
+  const h = holds[idx];
+  const active = readActive();
+  active.push({
+    _id: genId(),
+    date: h.date || "",
+    item: h.item || "",
+    type: h.type || "",
+    platform: h.platform || "",
+    cost: Number(h.cost) || 0,
+    list: Number(h.value) || 0,
+    qty: Number(h.qty) || 1,
+    notes: h.notes ? `${h.notes} | moved from holds` : "moved from holds"
+  });
+
+  holds.splice(idx, 1);
+  writeHolds(holds);
+  writeActive(active);
+  renderHolds();
+  renderActive();
+  showToast("Moved hold item to inventory");
+}
+
+function renderHolds() {
+  const all = readHolds();
+  refreshHoldsFilters(all);
+
+  const year = document.getElementById("holdsYearFilter")?.value || "ALL";
+  const month = document.getElementById("holdsMonthFilter")?.value || "ALL";
+
+  const filtered = all.filter(r => {
+    const yr = extractYear(r.date);
+    const mk = monthKey(r.date);
+    const okY = (year === "ALL") || (yr === year);
+    const okM = (month === "ALL") || (mk === month);
+    const okS = matchesHoldsSearch(r);
+    return okY && okM && okS;
+  });
+
+  const tbody = document.getElementById("holdsTableBody");
+  if (tbody) {
+    tbody.innerHTML = "";
+    const sorted = [...filtered].sort((a,b)=> String(b.date||"").localeCompare(String(a.date||"")));
+    for (const r of sorted) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.date || ""}</td>
+        <td>${r.item || ""}</td>
+        <td>${r.type || ""}</td>
+        <td>${r.platform || ""}</td>
+        <td>${formatDollars(r.cost)}</td>
+        <td>${formatDollars(r.value)}</td>
+        <td>${Number(r.qty || 1)}</td>
+        <td>${r.notes || ""}</td>
+        <td class="action-cell"></td>
+      `;
+
+      const action = tr.querySelector('.action-cell');
+      const e = document.createElement('span');
+      e.className = 'edit';
+      e.title = 'Edit';
+      e.textContent = '✏️';
+      e.onclick = () => openEditModal('hold', r._id);
+
+      const mv = document.createElement('span');
+      mv.className = 'soldbtn';
+      mv.title = 'Move to Inventory';
+      mv.textContent = '📋';
+      mv.style.marginLeft = '8px';
+      mv.onclick = () => moveHoldToInventory(r._id);
+
+      const del = document.createElement('span');
+      del.className = 'trash';
+      del.title = 'Delete';
+      del.textContent = '🗑';
+      del.style.marginLeft = '8px';
+      del.onclick = () => deleteHoldById(r._id);
+
+      action.appendChild(e);
+      action.appendChild(mv);
+      action.appendChild(del);
+      tbody.appendChild(tr);
+    }
+  }
+
+  updateHoldsDashboard(filtered, all);
+  try{ updateNetWorth(); }catch(e){}
+}
+
 /* ========= Inventory (Active) ========= */
 const ACTIVE_KEY = "activeInventory";
 
@@ -2920,6 +3255,16 @@ function writeActive(arr) { localStorage.setItem(ACTIVE_KEY, JSON.stringify(arr)
 
 let lastDelete = null;
 let undoTimer = null;
+
+function showToast(message) {
+  const toast = document.getElementById("undoToast");
+  const msg = document.getElementById("undoMsg");
+  if (!toast || !msg) return;
+  msg.textContent = message;
+  toast.style.display = "block";
+  if (undoTimer) clearTimeout(undoTimer);
+  undoTimer = setTimeout(() => { hideUndo(); }, 2500);
+}
 
 function showUndo(message, payload) {
   lastDelete = payload;
@@ -2951,6 +3296,7 @@ function undoLastDelete() {
 
   if (key === SOLD_KEY) { renderSold(); rebuildMonthlyIncomeFromSold(); }
   if (key === ACTIVE_KEY) { renderActive(); }
+  if (key === HOLDS_KEY) { renderHolds(); }
 }
 
 function modalBackdropClose(e) {
@@ -3043,6 +3389,112 @@ function importActiveCSV() {
   reader.readAsText(f);
 }
 
+
+function importHoldsCSV() {
+  const f = document.getElementById("holdsFile")?.files?.[0];
+  const msg = document.getElementById("holdsImportMsg");
+  if (!f) { if(msg){ msg.textContent = "Choose a CSV first."; msg.style.color="var(--yellow)"; } return; }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const text = String(reader.result || "");
+      const parsed = parseCSV(text);
+      if (!parsed.length) { if(msg){ msg.textContent = "CSV looks empty."; msg.style.color="var(--yellow)"; } return; }
+
+      const header = parsed[0].map(h => normalizeKey(h));
+      const idx = (names) => {
+        for (const n of names) {
+          const k = normalizeKey(n);
+          const i = header.indexOf(k);
+          if (i !== -1) return i;
+        }
+        return -1;
+      };
+
+      const iDate = idx(["date","acquireddate","holddate","purchasedate"]);
+      const iItem = idx(["item","title","name","listing","description"]);
+      const iType = idx(["type","category","kind","itemtype"]);
+      const iPlatform = idx(["platform","market","marketplace","site","source"]);
+      const iCost = idx(["cost","itemcost","purchase","buycost"]);
+      const iValue = idx(["value","estvalue","estimatedvalue","list","listprice"]);
+      const iQty = idx(["qty","quantity","count"]);
+      const iNotes = idx(["notes","note","details","memo"]);
+
+      if (iDate === -1 || iItem === -1) {
+        if(msg){
+          msg.textContent = "Missing required columns. Needs: date, item (names can vary).";
+          msg.style.color = "var(--red)";
+        }
+        return;
+      }
+
+      const existing = readHolds();
+      let added = 0;
+
+      for (let r = 1; r < parsed.length; r++) {
+        const row = parsed[r];
+        const dateObj = parseDateAny(row[iDate]);
+        if (!dateObj) continue;
+
+        const item = String(row[iItem] || "").trim();
+        const type = (iType !== -1) ? normalizeType(row[iType]) : "";
+        const platform = (iPlatform !== -1) ? String(row[iPlatform] || "").trim() : "";
+        const cost = iCost !== -1 ? parseMoney(row[iCost]) : 0;
+        const value = iValue !== -1 ? parseMoney(row[iValue]) : 0;
+        const qty = Math.max(1, parseInt(String(row[iQty] || "1").trim(), 10) || 1);
+        const notes = (iNotes !== -1) ? String(row[iNotes] || "").trim() : "";
+
+        if (!item) continue;
+
+        existing.push({
+          _id: genId(),
+          date: formatDate(dateObj),
+          item,
+          type,
+          platform,
+          cost: isFinite(cost) ? cost : 0,
+          value: isFinite(value) ? value : 0,
+          qty,
+          notes
+        });
+        added++;
+      }
+
+      writeHolds(existing);
+      renderHolds();
+      if(msg){
+        msg.textContent = `Imported ${added} hold rows ✅`;
+        msg.style.color = "var(--green)";
+      }
+    } catch (e) {
+      if(msg){
+        msg.textContent = "Holds import failed. Try exporting CSV again.";
+        msg.style.color = "var(--red)";
+      }
+    }
+  };
+  reader.readAsText(f);
+}
+
+function exportHoldsCSV() {
+  const rows = readHolds();
+  const out = [
+    ["date","item","type","platform","cost","value","qty","notes"],
+    ...rows.map(r => [
+      r.date || "",
+      r.item || "",
+      r.type || "",
+      r.platform || "",
+      Number(r.cost || 0),
+      Number(r.value || 0),
+      Number(r.qty || 1),
+      r.notes || ""
+    ])
+  ];
+  downloadCSV("inventory_holds.csv", out);
+}
+
 function exportActiveCSV() {
   const inv = readActive();
   const header = ["date","item","type","platform","cost","list","qty","notes"];
@@ -3069,6 +3521,15 @@ function clearActive() {
   renderActive();
   const msg = document.getElementById("activeImportMsg");
   if (msg) { msg.textContent = "Inventory cleared."; msg.style.color = "var(--yellow)"; }
+}
+
+function clearHolds() {
+  const ok = confirm("Clear ALL inventory hold items?");
+  if (!ok) return;
+  localStorage.removeItem(HOLDS_KEY);
+  renderHolds();
+  const msg = document.getElementById("holdsImportMsg");
+  if (msg) { msg.textContent = "Inventory holds cleared."; msg.style.color = "var(--yellow)"; }
 }
 
 function addActiveManually() {
@@ -3236,6 +3697,7 @@ function openEditModal(type, id) {
 
   if (type === "sold") obj = readSold().find(x => x && x._id === id);
   if (type === "active") obj = readActive().find(x => x && x._id === id);
+  if (type === "hold") obj = readHolds().find(x => x && x._id === id);
   if (!obj) return;
 
   const safe = (v) => String(v || "").replace(/"/g, "&quot;");
@@ -3264,6 +3726,20 @@ function openEditModal(type, id) {
         <div><label>Shipping ($)</label><input type="number" id="eShip" step="0.01" value="${obj.ship ?? 0}"></div>
       </div>
       <div class="stat muted">Profit auto-recalculates on save.</div>
+    `;
+  } else if (type === "hold") {
+    title.textContent = "Edit Hold Item";
+    body.innerHTML = `
+      <label>Acquired Date</label><input type="date" id="eDate" value="${obj.date || ""}">
+      <label>Item</label><input type="text" id="eItem" value="${safe(obj.item)}">
+      ${typeSelect}
+      <label>Platform / Source</label><input type="text" id="ePlatform" value="${safe(obj.platform)}">
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+        <div><label>Cost ($)</label><input type="number" id="eCost" step="0.01" value="${obj.cost ?? 0}"></div>
+        <div><label>Value ($)</label><input type="number" id="eValue" step="0.01" value="${obj.value ?? 0}"></div>
+        <div><label>Qty</label><input type="number" id="eQty" value="${obj.qty ?? 1}"></div>
+      </div>
+      <label>Notes</label><input type="text" id="eNotes" value="${safe(obj.notes)}">
     `;
   } else {
     title.textContent = "Edit Inventory Item";
@@ -3314,6 +3790,18 @@ function saveEditModal() {
     writeSold(arr);
     renderSold();
     rebuildMonthlyIncomeFromSold();
+  } else if (editContext.type === "hold") {
+    const cost = Number(document.getElementById("eCost")?.value) || 0;
+    const value = Number(document.getElementById("eValue")?.value) || 0;
+    const qty = parseInt(document.getElementById("eQty")?.value || "1", 10) || 1;
+    const notes = (document.getElementById("eNotes")?.value || "").trim();
+
+    const arr = readHolds();
+    const idx = arr.findIndex(x => x && x._id === editContext.id);
+    if (idx === -1) return;
+    arr[idx] = { ...arr[idx], date:d, item, type:t, platform, cost, value, qty, notes };
+    writeHolds(arr);
+    renderHolds();
   } else {
     const cost = Number(document.getElementById("eCost")?.value) || 0;
     const list = Number(document.getElementById("eList")?.value) || 0;
@@ -3705,6 +4193,7 @@ function parseDateSafe(s){
 }
 function sumActiveValue(conservative=false){
   const active = readActive();
+  const holds = (typeof readHolds === "function") ? readHolds() : [];
   let invCost = 0;
   let invValue = 0;
   active.forEach(r=>{
@@ -3713,6 +4202,13 @@ function sumActiveValue(conservative=false){
     const list = Number(r.list)||0;
     invCost += cost * qty;
     invValue += (conservative ? cost : list) * qty;
+  });
+  holds.forEach(r=>{
+    const qty = Number(r.qty ?? 1) || 1;
+    const cost = Number(r.cost)||0;
+    const value = Number(r.value)||0;
+    invCost += cost * qty;
+    invValue += (conservative ? cost : value) * qty;
   });
   return { invCost, invValue };
 }
@@ -4026,6 +4522,7 @@ window.onload = () => {
 
   updateBalanceStats();
   renderActive();
+  renderHolds();
   renderSold();
   loadIncomeChart();
   initBudgetPanel();
