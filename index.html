@@ -1097,6 +1097,18 @@ td.profit.neg { color:var(--red); }
   color:var(--muted);
 }
 
+
+/* === Marketplace income cards === */
+.market-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px;}
+.market-card{border:1px solid var(--border);background:var(--panel2, rgba(255,255,255,0.03));border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;}
+.market-logo{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 42px;font-weight:800;font-size:16px;letter-spacing:.02em;}
+.market-logo.mercari{background:#ff5a5f;color:#fff;}
+.market-logo.ebay{background:#fff;color:#e53238;font-family:Arial,sans-serif;font-weight:900;font-size:13px;}
+.market-meta{min-width:0;}
+.market-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.market-value{font-size:20px;font-weight:800;margin-top:4px;}
+.market-sub{font-size:12px;color:var(--muted);margin-top:3px;}
+
 </style>
 </head>
 
@@ -1389,6 +1401,25 @@ td.profit.neg { color:var(--red); }
             <div class="stat yellow" id="ytdCostSoldStat">YTD COST OF SOLD: $0</div>
             <div class="stat green" id="ytdProfitStat">YTD PROFIT: $0</div>
             <div class="stat muted" id="ytdItemsStat">YTD ITEMS SOLD: 0</div>
+          </div>
+
+          <div class="market-grid">
+            <div class="market-card">
+              <div class="market-logo mercari">M</div>
+              <div class="market-meta">
+                <div class="market-label">Mercari Income</div>
+                <div class="market-value" id="mercariIncomeStat">$0.00</div>
+                <div class="market-sub" id="mercariCountStat">0 sales</div>
+              </div>
+            </div>
+            <div class="market-card">
+              <div class="market-logo ebay">eBay</div>
+              <div class="market-meta">
+                <div class="market-label">eBay Income</div>
+                <div class="market-value" id="ebayIncomeStat">$0.00</div>
+                <div class="market-sub" id="ebayCountStat">0 sales</div>
+              </div>
+            </div>
           </div>
 
           <div class="divider"></div>
@@ -3854,6 +3885,10 @@ function getYTDSoldTotals(yearOverride){
   let profit = 0;
   let sales = 0;
   let count = 0;
+  let mercariIncome = 0;
+  let mercariCount = 0;
+  let ebayIncome = 0;
+  let ebayCount = 0;
 
   sold.forEach(r => {
     const ds = r && (r.date || r.soldDate || r.sold || "");
@@ -3865,14 +3900,24 @@ function getYTDSoldTotals(yearOverride){
     const itemCost = normExpense(r.cost || 0);
     const fees = normExpense(r.fees || r.fee || 0);
     const ship = normExpense(r.ship || r.shipping || 0);
+    const platform = String(r.platform || '').trim().toLowerCase();
 
     sales += sale;
     cost += itemCost;
     profit += (sale - itemCost - fees - ship);
     count += 1;
+
+    if (platform.includes('mercari')) {
+      mercariIncome += sale;
+      mercariCount += 1;
+    }
+    if (platform.includes('ebay')) {
+      ebayIncome += sale;
+      ebayCount += 1;
+    }
   });
 
-  return { year: y, sales, cost, profit, count };
+  return { year: y, sales, cost, profit, count, mercariIncome, mercariCount, ebayIncome, ebayCount };
 }
 
 function updateDashboardYTD(){
@@ -3883,12 +3928,20 @@ function updateDashboardYTD(){
   const costEl = document.getElementById('ytdCostSoldStat');
   const profitEl = document.getElementById('ytdProfitStat');
   const itemsEl = document.getElementById('ytdItemsStat');
+  const mercariIncomeEl = document.getElementById('mercariIncomeStat');
+  const mercariCountEl = document.getElementById('mercariCountStat');
+  const ebayIncomeEl = document.getElementById('ebayIncomeStat');
+  const ebayCountEl = document.getElementById('ebayCountStat');
 
   if (yearPill) yearPill.textContent = String(totals.year);
   if (incomeEl) incomeEl.textContent = 'YTD TOTAL INCOME: ' + formatDollars(totals.sales);
   if (costEl) costEl.textContent = 'YTD COST OF SOLD: ' + formatDollars(totals.cost);
   if (profitEl) profitEl.textContent = 'YTD PROFIT: ' + formatDollars(totals.profit);
   if (itemsEl) itemsEl.textContent = 'YTD ITEMS SOLD: ' + String(totals.count);
+  if (mercariIncomeEl) mercariIncomeEl.textContent = formatDollars(totals.mercariIncome);
+  if (mercariCountEl) mercariCountEl.textContent = String(totals.mercariCount) + (totals.mercariCount === 1 ? ' sale' : ' sales');
+  if (ebayIncomeEl) ebayIncomeEl.textContent = formatDollars(totals.ebayIncome);
+  if (ebayCountEl) ebayCountEl.textContent = String(totals.ebayCount) + (totals.ebayCount === 1 ? ' sale' : ' sales');
 }
 
 function updateBudgetPanel(){
