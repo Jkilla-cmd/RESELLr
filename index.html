@@ -3850,6 +3850,7 @@ function getSelectedYTDYear(){
   const now = new Date();
   const sel = document.getElementById('ytdYearSelect');
   const raw = sel ? String(sel.value || 'CURRENT') : 'CURRENT';
+  if (raw === 'ALL') return 'ALL';
   if (raw === 'CURRENT') return now.getFullYear();
   const y = parseInt(raw, 10);
   return Number.isFinite(y) ? y : now.getFullYear();
@@ -3872,14 +3873,20 @@ function refreshYTDYearOptions(){
 
   if (!years.includes(currentYear)) years.unshift(currentYear);
 
-  sel.innerHTML = '<option value="CURRENT">Current Year</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+  sel.innerHTML =
+    '<option value="CURRENT">Current Year</option>' +
+    '<option value="ALL">All Years</option>' +
+    years.map(y => `<option value="${y}">${y}</option>`).join('');
   const valid = Array.from(sel.options).some(o => o.value === previous);
   sel.value = valid ? previous : 'CURRENT';
 }
 
 function getYTDSoldTotals(yearOverride){
   const sold = (typeof readSold === 'function') ? readSold() : [];
-  const y = Number.isFinite(yearOverride) ? yearOverride : getSelectedYTDYear();
+  const selected = (yearOverride === 'ALL' || yearOverride === 'CURRENT' || Number.isFinite(yearOverride))
+    ? yearOverride
+    : getSelectedYTDYear();
+  const y = (selected === 'ALL') ? 'ALL' : (Number.isFinite(selected) ? selected : getSelectedYTDYear());
 
   let cost = 0;
   let profit = 0;
@@ -3894,7 +3901,7 @@ function getYTDSoldTotals(yearOverride){
     const ds = r && (r.date || r.soldDate || r.sold || "");
     const d = new Date(ds);
     if (isNaN(d)) return;
-    if (d.getFullYear() !== y) return;
+    if (y !== 'ALL' && d.getFullYear() !== y) return;
 
     const sale = Number(r.sale || 0) || 0;
     const itemCost = normExpense(r.cost || 0);
@@ -3933,11 +3940,13 @@ function updateDashboardYTD(){
   const ebayIncomeEl = document.getElementById('ebayIncomeStat');
   const ebayCountEl = document.getElementById('ebayCountStat');
 
-  if (yearPill) yearPill.textContent = String(totals.year);
-  if (incomeEl) incomeEl.textContent = 'YTD TOTAL INCOME: ' + formatDollars(totals.sales);
-  if (costEl) costEl.textContent = 'YTD COST OF SOLD: ' + formatDollars(totals.cost);
-  if (profitEl) profitEl.textContent = 'YTD PROFIT: ' + formatDollars(totals.profit);
-  if (itemsEl) itemsEl.textContent = 'YTD ITEMS SOLD: ' + String(totals.count);
+  const isAllYears = totals.year === 'ALL';
+  const labelPrefix = isAllYears ? 'ALL-TIME' : 'YTD';
+  if (yearPill) yearPill.textContent = isAllYears ? 'All Years' : String(totals.year);
+  if (incomeEl) incomeEl.textContent = labelPrefix + ' TOTAL INCOME: ' + formatDollars(totals.sales);
+  if (costEl) costEl.textContent = labelPrefix + ' COST OF SOLD: ' + formatDollars(totals.cost);
+  if (profitEl) profitEl.textContent = labelPrefix + ' PROFIT: ' + formatDollars(totals.profit);
+  if (itemsEl) itemsEl.textContent = labelPrefix + ' ITEMS SOLD: ' + String(totals.count);
   if (mercariIncomeEl) mercariIncomeEl.textContent = formatDollars(totals.mercariIncome);
   if (mercariCountEl) mercariCountEl.textContent = String(totals.mercariCount) + (totals.mercariCount === 1 ? ' sale' : ' sales');
   if (ebayIncomeEl) ebayIncomeEl.textContent = formatDollars(totals.ebayIncome);
