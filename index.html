@@ -1463,7 +1463,7 @@ td.profit.neg { color:var(--red); }
 
           <div class="stat muted" id="bestWorstStat" style="margin-top:6px;">—</div>
           <div class="stat green" id="dashMonthMatchStat" style="margin-top:6px;">THIS MONTH NET PROFIT (SOLD MATCH): $0.00</div>
-          <div class="stat muted" id="dashMonthMatchSub" style="margin-top:4px;">Gross: $0.00 • Items: 0 • Uses the same sold-row formula as the Sold tab.</div>
+          <div class="stat muted" id="dashMonthMatchSub" style="margin-top:4px;">Gross: $0.00 • Items: 0 • Uses the same sold-row formula and month parsing as the Sold tab.</div>
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0 8px;">
             <div class="pill" style="display:flex;align-items:center;gap:8px;">
               <label class="muted" style="font-size:12px;">Goal</label>
@@ -2458,8 +2458,8 @@ function getMonthlySeriesFromSold() {
 
   for (const it of sold) {
     const ds = it.date || it.soldDate || it.sold || "";
-    const d = new Date(ds);
-    if (isNaN(d)) continue;
+    const d = _parseDateSafe(ds);
+    if (!d) continue;
 
     const year = d.getFullYear();
     const month = d.getMonth();
@@ -2519,7 +2519,7 @@ function updateDashboardMonthMatch(){
   const raw = getMonthlySeriesFromSold();
   const chartMonth = raw.find(x => x && x.key === m.monthKey) || { gross:0, net:0 };
   const delta = Math.abs((Number(chartMonth.net)||0) - (Number(m.net)||0));
-  let sub = `Gross: ${formatDollars(m.gross)} • Items: ${m.items} • Uses the same sold-row formula as the Sold tab.`;
+  let sub = `Gross: ${formatDollars(m.gross)} • Items: ${m.items} • Uses the same sold-row formula and month parsing as the Sold tab.`;
   if (delta > 0.009) {
     sub += ` • Chart mismatch detected: ${formatDollars(chartMonth.net||0)} shown vs ${formatDollars(m.net)} sold-match.`;
   }
@@ -4441,8 +4441,8 @@ function refreshYTDYearOptions(){
   const years = Array.from(new Set(
     sold.map(r => {
       const ds = (r && (r.date || r.soldDate || r.sold || '')) || '';
-      const d = new Date(ds);
-      return isNaN(d) ? null : d.getFullYear();
+      const d = _parseDateSafe(ds);
+      return d ? d.getFullYear() : null;
     }).filter(Boolean)
   )).sort((a,b)=>b-a);
 
@@ -4474,8 +4474,8 @@ function getYTDSoldTotals(yearOverride){
 
   sold.forEach(r => {
     const ds = r && (r.date || r.soldDate || r.sold || "");
-    const d = new Date(ds);
-    if (isNaN(d)) return;
+    const d = _parseDateSafe(ds);
+    if (!d) return;
     if (y !== 'ALL' && d.getFullYear() !== y) return;
 
     const sale = Number(r.sale || 0) || 0;
