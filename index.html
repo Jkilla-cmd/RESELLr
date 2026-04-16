@@ -1458,6 +1458,14 @@ td.profit.neg { color:var(--red); }
           <div class="stat muted" id="holdsAvgValueStat">AVG VALUE/ITEM: $0.00</div>
         </div>
 
+        <div class="panel" id="inventoryDashboardPanel">
+          <h3>Active Inventory</h3>
+          <div class="stat yellow" id="dashInvCountStat">ACTIVE ITEMS: 0</div>
+          <div class="stat green" id="dashInvCostStat">INVENTORY COST: $0.00</div>
+          <div class="stat blue" id="dashInvValueStat">INVENTORY VALUE: $0.00</div>
+          <div class="stat muted" id="dashInvAvgStat">AVG VALUE/ITEM: $0.00</div>
+        </div>
+
 <div class="panel income-full">
           <h3>Income Graph</h3>
 
@@ -3017,6 +3025,7 @@ function renderSold() {
   }
 
   try{ updateSoldSummaryAndCharts(); }catch(e){}
+  try{ updateDashboardInventoryStats(); }catch(e){}
   try{ updateNetWorth(); }catch(e){}
   try{ updateDashboardYTD(); }catch(e){}
 
@@ -3674,16 +3683,13 @@ function renderActive() {
   });
 
   // Stats
-  const qty = filtered.reduce((s,x)=> s + (Number(x.qty)||1), 0);
-  const totalCost = filtered.reduce((s,x)=> s + (Number(x.cost)||0) * (Number(x.qty)||1), 0);
-  const totalList = filtered.reduce((s,x)=> s + (Number(x.list)||0) * (Number(x.qty)||1), 0);
-
+  const totals = getActiveInventoryTotals(filtered, false);
   const countEl = document.getElementById("activeCountStat");
   const costEl = document.getElementById("activeCostStat");
   const listEl = document.getElementById("activeListStat");
-  if (countEl) countEl.textContent = `ITEMS (QTY): ${qty}`;
-  if (costEl) costEl.textContent = `TOTAL COST: ${formatDollars(totalCost)}`;
-  if (listEl) listEl.textContent = `TOTAL LIST: ${formatDollars(totalList)}`;
+  if (countEl) countEl.textContent = `ITEMS (QTY): ${totals.qtyCount}`;
+  if (costEl) costEl.textContent = `TOTAL COST: ${formatDollars(totals.totalCost)}`;
+  if (listEl) listEl.textContent = `TOTAL LIST: ${formatDollars(totals.totalValue)}`;
 
   const tbody = document.getElementById("activeTableBody");
   if (!tbody) return;
@@ -4263,18 +4269,49 @@ function parseDateSafe(s){
   const d = new Date(s + "T00:00:00");
   return isNaN(d.getTime()) ? null : d;
 }
-function sumActiveValue(conservative=false){
-  const active = readActive();
-  let invCost = 0;
-  let invValue = 0;
-  active.forEach(r=>{
-    const qty = Number(r.qty ?? 1) || 1;
-    const cost = Number(r.cost)||0;
-    const list = Number(r.list)||0;
-    invCost += cost * qty;
-    invValue += (conservative ? cost : list) * qty;
+function getActiveInventoryTotals(rows, conservative=false){
+  const list = Array.isArray(rows) ? rows : [];
+  let itemCount = list.length;
+  let qtyCount = 0;
+  let totalCost = 0;
+  let totalValue = 0;
+
+  list.forEach(r=>{
+    const rawQty = Number(r && r.qty);
+    const qty = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : 1;
+    const cost = Number(r && r.cost) || 0;
+    const value = Number(r && r.list) || 0;
+
+    qtyCount += qty;
+    totalCost += cost * qty;
+    totalValue += (conservative ? cost : value) * qty;
   });
-  return { invCost, invValue };
+
+  return {
+    itemCount,
+    qtyCount,
+    totalCost,
+    totalValue,
+    avgValuePerUnit: qtyCount ? (totalValue / qtyCount) : 0
+  };
+}
+
+function updateDashboardInventoryStats(){
+  const totals = getActiveInventoryTotals(readActive(), false);
+  const setText = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+
+  setText("dashInvCountStat", `ACTIVE ITEMS: ${totals.qtyCount}`);
+  setText("dashInvCostStat", `INVENTORY COST: ${formatDollars(totals.totalCost)}`);
+  setText("dashInvValueStat", `INVENTORY VALUE: ${formatDollars(totals.totalValue)}`);
+  setText("dashInvAvgStat", `AVG VALUE/ITEM: ${formatDollars(totals.avgValuePerUnit)}`);
+}
+
+function sumActiveValue(conservative=false){
+  const totals = getActiveInventoryTotals(readActive(), conservative);
+  return { invCost: totals.totalCost, invValue: totals.totalValue };
 }
 
 function sumHoldsValue(conservative=false){
@@ -4326,6 +4363,7 @@ function updateNetWorth(){
   const range = rangeSel ? rangeSel.value : "all";
 
   const { invCost, invValue } = sumActiveValue(conservative);
+  try{ updateDashboardInventoryStats(); }catch(e){}
   const { holdsCost, holdsValue } = (typeof sumHoldsValue === "function") ? sumHoldsValue(conservative) : { holdsCost:0, holdsValue:0 };
   const realized = sumRealizedProfit(range);
 
