@@ -1366,6 +1366,46 @@ td.profit.neg { color:var(--red); }
           </div>
         </div>
 
+        <div class="panel" id="budgetPanel">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+            <h3 style="margin:0;">Next Month Inventory Budget</h3>
+            <span class="pill muted" id="budgetMonthPill" style="height:30px;display:flex;align-items:center;">—</span>
+          </div>
+
+          <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div class="stat blue" id="mtdSalesStat">MTD SALES: $0</div>
+            <div class="stat muted" id="mtdProfitStat">MTD PROFIT: $0</div>
+            <div class="stat yellow" id="projSalesStat">PROJ SALES: $0</div>
+            <div class="stat green" id="nextBudgetStat">NEXT BUDGET: $0</div>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;">
+            <div class="pill" style="display:flex;align-items:center;gap:10px;">
+              <span class="muted" style="font-size:12px;">Reinvest %</span>
+              <input id="reinvestPct" type="range" min="0" max="100" value="50" style="width:140px;">
+              <span id="reinvestPctLabel" style="font-size:12px;">50%</span>
+            </div>
+
+            <div class="pill" style="display:flex;align-items:center;gap:10px;">
+              <span class="muted" style="font-size:12px;">Mode</span>
+              <select id="budgetMode" class="pill" style="height:32px;padding:4px 10px;">
+                <option value="projected">Projected</option>
+                <option value="mtd">If month ended today</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="muted" style="font-size:12px;line-height:1.45;margin-bottom:8px;">
+            Estimates what you can spend for <b>next month</b> using what you’ve sold <b>so far this month</b>. It auto-rolls forward each month.
+          </div>
+
+          <div style="margin-top:10px;">
+            <div class="muted" style="font-size:12px;margin-bottom:6px;">Month progress</div>
+            <div class="progressBar"><div class="progressFill" id="monthProgressFill" style="width:0%"></div></div>
+            <div class="muted" style="font-size:11px;margin-top:6px;" id="monthProgressLabel">—</div>
+          </div>
+        </div>
+
         <div class="panel" id="ytdSummaryPanel">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
             <h3 style="margin:0;">YTD Sold Summary</h3>
@@ -1407,46 +1447,6 @@ td.profit.neg { color:var(--red); }
           <div class="divider"></div>
           <div class="muted" style="font-size:12px;line-height:1.45;">
             Income = total sales for the selected year. Cost of sold = what you paid for items sold that year. Profit = sale minus cost, fees, and shipping.
-          </div>
-        </div>
-
-        <div class="panel" id="budgetPanel">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
-            <h3 style="margin:0;">Next Month Inventory Budget</h3>
-            <span class="pill muted" id="budgetMonthPill" style="height:30px;display:flex;align-items:center;">—</span>
-          </div>
-
-          <div class="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-            <div class="stat blue" id="mtdSalesStat">MTD SALES: $0</div>
-            <div class="stat muted" id="mtdProfitStat">MTD PROFIT: $0</div>
-            <div class="stat yellow" id="projSalesStat">PROJ SALES: $0</div>
-            <div class="stat green" id="nextBudgetStat">NEXT BUDGET: $0</div>
-          </div>
-
-          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px;">
-            <div class="pill" style="display:flex;align-items:center;gap:10px;">
-              <span class="muted" style="font-size:12px;">Reinvest %</span>
-              <input id="reinvestPct" type="range" min="0" max="100" value="50" style="width:140px;">
-              <span id="reinvestPctLabel" style="font-size:12px;">50%</span>
-            </div>
-
-            <div class="pill" style="display:flex;align-items:center;gap:10px;">
-              <span class="muted" style="font-size:12px;">Mode</span>
-              <select id="budgetMode" class="pill" style="height:32px;padding:4px 10px;">
-                <option value="projected">Projected</option>
-                <option value="mtd">If month ended today</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="muted" style="font-size:12px;line-height:1.45;margin-bottom:8px;">
-            Estimates what you can spend for <b>next month</b> using what you’ve sold <b>so far this month</b>. It auto-rolls forward each month.
-          </div>
-
-          <div style="margin-top:10px;">
-            <div class="muted" style="font-size:12px;margin-bottom:6px;">Month progress</div>
-            <div class="progressBar"><div class="progressFill" id="monthProgressFill" style="width:0%"></div></div>
-            <div class="muted" style="font-size:11px;margin-top:6px;" id="monthProgressLabel">—</div>
           </div>
         </div>
 
