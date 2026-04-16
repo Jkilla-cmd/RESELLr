@@ -1458,14 +1458,6 @@ td.profit.neg { color:var(--red); }
           <div class="stat muted" id="holdsAvgValueStat">AVG VALUE/ITEM: $0.00</div>
         </div>
 
-        <div class="panel" id="inventoryDashboardPanel">
-          <h3>Active Inventory</h3>
-          <div class="stat yellow" id="dashInvCountStat">ACTIVE ITEMS: 0</div>
-          <div class="stat green" id="dashInvCostStat">INVENTORY COST: $0.00</div>
-          <div class="stat blue" id="dashInvValueStat">INVENTORY VALUE: $0.00</div>
-          <div class="stat muted" id="dashInvAvgStat">AVG VALUE/ITEM: $0.00</div>
-        </div>
-
 <div class="panel income-full">
           <h3>Income Graph</h3>
 
@@ -4435,13 +4427,18 @@ function _parseDateSafe(ds){
   if(!ds) return null;
   if(ds instanceof Date) return isNaN(ds.getTime())?null:ds;
   const s = String(ds).trim();
-  let d = new Date(s);
-  if(!isNaN(d.getTime())) return d;
-  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if(m){ d=new Date(+m[3], +m[1]-1, +m[2]); if(!isNaN(d.getTime())) return d; }
-  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-  if(m){ d=new Date(+m[1], +m[2]-1, +m[3]); if(!isNaN(d.getTime())) return d; }
-  return null;
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(m){
+    const d = new Date(+m[1], +m[2]-1, +m[3]);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m){
+    const d = new Date(+m[3], +m[1]-1, +m[2]);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
 }
 function _sumSoldForMonth(rows, y, m){
   let sales=0, profit=0;
