@@ -1462,6 +1462,8 @@ td.profit.neg { color:var(--red); }
           <h3>Income Graph</h3>
 
           <div class="stat muted" id="bestWorstStat" style="margin-top:6px;">—</div>
+          <div class="stat green" id="dashMonthMatchStat" style="margin-top:6px;">THIS MONTH NET PROFIT (SOLD MATCH): $0.00</div>
+          <div class="stat muted" id="dashMonthMatchSub" style="margin-top:4px;">Gross: $0.00 • Items: 0 • Uses the same sold-row formula as the Sold tab.</div>
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0 8px;">
             <div class="pill" style="display:flex;align-items:center;gap:8px;">
               <label class="muted" style="font-size:12px;">Goal</label>
@@ -2150,7 +2152,9 @@ function showSection(sectionId) {
   document.body.scrollTop = 0;
 
   // Refresh budget panel when returning to Dashboard
-  if (sectionId === 'secDashboard') { try { updateBudgetPanel(); } catch (e) {} }
+  if (sectionId === 'secDashboard') { try { updateBudgetPanel(); } catch (e) {}
+    try { updateDashboardMonthMatch(); } catch (e) {}
+  }
 
   setTimeout(() => {
     if (incomeChartObj) incomeChartObj.resize();
@@ -2479,6 +2483,46 @@ function getMonthlySeriesFromSold() {
   return Object.values(buckets).sort((a, b) => a.key.localeCompare(b.key));
 }
 
+function getDashboardMonthKey(){
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, "0")}`;
+}
+
+function getDashboardMonthSoldMatch(){
+  const sold = (typeof readSold === "function") ? readSold() : [];
+  const targetMonth = getDashboardMonthKey();
+  let gross = 0;
+  let net = 0;
+  let items = 0;
+  for (const r of sold){
+    if (monthKey(r.date) !== targetMonth) continue;
+    const sale = Number(r.sale || 0) || 0;
+    const cost = normExpense(r.cost || 0);
+    const fees = normExpense(r.fees || r.fee || 0);
+    const ship = normExpense(r.ship || r.shipping || 0);
+    gross += (sale - cost);
+    net += (sale - cost - fees - ship);
+    items += 1;
+  }
+  return { monthKey: targetMonth, gross, net, items };
+}
+
+function updateDashboardMonthMatch(){
+  const mainEl = document.getElementById("dashMonthMatchStat");
+  const subEl = document.getElementById("dashMonthMatchSub");
+  if (!mainEl || !subEl) return;
+  const m = getDashboardMonthSoldMatch();
+  const [year, month] = m.monthKey.split("-");
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const label = `${monthNames[Math.max(0, Math.min(11, Number(month)-1))]} ${year}`;
+  mainEl.textContent = `${label.toUpperCase()} NET PROFIT (SOLD MATCH): ${formatDollars(m.net)}`;
+  subEl.textContent = `Gross: ${formatDollars(m.gross)} • Items: ${m.items} • Uses the same sold-row formula as the Sold tab.`;
+  mainEl.classList.remove("profit-pos","profit-neg","profit-zero");
+  if (m.net > 0) mainEl.classList.add("profit-pos");
+  else if (m.net < 0) mainEl.classList.add("profit-neg");
+  else mainEl.classList.add("profit-zero");
+}
+
 function loadIncomeChart() {
   const raw = getMonthlySeriesFromSold();
   monthCountStat.textContent = `MONTHS STORED: ${raw.length}`;
@@ -2505,6 +2549,8 @@ function loadIncomeChart() {
   } else if (stat) {
     stat.textContent = "—";
   }
+
+  try{ updateDashboardMonthMatch(); }catch(e){}
 
   const showNet = document.getElementById("togNet")?.checked ?? true;
   const showGross = document.getElementById("togGross")?.checked ?? false;
@@ -3302,7 +3348,7 @@ function undoLastDelete() {
   localStorage.setItem(key, JSON.stringify(arr));
   hideUndo();
 
-  if (key === SOLD_KEY) { renderSold(); rebuildMonthlyIncomeFromSold(); }
+  if (key === SOLD_KEY) { renderSold(); rebuildMonthlyIncomeFromSold(); try{ updateDashboardMonthMatch(); }catch(e){} }
   if (key === ACTIVE_KEY) { renderActive(); }
   if (key === HOLDS_KEY) { renderHolds(); }
 }
@@ -4210,7 +4256,6 @@ function parseDateSafe(s){
 }
 function sumActiveValue(conservative=false){
   const active = readActive();
-  const holds = (typeof readHolds === "function") ? readHolds() : [];
   let invCost = 0;
   let invValue = 0;
   active.forEach(r=>{
@@ -4220,14 +4265,21 @@ function sumActiveValue(conservative=false){
     invCost += cost * qty;
     invValue += (conservative ? cost : list) * qty;
   });
+  return { invCost, invValue };
+}
+
+function sumHoldsValue(conservative=false){
+  const holds = (typeof readHolds === "function") ? readHolds() : [];
+  let holdsCost = 0;
+  let holdsValue = 0;
   holds.forEach(r=>{
     const qty = Number(r.qty ?? 1) || 1;
     const cost = Number(r.cost)||0;
     const value = Number(r.value)||0;
-    invCost += cost * qty;
-    invValue += (conservative ? cost : value) * qty;
+    holdsCost += cost * qty;
+    holdsValue += (conservative ? cost : value) * qty;
   });
-  return { invCost, invValue };
+  return { holdsCost, holdsValue };
 }
 function sumRealizedProfit(range){
   const sold = readSold();
@@ -4265,6 +4317,7 @@ function updateNetWorth(){
   const range = rangeSel ? rangeSel.value : "all";
 
   const { invCost, invValue } = sumActiveValue(conservative);
+  const { holdsCost, holdsValue } = (typeof sumHoldsValue === "function") ? sumHoldsValue(conservative) : { holdsCost:0, holdsValue:0 };
   const realized = sumRealizedProfit(range);
 
   const unrealized = invValue - invCost;
@@ -4281,7 +4334,7 @@ function updateNetWorth(){
   setText("nwRealized", formatDollars(realized));
   setText("nwTotal", formatDollars(netWorth));
   const asOf = document.getElementById("nwAsOf");
-  if (asOf) asOf.textContent = `As of ${new Date().toLocaleString()}`;
+  if (asOf) asOf.textContent = `As of ${new Date().toLocaleString()} • Holds kept separate: ${formatDollars(holdsValue)} value / ${formatDollars(holdsCost)} cost`;
 
   // color the total
   const totalEl = document.getElementById("nwTotal");
