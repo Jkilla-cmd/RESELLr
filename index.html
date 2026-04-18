@@ -1166,6 +1166,41 @@ td.profit.neg { color:var(--red); }
   opacity:0;
 }
 
+
+/* === NEW THEMES === */
+html[data-theme="glass"]{
+  --bg: linear-gradient(180deg,#0f172a,#020617);
+  --panel: rgba(255,255,255,0.06);
+  --panel-solid: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.12);
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --accent:#60a5fa;
+  --accent-2:#38bdf8;
+}
+
+html[data-theme="arcade"]{
+  --bg:#05010a;
+  --panel:#0b0414;
+  --panel-solid:#12081f;
+  --border:#ff00ff33;
+  --text:#f0f0ff;
+  --muted:#9b87f5;
+  --accent:#ff00ff;
+  --accent-2:#00ffff;
+}
+
+html[data-theme="vault"]{
+  --bg:#0b0b0b;
+  --panel:#121212;
+  --panel-solid:#181818;
+  --border:#d4af3722;
+  --text:#f5f5f5;
+  --muted:#a1a1aa;
+  --accent:#d4af37;
+  --accent-2:#b91c1c;
+}
+
 </style>
 </head>
 
@@ -2120,6 +2155,9 @@ td.profit.neg { color:var(--red); }
             <option value="hackercyan">Hacker Cyan</option>
             <option value="cyberred">Cyber Red</option>
             <option value="monochrome">Black & White</option>
+            <option value="glass">Glass</option>
+            <option value="arcade">Arcade</option>
+            <option value="vault">Comic Vault</option>
           </select>
 
           <div class="divider"></div>
@@ -4073,12 +4111,14 @@ function exportIncomeCSV() {
 const THEME_KEY = "ots_theme";
 
 function applyTheme(theme) {
-  let t = "hackercyan";
-  if (theme === "cyberred") t = "cyberred";
-  if (theme === "monochrome") t = "monochrome";
+  const allowed = ["hackercyan","cyberred","monochrome","glass","arcade","vault"];
+  const t = allowed.includes(theme) ? theme : "hackercyan";
 
   document.documentElement.setAttribute("data-theme", t);
-  localStorage.setItem(THEME_KEY, t);
+  try {
+    localStorage.setItem(THEME_KEY, t);
+    localStorage.setItem("theme", t);
+  } catch(e) {}
 
   const sel = document.getElementById("themeSelect");
   if (sel) sel.value = t;
@@ -4087,6 +4127,13 @@ function applyTheme(theme) {
 function setTheme(theme) {
   applyTheme(theme);
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    const saved = localStorage.getItem(THEME_KEY) || localStorage.getItem("theme");
+    if (saved) applyTheme(saved);
+  } catch(e) {}
+});
 
 
 /* ========= Support Button Behavior ========= */
@@ -4795,6 +4842,7 @@ function addProfitOverlay(incomeChartInstance){
 }
 
 </script>
+
 
 </body>
 </html>
