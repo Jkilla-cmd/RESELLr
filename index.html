@@ -2862,6 +2862,7 @@ function writeSold(arr) {
   localStorage.setItem(SOLD_SHADOW_KEY, raw);
   try{ sessionStorage.setItem(SOLD_KEY, raw); }catch(e){}
   try{ if(window.resellrMirrorSnapshot) window.resellrMirrorSnapshot(); }catch(e){}
+  try{ if(window.resellrCaptureMasterState) window.resellrCaptureMasterState(); }catch(e){}
 }
 try{ updateBudgetPanel(); }catch(e){}
 
@@ -3296,6 +3297,8 @@ function factoryReset() {
     window.name = "";
   }catch(e){}
 
+  try{ if(window.resellrClearMasterState) window.resellrClearMasterState(); }catch(e){}
+
   location.reload();
 }
 
@@ -3316,6 +3319,7 @@ function writeHolds(arr) {
   localStorage.setItem(HOLDS_SHADOW_KEY, raw);
   try{ sessionStorage.setItem(HOLDS_KEY, raw); }catch(e){}
   try{ if(window.resellrMirrorSnapshot) window.resellrMirrorSnapshot(); }catch(e){}
+  try{ if(window.resellrCaptureMasterState) window.resellrCaptureMasterState(); }catch(e){}
 }
 
 let holdsSearchTerm = "";
@@ -3553,6 +3557,7 @@ function writeActive(arr) {
   localStorage.setItem(ACTIVE_SHADOW_KEY, raw);
   try{ sessionStorage.setItem(ACTIVE_KEY, raw); }catch(e){}
   try{ if(window.resellrMirrorSnapshot) window.resellrMirrorSnapshot(); }catch(e){}
+  try{ if(window.resellrCaptureMasterState) window.resellrCaptureMasterState(); }catch(e){}
 }
 
 let lastDelete = null;
@@ -4953,6 +4958,7 @@ window.onload = () => {
     showStorageWarning("Browser storage is not persisting on this page. Open the app from the same Safari/Chrome URL each time, not a temporary preview or download view.");
   }
 
+  try{ if(window.resellrRestoreMasterState) window.resellrRestoreMasterState(); }catch(e){}
   migrateLegacyData();
   restoreShadowData();
 
@@ -5100,7 +5106,8 @@ function collectFullBackupData(){
       reinvestPct: safeGetText("reinvestPct", ""),
       budgetMode: safeGetText("budgetMode", ""),
       dashboardPassHash: safeGetText("dashboardPassHash", ""),
-      masterPhraseHash: safeGetText("masterPhraseHash", "")
+      masterPhraseHash: safeGetText("masterPhraseHash", ""),
+      __resellr_master__: safeGetText("__resellr_master__", "")
     }
   };
 }
@@ -5229,7 +5236,9 @@ function importFullBackup(){
 
       if(d.dashboardPassHash) saveText("dashboardPassHash", d.dashboardPassHash);
       if(d.masterPhraseHash) saveText("masterPhraseHash", d.masterPhraseHash);
+      if(d.__resellr_master__) saveText("__resellr_master__", d.__resellr_master__);
 
+      try{ if(window.resellrCaptureMasterState) window.resellrCaptureMasterState(); }catch(e){}
       _syncRestoreMirrors();
       _refreshAllUiAfterRestore();
 
@@ -5428,6 +5437,83 @@ document.addEventListener("DOMContentLoaded", refreshBackupBanner);
     try{ snapshotFromLocalStorage(); }catch(e){}
   });
 })();
+</script>
+
+
+<script>
+/* ===== Master Save Blob ===== */
+const RESELLR_MASTER_KEY = "__resellr_master__";
+
+function resellrCaptureMasterState(){
+  const keys = [
+    "activeInventory","activeInventory_shadow",
+    "soldInventory","soldInventory_shadow",
+    "inventoryHolds","inventoryHolds_shadow",
+    "monthlyIncome",
+    "earningsBalance","inventoryAllowance",
+    "ots_theme","theme","dashboardLayoutV1",
+    "nwShow","nwConservative","nwRange",
+    "reinvestPct","budgetMode","resellr_reinvest_pct",
+    "dashboardPassHash","masterPhraseHash",
+    "lastBackupExportAt","backupBannerDismissed"
+  ];
+  const data = {};
+  try{
+    keys.forEach((k)=>{
+      const v = localStorage.getItem(k);
+      if(v !== null) data[k] = v;
+    });
+    localStorage.setItem(RESELLR_MASTER_KEY, JSON.stringify({
+      savedAt: new Date().toISOString(),
+      data
+    }));
+    try{ sessionStorage.setItem(RESELLR_MASTER_KEY, localStorage.getItem(RESELLR_MASTER_KEY)); }catch(e){}
+  }catch(e){}
+}
+
+function resellrRestoreMasterState(){
+  try{
+    let raw = localStorage.getItem(RESELLR_MASTER_KEY);
+    if(!raw){
+      try{ raw = sessionStorage.getItem(RESELLR_MASTER_KEY); }catch(e){}
+    }
+    if(!raw) return false;
+
+    const parsed = JSON.parse(raw);
+    const data = parsed && parsed.data ? parsed.data : null;
+    if(!data || typeof data !== "object") return false;
+
+    Object.keys(data).forEach((k)=>{
+      const cur = localStorage.getItem(k);
+      const incoming = data[k];
+      const emptyish = cur === null || cur === "" || cur === "[]" || cur === "{}";
+      if(emptyish && incoming !== undefined && incoming !== null && incoming !== "" && incoming !== "[]" && incoming !== "{}"){
+        localStorage.setItem(k, incoming);
+      }
+    });
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+function resellrClearMasterState(){
+  try{ localStorage.removeItem(RESELLR_MASTER_KEY); }catch(e){}
+  try{ sessionStorage.removeItem(RESELLR_MASTER_KEY); }catch(e){}
+}
+</script>
+
+
+<script>
+document.addEventListener("change", function(e){
+  const id = e && e.target ? e.target.id : "";
+  if(["themeSelect","reinvestPct","budgetMode","nwShowToggle","nwConservativeToggle","nwRange","earningsBalance","inventoryAllowance"].includes(id)){
+    try{ setTimeout(()=>window.resellrCaptureMasterState && window.resellrCaptureMasterState(), 0); }catch(err){}
+  }
+});
+document.addEventListener("DOMContentLoaded", function(){
+  try{ setTimeout(()=>window.resellrCaptureMasterState && window.resellrCaptureMasterState(), 300); }catch(err){}
+});
 </script>
 
 </body>
