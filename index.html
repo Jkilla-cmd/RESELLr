@@ -3274,7 +3274,9 @@ function factoryReset() {
       "budgetMode",
       "resellr_reinvest_pct",
       "lastBackupExportAt",
-      "backupBannerDismissed"
+      "backupBannerDismissed",
+      "dashboardPassHash",
+      "masterPhraseHash"
     ].forEach(k => localStorage.removeItem(k));
   }catch(e){}
 
@@ -3283,6 +3285,9 @@ function factoryReset() {
       "activeInventory",
       "soldInventory",
       "inventoryHolds",
+      "activeInventory_shadow",
+      "soldInventory_shadow",
+      "inventoryHolds_shadow",
       "__resellr_mirror__"
     ].forEach(k => sessionStorage.removeItem(k));
   }catch(e){}
@@ -5093,7 +5098,9 @@ function collectFullBackupData(){
       nwRange: safeGetText("nwRange", ""),
 
       reinvestPct: safeGetText("reinvestPct", ""),
-      budgetMode: safeGetText("budgetMode", "")
+      budgetMode: safeGetText("budgetMode", ""),
+      dashboardPassHash: safeGetText("dashboardPassHash", ""),
+      masterPhraseHash: safeGetText("masterPhraseHash", "")
     }
   };
 }
@@ -5125,6 +5132,55 @@ function exportFullBackup(){
   }
 }
 
+
+function _resetUiFiltersAfterRestore(){
+  try{
+    ["activeYearFilter","activeMonthFilter","holdsYearFilter","holdsMonthFilter","soldYearFilter","soldMonthFilter","soldTypeFilter","soldPlatformFilter","yearFilter"].forEach((id)=>{
+      const el = document.getElementById(id);
+      if(el){
+        if(id === "soldTypeFilter"){
+          el.value = "ALL";
+        }else{
+          el.value = "ALL";
+        }
+      }
+    });
+    ["activeSearchTop","holdsSearchTop","soldSearchTop"].forEach((id)=>{
+      const el = document.getElementById(id);
+      if(el) el.value = "";
+    });
+    try{ activeSearchTerm = ""; }catch(e){}
+    try{ soldSearchTerm = ""; }catch(e){}
+    try{ holdsSearchTerm = ""; }catch(e){}
+    try{ activeSearch = ""; }catch(e){}
+  }catch(e){}
+}
+
+function _refreshAllUiAfterRestore(){
+  try{ _resetUiFiltersAfterRestore(); }catch(e){}
+  try{ renderActive(); }catch(e){}
+  try{ renderHolds(); }catch(e){}
+  try{ renderSold(); }catch(e){}
+  try{ loadIncomeChart(); }catch(e){}
+  try{ updateDashboardYTD(); }catch(e){}
+  try{ updateBudgetPanel(); }catch(e){}
+  try{ updateDashboardMonthMatch(); }catch(e){}
+  try{ updateNetWorth(); }catch(e){}
+  try{ refreshBackupBanner(); }catch(e){}
+}
+
+function _syncRestoreMirrors(){
+  try{
+    ["activeInventory","activeInventory_shadow","soldInventory","soldInventory_shadow","inventoryHolds","inventoryHolds_shadow","monthlyIncome","earningsBalance","inventoryAllowance","ots_theme","theme","dashboardLayoutV1","nwShow","nwConservative","nwRange","reinvestPct","budgetMode","resellr_reinvest_pct","lastBackupExportAt","backupBannerDismissed","dashboardPassHash","masterPhraseHash"].forEach((k)=>{
+      const v = localStorage.getItem(k);
+      if(v !== null){
+        try{ sessionStorage.setItem(k, v); }catch(e){}
+      }
+    });
+    try{ if(window.resellrMirrorSnapshot) window.resellrMirrorSnapshot(); }catch(e){}
+  }catch(e){}
+}
+
 function importFullBackup(){
   const input = document.getElementById("fullBackupFile");
   const file = input && input.files ? input.files[0] : null;
@@ -5147,13 +5203,18 @@ function importFullBackup(){
         if(value !== undefined && value !== null) localStorage.setItem(key, String(value));
       };
 
-      saveJSON("activeInventory", Array.isArray(d.activeInventory) ? d.activeInventory : []);
-      saveJSON("activeInventory_shadow", Array.isArray(d.activeInventory_shadow) ? d.activeInventory_shadow : (Array.isArray(d.activeInventory) ? d.activeInventory : []));
-      saveJSON("soldInventory", Array.isArray(d.soldInventory) ? d.soldInventory : []);
-      saveJSON("soldInventory_shadow", Array.isArray(d.soldInventory_shadow) ? d.soldInventory_shadow : (Array.isArray(d.soldInventory) ? d.soldInventory : []));
-      saveJSON("inventoryHolds", Array.isArray(d.inventoryHolds) ? d.inventoryHolds : []);
-      saveJSON("inventoryHolds_shadow", Array.isArray(d.inventoryHolds_shadow) ? d.inventoryHolds_shadow : (Array.isArray(d.inventoryHolds) ? d.inventoryHolds : []));
-      saveJSON("monthlyIncome", Array.isArray(d.monthlyIncome) ? d.monthlyIncome : []);
+      const active = Array.isArray(d.activeInventory) ? d.activeInventory : [];
+      const sold = Array.isArray(d.soldInventory) ? d.soldInventory : [];
+      const holds = Array.isArray(d.inventoryHolds) ? d.inventoryHolds : [];
+      const income = Array.isArray(d.monthlyIncome) ? d.monthlyIncome : [];
+
+      saveJSON("activeInventory", active);
+      saveJSON("activeInventory_shadow", Array.isArray(d.activeInventory_shadow) ? d.activeInventory_shadow : active);
+      saveJSON("soldInventory", sold);
+      saveJSON("soldInventory_shadow", Array.isArray(d.soldInventory_shadow) ? d.soldInventory_shadow : sold);
+      saveJSON("inventoryHolds", holds);
+      saveJSON("inventoryHolds_shadow", Array.isArray(d.inventoryHolds_shadow) ? d.inventoryHolds_shadow : holds);
+      saveJSON("monthlyIncome", income);
 
       saveText("earningsBalance", d.earningsBalance ?? "");
       saveText("inventoryAllowance", d.inventoryAllowance ?? "");
@@ -5166,10 +5227,16 @@ function importFullBackup(){
       saveText("reinvestPct", d.reinvestPct ?? "");
       saveText("budgetMode", d.budgetMode ?? "");
 
+      if(d.dashboardPassHash) saveText("dashboardPassHash", d.dashboardPassHash);
+      if(d.masterPhraseHash) saveText("masterPhraseHash", d.masterPhraseHash);
+
+      _syncRestoreMirrors();
+      _refreshAllUiAfterRestore();
+
       const msg = document.getElementById("backupRestoreMsg");
-      if(msg) msg.textContent = "Backup restored. Refreshing...";
+      if(msg) msg.textContent = "Backup restored successfully.";
       try{ showToast("Backup restored"); }catch(e){}
-      setTimeout(()=>location.reload(), 250);
+      try{ input.value = ""; }catch(e){}
     }catch(err){
       const msg = document.getElementById("backupRestoreMsg");
       if(msg) msg.textContent = "Backup restore failed. Use a valid RESELLr backup file.";
