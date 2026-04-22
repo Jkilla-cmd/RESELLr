@@ -1468,49 +1468,18 @@ body::after{
 }
 
 
+
+
+
 html[data-theme="lofi"] body{
   background:
-    radial-gradient(circle at 18% 18%, rgba(139,92,246,0.16), transparent 30%),
-    radial-gradient(circle at 82% 22%, rgba(244,114,182,0.10), transparent 28%),
-    linear-gradient(180deg, #07050d 0%, #04030a 100%) !important;
+    radial-gradient(circle at 70% 18%, rgba(255,184,108,0.22), transparent 10%),
+    radial-gradient(circle at 68% 18%, rgba(255,123,84,0.12), transparent 18%),
+    radial-gradient(circle at 50% -10%, rgba(139,92,246,0.18), transparent 35%),
+    linear-gradient(180deg, #120f24 0%, #0a0816 55%, #05040d 100%) !important;
   background-image: none !important;
 }
-html[data-theme="lofi"] .panel,
-html[data-theme="lofi"] .topbar,
-html[data-theme="lofi"] .sidebar{
-  box-shadow: 0 18px 55px rgba(0,0,0,0.45);
-}
-html[data-theme="lofi"] .sidebar button.active{
-  box-shadow: 0 10px 30px rgba(244,114,182,0.12);
-}
-.lofi-music-btn{
-  width:auto;
-  padding:8px 12px;
-  border-radius:12px;
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-}
-.lofi-music-btn .dot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background: var(--accent);
-  opacity:.35;
-}
-.lofi-music-btn.playing .dot{
-  opacity:1;
-  box-shadow:0 0 12px color-mix(in srgb, var(--accent) 70%, transparent);
-}
-.lofi-hidden-audio{
-  display:none;
-}
 
-
-html[data-theme="lofi"] body,
-html[data-theme="lofi"] body::before{
-  background-image: none !important;
-}
 html[data-theme="lofi"] body::before{
   content:"";
   position:fixed;
@@ -1518,10 +1487,38 @@ html[data-theme="lofi"] body::before{
   pointer-events:none;
   z-index:-1;
   background:
-    radial-gradient(circle at 20% 20%, rgba(255,125,184,0.10), transparent 32%),
-    radial-gradient(circle at 80% 18%, rgba(159,122,234,0.08), transparent 30%),
-    linear-gradient(180deg, rgba(4,3,10,0.08), rgba(4,3,10,0.16)) !important;
+    radial-gradient(circle at 70% 18%, rgba(255,196,125,0.38) 0 2.6%, transparent 2.8%),
+    linear-gradient(180deg, rgba(255,145,77,0.06), transparent 26%),
+    linear-gradient(180deg, transparent 68%, rgba(255,105,180,0.04) 100%);
   opacity:1;
+}
+
+html[data-theme="lofi"] body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:-1;
+  background:
+    linear-gradient(to top,
+      rgba(12,10,22,0.98) 0% 15%,
+      transparent 15%),
+    repeating-linear-gradient(to right,
+      transparent 0 3%,
+      rgba(20,18,34,0.85) 3% 4.5%,
+      transparent 4.5% 7%,
+      rgba(16,14,28,0.88) 7% 8.2%,
+      transparent 8.2% 11.5%,
+      rgba(24,20,40,0.82) 11.5% 13%,
+      transparent 13% 16%);
+  opacity:.55;
+}
+
+html[data-theme="lofi"] .panel,
+html[data-theme="lofi"] .topbar,
+html[data-theme="lofi"] .sidebar{
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 </style>
@@ -5381,12 +5378,16 @@ function importFullBackup(){
 
 
 
+
+
+
 <script>
 let lofiAudioCtx = null;
-let lofiMasterGain = null;
-let lofiLowpass = null;
-let lofiNoiseSource = null;
-let lofiChordOscs = [];
+let lofiMaster = null;
+let lofiFilter = null;
+let lofiComp = null;
+let lofiNodes = [];
+let lofiIntervals = [];
 let lofiMusicOn = false;
 
 function setLofiMusicUi(isPlaying){
@@ -5398,33 +5399,145 @@ function setLofiMusicUi(isPlaying){
   }catch(e){}
 }
 
-function createNoiseNode(ctx){
-  const bufferSize = ctx.sampleRate * 2;
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for(let i=0;i<bufferSize;i++){
-    data[i] = (Math.random() * 2 - 1) * 0.18;
-  }
-  const src = ctx.createBufferSource();
-  src.buffer = buffer;
-  src.loop = true;
-  return src;
+function lofiCleanup(){
+  lofiIntervals.forEach(id => clearInterval(id));
+  lofiIntervals = [];
+  lofiNodes.forEach(n => {
+    try{ n.stop && n.stop(); }catch(e){}
+    try{ n.disconnect && n.disconnect(); }catch(e){}
+  });
+  lofiNodes = [];
 }
 
-function stopLofiMusic(){
-  try{
-    lofiChordOscs.forEach(o => { try{o.stop();}catch(e){} });
-    lofiChordOscs = [];
-    if(lofiNoiseSource){ try{ lofiNoiseSource.stop(); }catch(e){} }
-    lofiNoiseSource = null;
-    if(lofiMasterGain){
-      try{ lofiMasterGain.gain.cancelScheduledValues(lofiAudioCtx.currentTime); }catch(e){}
-      try{ lofiMasterGain.gain.setValueAtTime(0, lofiAudioCtx.currentTime); }catch(e){}
+function lofiEnv(gainNode, now, attack, decay, sustain, release, peak){
+  gainNode.gain.cancelScheduledValues(now);
+  gainNode.gain.setValueAtTime(0.0001, now);
+  gainNode.gain.linearRampToValueAtTime(peak, now + attack);
+  gainNode.gain.linearRampToValueAtTime(sustain, now + attack + decay);
+  gainNode.gain.linearRampToValueAtTime(0.0001, now + attack + decay + release);
+}
+
+function noteToFreq(midi){
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function makeTone(freq, type, when, duration, volume, destination, detune=0){
+  const osc = lofiAudioCtx.createOscillator();
+  const gain = lofiAudioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  osc.detune.value = detune;
+  gain.gain.value = 0.0001;
+  osc.connect(gain);
+  gain.connect(destination);
+  lofiEnv(gain, when, 0.01, 0.18, volume * 0.38, Math.max(0.1, duration - 0.18), volume);
+  osc.start(when);
+  osc.stop(when + duration + 0.05);
+  lofiNodes.push(osc, gain);
+}
+
+function playChord(rootMidi, when, duration){
+  [0, 3, 7, 10].forEach((interval, idx)=>{
+    makeTone(noteToFreq(rootMidi + interval), idx === 0 ? "triangle" : "sine", when, duration, idx === 0 ? 0.05 : 0.032, lofiFilter, idx === 0 ? -4 : 2);
+  });
+}
+
+function playMelody(midi, when, duration){
+  makeTone(noteToFreq(midi), "triangle", when, duration, 0.04, lofiFilter, 3);
+}
+
+function playKick(when){
+  const osc = lofiAudioCtx.createOscillator();
+  const gain = lofiAudioCtx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(120, when);
+  osc.frequency.exponentialRampToValueAtTime(42, when + 0.12);
+  gain.gain.setValueAtTime(0.001, when);
+  gain.gain.exponentialRampToValueAtTime(0.5, when + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, when + 0.18);
+  osc.connect(gain);
+  gain.connect(lofiComp);
+  osc.start(when);
+  osc.stop(when + 0.2);
+  lofiNodes.push(osc, gain);
+}
+
+function playSnare(when){
+  const bufferSize = lofiAudioCtx.sampleRate * 0.2;
+  const buffer = lofiAudioCtx.createBuffer(1, bufferSize, lofiAudioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+  const noise = lofiAudioCtx.createBufferSource();
+  noise.buffer = buffer;
+  const hp = lofiAudioCtx.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 1300;
+  const gain = lofiAudioCtx.createGain();
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.exponentialRampToValueAtTime(0.16, when + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.16);
+  noise.connect(hp);
+  hp.connect(gain);
+  gain.connect(lofiComp);
+  noise.start(when);
+  noise.stop(when + 0.18);
+  lofiNodes.push(noise, hp, gain);
+}
+
+function playHat(when, openHat=false){
+  const bufferSize = lofiAudioCtx.sampleRate * (openHat ? 0.25 : 0.05);
+  const buffer = lofiAudioCtx.createBuffer(1, bufferSize, lofiAudioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++) data[i] = (Math.random() * 2 - 1) * (openHat ? 0.3 : 0.18);
+  const noise = lofiAudioCtx.createBufferSource();
+  noise.buffer = buffer;
+  const bp = lofiAudioCtx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 8000;
+  const gain = lofiAudioCtx.createGain();
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.exponentialRampToValueAtTime(openHat ? 0.07 : 0.045, when + 0.003);
+  gain.gain.exponentialRampToValueAtTime(0.0001, when + (openHat ? 0.22 : 0.04));
+  noise.connect(bp);
+  bp.connect(gain);
+  gain.connect(lofiComp);
+  noise.start(when);
+  noise.stop(when + (openHat ? 0.25 : 0.05));
+  lofiNodes.push(noise, bp, gain);
+}
+
+function scheduleLofiLoop(startTime){
+  const bpm = 76;
+  const beat = 60 / bpm;
+  const bar = beat * 4;
+
+  const chords = [57, 60, 53, 55]; // A, C, F, G roots
+  const melody = [
+    [69, 0.0, 0.45], [72, 0.5, 0.35], [76, 1.0, 0.55], [72, 1.75, 0.35],
+    [67, 2.0, 0.4], [69, 2.5, 0.35], [72, 3.0, 0.6]
+  ];
+
+  for(let barIndex = 0; barIndex < 4; barIndex++){
+    const tBar = startTime + barIndex * bar;
+    playChord(chords[barIndex], tBar, bar * 0.95);
+
+    // drums
+    playKick(tBar + 0 * beat);
+    playKick(tBar + 2 * beat);
+    playSnare(tBar + 1 * beat);
+    playSnare(tBar + 3 * beat);
+    for(let i=0;i<8;i++){
+      const t = tBar + i * (beat / 2);
+      playHat(t, i === 7 && barIndex % 2 === 1);
     }
-  }catch(e){}
-  lofiMusicOn = false;
-  try{ localStorage.setItem("resellr_lofi_music","off"); }catch(e){}
-  setLofiMusicUi(false);
+
+    // melody on first two bars of each loop
+    melody.forEach(([m, offsetBeat, dur])=>{
+      if(barIndex < 2 || (barIndex === 2 && offsetBeat < 2.5)){
+        playMelody(m, tBar + offsetBeat * beat, dur * beat);
+      }
+    });
+  }
 }
 
 function startLofiMusic(){
@@ -5436,63 +5549,47 @@ function startLofiMusic(){
 
   if(!lofiAudioCtx){
     lofiAudioCtx = new AudioCtx();
-    lofiMasterGain = lofiAudioCtx.createGain();
-    lofiMasterGain.gain.value = 0.0;
+    lofiMaster = lofiAudioCtx.createGain();
+    lofiMaster.gain.value = 0.08;
 
-    lofiLowpass = lofiAudioCtx.createBiquadFilter();
-    lofiLowpass.type = "lowpass";
-    lofiLowpass.frequency.value = 1400;
-    lofiLowpass.Q.value = 0.7;
+    lofiFilter = lofiAudioCtx.createBiquadFilter();
+    lofiFilter.type = "lowpass";
+    lofiFilter.frequency.value = 2200;
+    lofiFilter.Q.value = 0.7;
 
-    lofiLowpass.connect(lofiMasterGain);
-    lofiMasterGain.connect(lofiAudioCtx.destination);
+    lofiComp = lofiAudioCtx.createDynamicsCompressor();
+    lofiComp.threshold.value = -24;
+    lofiComp.knee.value = 20;
+    lofiComp.ratio.value = 4;
+    lofiComp.attack.value = 0.003;
+    lofiComp.release.value = 0.25;
+
+    lofiFilter.connect(lofiComp);
+    lofiComp.connect(lofiMaster);
+    lofiMaster.connect(lofiAudioCtx.destination);
   }
 
-  if(lofiAudioCtx.state === "suspended"){
-    lofiAudioCtx.resume();
-  }
+  if(lofiAudioCtx.state === "suspended") lofiAudioCtx.resume();
 
-  stopLofiMusic();
+  lofiCleanup();
 
-  const now = lofiAudioCtx.currentTime;
-  const chordFreqs = [220.00, 261.63, 329.63]; // A minor-ish
-  lofiChordOscs = chordFreqs.map((freq, i)=>{
-    const osc = lofiAudioCtx.createOscillator();
-    const gain = lofiAudioCtx.createGain();
-    osc.type = i === 0 ? "triangle" : "sine";
-    osc.frequency.value = freq;
-    gain.gain.value = i === 0 ? 0.030 : 0.018;
-    osc.connect(gain);
-    gain.connect(lofiLowpass);
-    osc.start();
-    osc._gain = gain;
-    return osc;
-  });
-
-  lofiNoiseSource = createNoiseNode(lofiAudioCtx);
-  const noiseGain = lofiAudioCtx.createGain();
-  noiseGain.gain.value = 0.012;
-  lofiNoiseSource.connect(noiseGain);
-  noiseGain.connect(lofiLowpass);
-  lofiNoiseSource.start();
-
-  // Very slow wobble for lo-fi feeling
-  const lfo = lofiAudioCtx.createOscillator();
-  const lfoGain = lofiAudioCtx.createGain();
-  lfo.type = "sine";
-  lfo.frequency.value = 0.08;
-  lfoGain.gain.value = 8;
-  lfo.connect(lfoGain);
-  lfoGain.connect(lofiLowpass.frequency);
-  lfo.start();
-  lofiChordOscs.push(lfo);
-
-  lofiMasterGain.gain.setValueAtTime(0.0, now);
-  lofiMasterGain.gain.linearRampToValueAtTime(0.08, now + 0.8);
+  const start = lofiAudioCtx.currentTime + 0.05;
+  scheduleLofiLoop(start);
+  const loopMs = Math.round((60 / 76) * 4 * 4 * 1000);
+  lofiIntervals.push(setInterval(()=>{
+    if(lofiMusicOn) scheduleLofiLoop(lofiAudioCtx.currentTime + 0.05);
+  }, loopMs - 60));
 
   lofiMusicOn = true;
   try{ localStorage.setItem("resellr_lofi_music","on"); }catch(e){}
   setLofiMusicUi(true);
+}
+
+function stopLofiMusic(){
+  lofiMusicOn = false;
+  lofiCleanup();
+  try{ localStorage.setItem("resellr_lofi_music","off"); }catch(e){}
+  setLofiMusicUi(false);
 }
 
 function toggleLofiMusic(){
