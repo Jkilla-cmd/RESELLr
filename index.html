@@ -2818,10 +2818,22 @@ function loadIncomeChart() {
 
 /* ========= SOLD DATA ========= */
 const SOLD_KEY = "soldInventory";
+const SOLD_SHADOW_KEY = "soldInventory_shadow";
 let soldProfitChartObj, soldItemsChartObj;
 
+function _safeParseArray(raw){
+  try{
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  }catch(e){
+    return [];
+  }
+}
+
 function readSold() {
-  const arr = JSON.parse(localStorage.getItem(SOLD_KEY)) || [];
+  const primary = _safeParseArray(localStorage.getItem(SOLD_KEY));
+  const shadow = _safeParseArray(localStorage.getItem(SOLD_SHADOW_KEY));
+  const arr = primary.length ? primary : shadow;
   // Normalize legacy data: ensure cost/fees/ship are positive and profit is recalculated.
   let changed = false;
   const fixed = arr.map(r=>{
@@ -2844,7 +2856,12 @@ function readSold() {
   }
   return fixed;
 }
-function writeSold(arr) { localStorage.setItem(SOLD_KEY, JSON.stringify(arr)); }
+function writeSold(arr) {
+  const raw = JSON.stringify(Array.isArray(arr) ? arr : []);
+  localStorage.setItem(SOLD_KEY, raw);
+  localStorage.setItem(SOLD_SHADOW_KEY, raw);
+  try{ sessionStorage.setItem(SOLD_KEY, raw); }catch(e){}
+}
 try{ updateBudgetPanel(); }catch(e){}
 
 /* Refresh dashboard chart from sold rows */
@@ -3242,9 +3259,19 @@ function factoryReset() {
 
 /* ========= Inventory Holds ========= */
 const HOLDS_KEY = "inventoryHolds";
+const HOLDS_SHADOW_KEY = "inventoryHolds_shadow";
 
-function readHolds() { return JSON.parse(localStorage.getItem(HOLDS_KEY)) || []; }
-function writeHolds(arr) { localStorage.setItem(HOLDS_KEY, JSON.stringify(arr)); }
+function readHolds() {
+  const primary = _safeParseArray(localStorage.getItem(HOLDS_KEY));
+  const shadow = _safeParseArray(localStorage.getItem(HOLDS_SHADOW_KEY));
+  return primary.length ? primary : shadow;
+}
+function writeHolds(arr) {
+  const raw = JSON.stringify(Array.isArray(arr) ? arr : []);
+  localStorage.setItem(HOLDS_KEY, raw);
+  localStorage.setItem(HOLDS_SHADOW_KEY, raw);
+  try{ sessionStorage.setItem(HOLDS_KEY, raw); }catch(e){}
+}
 
 let holdsSearchTerm = "";
 function setHoldsSearch(val){
@@ -4839,6 +4866,28 @@ function showStorageWarning(message){
 }
 
 
+
+function restoreShadowData(){
+  try{
+    const pairs = [
+      ["soldInventory", "soldInventory_shadow"],
+      ["inventoryHolds", "inventoryHolds_shadow"]
+    ];
+    for(const [primary, shadow] of pairs){
+      const cur = localStorage.getItem(primary);
+      const sh = localStorage.getItem(shadow) || (function(){ try{return sessionStorage.getItem(primary);}catch(e){return null;} })();
+      const curArr = _safeParseArray(cur);
+      const shArr = _safeParseArray(sh);
+      if((!cur || cur === "[]" || curArr.length === 0) && shArr.length){
+        localStorage.setItem(primary, JSON.stringify(shArr));
+      }
+      if(shArr.length === 0 && curArr.length){
+        localStorage.setItem(shadow, JSON.stringify(curArr));
+      }
+    }
+  }catch(e){}
+}
+
 /* ========= BOOT ========= */
 window.onload = () => {
   initLock();
@@ -4848,6 +4897,7 @@ window.onload = () => {
   }
 
   migrateLegacyData();
+  restoreShadowData();
 
   earningsBalance.value = localStorage.getItem("earningsBalance") || "";
   inventoryAllowance.value = localStorage.getItem("inventoryAllowance") || "";
@@ -4973,7 +5023,9 @@ function collectFullBackupData(){
     data: {
       activeInventory: safeGetJSON("activeInventory", []),
       soldInventory: safeGetJSON("soldInventory", []),
+      soldInventory_shadow: safeGetJSON("soldInventory_shadow", []),
       inventoryHolds: safeGetJSON("inventoryHolds", []),
+      inventoryHolds_shadow: safeGetJSON("inventoryHolds_shadow", []),
       monthlyIncome: safeGetJSON("monthlyIncome", []),
 
       earningsBalance: safeGetText("earningsBalance", ""),
@@ -5044,7 +5096,9 @@ function importFullBackup(){
 
       saveJSON("activeInventory", Array.isArray(d.activeInventory) ? d.activeInventory : []);
       saveJSON("soldInventory", Array.isArray(d.soldInventory) ? d.soldInventory : []);
+      saveJSON("soldInventory_shadow", Array.isArray(d.soldInventory_shadow) ? d.soldInventory_shadow : (Array.isArray(d.soldInventory) ? d.soldInventory : []));
       saveJSON("inventoryHolds", Array.isArray(d.inventoryHolds) ? d.inventoryHolds : []);
+      saveJSON("inventoryHolds_shadow", Array.isArray(d.inventoryHolds_shadow) ? d.inventoryHolds_shadow : (Array.isArray(d.inventoryHolds) ? d.inventoryHolds : []));
       saveJSON("monthlyIncome", Array.isArray(d.monthlyIncome) ? d.monthlyIncome : []);
 
       saveText("earningsBalance", d.earningsBalance ?? "");
