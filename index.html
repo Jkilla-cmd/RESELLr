@@ -743,9 +743,7 @@ body::before{
   inset:0;
   pointer-events:none;
   z-index:-1;
-  background-image:
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 2px, transparent 6px),
-    radial-gradient(1200px 800px at 50% 40%, rgba(56,189,248,0.06), transparent 60%);
+  
   mix-blend-mode: overlay;
   opacity: 0.55;
 }
@@ -859,9 +857,7 @@ html[data-theme="hackercyan"] body::before{
   inset:0;
   pointer-events:none;
   z-index:-1;
-  background-image:
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 2px, transparent 6px),
-    radial-gradient(1200px 800px at 50% 40%, rgba(56,189,248,0.06), transparent 60%);
+  
   mix-blend-mode: overlay;
   opacity: 0.55;
 }
@@ -879,9 +875,7 @@ html[data-theme="cyberred"] body::before{
   inset:0;
   pointer-events:none;
   z-index:-1;
-  background-image:
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 2px, transparent 6px),
-    radial-gradient(1200px 800px at 50% 40%, rgba(255,77,77,0.06), transparent 60%);
+  
   mix-blend-mode: overlay;
   opacity: 0.55;
 }
@@ -1349,17 +1343,17 @@ html[data-theme="vault"]{
 
 
 html[data-theme="lofi"]{
-  --bg:#0b0716;
-  --panel: rgba(15,10,34,0.72);
-  --panel-solid: rgba(18,12,40,0.86);
-  --panel-2: rgba(20,14,46,0.65);
-  --border: rgba(255,130,190,0.20);
-  --text:#f3e8ff;
-  --muted:#c2a7d9;
-  --accent:#ff7db8;
-  --accent-2:#9f7aea;
-  --blue:#74c0fc;
-  --green:#86efac;
+  --bg:
+    radial-gradient(circle at 18% 18%, #23103a 0%, #0a0714 45%, #04030a 100%);
+  --panel: rgba(10, 8, 20, 0.82);
+  --panel-solid: rgba(14, 10, 28, 0.92);
+  --border: rgba(244, 114, 182, 0.16);
+  --text:#f5eefe;
+  --muted:#bda7e8;
+  --accent:#f472b6;
+  --accent-2:#8b5cf6;
+  --blue:#c084fc;
+  --green:#4ade80;
   --red:#fb7185;
   --yellow:#fbbf24;
 }
@@ -1466,6 +1460,54 @@ html[data-theme="lofi"] .market-card{
   color:var(--muted);
 }
 #storageProbe b { color: var(--text); }
+
+
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background-image:url("https://grainy-gradients.vercel.app/noise.svg");
+  opacity:0.06;
+}
+
+
+html[data-theme="lofi"] body{
+  background:
+    radial-gradient(circle at 18% 18%, rgba(139,92,246,0.18), transparent 30%),
+    radial-gradient(circle at 82% 22%, rgba(244,114,182,0.12), transparent 28%),
+    linear-gradient(180deg, #07050d 0%, #04030a 100%);
+}
+html[data-theme="lofi"] .panel,
+html[data-theme="lofi"] .topbar,
+html[data-theme="lofi"] .sidebar{
+  box-shadow: 0 18px 55px rgba(0,0,0,0.45);
+}
+html[data-theme="lofi"] .sidebar button.active{
+  box-shadow: 0 10px 30px rgba(244,114,182,0.12);
+}
+.lofi-music-btn{
+  width:auto;
+  padding:8px 12px;
+  border-radius:12px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.lofi-music-btn .dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background: var(--accent);
+  opacity:.35;
+}
+.lofi-music-btn.playing .dot{
+  opacity:1;
+  box-shadow:0 0 12px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.lofi-hidden-audio{
+  display:none;
+}
 
 </style>
 </head>
@@ -1629,6 +1671,7 @@ html[data-theme="lofi"] .market-card{
   <button class="hamburger" onclick="toggleSidebar()">☰</button>
   <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>FINAL-CLEAN-2026-04-22-02</span></div>
   <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="small lofi-music-btn" id="lofiMusicToggle" onclick="toggleLofiMusic()"><span class="dot"></span><span id="lofiMusicLabel">Lo‑Fi Music</span></button>
     <button class="small" onclick="lockNow()">Lock</button>
     <button class="small danger" onclick="factoryReset()">Reset</button>
   </div>
@@ -5317,6 +5360,56 @@ function importFullBackup(){
 
   window.resellrFinalRehydrate = resellrFinalRehydrate;
 })();
+</script>
+
+
+<audio id="lofiAudio" class="lofi-hidden-audio" loop preload="none" crossorigin="anonymous">
+  <source src="https://cdn.pixabay.com/audio/2022/10/25/audio_94613b6a65.mp3" type="audio/mpeg">
+</audio>
+
+
+<script>
+function setLofiMusicUi(isPlaying){
+  try{
+    const btn = document.getElementById("lofiMusicToggle");
+    const label = document.getElementById("lofiMusicLabel");
+    if(btn) btn.classList.toggle("playing", !!isPlaying);
+    if(label) label.textContent = isPlaying ? "Lo‑Fi Playing" : "Lo‑Fi Music";
+  }catch(e){}
+}
+
+function toggleLofiMusic(){
+  const audio = document.getElementById("lofiAudio");
+  if(!audio) return;
+  if(audio.paused){
+    audio.play().then(()=>{
+      try{ localStorage.setItem("resellr_lofi_music","on"); }catch(e){}
+      setLofiMusicUi(true);
+    }).catch(()=>{
+      alert("Music playback was blocked by the browser. Click the button again after interacting with the page.");
+    });
+  }else{
+    audio.pause();
+    try{ localStorage.setItem("resellr_lofi_music","off"); }catch(e){}
+    setLofiMusicUi(false);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  const audio = document.getElementById("lofiAudio");
+  const savedTheme = (()=>{ try{return localStorage.getItem("ots_theme") || localStorage.getItem("theme") || "";}catch(e){return "";} })();
+  setLofiMusicUi(audio && !audio.paused);
+  try{
+    const pref = localStorage.getItem("resellr_lofi_music");
+    if(pref === "on" && savedTheme === "lofi" && audio){
+      setLofiMusicUi(false);
+    }
+  }catch(e){}
+  if(audio){
+    audio.addEventListener("play", ()=>setLofiMusicUi(true));
+    audio.addEventListener("pause", ()=>setLofiMusicUi(false));
+  }
+});
 </script>
 
 </body>
