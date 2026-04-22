@@ -2861,6 +2861,7 @@ function writeSold(arr) {
   localStorage.setItem(SOLD_KEY, raw);
   localStorage.setItem(SOLD_SHADOW_KEY, raw);
   try{ sessionStorage.setItem(SOLD_KEY, raw); }catch(e){}
+  try{ if(window.resellrMirrorSnapshot) window.resellrMirrorSnapshot(); }catch(e){}
 }
 try{ updateBudgetPanel(); }catch(e){}
 
@@ -3255,6 +3256,7 @@ function factoryReset() {
   try{
     [
       "activeInventory",
+      "activeInventory_shadow",
       "soldInventory",
       "soldInventory_shadow",
       "inventoryHolds",
@@ -3278,6 +3280,7 @@ function factoryReset() {
 
   try{
     [
+      "activeInventory",
       "soldInventory",
       "inventoryHolds",
       "__resellr_mirror__"
@@ -3307,6 +3310,7 @@ function writeHolds(arr) {
   localStorage.setItem(HOLDS_KEY, raw);
   localStorage.setItem(HOLDS_SHADOW_KEY, raw);
   try{ sessionStorage.setItem(HOLDS_KEY, raw); }catch(e){}
+  try{ if(window.resellrMirrorSnapshot) window.resellrMirrorSnapshot(); }catch(e){}
 }
 
 let holdsSearchTerm = "";
@@ -3531,9 +3535,20 @@ function renderHolds() {
 
 /* ========= Inventory (Active) ========= */
 const ACTIVE_KEY = "activeInventory";
+const ACTIVE_SHADOW_KEY = "activeInventory_shadow";
 
-function readActive() { return JSON.parse(localStorage.getItem(ACTIVE_KEY)) || []; }
-function writeActive(arr) { localStorage.setItem(ACTIVE_KEY, JSON.stringify(arr)); }
+function readActive() {
+  const primary = _safeParseArray(localStorage.getItem(ACTIVE_KEY));
+  const shadow = _safeParseArray(localStorage.getItem(ACTIVE_SHADOW_KEY));
+  return primary.length ? primary : shadow;
+}
+function writeActive(arr) {
+  const raw = JSON.stringify(Array.isArray(arr) ? arr : []);
+  localStorage.setItem(ACTIVE_KEY, raw);
+  localStorage.setItem(ACTIVE_SHADOW_KEY, raw);
+  try{ sessionStorage.setItem(ACTIVE_KEY, raw); }catch(e){}
+  try{ if(window.resellrMirrorSnapshot) window.resellrMirrorSnapshot(); }catch(e){}
+}
 
 let lastDelete = null;
 let undoTimer = null;
@@ -4906,6 +4921,7 @@ function showStorageWarning(message){
 function restoreShadowData(){
   try{
     const pairs = [
+      ["activeInventory", "activeInventory_shadow"],
       ["soldInventory", "soldInventory_shadow"],
       ["inventoryHolds", "inventoryHolds_shadow"]
     ];
@@ -5058,6 +5074,7 @@ function collectFullBackupData(){
     exportedAt: new Date().toISOString(),
     data: {
       activeInventory: safeGetJSON("activeInventory", []),
+      activeInventory_shadow: safeGetJSON("activeInventory_shadow", []),
       soldInventory: safeGetJSON("soldInventory", []),
       soldInventory_shadow: safeGetJSON("soldInventory_shadow", []),
       inventoryHolds: safeGetJSON("inventoryHolds", []),
@@ -5131,6 +5148,7 @@ function importFullBackup(){
       };
 
       saveJSON("activeInventory", Array.isArray(d.activeInventory) ? d.activeInventory : []);
+      saveJSON("activeInventory_shadow", Array.isArray(d.activeInventory_shadow) ? d.activeInventory_shadow : (Array.isArray(d.activeInventory) ? d.activeInventory : []));
       saveJSON("soldInventory", Array.isArray(d.soldInventory) ? d.soldInventory : []);
       saveJSON("soldInventory_shadow", Array.isArray(d.soldInventory_shadow) ? d.soldInventory_shadow : (Array.isArray(d.soldInventory) ? d.soldInventory : []));
       saveJSON("inventoryHolds", Array.isArray(d.inventoryHolds) ? d.inventoryHolds : []);
@@ -5201,8 +5219,11 @@ document.addEventListener("DOMContentLoaded", refreshBackupBanner);
 (function(){
   const MIRROR_KEYS = [
     "activeInventory",
+    "activeInventory_shadow",
     "soldInventory",
+    "soldInventory_shadow",
     "inventoryHolds",
+    "inventoryHolds_shadow",
     "monthlyIncome",
     "earningsBalance",
     "inventoryAllowance",
@@ -5257,7 +5278,8 @@ document.addEventListener("DOMContentLoaded", refreshBackupBanner);
       try{
         const cur = localStorage.getItem(k);
         const mir = data[k];
-        if((cur === null || cur === "" || cur === "[]" ) && mir !== undefined && mir !== null && mir !== ""){
+        if(mir === undefined || mir === null || mir === "" || mir === "[]") return;
+        if(cur === null || cur === "" || cur === "[]"){
           localStorage.setItem(k, mir);
           restored = true;
         }
