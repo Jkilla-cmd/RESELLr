@@ -5105,5 +5105,151 @@ function dismissBackupBanner(){
 document.addEventListener("DOMContentLoaded", refreshBackupBanner);
 </script>
 
+
+<script>
+/* ===== Refresh Guard: mirror critical data across refresh in this tab ===== */
+(function(){
+  const MIRROR_KEYS = [
+    "activeInventory",
+    "soldInventory",
+    "inventoryHolds",
+    "monthlyIncome",
+    "earningsBalance",
+    "inventoryAllowance",
+    "ots_theme",
+    "theme",
+    "dashboardLayoutV1",
+    "nwShow",
+    "nwConservative",
+    "nwRange",
+    "reinvestPct",
+    "budgetMode",
+    "resellr_reinvest_pct",
+    "lastBackupExportAt",
+    "backupBannerDismissed"
+  ];
+
+  function readMirror(){
+    let data = {};
+    try{
+      const raw = sessionStorage.getItem("__resellr_mirror__");
+      if(raw) data = JSON.parse(raw) || {};
+    }catch(e){}
+    if(!data || typeof data !== "object") data = {};
+    try{
+      if(Object.keys(data).length === 0 && typeof window.name === "string" && window.name.startsWith("RESELLR_MIRROR::")){
+        data = JSON.parse(window.name.replace("RESELLR_MIRROR::","")) || {};
+      }
+    }catch(e){}
+    return data && typeof data === "object" ? data : {};
+  }
+
+  function writeMirror(data){
+    try{ sessionStorage.setItem("__resellr_mirror__", JSON.stringify(data)); }catch(e){}
+    try{ window.name = "RESELLR_MIRROR::" + JSON.stringify(data); }catch(e){}
+  }
+
+  function snapshotFromLocalStorage(){
+    const data = readMirror();
+    MIRROR_KEYS.forEach((k)=>{
+      try{
+        const v = localStorage.getItem(k);
+        if(v !== null) data[k] = v;
+      }catch(e){}
+    });
+    writeMirror(data);
+  }
+
+  function restoreMissingFromMirror(){
+    const data = readMirror();
+    let restored = false;
+    MIRROR_KEYS.forEach((k)=>{
+      try{
+        const cur = localStorage.getItem(k);
+        const mir = data[k];
+        if((cur === null || cur === "" || cur === "[]" ) && mir !== undefined && mir !== null && mir !== ""){
+          localStorage.setItem(k, mir);
+          restored = true;
+        }
+      }catch(e){}
+    });
+    return restored;
+  }
+
+  // Expose for manual use/debug if needed
+  window.resellrMirrorSnapshot = snapshotFromLocalStorage;
+  window.resellrMirrorRestore = restoreMissingFromMirror;
+
+  // Patch localStorage methods so future writes/removes stay mirrored
+  try{
+    const _setItem = Storage.prototype.setItem;
+    const _removeItem = Storage.prototype.removeItem;
+    const _clear = Storage.prototype.clear;
+
+    Storage.prototype.setItem = function(key, value){
+      const out = _setItem.apply(this, arguments);
+      try{
+        if(this === localStorage && MIRROR_KEYS.includes(String(key))){
+          const data = readMirror();
+          data[String(key)] = String(value);
+          writeMirror(data);
+        }
+      }catch(e){}
+      return out;
+    };
+
+    Storage.prototype.removeItem = function(key){
+      const out = _removeItem.apply(this, arguments);
+      try{
+        if(this === localStorage && MIRROR_KEYS.includes(String(key))){
+          const data = readMirror();
+          delete data[String(key)];
+          writeMirror(data);
+        }
+      }catch(e){}
+      return out;
+    };
+
+    Storage.prototype.clear = function(){
+      const out = _clear.apply(this, arguments);
+      try{
+        if(this === localStorage){
+          const data = readMirror();
+          // keep mirror as disaster recovery for same-tab refreshes
+          writeMirror(data);
+        }
+      }catch(e){}
+      return out;
+    };
+  }catch(e){}
+
+  // Early attempt and again after load for safety
+  try{ restoreMissingFromMirror(); }catch(e){}
+  window.addEventListener("load", function(){
+    try{
+      const restored = restoreMissingFromMirror();
+      snapshotFromLocalStorage();
+      if(restored){
+        try{ renderActive(); }catch(e){}
+        try{ renderHolds(); }catch(e){}
+        try{ renderSold(); }catch(e){}
+        try{ loadIncomeChart(); }catch(e){}
+        try{ updateDashboardYTD(); }catch(e){}
+        try{ updateBudgetPanel(); }catch(e){}
+      }
+    }catch(e){}
+  });
+
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "hidden"){
+      try{ snapshotFromLocalStorage(); }catch(e){}
+    }
+  });
+  window.addEventListener("beforeunload", function(){
+    try{ snapshotFromLocalStorage(); }catch(e){}
+  });
+})();
+</script>
+
 </body>
 </html>
