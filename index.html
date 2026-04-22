@@ -1201,6 +1201,25 @@ html[data-theme="vault"]{
   --accent-2:#b91c1c;
 }
 
+
+/* ===== Backup Reminder Banner ===== */
+.backup-banner{
+  display:none;
+  margin-bottom:14px;
+  padding:12px 14px;
+  border:1px solid var(--border);
+  background: var(--panel);
+  border-radius:14px;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.backup-banner.show{ display:flex; }
+.backup-banner .msg{ font-size:13px; color:var(--text); }
+.backup-banner .msg .muted{ font-size:12px; display:block; margin-top:4px; }
+.backup-banner .actions{ display:flex; gap:10px; flex-wrap:wrap; }
+
 </style>
 </head>
 
@@ -1409,6 +1428,18 @@ html[data-theme="vault"]{
 
     <!-- DASHBOARD -->
     <section id="secDashboard" class="section active">
+
+    <div class="backup-banner" id="backupBanner">
+      <div class="msg">
+        Back up your RESELLr data regularly.
+        <span class="muted">Export a full backup after major inventory or sold updates.</span>
+      </div>
+      <div class="actions">
+        <button class="small" onclick="showSection('secImportExport');setTimeout(()=>{try{document.getElementById('backupRestoreMsg').scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}},100);">Go to Backup</button>
+        <button class="small" onclick="dismissBackupBanner()">Dismiss</button>
+      </div>
+    </div>
+
       <div class="grid">
         
         <div class="panel" id="netWorthPanel">
@@ -2037,6 +2068,30 @@ html[data-theme="vault"]{
 
       <div class="grid" style="margin-top:16px;">
         <div class="panel">
+          <h3>Full Backup / Restore</h3>
+
+          <div class="stat muted" style="line-height:1.5">
+            Save everything into one backup file:<br>
+            <span class="blue">inventory, holds, sold, monthly income, theme, and settings</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <button onclick="exportFullBackup()">Export Full Backup (JSON)</button>
+          <div style="height:10px"></div>
+
+          <label>Restore Backup File</label>
+          <input type="file" id="fullBackupFile" accept=".json,application/json" />
+          <button onclick="importFullBackup()">Restore Full Backup</button>
+
+          <div class="divider"></div>
+          <div class="stat muted" id="backupRestoreMsg">Use this before big edits or imports.</div>
+        </div>
+      </div>
+
+
+      <div class="grid" style="margin-top:16px;">
+        <div class="panel">
           <h3>Tips</h3>
           <div class="stat muted" style="line-height:1.7">
             • Inventory import expects <span class="blue">date, item</span> and supports <span class="blue">type, platform, cost, list, qty, notes</span>.<br>
@@ -2210,14 +2265,15 @@ function calculateInventoryBudget(gross, reinvestPct){
 
 /* ========= PWA SERVICE WORKER ========= */
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").then(() => {
-      const el = document.getElementById("pwaStat");
-      if (el) el.textContent = "Service worker: registered ✅";
-    }).catch(() => {
-      const el = document.getElementById("pwaStat");
-      if (el) el.textContent = "Service worker: not active (needs HTTPS/localhost).";
-    });
+  window.addEventListener("load", async () => {
+    const el = document.getElementById("pwaStat");
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const reg of regs) { try { await reg.unregister(); } catch(e){} }
+      if (el) el.textContent = "Service worker: disabled for data safety ✅";
+    } catch (e) {
+      if (el) el.textContent = "Service worker: could not change status.";
+    }
   });
 }
 
@@ -4743,9 +4799,55 @@ function initBudgetPanel(){
 }
 
 
+
+/* ========= STORAGE SAFETY ========= */
+function storageAvailable(){
+  try{
+    const k = "__resellr_storage_test__";
+    localStorage.setItem(k, "1");
+    const ok = localStorage.getItem(k) === "1";
+    localStorage.removeItem(k);
+    return ok;
+  }catch(e){ return false; }
+}
+
+function migrateLegacyData(){
+  try{
+    const pairs = [
+      ["inventory","activeInventory"],
+      ["active","activeInventory"],
+      ["sold","soldInventory"],
+      ["holds","inventoryHolds"]
+    ];
+    for(const [oldKey,newKey] of pairs){
+      const cur = localStorage.getItem(newKey);
+      const old = localStorage.getItem(oldKey);
+      if((cur === null || cur === "" || cur === "[]") && old && old !== "[]"){
+        localStorage.setItem(newKey, old);
+      }
+    }
+  }catch(e){}
+}
+
+function showStorageWarning(message){
+  const msg = document.getElementById("soldImportMsg") || document.getElementById("activeImportMsg");
+  if(msg){
+    msg.textContent = message;
+    msg.style.color = "var(--red)";
+  }
+  try{ alert(message); }catch(e){}
+}
+
+
 /* ========= BOOT ========= */
 window.onload = () => {
   initLock();
+
+  if(!storageAvailable()){
+    showStorageWarning("Browser storage is not persisting on this page. Open the app from the same Safari/Chrome URL each time, not a temporary preview or download view.");
+  }
+
+  migrateLegacyData();
 
   earningsBalance.value = localStorage.getItem("earningsBalance") || "";
   inventoryAllowance.value = localStorage.getItem("inventoryAllowance") || "";
@@ -4758,7 +4860,7 @@ window.onload = () => {
   initBudgetPanel();
   try{ updateDashboardYTD(); }catch(e){}
   renderProfitGraph();
-showSection('secDashboard');
+  showSection('secDashboard');
 };
 
 
@@ -4843,6 +4945,165 @@ function addProfitOverlay(incomeChartInstance){
 
 </script>
 
+
+
+<script>
+function collectFullBackupData(){
+  const safeGetJSON = (key, fallback) => {
+    try{
+      const raw = localStorage.getItem(key);
+      return raw === null ? fallback : JSON.parse(raw);
+    }catch(e){
+      return fallback;
+    }
+  };
+  const safeGetText = (key, fallback="") => {
+    try{
+      const raw = localStorage.getItem(key);
+      return raw === null ? fallback : raw;
+    }catch(e){
+      return fallback;
+    }
+  };
+
+  return {
+    app: "RESELLr",
+    version: "backup-v1",
+    exportedAt: new Date().toISOString(),
+    data: {
+      activeInventory: safeGetJSON("activeInventory", []),
+      soldInventory: safeGetJSON("soldInventory", []),
+      inventoryHolds: safeGetJSON("inventoryHolds", []),
+      monthlyIncome: safeGetJSON("monthlyIncome", []),
+
+      earningsBalance: safeGetText("earningsBalance", ""),
+      inventoryAllowance: safeGetText("inventoryAllowance", ""),
+
+      ots_theme: safeGetText("ots_theme", ""),
+      theme: safeGetText("theme", ""),
+      dashboardLayoutV1: safeGetText("dashboardLayoutV1", ""),
+
+      nwShow: safeGetText("nwShow", ""),
+      nwConservative: safeGetText("nwConservative", ""),
+      nwRange: safeGetText("nwRange", ""),
+
+      reinvestPct: safeGetText("reinvestPct", ""),
+      budgetMode: safeGetText("budgetMode", "")
+    }
+  };
+}
+
+function exportFullBackup(){
+  try{
+    const payload = collectFullBackupData();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0,19).replace(/[T:]/g, "-");
+    a.href = URL.createObjectURL(blob);
+    a.download = "resellr_backup_" + stamp + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+    try{
+      localStorage.setItem("lastBackupExportAt", new Date().toISOString());
+      localStorage.removeItem("backupBannerDismissed");
+    }catch(e){}
+    const msg = document.getElementById("backupRestoreMsg");
+    if(msg) msg.textContent = "Backup exported successfully.";
+    try{ showToast("Backup exported"); }catch(e){}
+    try{ refreshBackupBanner(); }catch(e){}
+  }catch(err){
+    const msg = document.getElementById("backupRestoreMsg");
+    if(msg) msg.textContent = "Could not export backup.";
+    alert("Could not export backup.");
+  }
+}
+
+function importFullBackup(){
+  const input = document.getElementById("fullBackupFile");
+  const file = input && input.files ? input.files[0] : null;
+  if(!file){
+    alert("Choose a backup JSON file first.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(){
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!parsed || !parsed.data){
+        throw new Error("Invalid backup format.");
+      }
+      const d = parsed.data;
+
+      const saveJSON = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+      const saveText = (key, value) => {
+        if(value !== undefined && value !== null) localStorage.setItem(key, String(value));
+      };
+
+      saveJSON("activeInventory", Array.isArray(d.activeInventory) ? d.activeInventory : []);
+      saveJSON("soldInventory", Array.isArray(d.soldInventory) ? d.soldInventory : []);
+      saveJSON("inventoryHolds", Array.isArray(d.inventoryHolds) ? d.inventoryHolds : []);
+      saveJSON("monthlyIncome", Array.isArray(d.monthlyIncome) ? d.monthlyIncome : []);
+
+      saveText("earningsBalance", d.earningsBalance ?? "");
+      saveText("inventoryAllowance", d.inventoryAllowance ?? "");
+      saveText("ots_theme", d.ots_theme || d.theme || "");
+      saveText("theme", d.theme || d.ots_theme || "");
+      saveText("dashboardLayoutV1", d.dashboardLayoutV1 ?? "");
+      saveText("nwShow", d.nwShow ?? "");
+      saveText("nwConservative", d.nwConservative ?? "");
+      saveText("nwRange", d.nwRange ?? "");
+      saveText("reinvestPct", d.reinvestPct ?? "");
+      saveText("budgetMode", d.budgetMode ?? "");
+
+      const msg = document.getElementById("backupRestoreMsg");
+      if(msg) msg.textContent = "Backup restored. Refreshing...";
+      try{ showToast("Backup restored"); }catch(e){}
+      setTimeout(()=>location.reload(), 250);
+    }catch(err){
+      const msg = document.getElementById("backupRestoreMsg");
+      if(msg) msg.textContent = "Backup restore failed. Use a valid RESELLr backup file.";
+      alert("Backup restore failed. Use a valid RESELLr backup file.");
+    }
+  };
+  reader.readAsText(file);
+}
+</script>
+
+
+<script>
+function shouldShowBackupBanner(){
+  try{
+    const dismissed = localStorage.getItem("backupBannerDismissed") === "1";
+    const last = localStorage.getItem("lastBackupExportAt");
+    if(dismissed && last) return false;
+    if(!last) return true;
+    const lastTime = new Date(last).getTime();
+    if(!lastTime) return true;
+    const days = (Date.now() - lastTime) / (1000*60*60*24);
+    return days >= 7;
+  }catch(e){
+    return true;
+  }
+}
+
+function refreshBackupBanner(){
+  try{
+    const el = document.getElementById("backupBanner");
+    if(!el) return;
+    el.classList.toggle("show", shouldShowBackupBanner());
+  }catch(e){}
+}
+
+function dismissBackupBanner(){
+  try{ localStorage.setItem("backupBannerDismissed","1"); }catch(e){}
+  refreshBackupBanner();
+}
+
+document.addEventListener("DOMContentLoaded", refreshBackupBanner);
+</script>
 
 </body>
 </html>
