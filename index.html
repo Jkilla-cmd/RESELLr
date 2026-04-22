@@ -1536,7 +1536,7 @@ html[data-theme="vault"]{
 
 <div class="topbar">
   <button class="hamburger" onclick="toggleSidebar()">☰</button>
-  <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>STABLE-CANARY-2026-04-22-01</span></div>
+  <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>FINAL-CLEAN-2026-04-22-02</span></div>
   <div style="display:flex; gap:10px; flex-wrap:wrap;">
     <button class="small" onclick="lockNow()">Lock</button>
     <button class="small danger" onclick="factoryReset()">Reset</button>
@@ -1585,7 +1585,7 @@ html[data-theme="vault"]{
     <!-- DASHBOARD -->
     
 <section id="secDashboard" class="section active">
-      <div id="storageProbe">Storage probe loading…</div>
+      <div id="storageProbe">Storage probe loading… (final clean patch)</div>
 
       <div class="grid">
         
@@ -5101,7 +5101,7 @@ function importFullBackup(){
 
 <script>
 (function(){
-  window.__RESELLR_BUILD_ID = "STABLE-CANARY-2026-04-22-01";
+  window.__RESELLR_BUILD_ID = "FINAL-CLEAN-2026-04-22-02";
   function updateStorageProbe(){
     try{
       const db = localStorage.getItem("resellrData");
@@ -5139,6 +5139,91 @@ function importFullBackup(){
   document.addEventListener("DOMContentLoaded", ()=>setTimeout(updateStorageProbe, 150));
   window.addEventListener("load", ()=>setTimeout(updateStorageProbe, 300));
   window.__updateStorageProbe = updateStorageProbe;
+})();
+</script>
+
+
+<script>
+/* ===== Final clean UI rehydrate patch ===== */
+(function(){
+  function resellrFinalRehydrate(){
+    try{
+      // Force in-memory collections to reload from storage if these globals exist
+      if(typeof readActive === "function"){
+        try{ window.active = readActive(); }catch(e){}
+      }
+      if(typeof readHolds === "function"){
+        try{ window.holds = readHolds(); }catch(e){}
+      }
+      if(typeof readSold === "function"){
+        try{ window.sold = readSold(); }catch(e){}
+      }
+
+      // Reset common filters/searches that can hide restored rows
+      [
+        "activeYearFilter","activeMonthFilter",
+        "holdsYearFilter","holdsMonthFilter",
+        "soldYearFilter","soldMonthFilter","soldTypeFilter","soldPlatformFilter",
+        "yearFilter"
+      ].forEach((id)=>{
+        const el = document.getElementById(id);
+        if(!el) return;
+        if(id === "soldTypeFilter"){
+          el.value = "ALL";
+        }else if(el.querySelector && el.querySelector('option[value="ALL"]')){
+          el.value = "ALL";
+        }
+      });
+
+      ["activeSearchTop","holdsSearchTop","soldSearchTop"].forEach((id)=>{
+        const el = document.getElementById(id);
+        if(el) el.value = "";
+      });
+
+      try{ window.activeSearchTerm = ""; }catch(e){}
+      try{ window.holdsSearchTerm = ""; }catch(e){}
+      try{ window.soldSearchTerm = ""; }catch(e){}
+      try{ window.activeSearch = ""; }catch(e){}
+      try{ window.soldSearch = ""; }catch(e){}
+      try{ window.holdsSearch = ""; }catch(e){}
+
+      // Re-render tabs and dashboard from freshly loaded state
+      try{ if(typeof renderActive === "function") renderActive(); }catch(e){}
+      try{ if(typeof renderHolds === "function") renderHolds(); }catch(e){}
+      try{ if(typeof renderSold === "function") renderSold(); }catch(e){}
+      try{ if(typeof loadIncomeChart === "function") loadIncomeChart(); }catch(e){}
+      try{ if(typeof updateDashboardYTD === "function") updateDashboardYTD(); }catch(e){}
+      try{ if(typeof updateBudgetPanel === "function") updateBudgetPanel(); }catch(e){}
+      try{ if(typeof updateDashboardMonthMatch === "function") updateDashboardMonthMatch(); }catch(e){}
+      try{ if(typeof updateNetWorth === "function") updateNetWorth(); }catch(e){}
+      try{ if(typeof updateStorageProbe === "function") updateStorageProbe(); }catch(e){}
+    }catch(err){
+      console.warn("RESELLr final rehydrate failed", err);
+    }
+  }
+
+  // Run after the page's own init/boot has had a chance to set up functions and DOM
+  document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(resellrFinalRehydrate, 250);
+    setTimeout(resellrFinalRehydrate, 900);
+  });
+
+  window.addEventListener("load", function(){
+    setTimeout(resellrFinalRehydrate, 250);
+    setTimeout(resellrFinalRehydrate, 1200);
+  });
+
+  // Also rehydrate when navigating into each tab, in case a later render path emptied the table
+  document.addEventListener("click", function(e){
+    const t = e.target;
+    if(!t) return;
+    const txt = (t.getAttribute && t.getAttribute("data-target")) || "";
+    if(["secInventory","secHolds","secSold"].includes(txt)){
+      setTimeout(resellrFinalRehydrate, 50);
+    }
+  });
+
+  window.resellrFinalRehydrate = resellrFinalRehydrate;
 })();
 </script>
 
