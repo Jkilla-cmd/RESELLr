@@ -1346,6 +1346,36 @@ html[data-theme="vault"]{
   --accent-2:#b91c1c;
 }
 
+
+/* Canary badge */
+.canary-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  font-size:11px;
+  color:var(--text);
+  background:var(--panel);
+  margin-left:10px;
+}
+.canary-dot {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--green);
+}
+#storageProbe {
+  margin: 10px 0 14px;
+  padding:10px 12px;
+  border:1px dashed var(--border);
+  border-radius:12px;
+  font-size:12px;
+  color:var(--muted);
+}
+#storageProbe b { color: var(--text); }
+
 </style>
 </head>
 
@@ -1506,7 +1536,7 @@ html[data-theme="vault"]{
 
 <div class="topbar">
   <button class="hamburger" onclick="toggleSidebar()">☰</button>
-  <div class="title" id="topbarTitle">RESELLr</div>
+  <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>STABLE-CANARY-2026-04-22-01</span></div>
   <div style="display:flex; gap:10px; flex-wrap:wrap;">
     <button class="small" onclick="lockNow()">Lock</button>
     <button class="small danger" onclick="factoryReset()">Reset</button>
@@ -1553,7 +1583,10 @@ html[data-theme="vault"]{
   <main class="canvas">
 
     <!-- DASHBOARD -->
-    <section id="secDashboard" class="section active">
+    
+<section id="secDashboard" class="section active">
+      <div id="storageProbe">Storage probe loading…</div>
+
       <div class="grid">
         
         <div class="panel" id="netWorthPanel">
@@ -5063,6 +5096,50 @@ function importFullBackup(){
   };
   reader.readAsText(file);
 }
+</script>
+
+
+<script>
+(function(){
+  window.__RESELLR_BUILD_ID = "STABLE-CANARY-2026-04-22-01";
+  function updateStorageProbe(){
+    try{
+      const db = localStorage.getItem("resellrData");
+      const active = localStorage.getItem("activeInventory");
+      const holds = localStorage.getItem("inventoryHolds");
+      const sold = localStorage.getItem("soldInventory");
+      const probe = document.getElementById("storageProbe");
+      if(!probe) return;
+
+      let aCount = 0, hCount = 0, sCount = 0;
+      try {
+        const parsed = db ? JSON.parse(db) : null;
+        const kv = parsed && parsed.kv ? parsed.kv : {};
+        aCount = kv.activeInventory ? JSON.parse(kv.activeInventory).length : 0;
+        hCount = kv.inventoryHolds ? JSON.parse(kv.inventoryHolds).length : 0;
+        sCount = kv.soldInventory ? JSON.parse(kv.soldInventory).length : 0;
+      } catch(e) {}
+
+      probe.innerHTML =
+        "<b>Build:</b> " + window.__RESELLR_BUILD_ID +
+        " &nbsp;|&nbsp; <b>URL:</b> " + location.href +
+        " &nbsp;|&nbsp; <b>resellrData:</b> " + (db ? "present" : "missing") +
+        " &nbsp;|&nbsp; <b>Counts:</b> inv " + aCount + " / holds " + hCount + " / sold " + sCount;
+      console.log("RESELLr build", window.__RESELLR_BUILD_ID);
+      console.log("resellrData exists?", !!db);
+      console.log("location.href", location.href);
+      console.log("debug db", db);
+      console.log("legacy keys", {
+        activeInventory: active,
+        inventoryHolds: holds,
+        soldInventory: sold
+      });
+    }catch(err){}
+  }
+  document.addEventListener("DOMContentLoaded", ()=>setTimeout(updateStorageProbe, 150));
+  window.addEventListener("load", ()=>setTimeout(updateStorageProbe, 300));
+  window.__updateStorageProbe = updateStorageProbe;
+})();
 </script>
 
 </body>
