@@ -2210,14 +2210,15 @@ function calculateInventoryBudget(gross, reinvestPct){
 
 /* ========= PWA SERVICE WORKER ========= */
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").then(() => {
-      const el = document.getElementById("pwaStat");
-      if (el) el.textContent = "Service worker: registered ✅";
-    }).catch(() => {
-      const el = document.getElementById("pwaStat");
-      if (el) el.textContent = "Service worker: not active (needs HTTPS/localhost).";
-    });
+  window.addEventListener("load", async () => {
+    const el = document.getElementById("pwaStat");
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const reg of regs) { try { await reg.unregister(); } catch(e){} }
+      if (el) el.textContent = "Service worker: disabled for data safety ✅";
+    } catch (e) {
+      if (el) el.textContent = "Service worker: could not change status.";
+    }
   });
 }
 
@@ -4743,9 +4744,55 @@ function initBudgetPanel(){
 }
 
 
+
+/* ========= STORAGE SAFETY ========= */
+function storageAvailable(){
+  try{
+    const k = "__resellr_storage_test__";
+    localStorage.setItem(k, "1");
+    const ok = localStorage.getItem(k) === "1";
+    localStorage.removeItem(k);
+    return ok;
+  }catch(e){ return false; }
+}
+
+function migrateLegacyData(){
+  try{
+    const pairs = [
+      ["inventory","activeInventory"],
+      ["active","activeInventory"],
+      ["sold","soldInventory"],
+      ["holds","inventoryHolds"]
+    ];
+    for(const [oldKey,newKey] of pairs){
+      const cur = localStorage.getItem(newKey);
+      const old = localStorage.getItem(oldKey);
+      if((cur === null || cur === "" || cur === "[]") && old && old !== "[]"){
+        localStorage.setItem(newKey, old);
+      }
+    }
+  }catch(e){}
+}
+
+function showStorageWarning(message){
+  const msg = document.getElementById("soldImportMsg") || document.getElementById("activeImportMsg");
+  if(msg){
+    msg.textContent = message;
+    msg.style.color = "var(--red)";
+  }
+  try{ alert(message); }catch(e){}
+}
+
+
 /* ========= BOOT ========= */
 window.onload = () => {
   initLock();
+
+  if(!storageAvailable()){
+    showStorageWarning("Browser storage is not persisting on this page. Open the app from the same Safari/Chrome URL each time, not a temporary preview or download view.");
+  }
+
+  migrateLegacyData();
 
   earningsBalance.value = localStorage.getItem("earningsBalance") || "";
   inventoryAllowance.value = localStorage.getItem("inventoryAllowance") || "";
@@ -4758,7 +4805,7 @@ window.onload = () => {
   initBudgetPanel();
   try{ updateDashboardYTD(); }catch(e){}
   renderProfitGraph();
-showSection('secDashboard');
+  showSection('secDashboard');
 };
 
 
