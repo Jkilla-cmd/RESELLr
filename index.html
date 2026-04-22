@@ -3249,9 +3249,45 @@ renderCalc();
 
 /* ========= Reset ========= */
 function factoryReset() {
-  const ok = confirm("Factory Reset: This will clear ALL local data on this device. Continue?");
-  if (!ok) return;
-  localStorage.clear();
+  const ok = confirm("Reset all app data? This clears inventory, holds, sold, income, layout, theme, and backup reminders.");
+  if(!ok) return;
+
+  try{
+    [
+      "activeInventory",
+      "soldInventory",
+      "soldInventory_shadow",
+      "inventoryHolds",
+      "inventoryHolds_shadow",
+      "monthlyIncome",
+      "earningsBalance",
+      "inventoryAllowance",
+      "ots_theme",
+      "theme",
+      "dashboardLayoutV1",
+      "nwShow",
+      "nwConservative",
+      "nwRange",
+      "reinvestPct",
+      "budgetMode",
+      "resellr_reinvest_pct",
+      "lastBackupExportAt",
+      "backupBannerDismissed"
+    ].forEach(k => localStorage.removeItem(k));
+  }catch(e){}
+
+  try{
+    [
+      "soldInventory",
+      "inventoryHolds",
+      "__resellr_mirror__"
+    ].forEach(k => sessionStorage.removeItem(k));
+  }catch(e){}
+
+  try{
+    window.name = "";
+  }catch(e){}
+
   location.reload();
 }
 
