@@ -4437,6 +4437,7 @@ function addHoldManually() {
   all.push({ _id: genId(), date: d, item, type, platform, cost, value, qty, notes });
   writeHolds(all);
   renderHolds();
+  try{ triggerHoldCharacter(); }catch(e){}
 
   document.getElementById("holdDate").value = "";
   document.getElementById("holdItem").value = "";
@@ -4561,6 +4562,7 @@ function moveActiveToHolds(id) {
   writeActive(active);
   renderHolds();
   renderActive();
+  try{ triggerHoldCharacter(); }catch(e){}
   showToast("Moved inventory item to holds");
 }
 
@@ -6667,42 +6669,6 @@ function triggerHoldCharacter(){
   }, 1800);
 }
 
-/* ===== Target ONLY Inventory Holds Add ===== */
-(function(){
-
-  function isHoldsVisible(){
-    const holdsTab = document.getElementById("secHolds");
-    if(!holdsTab) return false;
-    return holdsTab.offsetParent !== null; // true if visible
-  }
-
-  // Try multiple possible function names safely
-  const possibleFns = [
-    "addInventoryHold",
-    "addToInventoryHolds",
-    "addHoldItem",
-    "saveHold"
-  ];
-
-  possibleFns.forEach(fnName => {
-    if(typeof window[fnName] === "function"){
-      const original = window[fnName];
-
-      window[fnName] = function(){
-        const result = original.apply(this, arguments);
-
-        if(isHoldsVisible()){
-          setTimeout(()=>{
-            triggerHoldCharacter();
-          }, 50);
-        }
-
-        return result;
-      };
-    }
-  });
-
-})();
 </script>
 
 </body>
