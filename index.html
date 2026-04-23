@@ -1929,6 +1929,107 @@ html[data-theme="lofi"] textarea{
   th, td{ padding: 10px 10px !important; }
 }
 
+
+10%{ opacity:1; }
+  100%{ transform: translate3d(var(--dx), calc(100vh * var(--dy)), 0) rotate(var(--rot)) scale(1.15); opacity:0; }
+}
+
+
+/* ===== Comic KA-CHING celebration ===== */
+.ka-ching{
+  position: fixed;
+  left: 50%;
+  top: 35%;
+  transform: translate(-50%, -50%) scale(.6);
+  font-size: 64px;
+  font-weight: 900;
+  color: #00ff99;
+  text-shadow:
+    0 0 0 #000,
+    3px 3px 0 #000,
+    -3px -3px 0 #000,
+    0 0 25px rgba(0,255,150,.6);
+  letter-spacing: 2px;
+  opacity: 0;
+  z-index: 10070;
+  pointer-events: none;
+  user-select: none;
+}
+@keyframes kaChingPop{
+  0%{ opacity: 0; transform: translate(-50%, -60%) scale(.4) rotate(-8deg); }
+  40%{ opacity: 1; transform: translate(-50%, -50%) scale(var(--kaching-scale,1.2)) rotate(4deg); }
+  60%{ transform: translate(-50%, -50%) scale(calc(var(--kaching-scale,1.2) * .92)) rotate(-2deg); }
+  100%{ opacity: 0; transform: translate(-50%, -40%) scale(calc(var(--kaching-scale,1.2) * .98)) rotate(0deg); }
+}
+
+.ka-ching-burst{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10060;
+}
+.burst-line{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 140px;
+  background: linear-gradient(to bottom, #00ffcc, transparent);
+  transform-origin: bottom center;
+  opacity: 0;
+  border-radius: 999px;
+}
+@keyframes burstLine{
+  0%{ opacity: 0; transform: rotate(var(--angle)) scaleY(.3); }
+  40%{ opacity: 1; transform: rotate(var(--angle)) scaleY(1); }
+  100%{ opacity: 0; transform: rotate(var(--angle)) scaleY(1.2); }
+}
+
+body.kaching-shake{
+  animation: kachingShake 360ms linear;
+}
+@keyframes kachingShake{
+  0%,100%{ transform: translate(0,0); }
+  15%{ transform: translate(-4px, 2px); }
+  30%{ transform: translate(4px, -2px); }
+  45%{ transform: translate(-3px, -1px); }
+  60%{ transform: translate(3px, 2px); }
+  75%{ transform: translate(-2px, 1px); }
+}
+
+.lofi-avatar-trigger.kaching-glow{
+  opacity: 1 !important;
+  transform: translateY(0) scale(1.08) !important;
+  pointer-events: auto !important;
+  box-shadow: 0 0 0 4px rgba(0,255,153,.18), 0 0 24px rgba(0,255,153,.45), 0 12px 28px rgba(255,95,162,.25) !important;
+  border-color: rgba(0,255,153,.95) !important;
+}
+
+.combo-chip{
+  position: fixed;
+  left: 50%;
+  top: calc(35% + 58px);
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(12,16,24,.88);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #ffe089;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  z-index: 10071;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+@keyframes comboChipInOut{
+  0%{ opacity: 0; transform: translateX(-50%) translateY(10px) scale(.94); }
+  16%{ opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  84%{ opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  100%{ opacity: 0; transform: translateX(-50%) translateY(-8px) scale(.98); }
+}
+
 </style>
 </head>
 
@@ -3731,6 +3832,7 @@ function addSoldManually() {
   const all = readSold();
   all.push({ _id: genId(), date: d, item, type, platform, sale, cost, fees, ship, profit });
   writeSold(all);
+  try{ triggerSoldCelebration(sale); }catch(e){}
   try{ triggerMoneyRain(); }catch(e){}
 
   renderSold();
@@ -4812,6 +4914,7 @@ function confirmMarkSold() {
   const soldArr = readSold();
   soldArr.push({ _id: genId(), date: soldDate, item, type, platform, sale, cost, fees, ship, profit });
   writeSold(soldArr);
+  try{ triggerSoldCelebration(sale); }catch(e){}
   try{ triggerMoneyRain(); }catch(e){}
 
   // Remove from active
@@ -5990,6 +6093,129 @@ function triggerMoneyRain(count = 18){
   setTimeout(()=>{
     if(layer) layer.innerHTML = "";
   }, 4200);
+}
+</script>
+
+
+
+<script>
+let kachingAudioCtx = null;
+let soldComboCount = 0;
+let soldComboTimer = null;
+
+function playKaChingSound(amount){
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if(!AudioCtx) return;
+  if(!kachingAudioCtx) kachingAudioCtx = new AudioCtx();
+  if(kachingAudioCtx.state === "suspended") kachingAudioCtx.resume();
+
+  const now = kachingAudioCtx.currentTime;
+  const master = kachingAudioCtx.createGain();
+  master.gain.value = Math.min(0.16, 0.08 + (Number(amount||0)/2000));
+  master.connect(kachingAudioCtx.destination);
+
+  // cash register ding stack
+  [1046.5, 1318.5, 1567.98].forEach((freq, idx)=>{
+    const osc = kachingAudioCtx.createOscillator();
+    const gain = kachingAudioCtx.createGain();
+    osc.type = idx === 0 ? "triangle" : "sine";
+    osc.frequency.setValueAtTime(freq, now + idx * 0.03);
+    gain.gain.setValueAtTime(0.0001, now + idx * 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.08 - idx*0.015, now + idx * 0.03 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.03 + 0.38);
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start(now + idx * 0.03);
+    osc.stop(now + idx * 0.03 + 0.42);
+  });
+
+  // little click/clack
+  const bufferSize = Math.floor(kachingAudioCtx.sampleRate * 0.04);
+  const buffer = kachingAudioCtx.createBuffer(1, bufferSize, kachingAudioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1 - i/bufferSize); }
+  const noise = kachingAudioCtx.createBufferSource();
+  const bp = kachingAudioCtx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 1800;
+  const ng = kachingAudioCtx.createGain();
+  ng.gain.setValueAtTime(0.0001, now);
+  ng.gain.exponentialRampToValueAtTime(0.10, now + 0.005);
+  ng.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+  noise.buffer = buffer;
+  noise.connect(bp); bp.connect(ng); ng.connect(master);
+  noise.start(now); noise.stop(now + 0.05);
+}
+
+function triggerAvatarKaChingGlow(){
+  const btn = document.getElementById("lofiMusicToggle");
+  if(!btn) return;
+  btn.classList.add("kaching-glow");
+  setTimeout(()=>btn.classList.remove("kaching-glow"), 1300);
+}
+
+function triggerComicKaChing(amount){
+  const sale = Number(amount || 0);
+  const scale = sale >= 500 ? 1.6 : sale >= 300 ? 1.45 : sale >= 200 ? 1.32 : 1.18;
+
+  const text = document.createElement("div");
+  text.className = "ka-ching";
+  text.textContent = "KA-CHING!";
+  text.style.setProperty("--kaching-scale", String(scale));
+  text.style.animation = "kaChingPop 1200ms ease forwards";
+  document.body.appendChild(text);
+
+  const burst = document.createElement("div");
+  burst.className = "ka-ching-burst";
+  document.body.appendChild(burst);
+
+  const lines = sale >= 500 ? 24 : sale >= 300 ? 20 : 16;
+  for(let i=0;i<lines;i++){
+    const line = document.createElement("div");
+    line.className = "burst-line";
+    const angle = (360 / lines) * i;
+    line.style.setProperty("--angle", angle + "deg");
+    line.style.height = (sale >= 300 ? 170 : 140) + "px";
+    line.style.animation = `burstLine ${900 + (sale >= 300 ? 180 : 0)}ms ease-out forwards`;
+    burst.appendChild(line);
+  }
+
+  document.body.classList.add("kaching-shake");
+  setTimeout(()=>document.body.classList.remove("kaching-shake"), 420);
+
+  soldComboCount += 1;
+  if(soldComboTimer) clearTimeout(soldComboTimer);
+  soldComboTimer = setTimeout(()=>{ soldComboCount = 0; }, 5500);
+
+  if(soldComboCount >= 2){
+    const chip = document.createElement("div");
+    chip.className = "combo-chip";
+    chip.textContent = soldComboCount + " SALE COMBO";
+    chip.style.animation = "comboChipInOut 1500ms ease forwards";
+    document.body.appendChild(chip);
+    setTimeout(()=>{ try{ chip.remove(); }catch(e){} }, 1600);
+  }
+
+  try{ playKaChingSound(sale); }catch(e){}
+  try{ triggerAvatarKaChingGlow(); }catch(e){}
+
+  setTimeout(()=>{
+    try{ text.remove(); }catch(e){}
+    try{ burst.remove(); }catch(e){}
+  }, 1400);
+}
+
+function triggerBigSaleCelebration(amount){
+  triggerComicKaChing(amount);
+}
+
+function triggerSoldCelebration(amount){
+  const sale = Number(amount || 0);
+  if(sale > 100){
+    try{ triggerComicKaChing(sale); }catch(e){}
+  }else{
+    try{ triggerMoneyRain(); }catch(e){}
+  }
 }
 </script>
 
