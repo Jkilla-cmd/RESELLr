@@ -1520,87 +1520,27 @@ html[data-theme="lofi"] .sidebar button.active::before{
 
 
 /* Hidden lo-fi avatar behavior */
-.lofi-avatar-wrap{
-  position: relative;
-  width: 60px;
-  height: 60px;
-}
-
-.lofi-avatar-trigger{
-  width: 58px !important;
-  height: 58px !important;
-  min-width: 58px;
-  min-height: 58px;
-  padding: 0 !important;
-  border-radius: 999px !important;
-  overflow: hidden;
-  border: 2px solid rgba(255,95,162,0.65) !important;
-  background: rgba(10,10,18,0.65) !important;
-  box-shadow: 0 8px 22px rgba(0,0,0,.35);
-  opacity: 0;
-  transform: translateY(25px) scale(0.9);
-  pointer-events: none;
-  position: relative;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transition: opacity .25s ease, transform .25s ease, box-shadow .25s ease, border-color .25s ease;
-}
-
-.topbar:hover .lofi-avatar-trigger{
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
-}
-
-.lofi-avatar-trigger.playing,
-.lofi-avatar-trigger.active{
+.topbar:hover .lofi-avatar-trigger.playing{
   opacity: 1 !important;
   transform: translateY(0) scale(1) !important;
   pointer-events: auto !important;
-  border-color: rgba(255,95,162,0.95) !important;
+
+  border-color: rgba(255,95,162,0.85) !important;
   box-shadow: 0 12px 28px rgba(255,95,162,.25);
 }
 
-.lofi-avatar-trigger img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display:block;
-  border-radius: 999px;
-}@media (max-width: 900px){
+
+.lofi-avatar-wrap:hover .lofi-avatar-trigger,
+.lofi-avatar-trigger.playing{
+  transform: translateY(0);
+  border-color: rgba(255,95,162,0.85) !important;
+  box-shadow: 0 12px 28px rgba(255,95,162,.22);
+}
+
+@media (max-width: 900px){
   
 /* Hidden lo-fi avatar behavior */
-.lofi-avatar-wrap{
-  position: relative;
-  width: 60px;
-  height: 60px;
-}
-
-.lofi-avatar-trigger{
-  width: 58px !important;
-  height: 58px !important;
-  border-radius: 999px !important;
-  overflow: hidden;
-  border: 2px solid rgba(255,95,162,0.45) !important;
-  background: rgba(10,10,18,0.65) !important;
-  box-shadow: 0 8px 22px rgba(0,0,0,.35);
-
-  opacity: 0;
-  transform: translateY(25px) scale(0.9);
-  pointer-events: none;
-
-  transition: opacity .25s ease, transform .25s ease, box-shadow .25s ease, border-color .25s ease;
-}
-
-.topbar:hover .lofi-avatar-trigger{
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
-}
-
-.lofi-avatar-trigger.playing{
+.topbar:hover .lofi-avatar-trigger.playing{
   opacity: 1 !important;
   transform: translateY(0) scale(1) !important;
   pointer-events: auto !important;
@@ -1619,6 +1559,69 @@ html[data-theme="lofi"] .sidebar button.active::before{
   pointer-events: auto !important;
   border-color: rgba(255,95,162,0.85) !important;
   box-shadow: 0 12px 28px rgba(255,95,162,.25);
+}
+
+
+/* ===== CLEAN LOFI AVATAR (FIXED) ===== */
+.lofi-avatar-wrap{
+  position: relative;
+  width: 58px;
+  height: 58px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.lofi-avatar-trigger{
+  width: 58px !important;
+  height: 58px !important;
+  min-width: 58px;
+  min-height: 58px;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  border: 2px solid rgba(255,95,162,1) !important;
+  background: rgba(10,10,18,0.65) !important;
+  box-shadow: 0 10px 24px rgba(255,95,162,.18);
+  opacity: 0;
+  transform: translateY(25px) scale(0.92);
+  pointer-events: none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition: all .25s ease;
+}
+
+.topbar:hover .lofi-avatar-trigger{
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.lofi-avatar-trigger.playing,
+.lofi-avatar-trigger.active{
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+  pointer-events: auto !important;
+  border-color: rgba(255,95,162,1) !important;
+  box-shadow: 0 12px 28px rgba(255,95,162,.25);
+}
+
+.lofi-avatar-trigger img,
+#lofiAvatarImg{
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  display:block !important;
+  border-radius: 999px !important;
+}
+
+.lofi-avatar-trigger::after,
+.lofi-avatar-wrap::after{
+  content: none !important;
+  display: none !important;
 }
 
 </style>
