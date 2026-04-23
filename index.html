@@ -1636,8 +1636,6 @@ html[data-theme="lofi"] .sidebar button.active::before{
   background: var(--panel);
   border: 2px solid var(--accent);
 
-  overflow: hidden;
-  
   display:flex;
   align-items:center;
   justify-content:center;
@@ -1659,10 +1657,9 @@ html[data-theme="lofi"] .sidebar button.active::before{
 }
 
 .bmc-float img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
 }
 
 .bmc-float:hover{
@@ -1742,6 +1739,194 @@ html[data-theme="lofi"] .sidebar button.active::before{
     transform: translate3d(var(--drift, 0px), calc(100vh + 120px), 0) rotate(var(--spin, 360deg));
     opacity: 0.1;
   }
+}
+
+
+/* ===== Modern UI Pass ===== */
+:root{
+  --radius-card: 20px;
+  --radius-control: 14px;
+  --soft-border: rgba(255,255,255,0.08);
+  --soft-shadow: 0 14px 40px rgba(0,0,0,0.26);
+}
+
+body{
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+
+.panel,
+.topbar,
+.sidebar,
+.toast,
+.modal .box,
+.lockBox,
+.market-card,
+#netWorthPanel .nw-card{
+  border-radius: var(--radius-card) !important;
+  border: 1px solid var(--soft-border) !important;
+  box-shadow: var(--soft-shadow) !important;
+}
+
+.panel{ padding: 20px !important; }
+.topbar{ padding: 14px 16px !important; }
+.sidebar{ padding: 16px !important; gap: 12px !important; }
+
+.panel h3,
+.card h3{
+  font-size: 12px !important;
+  letter-spacing: .06em !important;
+  font-weight: 700 !important;
+  color: color-mix(in srgb, var(--text) 78%, var(--muted)) !important;
+  margin-bottom: 14px !important;
+}
+
+.topbar .title{
+  font-size: 14px !important;
+  letter-spacing: .05em !important;
+  font-weight: 700 !important;
+}
+
+input, select, textarea{
+  border-radius: var(--radius-control) !important;
+  padding: 11px 12px !important;
+  margin: 6px 0 14px !important;
+  background: rgba(255,255,255,0.035) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: none !important;
+}
+
+input:focus, select:focus, textarea:focus{
+  border-color: color-mix(in srgb, var(--accent) 45%, white 8%) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent) !important;
+}
+
+button{
+  border-radius: 14px !important;
+  padding: 10px 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease !important;
+}
+
+button.small{
+  border-radius: 12px !important;
+  padding: 9px 12px !important;
+}
+
+button:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(0,0,0,.16);
+}
+
+.nav{ gap: 10px !important; }
+
+.nav button,
+.sidebar button{
+  text-align: left;
+  padding: 12px 14px !important;
+  border-radius: 14px !important;
+}
+
+.table-wrap{
+  border-radius: 16px !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  background: rgba(255,255,255,0.02);
+}
+
+table{
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+th, td{ padding: 12px 12px !important; }
+
+thead th{
+  font-size: 11px !important;
+  letter-spacing: .05em !important;
+  color: color-mix(in srgb, var(--text) 62%, var(--muted)) !important;
+  background: rgba(255,255,255,0.035) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+tbody td{
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+tbody tr:hover td{
+  background: color-mix(in srgb, var(--accent) 6%, transparent) !important;
+}
+
+.pill, .badge{
+  border-radius: 999px !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  background: rgba(255,255,255,0.03) !important;
+  padding: 6px 10px !important;
+}
+
+#netWorthPanel .nw-total{
+  font-size: 38px !important;
+  font-weight: 800 !important;
+  line-height: 1.05 !important;
+}
+
+#netWorthPanel .nw-card{ padding: 14px !important; }
+#netWorthPanel .nw-label{ font-size: 11px !important; letter-spacing: .08em !important; }
+#netWorthPanel .nw-value{ font-size: 20px !important; }
+
+.chart-wrap{ height: 300px !important; }
+
+.divider{
+  margin: 14px 0 !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+
+.grid{ gap: 18px !important; }
+
+.bmc-float{
+  width: 56px !important;
+  height: 56px !important;
+  overflow: hidden !important;
+  border-color: rgba(255,215,0,.88) !important;
+  box-shadow: 0 12px 26px rgba(0,0,0,.24) !important;
+}
+
+.bmc-float img{
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+html[data-theme="lofi"] .panel,
+html[data-theme="lofi"] .topbar,
+html[data-theme="lofi"] .sidebar,
+html[data-theme="lofi"] .market-card,
+html[data-theme="lofi"] .nw-card{
+  background: rgba(9, 11, 20, 0.56) !important;
+  border-color: rgba(255, 180, 210, 0.10) !important;
+  box-shadow: 0 16px 42px rgba(0,0,0,.28) !important;
+}
+
+html[data-theme="lofi"] .panel h3,
+html[data-theme="lofi"] .topbar .title,
+html[data-theme="lofi"] .brand .name{
+  color: #ffd0e5 !important;
+}
+
+html[data-theme="lofi"] input,
+html[data-theme="lofi"] select,
+html[data-theme="lofi"] textarea{
+  background: rgba(16, 12, 30, 0.66) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+@media (max-width: 900px){
+  .panel{ padding: 16px !important; }
+  .topbar{ padding: 12px 14px !important; }
+  th, td{ padding: 10px 10px !important; }
 }
 
 </style>
