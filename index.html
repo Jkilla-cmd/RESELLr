@@ -2366,6 +2366,23 @@ html[data-theme="lofi"] textarea{
   .topbar{ padding: 11px 12px !important; }
 }
 
+
+/* ===== Hold Character ===== */
+#holdCharacter{
+  position: fixed;
+  bottom: 20px;
+  right: -220px;
+  width: 160px;
+  z-index: 10080;
+  pointer-events: none;
+  transition: all .5s ease;
+  opacity: 0;
+}
+#holdCharacter.show{
+  right: 20px;
+  opacity: 1;
+}
+
 </style>
 </head>
 
@@ -6617,6 +6634,36 @@ function triggerSoldCelebration(amount){
       return origTriggerComicKaChing.apply(this, arguments);
     };
   }
+})();
+</script>
+
+
+<img id="holdCharacter" src="assets/images/hold-character.png">
+
+<script>
+function triggerHoldCharacter(){
+  const el = document.getElementById("holdCharacter");
+  if(!el) return;
+
+  el.classList.add("show");
+
+  setTimeout(()=>{
+    el.classList.remove("show");
+  }, 1800);
+}
+
+/* Auto-detect inventory holds changes */
+(function(){
+  const observer = new MutationObserver(()=>{
+    triggerHoldCharacter();
+  });
+
+  window.addEventListener("load", ()=>{
+    const target = document.querySelector("#secHolds, #inventoryHoldsTable, #holdsTable");
+    if(target){
+      observer.observe(target, {childList:true, subtree:true});
+    }
+  });
 })();
 </script>
 
