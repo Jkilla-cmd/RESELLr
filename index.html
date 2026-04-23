@@ -1624,6 +1624,79 @@ html[data-theme="lofi"] .sidebar button.active::before{
   display: none !important;
 }
 
+
+/* ===== Buy Me a Coffee Floating Button ===== */
+.bmc-float{
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 2px solid var(--accent);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  z-index: 9999;
+
+  opacity: 0;
+  transform: translateY(10px);
+
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  transition: all .25s ease;
+
+  animation: bmcPulse 3.2s infinite;
+}
+
+.bmc-float.show{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.bmc-float img{
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+}
+
+.bmc-float:hover{
+  transform: scale(1.1);
+  animation: none;
+  box-shadow: 0 14px 28px rgba(255,215,0,0.25);
+}
+
+@keyframes bmcPulse{
+  0%{ box-shadow: 0 0 0 0 rgba(255,215,0,0.35); }
+  70%{ box-shadow: 0 0 0 10px transparent; }
+  100%{ box-shadow: 0 0 0 0 transparent; }
+}
+
+.bmc-float::after{
+  content: "Support RESELLr";
+  position: absolute;
+  right: 64px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  white-space: nowrap;
+
+  opacity: 0;
+  transform: translateX(10px);
+  transition: all .2s ease;
+  pointer-events: none;
+}
+
+.bmc-float:hover::after{
+  opacity: 1;
+  transform: translateX(0);
+}
+
 </style>
 </head>
 
@@ -5634,6 +5707,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setLofiMusicUi(false);
 });
+</script>
+
+
+<!-- Buy Me a Coffee Floating Button -->
+<a href="https://buymeacoffee.com/jac0bb" target="_blank" class="bmc-float">
+  <img src="assets/images/coffee-icon.png" alt="Buy Me a Coffee">
+</a>
+
+<script>
+setTimeout(()=>{
+  document.querySelector('.bmc-float')?.classList.add('show');
+}, 2500);
 </script>
 
 </body>
