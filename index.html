@@ -6652,18 +6652,56 @@ function triggerHoldCharacter(){
   }, 1800);
 }
 
-/* Auto-detect inventory holds changes */
-(function(){
-  const observer = new MutationObserver(()=>{
-    triggerHoldCharacter();
-  });
 
-  window.addEventListener("load", ()=>{
-    const target = document.querySelector("#secHolds, #inventoryHoldsTable, #holdsTable");
-    if(target){
-      observer.observe(target, {childList:true, subtree:true});
+
+
+<script>
+function triggerHoldCharacter(){
+  const el = document.getElementById("holdCharacter");
+  if(!el) return;
+
+  el.classList.add("show");
+
+  setTimeout(()=>{
+    el.classList.remove("show");
+  }, 1800);
+}
+
+/* ===== Target ONLY Inventory Holds Add ===== */
+(function(){
+
+  function isHoldsVisible(){
+    const holdsTab = document.getElementById("secHolds");
+    if(!holdsTab) return false;
+    return holdsTab.offsetParent !== null; // true if visible
+  }
+
+  // Try multiple possible function names safely
+  const possibleFns = [
+    "addInventoryHold",
+    "addToInventoryHolds",
+    "addHoldItem",
+    "saveHold"
+  ];
+
+  possibleFns.forEach(fnName => {
+    if(typeof window[fnName] === "function"){
+      const original = window[fnName];
+
+      window[fnName] = function(){
+        const result = original.apply(this, arguments);
+
+        if(isHoldsVisible()){
+          setTimeout(()=>{
+            triggerHoldCharacter();
+          }, 50);
+        }
+
+        return result;
+      };
     }
   });
+
 })();
 </script>
 
