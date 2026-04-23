@@ -1697,6 +1697,50 @@ html[data-theme="lofi"] .sidebar button.active::before{
   transform: translateX(0);
 }
 
+
+/* ===== Money fall celebration ===== */
+.money-rain-layer{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 10050;
+}
+.money-bill{
+  position: absolute;
+  top: -80px;
+  width: 44px;
+  height: 24px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #9be37a 0%, #4bbf63 100%);
+  border: 1px solid rgba(12,60,20,0.35);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#103b18;
+  font-weight:800;
+  font-size:12px;
+  opacity: 0.95;
+}
+.money-bill::before{
+  content: "$";
+  line-height: 1;
+}
+@keyframes moneyFall{
+  0%{
+    transform: translate3d(0,-60px,0) rotate(0deg);
+    opacity: 0;
+  }
+  10%{
+    opacity: .95;
+  }
+  100%{
+    transform: translate3d(var(--drift, 0px), calc(100vh + 120px), 0) rotate(var(--spin, 360deg));
+    opacity: 0.1;
+  }
+}
+
 </style>
 </head>
 
@@ -3499,6 +3543,7 @@ function addSoldManually() {
   const all = readSold();
   all.push({ _id: genId(), date: d, item, type, platform, sale, cost, fees, ship, profit });
   writeSold(all);
+  try{ triggerMoneyRain(); }catch(e){}
 
   renderSold();
   if (document.getElementById("manualSyncIncome")?.checked) rebuildMonthlyIncomeFromSold();
@@ -4579,6 +4624,7 @@ function confirmMarkSold() {
   const soldArr = readSold();
   soldArr.push({ _id: genId(), date: soldDate, item, type, platform, sale, cost, fees, ship, profit });
   writeSold(soldArr);
+  try{ triggerMoneyRain(); }catch(e){}
 
   // Remove from active
   const removed = invArr.splice(invIdx, 1)[0];
@@ -5719,6 +5765,44 @@ document.addEventListener("DOMContentLoaded", () => {
 setTimeout(()=>{
   document.querySelector('.bmc-float')?.classList.add('show');
 }, 2500);
+</script>
+
+
+<script>
+function triggerMoneyRain(count = 18){
+  let layer = document.getElementById("moneyRainLayer");
+  if(!layer){
+    layer = document.createElement("div");
+    layer.id = "moneyRainLayer";
+    layer.className = "money-rain-layer";
+    document.body.appendChild(layer);
+  }
+  layer.innerHTML = "";
+
+  const width = window.innerWidth || 1200;
+  const total = Math.max(10, Math.min(32, count));
+
+  for(let i=0;i<total;i++){
+    const bill = document.createElement("div");
+    bill.className = "money-bill";
+    const left = Math.random() * Math.max(60, width - 60);
+    const duration = 1800 + Math.random() * 1800;
+    const delay = Math.random() * 450;
+    const drift = (-140 + Math.random() * 280).toFixed(0) + "px";
+    const spin = (-540 + Math.random() * 1080).toFixed(0) + "deg";
+    const scale = (0.82 + Math.random() * 0.5).toFixed(2);
+    bill.style.left = left + "px";
+    bill.style.setProperty("--drift", drift);
+    bill.style.setProperty("--spin", spin);
+    bill.style.transform = `scale(${scale})`;
+    bill.style.animation = `moneyFall ${duration}ms linear ${delay}ms forwards`;
+    layer.appendChild(bill);
+  }
+
+  setTimeout(()=>{
+    if(layer) layer.innerHTML = "";
+  }, 4200);
+}
 </script>
 
 </body>
