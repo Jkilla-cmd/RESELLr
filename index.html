@@ -1739,6 +1739,10 @@ html[data-theme="lofi"] .sidebar button.active::before{
         <input type="date" id="msDate">
       </div>
       <div>
+        <label>Completed Date</label>
+        <input type="date" id="msCompletedDate">
+      </div>
+      <div>
         <label>Sale ($)</label>
         <input type="number" id="msSale" step="0.01">
       </div>
@@ -1970,7 +1974,7 @@ html[data-theme="lofi"] .sidebar button.active::before{
 
           <div class="divider"></div>
           <div class="muted" style="font-size:12px;line-height:1.45;">
-            Income = total sales for the selected year. Cost of sold = what you paid for items sold that year. Profit = sale minus cost, fees, and shipping.
+            Income = total sales for the selected period. Cost of sold = what you paid for items sold that period. Profit = sale minus cost, fees, and shipping. Use the “Track By” toggle above the graph to switch between Sale Date and Completed Date.
           </div>
         </div>
 
@@ -1993,6 +1997,13 @@ html[data-theme="lofi"] .sidebar button.active::before{
           <div class="stat green" id="dashMonthMatchStat" style="margin-top:6px;">THIS MONTH NET PROFIT (SOLD MATCH): $0.00</div>
           <div class="stat muted" id="dashMonthMatchSub" style="margin-top:4px;">Gross: $0.00 • Items: 0 • Uses the same sold-row formula and month parsing as the Sold tab.</div>
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0 8px;">
+            <div class="pill" style="display:flex;align-items:center;gap:10px;">
+              <label class="muted" style="font-size:12px;">Track By</label>
+              <select id="soldDateMode" class="pill" style="height:32px;padding:4px 10px;margin:0;" onchange="setSoldDateMode(this.value); try{loadIncomeChart();updateDashboardYTD();updateBudgetPanel();renderSold();}catch(e){}">
+                <option value="sale">Sale Date</option>
+                <option value="completed">Completed Date</option>
+              </select>
+            </div>
             <div class="pill" style="display:flex;align-items:center;gap:8px;">
               <label class="muted" style="font-size:12px;">Goal</label>
               <span class="muted" style="font-size:12px;">$300/mo</span>
@@ -2114,7 +2125,8 @@ html[data-theme="lofi"] .sidebar button.active::before{
             <table>
               <thead>
                 <tr>
-                  <th>Date</th>
+                  <th>Sold Date</th>
+                  <th>Completed</th>
                   <th>Item</th>
                   <th>Type</th>
                   <th>Platform</th>
@@ -2286,6 +2298,7 @@ html[data-theme="lofi"] .sidebar button.active::before{
           <div class="stat green" id="soldProfitStat"></div>
           <div class="stat yellow" id="soldItemsStat"></div>
           <div class="stat muted" id="soldAvgStat"></div>
+          <div class="stat muted" id="soldDateModeStat">Tracking by: Sale Date</div>
         </div>
       </div>
 
@@ -2293,8 +2306,11 @@ html[data-theme="lofi"] .sidebar button.active::before{
         <div class="panel">
           <h3>Add Sold Item Manually</h3>
 
-          <label>Date</label>
+          <label>Sold Date</label>
           <input type="date" id="manualDate">
+
+          <label>Completed Date</label>
+          <input type="date" id="manualCompletedDate">
 
           <label>Item</label>
           <input type="text" id="manualItem" placeholder="e.g. Amazing Spider-Man #300">
@@ -3015,7 +3031,7 @@ function getMonthlySeriesFromSold() {
   const buckets = {};
 
   for (const it of sold) {
-    const ds = it.date || it.soldDate || it.sold || "";
+    const ds = getSoldTrackingDate(it) || it.date || it.soldDate || it.sold || "";
     const d = _parseDateSafe(ds);
     if (!d) continue;
 
@@ -3053,7 +3069,7 @@ function getDashboardMonthSoldMatch(){
   let net = 0;
   let items = 0;
   for (const r of sold){
-    if (monthKey(r.date) !== targetMonth) continue;
+    if (monthKey(getSoldTrackingDate(r)) !== targetMonth) continue;
     const sale = Number(r.sale || 0) || 0;
     const cost = normExpense(r.cost || 0);
     const fees = normExpense(r.fees || r.fee || 0);
@@ -3412,6 +3428,7 @@ function importSoldCSV() {
 
 function addSoldManually() {
   const d = manualDate.value;
+  const completedDate = (document.getElementById("manualCompletedDate")?.value || d || "");
   const item = (manualItem.value || "").trim();
   const type = (document.getElementById("manualType")?.value || "").trim();
   const platform = (manualPlatform.value || "").trim() || "Manual";
@@ -3424,13 +3441,14 @@ function addSoldManually() {
 
   const profit = sale - cost - fees - ship;
   const all = readSold();
-  all.push({ _id: genId(), date: d, item, type, platform, sale, cost, fees, ship, profit });
+  all.push({ _id: genId(), date: d, completedDate, item, type, platform, sale, cost, fees, ship, profit });
   writeSold(all);
 
   renderSold();
   if (document.getElementById("manualSyncIncome")?.checked) rebuildMonthlyIncomeFromSold();
 
   manualDate.value = "";
+  if (document.getElementById("manualCompletedDate")) document.getElementById("manualCompletedDate").value = "";
   manualItem.value = "";
   const manualTypeEl = document.getElementById("manualType");
   if (manualTypeEl) manualTypeEl.value = "";
@@ -3517,8 +3535,9 @@ function renderSold() {
   const type = document.getElementById("soldTypeFilter")?.value || "ALL";
 
   const filtered = all.filter(r => {
-    const yr = extractYear(r.date);
-    const mk = monthKey(r.date);
+    const trackedDate = getSoldTrackingDate(r);
+    const yr = extractYear(trackedDate);
+    const mk = monthKey(trackedDate);
     const okY = (year==="ALL") || (yr===year);
     const okM = (month==="ALL") || (mk===month);
     const okP = (platform==="ALL") || (String(r.platform||"")===platform);
@@ -3531,12 +3550,13 @@ function renderSold() {
   if (!tbody) return;
   tbody.innerHTML = "";
 
-  const sorted = [...filtered].sort((a,b)=> String(b.date||"").localeCompare(String(a.date||"")));
+  const sorted = [...filtered].sort((a,b)=> String(getSoldTrackingDate(b)||"").localeCompare(String(getSoldTrackingDate(a)||"")));
 
   for (const r of sorted){
     const tr = document.createElement("tr");
 
     const tdDate = document.createElement("td"); tdDate.textContent = r.date || ""; tr.appendChild(tdDate);
+    const tdCompleted = document.createElement("td"); tdCompleted.textContent = r.completedDate || r.date || ""; tr.appendChild(tdCompleted);
     const tdItem = document.createElement("td"); tdItem.textContent = r.item || ""; tr.appendChild(tdItem);
     const tdType = document.createElement("td"); tdType.textContent = r.type || ""; tr.appendChild(tdType);
     const tdPlat = document.createElement("td"); tdPlat.textContent = r.platform || ""; tr.appendChild(tdPlat);
@@ -4463,6 +4483,7 @@ function openMarkSoldModal(activeId) {
   const m = String(today.getMonth()+1).padStart(2,"0");
   const d = String(today.getDate()).padStart(2,"0");
   document.getElementById("msDate").value = `${y}-${m}-${d}`;
+  if(document.getElementById("msCompletedDate")) document.getElementById("msCompletedDate").value = `${y}-${m}-${d}`;
   document.getElementById("msSale").value = inv.list || "";
   document.getElementById("msPlatform").value = inv.platform || "";
   document.getElementById("msFees").value = "";
@@ -4485,6 +4506,7 @@ function confirmMarkSold() {
   if (!markSoldActiveId) return;
 
   const soldDate = document.getElementById("msDate").value;
+  const completedDate = (document.getElementById("msCompletedDate")?.value || soldDate || "");
   const item = (document.getElementById("msItem").value || "").trim();
   const type = (document.getElementById("msType")?.value || "").trim();
   const platform = (document.getElementById("msPlatform").value || "").trim() || "Unknown";
@@ -4504,7 +4526,7 @@ function confirmMarkSold() {
 
   // Add to sold
   const soldArr = readSold();
-  soldArr.push({ _id: genId(), date: soldDate, item, type, platform, sale, cost, fees, ship, profit });
+  soldArr.push({ _id: genId(), date: soldDate, completedDate, item, type, platform, sale, cost, fees, ship, profit });
   writeSold(soldArr);
 
   // Remove from active
@@ -5010,7 +5032,7 @@ function _parseDateSafe(ds){
 function _sumSoldForMonth(rows, y, m){
   let sales=0, profit=0;
   (rows||[]).forEach(r=>{
-    const dt=_parseDateSafe(r.date||r.soldDate||r.sold_date||r.saleDate||'');
+    const dt=_parseDateSafe(getSoldTrackingDate(r) || r.date||r.soldDate||r.sold_date||r.saleDate||'');
     if(!dt) return;
     if(dt.getFullYear()!=y || dt.getMonth()!=m) return;
     const sale=Number(r.sale||r.price||0)||0;
@@ -5042,7 +5064,7 @@ function refreshYTDYearOptions(){
   const previous = sel.value || 'CURRENT';
   const years = Array.from(new Set(
     sold.map(r => {
-      const ds = (r && (r.date || r.soldDate || r.sold || '')) || '';
+      const ds = (r && (getSoldTrackingDate(r) || r.date || r.soldDate || r.sold || '')) || '';
       const d = _parseDateSafe(ds);
       return d ? d.getFullYear() : null;
     }).filter(Boolean)
@@ -5075,7 +5097,7 @@ function getYTDSoldTotals(yearOverride){
   let ebayCount = 0;
 
   sold.forEach(r => {
-    const ds = r && (r.date || r.soldDate || r.sold || "");
+    const ds = r && (getSoldTrackingDate(r) || r.date || r.soldDate || r.sold || "");
     const d = _parseDateSafe(ds);
     if (!d) return;
     if (y !== 'ALL' && d.getFullYear() !== y) return;
@@ -5633,6 +5655,50 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   setLofiMusicUi(false);
+});
+</script>
+
+
+<script>
+/* ===== Sale vs Completed tracking ===== */
+function getSoldDateMode(){
+  try{ return localStorage.getItem("resellr_sold_date_mode") || "sale"; }catch(e){ return "sale"; }
+}
+function setSoldDateMode(mode){
+  const safe = (mode === "completed") ? "completed" : "sale";
+  try{ localStorage.setItem("resellr_sold_date_mode", safe); }catch(e){}
+  const sel = document.getElementById("soldDateMode");
+  if(sel) sel.value = safe;
+  const stat = document.getElementById("soldDateModeStat");
+  if(stat) stat.textContent = "Tracking by: " + (safe === "completed" ? "Completed Date" : "Sale Date");
+}
+function getSoldTrackingDate(row){
+  if(!row) return "";
+  const mode = getSoldDateMode();
+  if(mode === "completed"){
+    return row.completedDate || row.completed || row.completeDate || row.date || "";
+  }
+  return row.date || row.soldDate || row.sold || "";
+}
+function ensureSoldCompletedDates(){
+  try{
+    const raw = localStorage.getItem("soldInventory");
+    if(!raw) return;
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return;
+    let changed = false;
+    arr.forEach(r=>{
+      if(r && typeof r === "object" && !("completedDate" in r)){
+        r.completedDate = r.date || "";
+        changed = true;
+      }
+    });
+    if(changed) localStorage.setItem("soldInventory", JSON.stringify(arr));
+  }catch(e){}
+}
+document.addEventListener("DOMContentLoaded", ()=>{
+  try{ ensureSoldCompletedDates(); }catch(e){}
+  try{ setSoldDateMode(getSoldDateMode()); }catch(e){}
 });
 </script>
 
