@@ -2030,6 +2030,41 @@ body.kaching-shake{
   100%{ opacity: 0; transform: translateX(-50%) translateY(-8px) scale(.98); }
 }
 
+
+/* ===== Dropdown fix ===== */
+select{
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, color-mix(in srgb, var(--text) 75%, transparent) 50%),
+    linear-gradient(135deg, color-mix(in srgb, var(--text) 75%, transparent) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 34px !important;
+}
+
+select option{
+  background: #101722 !important;
+  color: #eef6ff !important;
+}
+
+html[data-theme="lofi"] select option{
+  background: #130f1f !important;
+  color: #f8eef6 !important;
+}
+
+/* ===== KA-CHING banner polish ===== */
+.ka-ching{
+  will-change: transform, opacity;
+}
+.combo-chip{
+  will-change: transform, opacity;
+}
+
 </style>
 </head>
 
@@ -6217,6 +6252,71 @@ function triggerSoldCelebration(amount){
     try{ triggerMoneyRain(); }catch(e){}
   }
 }
+</script>
+
+
+<script>
+/* ===== Reliable sold celebration hooks ===== */
+(function(){
+  function wireReliableSoldCelebrations(){
+    if (window.__soldCelebrationWired) return;
+    window.__soldCelebrationWired = true;
+
+    if (typeof window.confirmMarkSold === "function"){
+      const origConfirmMarkSold = window.confirmMarkSold;
+      window.confirmMarkSold = function(){
+        const sale = parseFloat(document.getElementById("msSale")?.value || "0") || 0;
+        const hadAudioGesture = true;
+        const out = origConfirmMarkSold.apply(this, arguments);
+        setTimeout(()=>{
+          try{
+            if (sale > 100 && typeof window.triggerComicKaChing === "function"){
+              window.triggerComicKaChing(sale);
+            } else if (sale > 0 && typeof window.triggerMoneyRain === "function"){
+              window.triggerMoneyRain();
+            }
+          }catch(e){}
+        }, 30);
+        return out;
+      };
+    }
+
+    if (typeof window.addSoldManually === "function"){
+      const origAddSoldManually = window.addSoldManually;
+      window.addSoldManually = function(){
+        const sale = parseFloat(document.getElementById("manualSale")?.value || "0") || 0;
+        const out = origAddSoldManually.apply(this, arguments);
+        setTimeout(()=>{
+          try{
+            if (sale > 100 && typeof window.triggerComicKaChing === "function"){
+              window.triggerComicKaChing(sale);
+            } else if (sale > 0 && typeof window.triggerMoneyRain === "function"){
+              window.triggerMoneyRain();
+            }
+          }catch(e){}
+        }, 30);
+        return out;
+      };
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", wireReliableSoldCelebrations);
+  window.addEventListener("load", wireReliableSoldCelebrations);
+
+  /* Safety: improve synthesized sound trigger */
+  const origTriggerComicKaChing = window.triggerComicKaChing;
+  if (typeof origTriggerComicKaChing === "function"){
+    window.triggerComicKaChing = function(amount){
+      try{
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx && window.kachingAudioCtx && window.kachingAudioCtx.state === "suspended"){
+          window.kachingAudioCtx.resume();
+        }
+      }catch(e){}
+      return origTriggerComicKaChing.apply(this, arguments);
+    };
+  }
+})();
 </script>
 
 </body>
