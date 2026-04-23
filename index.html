@@ -1520,7 +1520,35 @@ html[data-theme="lofi"] .sidebar button.active::before{
 
 
 /* Hidden lo-fi avatar behavior */
-.topbar:hover .lofi-avatar-trigger.playing{
+.lofi-avatar-wrap{
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.lofi-avatar-trigger{
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 999px !important;
+  overflow: hidden;
+  border: 2px solid rgba(255,95,162,0.45) !important;
+  background: rgba(10,10,18,0.65) !important;
+  box-shadow: 0 8px 22px rgba(0,0,0,.35);
+
+  opacity: 0;
+  transform: translateY(25px) scale(0.9);
+  pointer-events: none;
+
+  transition: opacity .25s ease, transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.topbar:hover .lofi-avatar-trigger{
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.lofi-avatar-trigger.playing{
   opacity: 1 !important;
   transform: translateY(0) scale(1) !important;
   pointer-events: auto !important;
@@ -1537,10 +1565,63 @@ html[data-theme="lofi"] .sidebar button.active::before{
   box-shadow: 0 12px 28px rgba(255,95,162,.22);
 }
 
+.lofi-avatar-trigger img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display:block;
+}
+
+.lofi-avatar-trigger::after{
+  content: "♫";
+  position:absolute;
+  right:-4px;
+  bottom:-4px;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  color:#fff;
+  background: linear-gradient(180deg, rgba(255,95,162,.95), rgba(141,125,255,.95));
+  border:1px solid rgba(255,255,255,.25);
+  box-shadow: 0 4px 12px rgba(0,0,0,.35);
+}
+
 @media (max-width: 900px){
   
 /* Hidden lo-fi avatar behavior */
-.topbar:hover .lofi-avatar-trigger.playing{
+.lofi-avatar-wrap{
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.lofi-avatar-trigger{
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 999px !important;
+  overflow: hidden;
+  border: 2px solid rgba(255,95,162,0.45) !important;
+  background: rgba(10,10,18,0.65) !important;
+  box-shadow: 0 8px 22px rgba(0,0,0,.35);
+
+  opacity: 0;
+  transform: translateY(25px) scale(0.9);
+  pointer-events: none;
+
+  transition: opacity .25s ease, transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.topbar:hover .lofi-avatar-trigger{
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.lofi-avatar-trigger.playing{
   opacity: 1 !important;
   transform: translateY(0) scale(1) !important;
   pointer-events: auto !important;
@@ -1559,69 +1640,6 @@ html[data-theme="lofi"] .sidebar button.active::before{
   pointer-events: auto !important;
   border-color: rgba(255,95,162,0.85) !important;
   box-shadow: 0 12px 28px rgba(255,95,162,.25);
-}
-
-
-/* ===== CLEAN LOFI AVATAR (FIXED) ===== */
-.lofi-avatar-wrap{
-  position: relative;
-  width: 58px;
-  height: 58px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.lofi-avatar-trigger{
-  width: 58px !important;
-  height: 58px !important;
-  min-width: 58px;
-  min-height: 58px;
-  padding: 0 !important;
-  margin: 0 !important;
-  border-radius: 999px !important;
-  overflow: hidden !important;
-  border: 2px solid rgba(255,95,162,1) !important;
-  background: rgba(10,10,18,0.65) !important;
-  box-shadow: 0 10px 24px rgba(255,95,162,.18);
-  opacity: 0;
-  transform: translateY(25px) scale(0.92);
-  pointer-events: none;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transition: all .25s ease;
-}
-
-.topbar:hover .lofi-avatar-trigger{
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
-}
-
-.lofi-avatar-trigger.playing,
-.lofi-avatar-trigger.active{
-  opacity: 1 !important;
-  transform: translateY(0) scale(1) !important;
-  pointer-events: auto !important;
-  border-color: rgba(255,95,162,1) !important;
-  box-shadow: 0 12px 28px rgba(255,95,162,.25);
-}
-
-.lofi-avatar-trigger img,
-#lofiAvatarImg{
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  object-position: center !important;
-  display:block !important;
-  border-radius: 999px !important;
-}
-
-.lofi-avatar-trigger::after,
-.lofi-avatar-wrap::after{
-  content: none !important;
-  display: none !important;
 }
 
 </style>
@@ -1817,6 +1835,7 @@ html[data-theme="lofi"] .sidebar button.active::before{
       <button data-target="secInventory" onclick="showSection('secInventory')">📋 Inventory</button>
       <button data-target="secHolds" onclick="showSection('secHolds')">🧊 Inventory Holds</button>
       <button data-target="secSold" onclick="showSection('secSold')">📦 Sold</button>
+      <button data-target="secMarket" onclick="showSection('secMarket')">📊 Market</button>
       <button data-target="secImportExport" onclick="showSection('secImportExport')">⬆️⬇️ Import / Export</button>
       <button data-target="secTools" onclick="showSection('secTools')">🧮 Tools</button>
       <button data-target="secSettings" onclick="showSection('secSettings')">⚙️ Settings</button>
@@ -2386,6 +2405,74 @@ html[data-theme="lofi"] .sidebar button.active::before{
     </section>
 
     
+
+    <!-- MARKET -->
+    <section id="secMarket" class="section">
+      <div class="grid">
+        <div class="panel">
+          <h3>Comp Lookup</h3>
+          <label>Item Title or Search Terms</label>
+          <input type="text" id="compQuery" placeholder="e.g. Nova #1 Mattina 1:50 Variant">
+
+          <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+            <div>
+              <label>Your Price ($)</label>
+              <input type="number" id="compMyPrice" step="0.01" placeholder="Optional">
+            </div>
+            <div>
+              <label>Search URL (optional)</label>
+              <input type="text" id="compUrl" placeholder="Paste eBay sold search URL">
+            </div>
+          </div>
+
+          <button onclick="runCompLookup()">Get Comps</button>
+
+          <div class="divider"></div>
+
+          <div class="stat blue" id="compAvgStat">AVG SOLD: —</div>
+          <div class="stat muted" id="compRangeStat">RANGE: —</div>
+          <div class="stat yellow" id="compCountStat">COMPS FOUND: 0</div>
+          <div class="stat green" id="compSuggestedStat">SUGGESTED PRICE: —</div>
+          <div class="stat muted" id="compActionStat">ACTION: —</div>
+        </div>
+
+        <div class="panel">
+          <h3>How to Use</h3>
+          <div class="stat muted" style="line-height:1.7">
+            • This starter tool gives you a clean place to compare sold prices and estimate a fair listing price.<br>
+            • Paste prices manually for now, one per line, or use the helper import box below.<br>
+            • Once you like the workflow, this can be upgraded later to pull live marketplace comps.
+          </div>
+
+          <div class="divider"></div>
+
+          <label>Paste Sold Prices (one per line or comma separated)</label>
+          <textarea id="compPricePaste" rows="8" placeholder="45&#10;42&#10;50&#10;39.99"></textarea>
+          <button onclick="loadCompPricesFromPaste()">Load Prices</button>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:16px;">
+        <div class="panel">
+          <h3>Recent Comp Prices</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody id="compTableBody"></tbody>
+            </table>
+          </div>
+          <div class="divider"></div>
+          <div class="stat muted">Tip: after you paste comps, this tool estimates average, range, and a suggested market price.</div>
+        </div>
+      </div>
+    </section>
+
+
     <!-- IMPORT / EXPORT -->
     <section id="secImportExport" class="section">
       <div class="grid">
@@ -5633,6 +5720,103 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   setLofiMusicUi(false);
+});
+</script>
+
+
+<script>
+let compPrices = [];
+
+function renderCompTable(){
+  const body = document.getElementById("compTableBody");
+  if(!body) return;
+  body.innerHTML = "";
+  if(!compPrices.length){
+    body.innerHTML = '<tr><td colspan="2" class="muted">No comp prices loaded yet.</td></tr>';
+    return;
+  }
+  compPrices.forEach((price, idx)=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${idx+1}</td><td>$${Number(price).toFixed(2)}</td>`;
+    body.appendChild(tr);
+  });
+}
+
+function setCompStats(prices){
+  const avgEl = document.getElementById("compAvgStat");
+  const rangeEl = document.getElementById("compRangeStat");
+  const countEl = document.getElementById("compCountStat");
+  const suggestedEl = document.getElementById("compSuggestedStat");
+  const actionEl = document.getElementById("compActionStat");
+  const myPrice = parseFloat(document.getElementById("compMyPrice")?.value || "") || null;
+
+  if(!prices.length){
+    if(avgEl) avgEl.textContent = "AVG SOLD: —";
+    if(rangeEl) rangeEl.textContent = "RANGE: —";
+    if(countEl) countEl.textContent = "COMPS FOUND: 0";
+    if(suggestedEl) suggestedEl.textContent = "SUGGESTED PRICE: —";
+    if(actionEl) actionEl.textContent = "ACTION: —";
+    return;
+  }
+
+  const sorted = [...prices].sort((a,b)=>a-b);
+  const sum = sorted.reduce((a,b)=>a+b,0);
+  const avg = sum / sorted.length;
+  const low = sorted[0];
+  const high = sorted[sorted.length-1];
+  const suggested = Math.round(avg * 100) / 100;
+
+  let action = "Market looks normal";
+  if(myPrice !== null){
+    if(myPrice > avg * 1.15) action = "Over market → consider lowering";
+    else if(myPrice < avg * 0.85) action = "Under market → consider raising";
+    else action = "Near market → price looks good";
+  }
+
+  if(avgEl) avgEl.textContent = `AVG SOLD: $${avg.toFixed(2)}`;
+  if(rangeEl) rangeEl.textContent = `RANGE: $${low.toFixed(2)} → $${high.toFixed(2)}`;
+  if(countEl) countEl.textContent = `COMPS FOUND: ${sorted.length}`;
+  if(suggestedEl) suggestedEl.textContent = `SUGGESTED PRICE: $${suggested.toFixed(2)}`;
+  if(actionEl) actionEl.textContent = `ACTION: ${action}`;
+}
+
+function parseCompPrices(text){
+  return (text || "")
+    .split(/[\n,]+/)
+    .map(s => s.replace(/[^0-9.]/g, "").trim())
+    .filter(Boolean)
+    .map(Number)
+    .filter(n => Number.isFinite(n) && n > 0);
+}
+
+function loadCompPricesFromPaste(){
+  const el = document.getElementById("compPricePaste");
+  compPrices = parseCompPrices(el ? el.value : "");
+  renderCompTable();
+  setCompStats(compPrices);
+  try{ showToast(`Loaded ${compPrices.length} comp price${compPrices.length===1?"":"s"}`); }catch(e){}
+}
+
+function runCompLookup(){
+  const query = document.getElementById("compQuery")?.value?.trim() || "";
+  const url = document.getElementById("compUrl")?.value?.trim() || "";
+
+  if(compPrices.length){
+    setCompStats(compPrices);
+    try{ showToast("Comp results updated"); }catch(e){}
+    return;
+  }
+
+  if(query || url){
+    try{ showToast("Paste sold prices below, then click Load Prices."); }catch(e){}
+  } else {
+    try{ showToast("Enter a title and paste comp prices to begin."); }catch(e){}
+  }
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  renderCompTable();
+  setCompStats(compPrices);
 });
 </script>
 
