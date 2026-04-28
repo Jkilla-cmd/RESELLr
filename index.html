@@ -2478,47 +2478,60 @@ html[data-theme="lofi"] textarea{
 }
 
 
-/* ===== Auto-hide Sidebar (Command Center Clean Mode) ===== */
-.sidebar{
-  position: fixed;
-  left: 0;
-  top: 0;
-  height: 100%;
-  z-index: 10050;
 
-  transform: translateX(-100%);
-  transition: transform .28s ease;
+
+
+/* ===== Safe Auto-hide Sidebar ===== */
+@media (min-width: 901px){
+  .app{
+    grid-template-columns: 1fr !important;
+  }
+
+  #sidebar{
+    position: fixed !important;
+    left: 14px !important;
+    top: 14px !important;
+    height: calc(100vh - 28px) !important;
+    width: 260px !important;
+    z-index: 10050 !important;
+    transform: translateX(-292px) !important;
+    transition: transform .28s ease !important;
+    opacity: .98;
+  }
+
+  body.sidebar-peek #sidebar,
+  #sidebar:hover{
+    transform: translateX(0) !important;
+  }
+
+  #sidebarHoverTrigger{
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 22px;
+    height: 100vh;
+    z-index: 10049;
+    background: transparent;
+  }
+
+  .canvas{
+    width: 100% !important;
+    max-width: none !important;
+  }
 }
 
-/* Show sidebar when hovering it */
-.sidebar:hover{
-  transform: translateX(0);
-}
-
-/* Invisible hover zone */
-.sidebar-trigger{
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 14px;
-  height: 100%;
-  z-index: 10049;
-}
-
-/* Hovering edge reveals sidebar */
-.sidebar-trigger:hover + .sidebar{
-  transform: translateX(0);
-}
-
-/* Full width main */
-main{
-  margin-left: 0 !important;
+/* Sidebar remains normal on mobile */
+@media (max-width: 900px){
+  #sidebarHoverTrigger{
+    display:none;
+  }
 }
 
 </style>
 </head>
 
 <body>
+<div id="sidebarHoverTrigger" aria-hidden="true"></div>
 
 <!-- LOGIN / LOCK SCREEN -->
 <div id="lockScreen">
@@ -7004,6 +7017,60 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     window.__ccRefreshTimer = setTimeout(updateCommandCenter, 350);
   });
 });
+</script>
+
+
+<script>
+/* ===== Safe sidebar hover/open behavior ===== */
+(function(){
+  function openPeek(){
+    document.body.classList.add("sidebar-peek");
+  }
+  function closePeekSoon(){
+    setTimeout(()=>{
+      const sidebar = document.getElementById("sidebar");
+      const trigger = document.getElementById("sidebarHoverTrigger");
+      if(sidebar && sidebar.matches(":hover")) return;
+      if(trigger && trigger.matches(":hover")) return;
+      document.body.classList.remove("sidebar-peek");
+    }, 180);
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    const trigger = document.getElementById("sidebarHoverTrigger");
+    const sidebar = document.getElementById("sidebar");
+
+    if(trigger){
+      trigger.addEventListener("mouseenter", openPeek);
+      trigger.addEventListener("mouseleave", closePeekSoon);
+      trigger.addEventListener("click", openPeek);
+    }
+
+    if(sidebar){
+      sidebar.addEventListener("mouseenter", openPeek);
+      sidebar.addEventListener("mouseleave", closePeekSoon);
+    }
+
+    const hamburger = document.querySelector(".hamburger");
+    if(hamburger){
+      const oldClick = hamburger.getAttribute("onclick");
+      hamburger.setAttribute("onclick", "");
+      hamburger.addEventListener("click", (e)=>{
+        e.preventDefault();
+        document.body.classList.toggle("sidebar-peek");
+        try{
+          if(typeof toggleSidebar === "function" && window.innerWidth <= 900) toggleSidebar();
+        }catch(err){}
+      });
+    }
+
+    document.querySelectorAll("#nav button").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        document.body.classList.remove("sidebar-peek");
+      });
+    });
+  });
+})();
 </script>
 
 </body>
