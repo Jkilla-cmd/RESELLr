@@ -3314,6 +3314,77 @@ html[data-theme="lofi"] .topbar-visualizer-wrap .music-visualizer.expanded canva
   }
 }
 
+
+/* ===== Wider contained topbar visualizer + login menu fix ===== */
+body.login-active #sidebarHoverTrigger{
+  display:none !important;
+  pointer-events:none !important;
+}
+body.login-active #sidebar{
+  transform: translateX(-292px) !important;
+  pointer-events:none !important;
+}
+
+.topbar-left{
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display:flex !important;
+  align-items:center !important;
+}
+
+.topbar-inline-viz{
+  flex: 1 1 520px !important;
+  width: auto !important;
+  max-width: 720px !important;
+  min-width: 220px !important;
+  height: 30px !important;
+  margin-left: 14px !important;
+  margin-right: 10px !important;
+  overflow: hidden !important;
+}
+
+.topbar-left .title{
+  flex: 0 1 auto !important;
+  max-width: 360px !important;
+}
+
+.topbar-inline-viz .music-visualizer,
+.topbar-inline-viz .music-visualizer.expanded{
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 30px !important;
+  max-height: 30px !important;
+}
+
+.topbar-inline-viz canvas,
+.topbar-inline-viz .viz-bars{
+  height: 30px !important;
+  max-height: 30px !important;
+}
+
+.topbar-inline-viz .music-visualizer.wave canvas,
+.topbar-inline-viz .music-visualizer.expanded canvas{
+  opacity: .75 !important;
+}
+
+@media (max-width: 900px){
+  .topbar-inline-viz{
+    flex-basis: 160px !important;
+    min-width: 90px !important;
+    max-width: 220px !important;
+    margin-left: 8px !important;
+  }
+  .topbar-left .title{
+    max-width: 34vw !important;
+  }
+}
+
+@media (max-width: 620px){
+  .topbar-inline-viz{
+    display:none !important;
+  }
+}
+
 </style>
 </head>
 
@@ -8225,6 +8296,33 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.addEventListener("load", ()=>{
     setTimeout(setupUnsavedPulse, 900);
   });
+})();
+</script>
+
+
+<script>
+/* ===== Hide sidebar hover trigger while locked/login is visible ===== */
+(function(){
+  function syncLoginSidebarState(){
+    const lock = document.getElementById("lockScreen");
+    const isLocked = lock && getComputedStyle(lock).display !== "none";
+    document.body.classList.toggle("login-active", !!isLocked);
+    if(isLocked){
+      document.body.classList.remove("sidebar-peek");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    syncLoginSidebarState();
+    const lock = document.getElementById("lockScreen");
+    if(lock){
+      const obs = new MutationObserver(syncLoginSidebarState);
+      obs.observe(lock, { attributes:true, attributeFilter:["style", "class"] });
+    }
+  });
+
+  window.addEventListener("load", syncLoginSidebarState);
+  document.addEventListener("click", ()=>setTimeout(syncLoginSidebarState, 50));
 })();
 </script>
 
