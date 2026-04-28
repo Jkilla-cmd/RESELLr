@@ -2749,6 +2749,88 @@ html[data-theme="lofi"] .music-visualizer.playing{
   opacity: 1;
 }
 
+
+/* ===== Visualizer modes: bars / squiggle / expanded ===== */
+.music-visualizer{
+  position:relative;
+  cursor:pointer;
+  user-select:none;
+  overflow:hidden;
+}
+
+.music-visualizer .viz-bars{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  width:100%;
+  height:100%;
+}
+
+.music-visualizer canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:none;
+}
+
+.music-visualizer.wave canvas,
+.music-visualizer.expanded canvas{
+  display:block;
+}
+
+.music-visualizer.wave .viz-bars,
+.music-visualizer.expanded .viz-bars{
+  display:none;
+}
+
+.music-visualizer.expanded{
+  width:220px !important;
+  height:42px !important;
+  border-radius:18px !important;
+  padding:0 !important;
+}
+
+.music-visualizer.palette-warm span{
+  background:linear-gradient(180deg,#ffd166,#ff5fa2) !important;
+}
+.music-visualizer.palette-cool span{
+  background:linear-gradient(180deg,#7cc7ff,#8d7dff) !important;
+}
+.music-visualizer.palette-mint span{
+  background:linear-gradient(180deg,#00ff99,#7cc7ff) !important;
+}
+
+.music-visualizer.palette-warm{
+  --viz-color:#ffd166;
+  --viz-glow:rgba(255,209,102,.22);
+}
+.music-visualizer.palette-cool{
+  --viz-color:#7cc7ff;
+  --viz-glow:rgba(124,199,255,.20);
+}
+.music-visualizer.palette-mint{
+  --viz-color:#00ff99;
+  --viz-glow:rgba(0,255,153,.18);
+}
+
+.music-visualizer.wave.playing,
+.music-visualizer.expanded.playing{
+  box-shadow:0 10px 28px var(--viz-glow, color-mix(in srgb, var(--accent) 12%, transparent)) !important;
+}
+
+html[data-theme="lofi"] .music-visualizer.wave.playing,
+html[data-theme="lofi"] .music-visualizer.expanded.playing{
+  box-shadow:0 10px 28px rgba(255,120,186,.16), inset 0 0 18px rgba(255,120,186,.045) !important;
+}
+
+@media (max-width:700px){
+  .music-visualizer.expanded{
+    width:150px !important;
+  }
+}
+
 </style>
 </head>
 
@@ -2913,15 +2995,18 @@ html[data-theme="lofi"] .music-visualizer.playing{
   <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>FINAL-CLEAN-2026-04-22-02</span></div>
   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
     <div class="topbar-music-zone">
-      <div class="music-visualizer" id="musicVisualizer" aria-hidden="true">
-        <span style="--i:1"></span>
-        <span style="--i:2"></span>
-        <span style="--i:3"></span>
-        <span style="--i:4"></span>
-        <span style="--i:5"></span>
-        <span style="--i:6"></span>
-        <span style="--i:7"></span>
-        <span style="--i:8"></span>
+      <div class="music-visualizer" id="musicVisualizer" title="Click: change visual • Double-click: color • Long press: expand">
+        <canvas id="vizCanvas"></canvas>
+        <div class="viz-bars">
+          <span style="--i:1"></span>
+          <span style="--i:2"></span>
+          <span style="--i:3"></span>
+          <span style="--i:4"></span>
+          <span style="--i:5"></span>
+          <span style="--i:6"></span>
+          <span style="--i:7"></span>
+          <span style="--i:8"></span>
+        </div>
       </div>
       <div class="lofi-avatar-wrap" id="lofiAvatarWrap">
         <button class="lofi-avatar-trigger" id="lofiMusicToggle" onclick="toggleLofiMusic()" title="Lo-Fi Music">
@@ -7311,24 +7396,57 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 
+
 <script>
-/* ===== Real audio-reactive visualizer ===== */
+/* ===== Real audio-reactive visualizer with modes ===== */
 (function(){
   let audioCtx = null;
   let analyser = null;
   let sourceNode = null;
-  let dataArray = null;
+  let freqData = null;
+  let timeData = null;
   let rafId = null;
+  let vizMode = localStorage.getItem("resellr_viz_mode") || "bars";
+  let paletteIndex = parseInt(localStorage.getItem("resellr_viz_palette") || "0", 10) || 0;
+  let longPressTimer = null;
+  let suppressClick = false;
+  const palettes = ["palette-cool", "palette-warm", "palette-mint"];
 
-  function bars(){
-    return Array.from(document.querySelectorAll("#musicVisualizer span"));
+  function viz(){ return document.getElementById("musicVisualizer"); }
+  function canvas(){ return document.getElementById("vizCanvas"); }
+  function bars(){ return Array.from(document.querySelectorAll("#musicVisualizer .viz-bars span")); }
+
+  function applyMode(){
+    const v = viz();
+    if(!v) return;
+    v.classList.toggle("wave", vizMode === "wave");
+    v.classList.toggle("expanded", vizMode === "expanded");
+    v.classList.remove("palette-cool","palette-warm","palette-mint");
+    v.classList.add(palettes[paletteIndex % palettes.length]);
+    localStorage.setItem("resellr_viz_mode", vizMode);
+    localStorage.setItem("resellr_viz_palette", String(paletteIndex));
   }
 
+  window.toggleVisualizerMode = function(){
+    vizMode = vizMode === "bars" ? "wave" : "bars";
+    applyMode();
+  };
+
+  window.cycleVisualizerPalette = function(){
+    paletteIndex = (paletteIndex + 1) % palettes.length;
+    applyMode();
+  };
+
+  window.toggleVisualizerExpanded = function(){
+    vizMode = vizMode === "expanded" ? "bars" : "expanded";
+    applyMode();
+  };
+
   function setVisualizerPlaying(on){
-    const viz = document.getElementById("musicVisualizer");
-    if(viz){
-      viz.classList.add("audio-reactive");
-      viz.classList.toggle("playing", !!on);
+    const v = viz();
+    if(v){
+      v.classList.add("audio-reactive");
+      v.classList.toggle("playing", !!on);
     }
   }
 
@@ -7350,9 +7468,10 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       if(!audioCtx){
         audioCtx = new AudioCtx();
         analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 64;
+        analyser.fftSize = 128;
         analyser.smoothingTimeConstant = 0.78;
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        freqData = new Uint8Array(analyser.frequencyBinCount);
+        timeData = new Uint8Array(analyser.fftSize);
       }
 
       if(!sourceNode){
@@ -7368,20 +7487,17 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     }
   }
 
-  function renderVisualizer(){
+  function drawBars(){
     const vizBars = bars();
-    if(!analyser || !dataArray || !vizBars.length){
-      rafId = requestAnimationFrame(renderVisualizer);
-      return;
-    }
+    if(!analyser || !freqData || !vizBars.length) return;
 
-    analyser.getByteFrequencyData(dataArray);
+    analyser.getByteFrequencyData(freqData);
+    const step = Math.max(1, Math.floor(freqData.length / vizBars.length));
 
-    const step = Math.max(1, Math.floor(dataArray.length / vizBars.length));
     vizBars.forEach((bar, i)=>{
       let sum = 0;
       for(let j=0;j<step;j++){
-        sum += dataArray[Math.min(dataArray.length - 1, i * step + j)] || 0;
+        sum += freqData[Math.min(freqData.length - 1, i * step + j)] || 0;
       }
       const avg = sum / step;
       const normalized = Math.min(1, avg / 190);
@@ -7389,24 +7505,74 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       bar.style.height = height.toFixed(1) + "px";
       bar.style.opacity = String(0.45 + normalized * 0.55);
     });
+  }
 
+  function drawWave(){
+    const c = canvas();
+    if(!c || !analyser || !timeData) return;
+    const ctx = c.getContext("2d");
+    const rect = c.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    c.width = Math.max(1, Math.floor(rect.width * dpr));
+    c.height = Math.max(1, Math.floor(rect.height * dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    analyser.getByteTimeDomainData(timeData);
+
+    const w = rect.width;
+    const h = rect.height;
+    ctx.clearRect(0,0,w,h);
+
+    const v = viz();
+    const color = getComputedStyle(v).getPropertyValue("--viz-color").trim() || getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#7cc7ff";
+
+    ctx.lineWidth = vizMode === "expanded" ? 2.4 : 2;
+    ctx.strokeStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = vizMode === "expanded" ? 12 : 7;
+    ctx.beginPath();
+
+    const slice = w / (timeData.length - 1);
+    for(let i=0;i<timeData.length;i++){
+      const val = timeData[i] / 128.0;
+      const y = (val * h / 2);
+      const x = i * slice;
+      if(i===0) ctx.moveTo(x,y);
+      else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    // subtle second line in expanded mode
+    if(vizMode === "expanded"){
+      ctx.globalAlpha = .28;
+      ctx.lineWidth = 1;
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      for(let i=0;i<timeData.length;i+=2){
+        const val = timeData[i] / 128.0;
+        const y = h - (val * h / 2);
+        const x = i * slice;
+        if(i===0) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function renderVisualizer(){
+    if(vizMode === "bars") drawBars();
+    else drawWave();
     rafId = requestAnimationFrame(renderVisualizer);
   }
 
   function startVisualizer(){
-    const audio = document.getElementById("lofiAudio");
-    if(!audio) return;
-
     const ok = setupAudioReactive();
     setVisualizerPlaying(true);
-
     if(audioCtx && audioCtx.state === "suspended"){
       audioCtx.resume().catch(()=>{});
     }
-
-    if(ok && !rafId){
-      renderVisualizer();
-    }
+    if(ok && !rafId) renderVisualizer();
   }
 
   function stopVisualizer(){
@@ -7419,11 +7585,42 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   }
 
   document.addEventListener("DOMContentLoaded", ()=>{
-    const viz = document.getElementById("musicVisualizer");
-    if(viz) viz.classList.add("audio-reactive");
-
+    const v = viz();
     const audio = document.getElementById("lofiAudio");
+    applyMode();
     resetBars();
+
+    if(v){
+      v.addEventListener("click", ()=>{
+        if(suppressClick){
+          suppressClick = false;
+          return;
+        }
+        window.toggleVisualizerMode();
+      });
+
+      v.addEventListener("dblclick", (e)=>{
+        e.preventDefault();
+        suppressClick = true;
+        window.cycleVisualizerPalette();
+      });
+
+      const startPress = ()=>{
+        clearTimeout(longPressTimer);
+        longPressTimer = setTimeout(()=>{
+          suppressClick = true;
+          window.toggleVisualizerExpanded();
+        }, 650);
+      };
+      const endPress = ()=>clearTimeout(longPressTimer);
+
+      v.addEventListener("mousedown", startPress);
+      v.addEventListener("mouseup", endPress);
+      v.addEventListener("mouseleave", endPress);
+      v.addEventListener("touchstart", startPress, {passive:true});
+      v.addEventListener("touchend", endPress);
+      v.addEventListener("touchcancel", endPress);
+    }
 
     if(audio){
       audio.addEventListener("play", startVisualizer);
@@ -7434,8 +7631,8 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   });
 
   const oldSet = window.setLofiMusicUi;
-  if(typeof oldSet === "function" && !window.__audioReactiveVisualizerHooked){
-    window.__audioReactiveVisualizerHooked = true;
+  if(typeof oldSet === "function" && !window.__audioReactiveVisualizerModesHooked){
+    window.__audioReactiveVisualizerModesHooked = true;
     window.setLofiMusicUi = function(isPlaying){
       try{ oldSet.apply(this, arguments); }catch(e){}
       if(isPlaying) startVisualizer();
@@ -7443,7 +7640,6 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     };
   }
 
-  // Expose for debugging/testing
   window.__startAudioVisualizer = startVisualizer;
   window.__stopAudioVisualizer = stopVisualizer;
 })();
