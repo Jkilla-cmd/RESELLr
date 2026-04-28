@@ -3232,6 +3232,88 @@ html[data-theme="lofi"] .topbar-visualizer-wrap .music-visualizer.expanded canva
   min-width: 0 !important;
 }
 
+
+/* ===== Contained topbar visualizer fix ===== */
+.topbar-visualizer-wrap{
+  display:none !important;
+}
+
+.topbar{
+  overflow:hidden !important;
+  contain: layout paint !important;
+}
+
+.topbar-left{
+  flex: 1 1 auto !important;
+  min-width:0 !important;
+}
+
+.topbar-inline-viz{
+  width: 150px;
+  height: 28px;
+  flex: 0 0 150px;
+  overflow: hidden;
+  pointer-events: auto;
+  opacity: .9;
+}
+
+.topbar-inline-viz .music-visualizer{
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: 28px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-height: 28px !important;
+  opacity: .18 !important;
+  transform: none !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: auto !important;
+  overflow: hidden !important;
+}
+
+.topbar-inline-viz .music-visualizer.playing{
+  opacity: .85 !important;
+}
+
+.topbar-inline-viz .music-visualizer.expanded{
+  width: 150px !important;
+  min-width: 150px !important;
+  height: 28px !important;
+}
+
+.topbar-inline-viz canvas,
+.topbar-inline-viz .viz-bars{
+  width: 100% !important;
+  height: 28px !important;
+  max-height: 28px !important;
+}
+
+.topbar-inline-viz .viz-bars{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+}
+
+.topbar-inline-viz .viz-bars span{
+  width:3px !important;
+  max-height:24px !important;
+}
+
+@media (max-width: 760px){
+  .topbar-inline-viz{
+    width: 80px;
+    flex-basis: 80px;
+  }
+  .topbar-inline-viz .music-visualizer.expanded{
+    width:80px !important;
+    min-width:80px !important;
+  }
+}
+
 </style>
 </head>
 
@@ -3392,24 +3474,25 @@ html[data-theme="lofi"] .topbar-visualizer-wrap .music-visualizer.expanded canva
 <!-- Topbar -->
 
 <div class="topbar">
-  <div class="topbar-visualizer-wrap" aria-hidden="true">
-    <div class="music-visualizer" id="musicVisualizer" title="Click: change visual • Double-click: color • Long press: expand">
-      <canvas id="vizCanvas"></canvas>
-      <div class="viz-bars">
-        <span style="--i:1"></span>
-        <span style="--i:2"></span>
-        <span style="--i:3"></span>
-        <span style="--i:4"></span>
-        <span style="--i:5"></span>
-        <span style="--i:6"></span>
-        <span style="--i:7"></span>
-        <span style="--i:8"></span>
-      </div>
-    </div>
-  <div class="topbar-content">
+<div class="topbar-content">
     <div class="topbar-left">
       <button class="hamburger" onclick="toggleSidebar()">☰</button>
       <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>FINAL-CLEAN-2026-04-22-02</span></div>
+      <div class="topbar-inline-viz">
+        <div class="music-visualizer" id="musicVisualizer" title="Click: change visual • Double-click: color • Long press: expand">
+          <canvas id="vizCanvas"></canvas>
+          <div class="viz-bars">
+            <span style="--i:1"></span>
+            <span style="--i:2"></span>
+            <span style="--i:3"></span>
+            <span style="--i:4"></span>
+            <span style="--i:5"></span>
+            <span style="--i:6"></span>
+            <span style="--i:7"></span>
+            <span style="--i:8"></span>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="topbar-right">
       <div class="lofi-avatar-wrap" id="lofiAvatarWrap">
