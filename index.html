@@ -2656,6 +2656,99 @@ html[data-theme="lofi"] #secDashboard .command-tabs{
   margin-top:12px !important;
 }
 
+
+/* ===== Top Bar Music Visualizer ===== */
+.topbar-music-zone{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.music-visualizer{
+  width:72px;
+  height:34px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.035);
+  border:1px solid rgba(255,255,255,0.07);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  padding:7px 10px;
+  opacity:.36;
+  transform:translateY(2px);
+  transition:opacity .25s ease, border-color .25s ease, box-shadow .25s ease, background .25s ease;
+}
+
+.music-visualizer span{
+  display:block;
+  width:4px;
+  height:8px;
+  border-radius:999px;
+  background:linear-gradient(180deg, var(--accent), var(--green));
+  opacity:.65;
+  transform-origin:center bottom;
+  animation: visualizerIdle 1.8s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.11s);
+}
+
+.music-visualizer.playing{
+  opacity:1;
+  border-color:color-mix(in srgb, var(--accent) 22%, transparent);
+  background:color-mix(in srgb, var(--accent) 6%, transparent);
+  box-shadow:0 10px 26px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.music-visualizer.playing span{
+  animation: visualizerBounce .72s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.075s);
+  opacity:1;
+}
+
+@keyframes visualizerIdle{
+  0%,100%{ transform:scaleY(.55); opacity:.42; }
+  50%{ transform:scaleY(.9); opacity:.68; }
+}
+
+@keyframes visualizerBounce{
+  0%,100%{ transform:scaleY(.45); }
+  25%{ transform:scaleY(1.2); }
+  50%{ transform:scaleY(.7); }
+  75%{ transform:scaleY(1.65); }
+}
+
+html[data-theme="lofi"] .music-visualizer span{
+  background:linear-gradient(180deg, #ff78ba, #8d7dff);
+}
+
+html[data-theme="lofi"] .music-visualizer.playing{
+  border-color:rgba(255,120,186,.20);
+  background:rgba(255,120,186,.055);
+  box-shadow:0 10px 28px rgba(255,120,186,.10);
+}
+
+@media (max-width: 700px){
+  .music-visualizer{
+    width:54px;
+    gap:3px;
+    padding:7px 8px;
+  }
+  .music-visualizer span:nth-child(n+7){
+    display:none;
+  }
+}
+
+
+/* ===== Audio-reactive visualizer refinement ===== */
+.music-visualizer.audio-reactive span{
+  animation: none !important;
+  height: 6px;
+  transition: height .08s linear, opacity .12s ease;
+}
+.music-visualizer.audio-reactive.playing span{
+  opacity: 1;
+}
+
 </style>
 </head>
 
@@ -2819,10 +2912,22 @@ html[data-theme="lofi"] #secDashboard .command-tabs{
   <button class="hamburger" onclick="toggleSidebar()">☰</button>
   <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>FINAL-CLEAN-2026-04-22-02</span></div>
   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-    <div class="lofi-avatar-wrap" id="lofiAvatarWrap">
-      <button class="lofi-avatar-trigger" id="lofiMusicToggle" onclick="toggleLofiMusic()" title="Lo-Fi Music">
-        <img src="assets/images/lofi-avatar.webp" alt="Lo-Fi music toggle" id="lofiAvatarImg">
-      </button>
+    <div class="topbar-music-zone">
+      <div class="music-visualizer" id="musicVisualizer" aria-hidden="true">
+        <span style="--i:1"></span>
+        <span style="--i:2"></span>
+        <span style="--i:3"></span>
+        <span style="--i:4"></span>
+        <span style="--i:5"></span>
+        <span style="--i:6"></span>
+        <span style="--i:7"></span>
+        <span style="--i:8"></span>
+      </div>
+      <div class="lofi-avatar-wrap" id="lofiAvatarWrap">
+        <button class="lofi-avatar-trigger" id="lofiMusicToggle" onclick="toggleLofiMusic()" title="Lo-Fi Music">
+          <img src="assets/images/lofi-avatar.webp" alt="Lo-Fi music toggle" id="lofiAvatarImg">
+        </button>
+      </div>
     </div>
     
     <button class="small" onclick="lockNow()">Lock</button>
@@ -6600,6 +6705,8 @@ function setLofiMusicUi(isPlaying) {
         ? "Playing: " + lofiPlaylist[lofiIndex].title
         : (lofiActive ? "Paused: " + lofiPlaylist[lofiIndex].title : "Lo-Fi Music");
     }
+    const viz = document.getElementById("musicVisualizer");
+    if(viz) viz.classList.toggle("playing", !!isPlaying);
   } catch(e) {}
 }
 
@@ -7199,6 +7306,146 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       });
     });
   });
+})();
+</script>
+
+
+
+<script>
+/* ===== Real audio-reactive visualizer ===== */
+(function(){
+  let audioCtx = null;
+  let analyser = null;
+  let sourceNode = null;
+  let dataArray = null;
+  let rafId = null;
+
+  function bars(){
+    return Array.from(document.querySelectorAll("#musicVisualizer span"));
+  }
+
+  function setVisualizerPlaying(on){
+    const viz = document.getElementById("musicVisualizer");
+    if(viz){
+      viz.classList.add("audio-reactive");
+      viz.classList.toggle("playing", !!on);
+    }
+  }
+
+  function resetBars(){
+    bars().forEach((bar, i)=>{
+      bar.style.height = (6 + (i % 3) * 2) + "px";
+      bar.style.opacity = ".45";
+    });
+  }
+
+  function setupAudioReactive(){
+    const audio = document.getElementById("lofiAudio");
+    if(!audio) return false;
+
+    try{
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if(!AudioCtx) return false;
+
+      if(!audioCtx){
+        audioCtx = new AudioCtx();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        analyser.smoothingTimeConstant = 0.78;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+      }
+
+      if(!sourceNode){
+        sourceNode = audioCtx.createMediaElementSource(audio);
+        sourceNode.connect(analyser);
+        analyser.connect(audioCtx.destination);
+      }
+
+      return true;
+    }catch(e){
+      console.warn("Audio visualizer setup failed", e);
+      return false;
+    }
+  }
+
+  function renderVisualizer(){
+    const vizBars = bars();
+    if(!analyser || !dataArray || !vizBars.length){
+      rafId = requestAnimationFrame(renderVisualizer);
+      return;
+    }
+
+    analyser.getByteFrequencyData(dataArray);
+
+    const step = Math.max(1, Math.floor(dataArray.length / vizBars.length));
+    vizBars.forEach((bar, i)=>{
+      let sum = 0;
+      for(let j=0;j<step;j++){
+        sum += dataArray[Math.min(dataArray.length - 1, i * step + j)] || 0;
+      }
+      const avg = sum / step;
+      const normalized = Math.min(1, avg / 190);
+      const height = 5 + normalized * 22;
+      bar.style.height = height.toFixed(1) + "px";
+      bar.style.opacity = String(0.45 + normalized * 0.55);
+    });
+
+    rafId = requestAnimationFrame(renderVisualizer);
+  }
+
+  function startVisualizer(){
+    const audio = document.getElementById("lofiAudio");
+    if(!audio) return;
+
+    const ok = setupAudioReactive();
+    setVisualizerPlaying(true);
+
+    if(audioCtx && audioCtx.state === "suspended"){
+      audioCtx.resume().catch(()=>{});
+    }
+
+    if(ok && !rafId){
+      renderVisualizer();
+    }
+  }
+
+  function stopVisualizer(){
+    setVisualizerPlaying(false);
+    if(rafId){
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    resetBars();
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    const viz = document.getElementById("musicVisualizer");
+    if(viz) viz.classList.add("audio-reactive");
+
+    const audio = document.getElementById("lofiAudio");
+    resetBars();
+
+    if(audio){
+      audio.addEventListener("play", startVisualizer);
+      audio.addEventListener("pause", stopVisualizer);
+      audio.addEventListener("ended", stopVisualizer);
+      if(!audio.paused) startVisualizer();
+    }
+  });
+
+  const oldSet = window.setLofiMusicUi;
+  if(typeof oldSet === "function" && !window.__audioReactiveVisualizerHooked){
+    window.__audioReactiveVisualizerHooked = true;
+    window.setLofiMusicUi = function(isPlaying){
+      try{ oldSet.apply(this, arguments); }catch(e){}
+      if(isPlaying) startVisualizer();
+      else stopVisualizer();
+    };
+  }
+
+  // Expose for debugging/testing
+  window.__startAudioVisualizer = startVisualizer;
+  window.__stopAudioVisualizer = stopVisualizer;
 })();
 </script>
 
