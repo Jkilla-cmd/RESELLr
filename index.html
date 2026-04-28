@@ -2901,65 +2901,65 @@ html[data-theme="lofi"] .music-visualizer.expanded canvas{
 }
 
 
-/* ===== Full-width topbar visualizer ===== */
+/* ===== Safe full-width topbar visualizer ===== */
 .topbar{
-  position: relative;
-  overflow: hidden;
-}
-
-.topbar-visualizer-wrap{
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.music-visualizer{
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  pointer-events: auto;
+  position: sticky !important;
+  overflow: hidden !important;
 }
 
 .topbar-content{
   position: relative;
-  z-index: 2;
+  z-index: 3;
+  width: 100%;
   display:flex;
   align-items:center;
-  justify-content: space-between;
-}
-
-.music-visualizer{
-  opacity: .12;
-  transition: opacity .35s ease;
-}
-
-.music-visualizer.playing{
-  opacity: .35;
-}
-
-.music-visualizer.wave canvas,
-.music-visualizer.expanded canvas{
-  opacity: .6;
-  filter: blur(.2px) drop-shadow(0 0 8px rgba(124,199,255,.25));
-}
-
-html[data-theme="lofi"] .music-visualizer.wave canvas{
-  filter: blur(.2px) drop-shadow(0 0 10px rgba(255,120,186,.25));
+  justify-content:space-between;
+  gap:12px;
 }
 
 .topbar-visualizer-wrap{
-  mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    black 20%,
-    black 80%,
-    transparent 100%
-  );
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  opacity:.9;
+  mask-image: linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%);
+}
+
+.topbar-visualizer-wrap .music-visualizer{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  opacity:.10 !important;
+  transform:none !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  pointer-events:none !important;
+}
+
+.topbar-visualizer-wrap .music-visualizer.playing{
+  opacity:.34 !important;
+  animation:none !important;
+}
+
+.topbar-visualizer-wrap .music-visualizer .viz-bars{
+  height:100%;
+  align-items:center;
+  justify-content:center;
+}
+
+.topbar-visualizer-wrap .music-visualizer.wave canvas,
+.topbar-visualizer-wrap .music-visualizer.expanded canvas{
+  opacity:.65;
+  filter: blur(.2px) drop-shadow(0 0 8px rgba(124,199,255,.25));
+}
+
+html[data-theme="lofi"] .topbar-visualizer-wrap .music-visualizer.wave canvas,
+html[data-theme="lofi"] .topbar-visualizer-wrap .music-visualizer.expanded canvas{
+  filter: blur(.2px) drop-shadow(0 0 10px rgba(255,120,186,.25));
 }
 
 </style>
@@ -3122,42 +3122,35 @@ html[data-theme="lofi"] .music-visualizer.wave canvas{
 <!-- Topbar -->
 
 <div class="topbar">
-  <div class="topbar-visualizer-wrap">
-    <div class="music-visualizer" id="musicVisualizer">
+  <div class="topbar-visualizer-wrap" aria-hidden="true">
+    <div class="music-visualizer" id="musicVisualizer" title="Click: change visual • Double-click: color • Long press: expand">
       <canvas id="vizCanvas"></canvas>
       <div class="viz-bars">
-        <span></span><span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span>
+        <span style="--i:1"></span>
+        <span style="--i:2"></span>
+        <span style="--i:3"></span>
+        <span style="--i:4"></span>
+        <span style="--i:5"></span>
+        <span style="--i:6"></span>
+        <span style="--i:7"></span>
+        <span style="--i:8"></span>
       </div>
     </div>
   </div>
   <div class="topbar-content">
+
   <button class="hamburger" onclick="toggleSidebar()">☰</button>
   <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>FINAL-CLEAN-2026-04-22-02</span></div>
   <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-    <div class="topbar-music-zone">
-      <div class="music-visualizer" id="musicVisualizer" title="Click: change visual • Double-click: color • Long press: expand">
-        <canvas id="vizCanvas"></canvas>
-        <div class="viz-bars">
-          <span style="--i:1"></span>
-          <span style="--i:2"></span>
-          <span style="--i:3"></span>
-          <span style="--i:4"></span>
-          <span style="--i:5"></span>
-          <span style="--i:6"></span>
-          <span style="--i:7"></span>
-          <span style="--i:8"></span>
-        </div>
-      </div>
-      <div class="lofi-avatar-wrap" id="lofiAvatarWrap">
+    <div class="lofi-avatar-wrap" id="lofiAvatarWrap">
         <button class="lofi-avatar-trigger" id="lofiMusicToggle" onclick="toggleLofiMusic()" title="Lo-Fi Music">
           <img src="assets/images/lofi-avatar.webp" alt="Lo-Fi music toggle" id="lofiAvatarImg">
         </button>
-      </div>
-    </div>
-    
+      </div></div>
     <button class="small" onclick="lockNow()">Lock</button>
     <button class="small danger" onclick="factoryReset()">Reset</button>
+  </div>
+
   </div>
 </div>
 
