@@ -2435,6 +2435,48 @@ html[data-theme="lofi"] textarea{
   .command-hero{ grid-template-columns:1fr; }
 }
 
+
+/* ===== Command Center Refinement ===== */
+.command-hero{
+  grid-template-columns: repeat(5, minmax(130px, 1fr)) !important;
+  gap:12px !important;
+}
+.command-stat{ padding:14px !important; }
+.command-stat .value{ font-size:22px !important; }
+
+.command-center{
+  grid-template-columns: minmax(260px, .8fr) minmax(520px, 1.6fr) !important;
+  gap:16px !important;
+}
+.command-center .panel{ min-width:0 !important; }
+.command-center .chart-wrap{ height:320px !important; }
+
+.snapshot-column{ grid-column:1 / -1; }
+.command-side-snapshots{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap:12px;
+}
+.snapshot-item{ padding:9px 10px !important; }
+.snapshot-item .name{
+  white-space:normal !important;
+  line-height:1.25 !important;
+  max-height:2.5em;
+}
+
+.flip-zone{ margin-top:0 !important; }
+.command-tabs{
+  margin-top:18px !important;
+  opacity:.92;
+}
+#secDashboard > .grid{ margin-top:14px; }
+
+@media (max-width: 1180px){
+  .command-hero{ grid-template-columns: repeat(2, minmax(150px, 1fr)) !important; }
+  .command-center{ grid-template-columns:1fr !important; }
+  .command-side-snapshots{ grid-template-columns:1fr !important; }
+}
+
 </style>
 </head>
 
@@ -2682,14 +2724,16 @@ html[data-theme="lofi"] textarea{
           <div class="flip-zone panel"><h3>Flip Zone</h3><div class="flip-grid" id="ccFlipZone"></div></div>
         </div>
 
-        <div class="command-stack">
-          <div class="panel"><h3>Newest Inventory</h3><div class="snapshot-list" id="ccNewestInventory"></div></div>
-          <div class="panel"><h3>Inventory Holds</h3><div class="snapshot-list" id="ccNewestHolds"></div></div>
-          <div class="panel"><h3>Recently Sold</h3><div class="snapshot-list" id="ccRecentSold"></div></div>
+        <div class="snapshot-column">
+          <div class="command-side-snapshots">
+            <div class="panel"><h3>Newest Inventory</h3><div class="snapshot-list" id="ccNewestInventory"></div></div>
+            <div class="panel"><h3>Inventory Holds</h3><div class="snapshot-list" id="ccNewestHolds"></div></div>
+            <div class="panel"><h3>Recently Sold</h3><div class="snapshot-list" id="ccRecentSold"></div></div>
+          </div>
         </div>
       </div>
 
-      <div class="panel command-tabs"><div class="command-section-title"><h3>Detailed Dashboard</h3><span class="pill muted">Original panels below</span></div></div>
+      <div class="panel command-tabs"><div class="command-section-title"><h3>Deep Dive Dashboard</h3><span class="pill muted">Detailed totals, budget, net worth, and full graphs below</span></div></div>
 
 
       <div class="grid">
@@ -6776,6 +6820,31 @@ function ccReadSold(){ try{ return readSold(); }catch(e){ return []; } }
 function ccDateKey(d){ return String(d || "").slice(0,10); }
 function ccTodayKey(){ const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function ccSafeNum(v){ const n = Number(v||0); return Number.isFinite(n) ? n : 0; }
+function ccItemValue(r){
+  if(!r) return 0;
+  const fields = [
+    r.value, r.listValue, r.listedValue, r.listPrice, r.price,
+    r.asking, r.askingPrice, r.salePrice, r.amount,
+    r.totalValue, r.marketValue
+  ];
+  for(const v of fields){
+    const n = ccSafeNum(v);
+    if(n > 0) return n;
+  }
+  const qty = Math.max(1, ccSafeNum(r.qty || r.quantity || 1));
+  const each = ccSafeNum(r.valueEach || r.priceEach || r.listEach);
+  if(each > 0) return each * qty;
+  return 0;
+}
+function ccItemCost(r){
+  if(!r) return 0;
+  const fields = [r.cost, r.buyCost, r.purchasePrice, r.paid, r.totalCost];
+  for(const v of fields){
+    const n = ccSafeNum(v);
+    if(n > 0) return n;
+  }
+  return 0;
+}
 
 function ccRenderList(id, rows, kind){
   const el = document.getElementById(id);
@@ -6791,7 +6860,12 @@ function ccRenderList(id, rows, kind){
     const name = r.item || r.title || r.name || "Untitled";
     let left = "", right = "";
     if(kind === "sold"){ left = r.date || ""; right = ccMoney(r.profit || 0); }
-    else { left = r.type || r.platform || ""; right = ccMoney(r.value || r.price || 0); }
+    else {
+      const val = ccItemValue(r);
+      const cost = ccItemCost(r);
+      left = r.type || r.platform || (cost ? "Cost " + ccMoney(cost) : "");
+      right = val ? ccMoney(val) : (cost ? ccMoney(cost) : "—");
+    }
     div.innerHTML = `<div class="name">${name}</div><div class="meta"><span>${left}</span><span>${right}</span></div>`;
     el.appendChild(div);
   });
@@ -6820,12 +6894,12 @@ function ccRenderFlipZone(active, holds, sold){
   const el = document.getElementById("ccFlipZone");
   if(!el) return;
   const highestMargin = [...sold].sort((a,b)=>ccSafeNum(b.profit)-ccSafeNum(a.profit))[0];
-  const highestValueHold = [...holds].sort((a,b)=>ccSafeNum(b.value)-ccSafeNum(a.value))[0];
-  const highestValueActive = [...active].sort((a,b)=>ccSafeNum(b.value || b.price)-ccSafeNum(a.value || a.price))[0];
+  const highestValueHold = [...holds].sort((a,b)=>ccItemValue(b)-ccItemValue(a))[0];
+  const highestValueActive = [...active].sort((a,b)=>ccItemValue(b)-ccItemValue(a))[0];
   const cards = [
     ["Best Flip", highestMargin ? `${highestMargin.item || "Item"} brought ${ccMoney(highestMargin.profit)} profit.` : "No sold data yet."],
-    ["Top Hold", highestValueHold ? `${highestValueHold.item || "Hold item"} is sitting at ${ccMoney(highestValueHold.value)} value.` : "No holds yet."],
-    ["High Value Listing", highestValueActive ? `${highestValueActive.item || "Inventory item"} is listed/value tracked at ${ccMoney(highestValueActive.value || highestValueActive.price)}.` : "No active inventory yet."]
+    ["Top Hold", highestValueHold ? `${highestValueHold.item || "Hold item"} is sitting at ${ccItemValue(highestValueHold) ? ccMoney(ccItemValue(highestValueHold)) : "an unpriced value"}.` : "No holds yet."],
+    ["High Value Listing", highestValueActive ? `${highestValueActive.item || "Inventory item"} is listed/value tracked at ${ccItemValue(highestValueActive) ? ccMoney(ccItemValue(highestValueActive)) : "an unpriced value"}.` : "No active inventory yet."]
   ];
   el.innerHTML = "";
   cards.forEach(([title,body])=>{
