@@ -2527,6 +2527,135 @@ html[data-theme="lofi"] textarea{
   }
 }
 
+
+/* ===== Unified Dashboard Style: old panels match Command Center ===== */
+#secDashboard > .grid{
+  display:grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  gap:16px !important;
+  align-items:start !important;
+}
+
+#secDashboard > .grid > .panel{
+  grid-column: span 4;
+  min-width:0 !important;
+  min-height:auto !important;
+  height:auto !important;
+  flex:none !important;
+  border-radius:18px !important;
+  background: rgba(255,255,255,0.035) !important;
+  border:1px solid rgba(255,255,255,0.07) !important;
+  box-shadow:0 10px 26px rgba(0,0,0,.18) !important;
+  padding:16px !important;
+}
+
+#secDashboard > .grid > .panel.panel-wide,
+#secDashboard > .grid > .panel.income-full,
+#secDashboard > .grid > .panel.profit-full,
+#secDashboard > .grid > .panel.full-span{
+  grid-column: span 12 !important;
+}
+
+#secDashboard > .grid > .panel h3{
+  color:var(--text) !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  text-transform:none !important;
+  letter-spacing:.02em !important;
+  margin-bottom:12px !important;
+}
+
+#secDashboard > .grid .stat{
+  font-size:13px !important;
+}
+
+#secDashboard > .grid .nw-card,
+#secDashboard > .grid .market-card{
+  background:rgba(255,255,255,0.025) !important;
+  border:1px solid rgba(255,255,255,0.06) !important;
+  border-radius:14px !important;
+  box-shadow:none !important;
+}
+
+#secDashboard > .grid .chart-wrap{
+  height:300px !important;
+}
+
+#secDashboard > .grid .resize-handle{
+  display:none !important;
+}
+
+#secDashboard .command-tabs{
+  background:rgba(255,255,255,0.025) !important;
+  border:1px solid rgba(255,255,255,0.06) !important;
+  box-shadow:none !important;
+  padding:14px 16px !important;
+}
+
+#secDashboard .command-tabs h3{
+  color:var(--text) !important;
+  text-transform:none !important;
+  letter-spacing:.02em !important;
+}
+
+#secDashboard .command-tabs .pill{
+  background:rgba(255,255,255,0.035) !important;
+  border-color:rgba(255,255,255,0.07) !important;
+}
+
+/* make old dashboard controls feel like command cards */
+#secDashboard > .grid select,
+#secDashboard > .grid input{
+  background:rgba(255,255,255,0.035) !important;
+  border:1px solid rgba(255,255,255,0.07) !important;
+  border-radius:12px !important;
+}
+
+#secDashboard > .grid .pill{
+  background:rgba(255,255,255,0.035) !important;
+  border:1px solid rgba(255,255,255,0.07) !important;
+  color:var(--muted) !important;
+}
+
+/* better responsive old dashboard */
+@media (max-width: 1200px){
+  #secDashboard > .grid > .panel{
+    grid-column: span 6;
+  }
+  #secDashboard > .grid > .panel.panel-wide,
+  #secDashboard > .grid > .panel.income-full,
+  #secDashboard > .grid > .panel.profit-full,
+  #secDashboard > .grid > .panel.full-span{
+    grid-column: span 12 !important;
+  }
+}
+
+@media (max-width: 760px){
+  #secDashboard > .grid{
+    grid-template-columns:1fr !important;
+  }
+  #secDashboard > .grid > .panel,
+  #secDashboard > .grid > .panel.panel-wide,
+  #secDashboard > .grid > .panel.income-full,
+  #secDashboard > .grid > .panel.profit-full,
+  #secDashboard > .grid > .panel.full-span{
+    grid-column:1 / -1 !important;
+  }
+}
+
+/* Lo-Fi unified polish */
+html[data-theme="lofi"] #secDashboard > .grid > .panel,
+html[data-theme="lofi"] #secDashboard .command-tabs{
+  background:rgba(10,12,20,0.54) !important;
+  border-color:rgba(255,255,255,.07) !important;
+  box-shadow:0 12px 30px rgba(0,0,0,.20) !important;
+}
+
+/* reduce old dashboard visual weight under command center */
+#secDashboard > .grid{
+  margin-top:12px !important;
+}
+
 </style>
 </head>
 
@@ -2784,7 +2913,7 @@ html[data-theme="lofi"] textarea{
         </div>
       </div>
 
-      <div class="panel command-tabs"><div class="command-section-title"><h3>Deep Dive Dashboard</h3><span class="pill muted">Detailed totals, budget, net worth, and full graphs below</span></div></div>
+      <div class="panel command-tabs"><div class="command-section-title"><h3>Expanded Dashboard</h3><span class="pill muted">Expanded metrics and original tools below</span></div></div>
 
 
       <div class="grid">
