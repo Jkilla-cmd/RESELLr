@@ -3168,6 +3168,70 @@ html[data-theme="lofi"] .topbar-visualizer-wrap .music-visualizer.expanded canva
   }
 }
 
+
+/* ===== Hard clip visualizer to topbar only ===== */
+.topbar{
+  position: sticky !important;
+  top: 12px !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  contain: paint !important;
+}
+
+.topbar-visualizer-wrap{
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 120px !important;
+  right: 210px !important;
+  width: auto !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+.topbar-visualizer-wrap .music-visualizer{
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  opacity: .14 !important;
+  transform: none !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+.topbar-visualizer-wrap .music-visualizer.playing{
+  opacity: .32 !important;
+}
+
+.topbar-visualizer-wrap canvas,
+.topbar-visualizer-wrap .viz-bars{
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+.topbar-content{
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+/* Cancel any global expanded visualizer sizing inside topbar */
+.topbar-visualizer-wrap .music-visualizer.expanded{
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+}
+
 </style>
 </head>
 
