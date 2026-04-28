@@ -3050,6 +3050,124 @@ html[data-theme="lofi"] .topbar-visualizer-wrap .music-visualizer.expanded canva
   }
 }
 
+
+/* ===== Topbar flex alignment fix ===== */
+.topbar{
+  min-height: 66px !important;
+  display:flex !important;
+  align-items:center !important;
+  position: sticky !important;
+  overflow: hidden !important;
+}
+
+.topbar-content{
+  position: relative !important;
+  z-index: 3 !important;
+  width:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+}
+
+.topbar-left{
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  min-width:0 !important;
+}
+
+.topbar-right{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:10px !important;
+  flex-shrink:0 !important;
+  flex-wrap:nowrap !important;
+}
+
+.topbar-left .title{
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+.topbar-right .lofi-avatar-wrap{
+  width:56px !important;
+  height:56px !important;
+  flex:0 0 56px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+.topbar-right .small{
+  flex:0 0 auto !important;
+  white-space:nowrap !important;
+}
+
+.topbar-visualizer-wrap{
+  position:absolute !important;
+  top:0 !important;
+  bottom:0 !important;
+  left:120px !important;
+  right:210px !important;
+  z-index:1 !important;
+  pointer-events:none !important;
+  mask-image: linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%);
+}
+
+.topbar-visualizer-wrap .music-visualizer{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  transform:none !important;
+  pointer-events:none !important;
+}
+
+/* ===== Unsaved changes Lock pulse ===== */
+#lockButton.unsaved-pulse{
+  border-color: rgba(245,207,117,.65) !important;
+  color: #f5cf75 !important;
+  animation: lockUnsavedPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes lockUnsavedPulse{
+  0%,100%{
+    box-shadow: 0 0 0 0 rgba(245,207,117,.0);
+  }
+  50%{
+    box-shadow: 0 0 0 4px rgba(245,207,117,.14), 0 0 18px rgba(245,207,117,.12);
+  }
+}
+
+@media (max-width: 760px){
+  .topbar{
+    min-height:58px !important;
+  }
+  .topbar-left{
+    gap:8px !important;
+  }
+  .topbar-left .title{
+    max-width:42vw !important;
+    font-size:12px !important;
+  }
+  .topbar-right{
+    gap:7px !important;
+  }
+  .topbar-right .lofi-avatar-wrap{
+    width:44px !important;
+    height:44px !important;
+    flex-basis:44px !important;
+  }
+  .topbar-visualizer-wrap{
+    left:72px !important;
+    right:150px !important;
+  }
+}
+
 </style>
 </head>
 
@@ -3224,21 +3342,20 @@ html[data-theme="lofi"] .topbar-visualizer-wrap .music-visualizer.expanded canva
         <span style="--i:8"></span>
       </div>
     </div>
-  </div>
   <div class="topbar-content">
-
-  <button class="hamburger" onclick="toggleSidebar()">☰</button>
-  <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>FINAL-CLEAN-2026-04-22-02</span></div>
-  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-    <div class="lofi-avatar-wrap" id="lofiAvatarWrap">
+    <div class="topbar-left">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>FINAL-CLEAN-2026-04-22-02</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="lofi-avatar-wrap" id="lofiAvatarWrap">
         <button class="lofi-avatar-trigger" id="lofiMusicToggle" onclick="toggleLofiMusic()" title="Lo-Fi Music">
           <img src="assets/images/lofi-avatar.webp" alt="Lo-Fi music toggle" id="lofiAvatarImg">
         </button>
-      </div></div>
-    <button class="small" onclick="lockNow()">Lock</button>
-    <button class="small danger" onclick="factoryReset()">Reset</button>
-  </div>
-
+      </div>
+      <button class="small" id="lockButton" onclick="lockNow()">Lock</button>
+      <button class="small danger" onclick="factoryReset()">Reset</button>
+    </div>
   </div>
 </div>
 
@@ -7864,6 +7981,103 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
   window.__startAudioVisualizer = startVisualizer;
   window.__stopAudioVisualizer = stopVisualizer;
+})();
+</script>
+
+
+<script>
+/* ===== Unsaved changes pulse on Lock button ===== */
+(function(){
+  let armed = false;
+
+  function setUnsaved(on){
+    const btn = document.getElementById("lockButton") || Array.from(document.querySelectorAll("button")).find(b => (b.textContent || "").trim() === "Lock");
+    if(!btn) return;
+    btn.classList.toggle("unsaved-pulse", !!on);
+  }
+
+  window.markResellrUnsaved = function(){
+    if(!armed) return;
+    setUnsaved(true);
+  };
+
+  function wrapDataFunction(name){
+    if(typeof window[name] !== "function" || window["__unsavedWrapped_" + name]) return;
+    window["__unsavedWrapped_" + name] = true;
+    const original = window[name];
+    window[name] = function(){
+      const result = original.apply(this, arguments);
+      try{ window.markResellrUnsaved(); }catch(e){}
+      return result;
+    };
+  }
+
+  function setupUnsavedPulse(){
+    if(window.__unsavedPulseReady) return;
+    window.__unsavedPulseReady = true;
+
+    [
+      "writeActive",
+      "writeSold",
+      "writeHolds",
+      "writeMonthlyIncome",
+      "saveInventory",
+      "saveSold",
+      "saveHolds",
+      "addInventory",
+      "addHoldManually",
+      "addSoldManually",
+      "confirmMarkSold",
+      "moveActiveToHolds",
+      "moveHoldToActive",
+      "deleteActive",
+      "deleteSold",
+      "deleteHold"
+    ].forEach(wrapDataFunction);
+
+    // Also detect direct localStorage writes to the main DB keys
+    try{
+      const originalSetItem = Storage.prototype.setItem;
+      if(!window.__unsavedStorageWrapped){
+        window.__unsavedStorageWrapped = true;
+        Storage.prototype.setItem = function(key, value){
+          const result = originalSetItem.apply(this, arguments);
+          try{
+            const k = String(key || "");
+            if([
+              "resellrData",
+              "activeInventory",
+              "soldInventory",
+              "inventoryHolds",
+              "monthlyIncome"
+            ].includes(k)){
+              window.markResellrUnsaved();
+            }
+          }catch(e){}
+          return result;
+        };
+      }
+    }catch(e){}
+
+    // Clear the pulse when locking because that means you're done with this session
+    if(typeof window.lockNow === "function" && !window.__lockNowUnsavedWrapped){
+      window.__lockNowUnsavedWrapped = true;
+      const oldLock = window.lockNow;
+      window.lockNow = function(){
+        setUnsaved(false);
+        return oldLock.apply(this, arguments);
+      };
+    }
+
+    armed = true;
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    setTimeout(setupUnsavedPulse, 600);
+  });
+  window.addEventListener("load", ()=>{
+    setTimeout(setupUnsavedPulse, 900);
+  });
 })();
 </script>
 
