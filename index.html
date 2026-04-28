@@ -2962,6 +2962,94 @@ html[data-theme="lofi"] .topbar-visualizer-wrap .music-visualizer.expanded canva
   filter: blur(.2px) drop-shadow(0 0 10px rgba(255,120,186,.25));
 }
 
+
+/* ===== Topbar spacing fix ===== */
+.topbar{
+  min-height: 66px !important;
+  display:flex !important;
+  align-items:center !important;
+}
+
+.topbar-content{
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items:center !important;
+  gap:14px !important;
+}
+
+.topbar-content > .hamburger{
+  grid-column:1 !important;
+  justify-self:start !important;
+}
+
+.topbar-content > .title{
+  grid-column:2 !important;
+  justify-self:start !important;
+  white-space:nowrap !important;
+}
+
+.topbar-content > div:last-child{
+  grid-column:3 !important;
+  justify-self:end !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  flex-wrap:nowrap !important;
+}
+
+.topbar-content .lofi-avatar-wrap{
+  width:58px !important;
+  height:58px !important;
+  flex:0 0 58px !important;
+}
+
+.topbar-content .small{
+  flex:0 0 auto !important;
+}
+
+.topbar-visualizer-wrap{
+  pointer-events:none !important;
+}
+
+.topbar-visualizer-wrap .music-visualizer{
+  pointer-events:none !important;
+  opacity:.16 !important;
+}
+
+.topbar-visualizer-wrap .music-visualizer.playing{
+  opacity:.32 !important;
+}
+
+/* keep the visualizer behind the center area only */
+.topbar-visualizer-wrap{
+  left:90px !important;
+  right:180px !important;
+  inset-block:0 !important;
+  width:auto !important;
+}
+
+@media (max-width: 760px){
+  .topbar-content{
+    grid-template-columns:auto 1fr auto !important;
+    gap:8px !important;
+  }
+  .topbar-content > .title{
+    font-size:12px !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  .topbar-content .lofi-avatar-wrap{
+    width:46px !important;
+    height:46px !important;
+    flex-basis:46px !important;
+  }
+  .topbar-visualizer-wrap{
+    left:60px !important;
+    right:120px !important;
+  }
+}
+
 </style>
 </head>
 
