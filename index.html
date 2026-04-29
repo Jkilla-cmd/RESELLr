@@ -3744,6 +3744,406 @@ html[data-theme="lofi"] .topbar-inline-viz .music-visualizer.playing{
   }
 }
 
+
+/* ===== RESELLr PRO+ V2 — noticeable professional refresh ===== */
+
+/* More obvious modern shell */
+body{
+  background:
+    radial-gradient(900px 540px at 16% -8%, rgba(76,132,255,.085), transparent 58%),
+    radial-gradient(720px 420px at 95% 0%, rgba(31,211,145,.055), transparent 55%),
+    #090b10 !important;
+  color:#eef2f7 !important;
+  padding:18px !important;
+}
+
+/* Cleaner app width and spacing */
+.app{
+  max-width:1440px !important;
+  gap:18px !important;
+}
+
+.canvas{
+  min-width:0 !important;
+}
+
+/* Stronger “professional card” look */
+.panel,
+.command-stat,
+.command-tabs,
+.snapshot-item,
+.flip-card,
+.insight-card,
+.market-card,
+.table-wrap,
+#netWorthPanel .nw-card{
+  background:#111720 !important;
+  border:1px solid rgba(255,255,255,.075) !important;
+  border-radius:18px !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.045) inset,
+    0 18px 45px rgba(0,0,0,.18) !important;
+}
+
+.panel{
+  padding:20px !important;
+}
+
+/* Top bar: more noticeable premium header */
+.topbar{
+  min-height:70px !important;
+  background:linear-gradient(180deg, rgba(18,23,32,.94), rgba(12,15,22,.92)) !important;
+  border:1px solid rgba(255,255,255,.085) !important;
+  border-radius:20px !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.05) inset,
+    0 18px 40px rgba(0,0,0,.22) !important;
+}
+
+#topbarTitle{
+  font-size:15px !important;
+  font-weight:750 !important;
+  letter-spacing:-.01em !important;
+}
+
+/* Make canary badge less noisy */
+.canary-badge{
+  opacity:.65 !important;
+  font-size:10px !important;
+  padding:4px 7px !important;
+}
+
+/* Command center: more spacious and polished */
+.command-hero{
+  grid-template-columns: repeat(5, minmax(145px, 1fr)) !important;
+  gap:16px !important;
+  margin-bottom:20px !important;
+}
+
+.command-stat{
+  padding:18px !important;
+  min-height:122px !important;
+}
+
+.command-stat .label{
+  font-size:11px !important;
+  text-transform:uppercase !important;
+  letter-spacing:.06em !important;
+  color:#8793a3 !important;
+}
+
+.command-stat .value{
+  font-size:30px !important;
+  font-weight:800 !important;
+  letter-spacing:-.05em !important;
+}
+
+.command-stat .sub{
+  font-size:12px !important;
+  color:#8793a3 !important;
+}
+
+/* Make command center less cramped */
+.command-center{
+  grid-template-columns: minmax(280px,.8fr) minmax(560px,1.6fr) !important;
+  gap:20px !important;
+}
+
+.command-stack{
+  gap:16px !important;
+}
+
+.command-side-snapshots{
+  gap:16px !important;
+}
+
+/* Buttons: more SaaS style */
+button,
+button.small{
+  background:#18202b !important;
+  border:1px solid rgba(255,255,255,.075) !important;
+  color:#eef2f7 !important;
+  border-radius:12px !important;
+  box-shadow:none !important;
+  transition:background .16s ease, border-color .16s ease, transform .16s ease !important;
+}
+
+button:hover,
+button.small:hover{
+  background:#202a38 !important;
+  border-color:rgba(138,199,255,.22) !important;
+  transform:translateY(-1px) !important;
+}
+
+/* Quick action buttons look intentionally primary */
+.command-action button{
+  justify-content:flex-start !important;
+  min-height:44px !important;
+  background:#151d28 !important;
+}
+
+.command-action button:hover{
+  background:rgba(138,199,255,.10) !important;
+}
+
+/* Inputs flatter and cleaner */
+input, select, textarea{
+  background:#0e131b !important;
+  border:1px solid rgba(255,255,255,.075) !important;
+  border-radius:12px !important;
+}
+
+input:focus, select:focus, textarea:focus{
+  border-color:rgba(138,199,255,.45) !important;
+  box-shadow:0 0 0 3px rgba(138,199,255,.10) !important;
+}
+
+/* Headings clearer */
+.panel h3,
+.command-section-title h3,
+h3{
+  font-size:13px !important;
+  font-weight:750 !important;
+  color:#f4f7fb !important;
+  letter-spacing:-.005em !important;
+  text-transform:none !important;
+}
+
+/* Snapshot cards more refined */
+.snapshot-item,
+.flip-card,
+.insight-card{
+  background:#0f151e !important;
+  border-color:rgba(255,255,255,.06) !important;
+  box-shadow:none !important;
+}
+
+.snapshot-item .name,
+.flip-card .title{
+  font-weight:700 !important;
+}
+
+.snapshot-item .meta,
+.flip-card .body{
+  color:#8d99a8 !important;
+}
+
+/* Tables noticeably more professional */
+.table-wrap{
+  border-radius:18px !important;
+  overflow:auto !important;
+  background:#0f151e !important;
+}
+
+table{
+  border-collapse:separate !important;
+  border-spacing:0 !important;
+}
+
+thead th{
+  background:#0d1219 !important;
+  color:#8b98a8 !important;
+  font-size:11px !important;
+  font-weight:700 !important;
+  text-transform:uppercase !important;
+  letter-spacing:.045em !important;
+  padding:12px 14px !important;
+  border-bottom:1px solid rgba(255,255,255,.07) !important;
+}
+
+tbody td{
+  padding:13px 14px !important;
+  border-bottom:1px solid rgba(255,255,255,.04) !important;
+}
+
+tbody tr:hover td{
+  background:rgba(138,199,255,.035) !important;
+}
+
+/* Cleaner sidebar drawer */
+#sidebar{
+  background:#0d1118 !important;
+  border:1px solid rgba(255,255,255,.08) !important;
+  box-shadow:0 28px 70px rgba(0,0,0,.40) !important;
+}
+
+.brand .name{
+  font-weight:800 !important;
+  color:#f4f7fb !important;
+}
+
+.nav button{
+  min-height:42px !important;
+  border-radius:12px !important;
+}
+
+.nav button.active{
+  background:rgba(138,199,255,.105) !important;
+  border-color:rgba(138,199,255,.18) !important;
+}
+
+/* Expanded dashboard: make old layout blend better */
+#secDashboard > .grid > .panel{
+  background:#111720 !important;
+  border-radius:18px !important;
+  padding:18px !important;
+}
+
+/* Pro visualizer treatment */
+.topbar-inline-viz{
+  height:32px !important;
+  opacity:.95 !important;
+}
+.topbar-inline-viz .music-visualizer{
+  opacity:.12 !important;
+}
+.topbar-inline-viz .music-visualizer.playing{
+  opacity:.72 !important;
+}
+
+/* Keep Easter eggs visible and premium */
+#holdCharacter{
+  width:170px !important;
+  filter:drop-shadow(0 24px 34px rgba(0,0,0,.40)) !important;
+}
+
+.bmc-float{
+  width:54px !important;
+  height:54px !important;
+  background:#121821 !important;
+  border:1px solid rgba(255,215,0,.38) !important;
+  box-shadow:0 18px 38px rgba(0,0,0,.30) !important;
+}
+
+.ka-ching{
+  filter:drop-shadow(0 18px 35px rgba(0,0,0,.35)) !important;
+}
+
+/* Smaller-screen improvements */
+@media (max-width:1180px){
+  .command-hero{
+    grid-template-columns:repeat(2,minmax(150px,1fr)) !important;
+  }
+  .command-center{
+    grid-template-columns:1fr !important;
+  }
+}
+
+@media (max-width:760px){
+  body{ padding:12px !important; }
+  .command-stat .value{ font-size:25px !important; }
+  .topbar{ min-height:62px !important; }
+}
+
+
+/* ===== Pro+ Dropdown Menus ===== */
+select{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  -moz-appearance:none !important;
+
+  background:
+    linear-gradient(45deg, transparent 50%, #9aa3b2 50%),
+    linear-gradient(135deg, #9aa3b2 50%, transparent 50%),
+    #0e131b !important;
+
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px),
+    0 0 !important;
+
+  background-size:
+    6px 6px,
+    6px 6px,
+    100% 100% !important;
+
+  background-repeat:no-repeat !important;
+
+  border:1px solid rgba(255,255,255,.075) !important;
+  border-radius:12px !important;
+  color:#eef2f7 !important;
+  padding:10px 36px 10px 12px !important;
+  min-height:40px !important;
+  cursor:pointer !important;
+}
+
+select:hover{
+  background:
+    linear-gradient(45deg, transparent 50%, #c7d2df 50%),
+    linear-gradient(135deg, #c7d2df 50%, transparent 50%),
+    #121923 !important;
+
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px),
+    0 0 !important;
+
+  background-size:
+    6px 6px,
+    6px 6px,
+    100% 100% !important;
+
+  background-repeat:no-repeat !important;
+
+  border-color:rgba(138,199,255,.22) !important;
+}
+
+select:focus{
+  border-color:rgba(138,199,255,.45) !important;
+  box-shadow:0 0 0 3px rgba(138,199,255,.10) !important;
+}
+
+/* Dropdown options */
+select option{
+  background:#0f151e !important;
+  color:#eef2f7 !important;
+}
+
+select option:checked{
+  background:#182232 !important;
+  color:#ffffff !important;
+}
+
+/* Smaller pill-style selects */
+.pill select,
+select.pill,
+#ytdYearSelect,
+#budgetMode,
+#nwRange,
+#themeSelect{
+  height:36px !important;
+  min-height:36px !important;
+  padding:7px 34px 7px 12px !important;
+  border-radius:999px !important;
+  font-size:12px !important;
+}
+
+/* Lo-Fi theme dropdown polish */
+html[data-theme="lofi"] select{
+  background:
+    linear-gradient(45deg, transparent 50%, #cdb7cb 50%),
+    linear-gradient(135deg, #cdb7cb 50%, transparent 50%),
+    rgba(16,12,30,.82) !important;
+
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px),
+    0 0 !important;
+
+  background-size:
+    6px 6px,
+    6px 6px,
+    100% 100% !important;
+
+  background-repeat:no-repeat !important;
+  border-color:rgba(255,255,255,.08) !important;
+}
+
+html[data-theme="lofi"] select option{
+  background:#151020 !important;
+  color:#f8eef6 !important;
+}
+
 </style>
 </head>
 
