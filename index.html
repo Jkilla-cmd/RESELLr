@@ -4144,6 +4144,386 @@ html[data-theme="lofi"] select option{
   color:#f8eef6 !important;
 }
 
+
+/* ===== UniFi-inspired UI Skin ===== */
+:root{
+  --ui-bg:#0b1117;
+  --ui-surface:#111820;
+  --ui-surface-2:#151e28;
+  --ui-surface-3:#1a2430;
+  --ui-border:rgba(128,151,174,.16);
+  --ui-border-soft:rgba(128,151,174,.10);
+  --ui-text:#e7edf5;
+  --ui-muted:#8d9aaa;
+  --ui-blue:#1597ff;
+  --ui-blue-soft:rgba(21,151,255,.12);
+  --ui-green:#22c55e;
+  --ui-red:#ef4444;
+  --ui-yellow:#f5c451;
+}
+
+/* UniFi-style shell */
+body{
+  background:
+    radial-gradient(1100px 620px at 50% -12%, rgba(21,151,255,.07), transparent 58%),
+    linear-gradient(180deg, #0a1016 0%, #0b1117 48%, #090e14 100%) !important;
+  color:var(--ui-text) !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
+}
+
+/* Main cards */
+.panel,
+.command-stat,
+.command-tabs,
+.snapshot-item,
+.flip-card,
+.insight-card,
+.market-card,
+.table-wrap,
+#netWorthPanel .nw-card{
+  background:var(--ui-surface) !important;
+  border:1px solid var(--ui-border-soft) !important;
+  border-radius:14px !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.025) inset, 0 8px 24px rgba(0,0,0,.18) !important;
+}
+
+/* Top bar like UniFi header */
+.topbar{
+  background:rgba(12,18,25,.92) !important;
+  border:1px solid var(--ui-border-soft) !important;
+  border-radius:14px !important;
+  box-shadow:0 12px 28px rgba(0,0,0,.20) !important;
+  min-height:64px !important;
+}
+
+#topbarTitle,
+.topbar .title{
+  color:var(--ui-text) !important;
+  font-weight:700 !important;
+  font-size:14px !important;
+}
+
+/* Command cards: flatter with blue accent feel */
+.command-stat{
+  padding:18px !important;
+  background:linear-gradient(180deg, rgba(255,255,255,.018), rgba(255,255,255,.006)), var(--ui-surface) !important;
+}
+
+.command-stat .label{
+  color:var(--ui-muted) !important;
+  font-size:11px !important;
+  text-transform:uppercase !important;
+  letter-spacing:.075em !important;
+  font-weight:700 !important;
+}
+
+.command-stat .value{
+  color:var(--ui-text) !important;
+  font-size:29px !important;
+  font-weight:760 !important;
+  letter-spacing:-.04em !important;
+}
+
+.command-stat .sub{
+  color:var(--ui-muted) !important;
+}
+
+.command-stat:hover{
+  border-color:rgba(21,151,255,.22) !important;
+  background:linear-gradient(180deg, rgba(21,151,255,.035), rgba(255,255,255,.008)), var(--ui-surface) !important;
+}
+
+/* Headings */
+.panel h3,
+.command-section-title h3,
+h3{
+  color:var(--ui-text) !important;
+  font-size:13px !important;
+  font-weight:700 !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+}
+
+/* Muted text */
+.muted,
+label,
+.snapshot-item .meta,
+.flip-card .body,
+.command-stat .sub{
+  color:var(--ui-muted) !important;
+}
+
+/* Buttons */
+button,
+button.small{
+  background:var(--ui-surface-2) !important;
+  color:var(--ui-text) !important;
+  border:1px solid var(--ui-border) !important;
+  border-radius:10px !important;
+  box-shadow:none !important;
+  font-weight:650 !important;
+}
+
+button:hover,
+button.small:hover{
+  background:var(--ui-surface-3) !important;
+  border-color:rgba(21,151,255,.32) !important;
+  transform:translateY(-1px);
+}
+
+button.danger{
+  color:#ff9b9b !important;
+  background:rgba(239,68,68,.055) !important;
+  border-color:rgba(239,68,68,.20) !important;
+}
+
+/* Quick actions feel like UniFi navigation actions */
+.command-action button{
+  min-height:44px !important;
+  background:#101821 !important;
+  border-color:var(--ui-border-soft) !important;
+}
+
+.command-action button:hover{
+  background:rgba(21,151,255,.085) !important;
+  color:#dff1ff !important;
+}
+
+/* Inputs / dropdowns */
+input,
+select,
+textarea{
+  background:#0d141c !important;
+  border:1px solid var(--ui-border-soft) !important;
+  color:var(--ui-text) !important;
+  border-radius:10px !important;
+  box-shadow:none !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  border-color:rgba(21,151,255,.46) !important;
+  box-shadow:0 0 0 3px rgba(21,151,255,.12) !important;
+}
+
+/* UniFi style selects */
+select{
+  background:
+    linear-gradient(45deg, transparent 50%, #8d9aaa 50%),
+    linear-gradient(135deg, #8d9aaa 50%, transparent 50%),
+    #0d141c !important;
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px),
+    0 0 !important;
+  background-size:6px 6px,6px 6px,100% 100% !important;
+  background-repeat:no-repeat !important;
+}
+
+select:hover{
+  background:
+    linear-gradient(45deg, transparent 50%, #c2d3e6 50%),
+    linear-gradient(135deg, #c2d3e6 50%, transparent 50%),
+    #111b25 !important;
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px),
+    0 0 !important;
+  background-size:6px 6px,6px 6px,100% 100% !important;
+  background-repeat:no-repeat !important;
+}
+
+select option{
+  background:#101821 !important;
+  color:var(--ui-text) !important;
+}
+
+/* Sidebar: UniFi left drawer */
+#sidebar,
+.sidebar{
+  background:#0c1219 !important;
+  border:1px solid var(--ui-border-soft) !important;
+  border-radius:16px !important;
+  box-shadow:0 24px 60px rgba(0,0,0,.42) !important;
+}
+
+.brand .name{
+  color:var(--ui-text) !important;
+  font-weight:800 !important;
+}
+
+.nav button,
+.sidebar button,
+#sidebar button{
+  background:transparent !important;
+  color:var(--ui-muted) !important;
+  border:1px solid transparent !important;
+  border-radius:10px !important;
+}
+
+.nav button:hover,
+.sidebar button:hover,
+#sidebar button:hover{
+  background:rgba(255,255,255,.035) !important;
+  color:var(--ui-text) !important;
+}
+
+.nav button.active,
+.sidebar button.active,
+#sidebar button.active{
+  background:rgba(21,151,255,.12) !important;
+  color:#e5f4ff !important;
+  border-color:rgba(21,151,255,.20) !important;
+}
+
+.sidebar button.active::before{
+  background:var(--ui-blue) !important;
+  box-shadow:none !important;
+}
+
+/* Tables: UniFi network dashboard style */
+.table-wrap{
+  background:#0f171f !important;
+  border-color:var(--ui-border-soft) !important;
+  border-radius:14px !important;
+}
+
+table{
+  border-collapse:separate !important;
+  border-spacing:0 !important;
+}
+
+thead th{
+  background:#0d141c !important;
+  color:var(--ui-muted) !important;
+  font-size:11px !important;
+  font-weight:700 !important;
+  text-transform:uppercase !important;
+  letter-spacing:.055em !important;
+  border-bottom:1px solid var(--ui-border-soft) !important;
+  padding:12px 14px !important;
+}
+
+tbody td{
+  color:var(--ui-text) !important;
+  border-bottom:1px solid rgba(128,151,174,.075) !important;
+  padding:13px 14px !important;
+}
+
+tbody tr:hover td{
+  background:rgba(21,151,255,.045) !important;
+}
+
+/* Snapshot / insight cards */
+.snapshot-item,
+.flip-card,
+.insight-card{
+  background:#0f171f !important;
+  border:1px solid rgba(128,151,174,.10) !important;
+}
+
+.insight-card .tag{
+  color:var(--ui-blue) !important;
+}
+
+.snapshot-item .name,
+.flip-card .title{
+  color:var(--ui-text) !important;
+}
+
+/* Pills and badges */
+.pill,
+.badge,
+.canary-badge{
+  background:#101821 !important;
+  border:1px solid rgba(128,151,174,.12) !important;
+  color:var(--ui-muted) !important;
+}
+
+/* Blue system accents */
+.blue{ color:var(--ui-blue) !important; }
+.green{ color:var(--ui-green) !important; }
+.red{ color:var(--ui-red) !important; }
+.yellow{ color:var(--ui-yellow) !important; }
+
+.goal-mini{
+  background:rgba(128,151,174,.14) !important;
+}
+
+.goal-mini-fill{
+  background:linear-gradient(90deg, var(--ui-blue), #33d69f) !important;
+}
+
+/* Visualizer adapted to UniFi blue */
+.topbar-inline-viz .music-visualizer.playing{
+  opacity:.62 !important;
+}
+
+.music-visualizer .viz-bars span,
+.topbar-inline-viz .viz-bars span{
+  background:linear-gradient(180deg, #50b8ff, #1597ff) !important;
+}
+
+.music-visualizer.wave canvas,
+.music-visualizer.expanded canvas{
+  filter:drop-shadow(0 0 7px rgba(21,151,255,.22)) !important;
+}
+
+/* Keep Easter eggs intact, just more integrated */
+.lofi-avatar-trigger{
+  border:1px solid rgba(128,151,174,.18) !important;
+  box-shadow:0 8px 18px rgba(0,0,0,.24) !important;
+}
+
+.lofi-avatar-trigger.playing,
+.lofi-avatar-trigger.active{
+  border-color:rgba(21,151,255,.35) !important;
+  box-shadow:0 0 0 3px rgba(21,151,255,.08), 0 10px 24px rgba(0,0,0,.26) !important;
+}
+
+#holdCharacter{
+  filter:drop-shadow(0 18px 30px rgba(0,0,0,.38)) !important;
+}
+
+.bmc-float{
+  background:#101821 !important;
+  border:1px solid rgba(245,196,81,.36) !important;
+  box-shadow:0 14px 30px rgba(0,0,0,.30) !important;
+}
+
+/* Login screen also matches */
+.lockBox{
+  background:#111820 !important;
+  border:1px solid var(--ui-border-soft) !important;
+  border-radius:18px !important;
+  box-shadow:0 24px 60px rgba(0,0,0,.45) !important;
+}
+
+/* Lo-Fi theme still available but UniFi layout remains refined */
+html[data-theme="lofi"] .panel,
+html[data-theme="lofi"] .command-stat,
+html[data-theme="lofi"] .topbar,
+html[data-theme="lofi"] .sidebar,
+html[data-theme="lofi"] .snapshot-item,
+html[data-theme="lofi"] .flip-card,
+html[data-theme="lofi"] .insight-card,
+html[data-theme="lofi"] .table-wrap{
+  background:rgba(13,18,26,.76) !important;
+  border-color:rgba(128,151,174,.13) !important;
+}
+
+/* Better top spacing */
+.command-hero{
+  margin-top:2px !important;
+  gap:16px !important;
+}
+
+.command-center,
+.command-side-snapshots{
+  gap:16px !important;
+}
+
 </style>
 </head>
 
