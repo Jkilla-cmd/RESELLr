@@ -4524,6 +4524,211 @@ html[data-theme="lofi"] .table-wrap{
   gap:16px !important;
 }
 
+
+/* ===== RESELLr MONO THEME ===== */
+:root{
+  --mono-bg:#0a0a0a;
+  --mono-panel:#111;
+  --mono-border:#2a2a2a;
+  --mono-text:#f5f5f5;
+  --mono-muted:#9a9a9a;
+}
+
+body{
+  background:var(--mono-bg)!important;
+  color:var(--mono-text)!important;
+}
+
+.panel,.command-stat,.snapshot-item,.flip-card,.insight-card,.table-wrap{
+  background:var(--mono-panel)!important;
+  border:1px solid var(--mono-border)!important;
+  border-radius:6px!important;
+  box-shadow:none!important;
+}
+
+.topbar{
+  background:var(--mono-panel)!important;
+  border:1px solid var(--mono-border)!important;
+}
+
+button,button.small{
+  background:transparent!important;
+  border:1px solid #3a3a3a!important;
+  color:#fff!important;
+  border-radius:6px!important;
+}
+
+button:hover{
+  background:#1a1a1a!important;
+  border-color:#fff!important;
+}
+
+input,select{
+  background:transparent!important;
+  border:1px solid #3a3a3a!important;
+  color:#fff!important;
+}
+
+th{
+  color:var(--mono-muted)!important;
+  border-bottom:1px solid var(--mono-border)!important;
+}
+
+td{
+  border-bottom:1px solid var(--mono-border)!important;
+}
+
+tr:hover{
+  background:#151515!important;
+}
+
+.blue,.green,.red,.yellow{
+  color:#fff!important;
+}
+
+.music-visualizer .viz-bars span{
+  background:#fff!important;
+}
+
+
+/* ===== Style Toggle Skins ===== */
+
+/* Keep current appended mono look as default */
+body.skin-mono .blue,
+body.skin-mono .green,
+body.skin-mono .red,
+body.skin-mono .yellow{
+  color:#fff !important;
+}
+
+/* UniFi skin override */
+body.skin-unifi{
+  background:
+    radial-gradient(1100px 620px at 50% -12%, rgba(21,151,255,.07), transparent 58%),
+    linear-gradient(180deg, #0a1016 0%, #0b1117 48%, #090e14 100%) !important;
+  color:#e7edf5 !important;
+}
+
+body.skin-unifi .panel,
+body.skin-unifi .command-stat,
+body.skin-unifi .command-tabs,
+body.skin-unifi .snapshot-item,
+body.skin-unifi .flip-card,
+body.skin-unifi .insight-card,
+body.skin-unifi .market-card,
+body.skin-unifi .table-wrap,
+body.skin-unifi #netWorthPanel .nw-card{
+  background:#111820 !important;
+  border:1px solid rgba(128,151,174,.12) !important;
+  border-radius:14px !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.025) inset, 0 8px 24px rgba(0,0,0,.18) !important;
+}
+
+body.skin-unifi .topbar,
+body.skin-unifi #sidebar,
+body.skin-unifi .sidebar{
+  background:#0c1219 !important;
+  border:1px solid rgba(128,151,174,.12) !important;
+  border-radius:16px !important;
+}
+
+body.skin-unifi button,
+body.skin-unifi button.small{
+  background:#151e28 !important;
+  border:1px solid rgba(128,151,174,.16) !important;
+  color:#e7edf5 !important;
+  border-radius:10px !important;
+}
+
+body.skin-unifi button:hover{
+  background:#1a2430 !important;
+  border-color:rgba(21,151,255,.32) !important;
+}
+
+body.skin-unifi input,
+body.skin-unifi select,
+body.skin-unifi textarea{
+  background:#0d141c !important;
+  border:1px solid rgba(128,151,174,.12) !important;
+  color:#e7edf5 !important;
+  border-radius:10px !important;
+}
+
+body.skin-unifi .blue{ color:#1597ff !important; }
+body.skin-unifi .green{ color:#22c55e !important; }
+body.skin-unifi .red{ color:#ef4444 !important; }
+body.skin-unifi .yellow{ color:#f5c451 !important; }
+
+body.skin-unifi .music-visualizer .viz-bars span{
+  background:linear-gradient(180deg, #50b8ff, #1597ff) !important;
+}
+
+/* Pro skin override */
+body.skin-pro{
+  background:
+    radial-gradient(900px 540px at 16% -8%, rgba(76,132,255,.085), transparent 58%),
+    radial-gradient(720px 420px at 95% 0%, rgba(31,211,145,.055), transparent 55%),
+    #090b10 !important;
+  color:#eef2f7 !important;
+}
+
+body.skin-pro .panel,
+body.skin-pro .command-stat,
+body.skin-pro .command-tabs,
+body.skin-pro .snapshot-item,
+body.skin-pro .flip-card,
+body.skin-pro .insight-card,
+body.skin-pro .market-card,
+body.skin-pro .table-wrap,
+body.skin-pro #netWorthPanel .nw-card{
+  background:#111720 !important;
+  border:1px solid rgba(255,255,255,.075) !important;
+  border-radius:18px !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.045) inset, 0 18px 45px rgba(0,0,0,.18) !important;
+}
+
+body.skin-pro .topbar{
+  background:linear-gradient(180deg, rgba(18,23,32,.94), rgba(12,15,22,.92)) !important;
+  border:1px solid rgba(255,255,255,.085) !important;
+  border-radius:20px !important;
+}
+
+body.skin-pro button,
+body.skin-pro button.small{
+  background:#18202b !important;
+  border:1px solid rgba(255,255,255,.075) !important;
+  color:#eef2f7 !important;
+  border-radius:12px !important;
+}
+
+body.skin-pro button:hover{
+  background:#202a38 !important;
+  border-color:rgba(138,199,255,.22) !important;
+}
+
+body.skin-pro input,
+body.skin-pro select,
+body.skin-pro textarea{
+  background:#0e131b !important;
+  border:1px solid rgba(255,255,255,.075) !important;
+  color:#eef2f7 !important;
+  border-radius:12px !important;
+}
+
+body.skin-pro .blue{ color:#8ac7ff !important; }
+body.skin-pro .green{ color:#7ee0a3 !important; }
+body.skin-pro .red{ color:#ff8c8c !important; }
+body.skin-pro .yellow{ color:#f3ce74 !important; }
+
+body.skin-pro .music-visualizer .viz-bars span{
+  background:linear-gradient(180deg, #8ac7ff, #7ee0a3) !important;
+}
+
+/* Toggle button polish */
+#styleModeToggle{
+  min-width:96px;
+}
+
 </style>
 </head>
 
@@ -4710,6 +4915,7 @@ html[data-theme="lofi"] .table-wrap{
           <img src="assets/images/lofi-avatar.webp" alt="Lo-Fi music toggle" id="lofiAvatarImg">
         </button>
       </div>
+      <button class="small" id="styleModeToggle" onclick="cycleResellrStyle()">Style: Mono</button>
       <button class="small" id="lockButton" onclick="lockNow()">Lock</button>
       <button class="small danger" onclick="factoryReset()">Reset</button>
     </div>
@@ -9462,6 +9668,45 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
   window.addEventListener("load", syncLoginSidebarState);
   document.addEventListener("click", ()=>setTimeout(syncLoginSidebarState, 50));
+})();
+</script>
+
+
+<script>
+/* ===== RESELLr style toggle ===== */
+(function(){
+  const modes = [
+    { key:"mono", label:"Mono" },
+    { key:"unifi", label:"UniFi" },
+    { key:"pro", label:"Pro" }
+  ];
+
+  function applyStyleMode(mode){
+    const safe = modes.some(m => m.key === mode) ? mode : "mono";
+
+    document.body.classList.remove("skin-mono", "skin-unifi", "skin-pro");
+    document.body.classList.add("skin-" + safe);
+
+    try{ localStorage.setItem("resellr_style_mode", safe); }catch(e){}
+
+    const btn = document.getElementById("styleModeToggle");
+    const found = modes.find(m => m.key === safe);
+    if(btn) btn.textContent = "Style: " + (found ? found.label : "Mono");
+  }
+
+  window.cycleResellrStyle = function(){
+    let current = "mono";
+    try{ current = localStorage.getItem("resellr_style_mode") || "mono"; }catch(e){}
+    const idx = modes.findIndex(m => m.key === current);
+    const next = modes[(idx + 1 + modes.length) % modes.length];
+    applyStyleMode(next.key);
+  };
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    let saved = "mono";
+    try{ saved = localStorage.getItem("resellr_style_mode") || "mono"; }catch(e){}
+    applyStyleMode(saved);
+  });
 })();
 </script>
 
