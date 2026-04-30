@@ -6004,6 +6004,111 @@ body.skin-retro .private-sale-icon{
   font-size:12px;
 }
 
+
+/* ===== Private Sale Card Reliable Placement ===== */
+#privateSaleIncomeCard.private-sale-card{
+  margin-top:12px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:16px !important;
+}
+
+.private-sale-icon{
+  width:52px;
+  height:52px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--text, #fff);
+  font-weight:900;
+  font-size:18px;
+}
+
+body.skin-retro .private-sale-icon{
+  border-radius:0;
+  border:2px solid #fff06a;
+  box-shadow:3px 3px 0 #000;
+  font-family:"Press Start 2P","IBM Plex Mono",monospace;
+  font-size:10px;
+}
+
+
+/* ===== Clean Dashboard: hide Command Center add-ons, keep old dashboard ===== */
+#secDashboard .command-hero,
+#secDashboard .command-center,
+#secDashboard .command-tabs{
+  display:none !important;
+}
+
+/* If any command center cards were injected outside expected containers */
+#gameHud,
+.command-side-snapshots,
+.flip-zone,
+#ccSmartSuggestions,
+#ccNewestInventory,
+#ccNewestHolds,
+#ccRecentSold,
+#ccFlipZone,
+#ccIncomeChart{
+  display:none !important;
+}
+
+/* Make old dashboard start cleanly */
+#secDashboard > .grid{
+  margin-top:0 !important;
+}
+
+
+/* ===== Private Sale Card sibling placement ===== */
+#privateSaleIncomeCard{
+  margin-top:12px !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  align-items:center !important;
+  gap:16px !important;
+}
+
+
+/* ===== Keep top stat cards, hide the rest of Command Center ===== */
+#secDashboard .command-hero{
+  display:grid !important;
+}
+
+#secDashboard .command-center,
+#secDashboard .command-tabs{
+  display:none !important;
+}
+
+
+/* ===== Private Sale standalone card styling ===== */
+#privateSaleIncomeCard.private-sale-card{
+  margin-top:12px !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  display:flex;
+  align-items:center !important;
+  gap:16px !important;
+  clear:both !important;
+}
+
+.private-sale-icon{
+  width:52px;
+  height:52px;
+  flex:0 0 52px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--text, #fff);
+  font-weight:900;
+  font-size:18px;
+}
+
 </style>
 </head>
 
@@ -6406,15 +6511,6 @@ body.skin-retro .private-sale-icon{
                 <div class="market-value" id="ebayIncomeStat">$0.00</div>
                 <div class="market-sub" id="ebayCountStat">0 sales</div>
               </div>
-
-          <div class="market-card private-sale-card" id="privateSaleIncomeCard">
-            <div class="private-sale-icon">PS</div>
-            <div>
-              <div class="muted">PRIVATE SALE INCOME</div>
-              <div class="big" id="privateSaleIncome">$0.00</div>
-              <div class="muted" id="privateSaleCount">0 sales</div>
-            </div>
-          </div>
 
             </div>
           </div>
@@ -11989,8 +12085,11 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 </script>
 
 
+
+
+
 <script>
-/* ===== Private Sale Income Card Logic ===== */
+/* ===== Private Sale Income Card Logic v4 ===== */
 (function(){
   function moneyFmt(n){
     try{ return money(Number(n || 0)); }catch(e){ return "$" + Number(n || 0).toFixed(2); }
@@ -11998,75 +12097,145 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
   function getSoldRows(){
     try{ if(typeof readSold === "function") return readSold(); }catch(e){}
-    try{
-      const raw = localStorage.getItem("soldInventory") || localStorage.getItem("sold") || "[]";
-      const arr = JSON.parse(raw);
-      return Array.isArray(arr) ? arr : [];
-    }catch(e){}
+    const keys = ["soldInventory", "sold", "resellr_sold", "soldItems"];
+    for(const key of keys){
+      try{
+        const raw = localStorage.getItem(key);
+        if(!raw) continue;
+        const arr = JSON.parse(raw);
+        if(Array.isArray(arr)) return arr;
+      }catch(e){}
+    }
     return [];
   }
 
-  function isPrivateSale(platform){
+  function isPrivatePlatform(platform){
     const p = String(platform || "").trim().toLowerCase();
     return !["mercari","ebay","e bay","e-bay"].includes(p);
   }
 
-  function selectedYear(){
-    const selectors = ["ytdYearSelect", "yearSelect", "soldYearSelect"];
-    for(const id of selectors){
+  function getSelectedYtdYear(){
+    const ids = ["ytdYearSelect", "soldYearSelect", "yearSelect"];
+    for(const id of ids){
       const el = document.getElementById(id);
       if(el && el.value && !String(el.value).toLowerCase().includes("all")){
-        return String(el.value);
+        return String(el.value).trim();
       }
     }
-
-    const ytdText = document.body.textContent || "";
-    if(/All Years/i.test(ytdText)) return "all";
     return "all";
   }
 
-  function updatePrivateSaleCard(){
-    const incomeEl = document.getElementById("privateSaleIncome");
-    const countEl = document.getElementById("privateSaleCount");
-    const card = document.getElementById("privateSaleIncomeCard");
-    if(!incomeEl || !countEl || !card) return;
-
-    const year = selectedYear();
-    const rows = getSoldRows().filter(r=>{
-      if(!isPrivateSale(r.platform)) return false;
-      if(year === "all") return true;
-      const d = String(r.date || "");
-      return d.slice(0,4) === year;
-    });
-
-    const income = rows.reduce((s,r)=>s + Number(r.sale || r.price || r.value || 0), 0);
-
-    incomeEl.textContent = moneyFmt(income);
-    countEl.textContent = rows.length + " sale" + (rows.length === 1 ? "" : "s");
-
-    // Hide only if there are no private sales in selected range.
-    card.style.display = rows.length ? "" : "none";
+  function getSaleAmount(r){
+    const fields = [r.sale, r.salePrice, r.total, r.amount, r.price, r.value];
+    for(const v of fields){
+      const n = Number(v || 0);
+      if(Number.isFinite(n) && n > 0) return n;
+    }
+    return 0;
   }
 
-  document.addEventListener("DOMContentLoaded", ()=>setTimeout(updatePrivateSaleCard, 800));
-  window.addEventListener("load", ()=>setTimeout(updatePrivateSaleCard, 1200));
+  function makeCard(){
+    let card = document.getElementById("privateSaleIncomeCard");
+    if(card) return card;
+
+    card = document.createElement("div");
+    card.className = "market-card private-sale-card";
+    card.id = "privateSaleIncomeCard";
+    card.innerHTML = `
+      <div class="private-sale-icon">PS</div>
+      <div>
+        <div class="muted">PRIVATE SALE INCOME</div>
+        <div class="big" id="privateSaleIncome">$0.00</div>
+        <div class="muted" id="privateSaleCount">0 sales</div>
+      </div>
+    `;
+    return card;
+  }
+
+  function findYtdPanel(){
+    const panels = Array.from(document.querySelectorAll(".panel"));
+    return panels.find(p => /YTD Sold Summary/i.test(p.textContent || "")) || null;
+  }
+
+  function findEbayCard(panel){
+    if(!panel) return null;
+
+    // Look only for visible-ish card blocks inside YTD Sold Summary.
+    const cards = Array.from(panel.querySelectorAll(".market-card, .nw-card, .snapshot-item, .command-stat, .stat-card"));
+    let found = cards.find(c => /EBAY\s*INCOME|eBay\s*Income/i.test(c.textContent || ""));
+    if(found) return found;
+
+    // Fallback: find the eBay label and walk upward until the next parent would be the panel.
+    const label = Array.from(panel.querySelectorAll("*"))
+      .find(el => /EBAY\s*INCOME|eBay\s*Income/i.test(el.textContent || ""));
+    if(!label) return null;
+
+    let node = label;
+    while(node.parentElement && node.parentElement !== panel){
+      node = node.parentElement;
+    }
+    return node === panel ? label : node;
+  }
+
+  function ensurePlacement(){
+    const panel = findYtdPanel();
+    if(!panel) return null;
+
+    const card = makeCard();
+    const ebayCard = findEbayCard(panel);
+
+    if(ebayCard && ebayCard.parentElement){
+      // Important: place as a sibling AFTER the full eBay block.
+      ebayCard.insertAdjacentElement("afterend", card);
+    }else{
+      panel.appendChild(card);
+    }
+    return card;
+  }
+
+  function updatePrivateSaleCard(){
+    const card = ensurePlacement();
+    if(!card) return;
+
+    const year = getSelectedYtdYear();
+    const rows = getSoldRows().filter(r=>{
+      if(!isPrivatePlatform(r.platform)) return false;
+      if(year === "all") return true;
+      return String(r.date || "").slice(0,4) === year;
+    });
+
+    const income = rows.reduce((s,r)=>s + getSaleAmount(r), 0);
+
+    const incomeEl = document.getElementById("privateSaleIncome");
+    const countEl = document.getElementById("privateSaleCount");
+
+    if(incomeEl) incomeEl.textContent = moneyFmt(income);
+    if(countEl) countEl.textContent = rows.length + " sale" + (rows.length === 1 ? "" : "s");
+
+    card.style.display = rows.length ? "flex" : "none";
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>setTimeout(updatePrivateSaleCard, 900));
+  window.addEventListener("load", ()=>setTimeout(updatePrivateSaleCard, 1300));
 
   ["click","change","input"].forEach(evt=>{
     document.addEventListener(evt, ()=>{
-      clearTimeout(window.__privateSaleCardTimer);
-      window.__privateSaleCardTimer = setTimeout(updatePrivateSaleCard, 250);
+      clearTimeout(window.__privateSaleV4Timer);
+      window.__privateSaleV4Timer = setTimeout(updatePrivateSaleCard, 250);
     });
   });
 
   const oldUpdate = window.updateDashboard;
-  if(typeof oldUpdate === "function" && !window.__privateSaleDashboardHooked){
-    window.__privateSaleDashboardHooked = true;
+  if(typeof oldUpdate === "function" && !window.__privateSaleV4Hooked){
+    window.__privateSaleV4Hooked = true;
     window.updateDashboard = function(){
       const out = oldUpdate.apply(this, arguments);
-      setTimeout(updatePrivateSaleCard, 120);
+      setTimeout(updatePrivateSaleCard, 150);
       return out;
     };
   }
+
+  window.updatePrivateSaleCard = updatePrivateSaleCard;
 })();
 </script>
 
