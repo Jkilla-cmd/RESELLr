@@ -6149,6 +6149,20 @@ body.skin-retro .mercari-autofill-status{
   }
 }
 
+
+/* ===== Bookmarklet Import: skip lock screen for incoming add ===== */
+body.bookmarklet-import #lockScreen{
+  display:none !important;
+  pointer-events:none !important;
+}
+
+body.bookmarklet-import .lockScreen,
+body.bookmarklet-import .lock-overlay,
+body.bookmarklet-import #loginScreen{
+  display:none !important;
+  pointer-events:none !important;
+}
+
 </style>
 </head>
 
@@ -12591,6 +12605,52 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
   document.addEventListener("DOMContentLoaded", applyBookmarkletData);
   window.addEventListener("load", ()=>setTimeout(applyBookmarkletData, 300));
+})();
+</script>
+
+
+<script>
+/* ===== Bookmarklet Import Lock Bypass ===== */
+(function(){
+  function isBookmarkletImport(){
+    try{
+      return new URLSearchParams(window.location.search).get("add") === "1";
+    }catch(e){
+      return false;
+    }
+  }
+
+  function hideLockForImport(){
+    if(!isBookmarkletImport()) return;
+
+    document.body.classList.add("bookmarklet-import");
+
+    const ids = ["lockScreen", "loginScreen"];
+    ids.forEach(id=>{
+      const el = document.getElementById(id);
+      if(el){
+        el.style.display = "none";
+        el.setAttribute("aria-hidden", "true");
+      }
+    });
+
+    // Some builds use app/canvas wrappers hidden until unlock.
+    document.querySelectorAll(".app, .canvas, main").forEach(el=>{
+      if(el){
+        el.style.visibility = "visible";
+        el.style.opacity = "1";
+      }
+    });
+
+    // Try common unlock flags without changing password settings.
+    try{ sessionStorage.setItem("resellr_bookmarklet_import", "1"); }catch(e){}
+  }
+
+  hideLockForImport();
+  document.addEventListener("DOMContentLoaded", hideLockForImport);
+  window.addEventListener("load", hideLockForImport);
+  setTimeout(hideLockForImport, 300);
+  setTimeout(hideLockForImport, 900);
 })();
 </script>
 
