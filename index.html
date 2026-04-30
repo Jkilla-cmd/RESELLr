@@ -7136,6 +7136,177 @@ button.small:hover{
   }
 }
 
+
+/* ===== MyDoorView Layout Spacing + Sidebar Label Fix ===== */
+
+/* Better dashboard breathing room */
+.canvas{
+  padding:34px 44px !important;
+}
+
+/* top stat cards should wrap instead of squeezing */
+.command-hero{
+  grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)) !important;
+  gap:16px !important;
+  margin-bottom:18px !important;
+}
+
+.command-stat{
+  min-height:132px !important;
+  padding:22px 24px !important;
+}
+
+/* Old dashboard area: prevent cramped columns */
+#secDashboard > .grid{
+  grid-template-columns:repeat(auto-fit, minmax(440px, 1fr)) !important;
+  gap:18px !important;
+  align-items:start !important;
+}
+
+#secDashboard > .grid > .panel{
+  padding:24px !important;
+  min-width:0 !important;
+}
+
+/* Give larger panels room */
+#netWorthPanel,
+#secDashboard .panel{
+  min-width:0 !important;
+}
+
+/* YTD / marketplace cards breathe better */
+.market-card{
+  padding:18px !important;
+  gap:18px !important;
+}
+
+#secDashboard .panel h3{
+  margin-bottom:18px !important;
+}
+
+/* Budget panel specific spacing */
+#budgetPanel,
+#nextMonthBudget,
+#netWorthPanel{
+  overflow:hidden !important;
+}
+
+#budgetPanel .pill,
+#netWorthPanel .pill,
+#nextMonthBudget .pill{
+  white-space:nowrap !important;
+}
+
+/* Sidebar behavior:
+   collapsed = icon only
+   open = icon + label
+*/
+.sidebar .nav button,
+#sidebar .nav button{
+  color:transparent !important;
+  font-size:0 !important;
+  justify-content:center !important;
+  padding:0 !important;
+  gap:0 !important;
+}
+
+.sidebar .nav button::before,
+#sidebar .nav button::before{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:38px !important;
+  min-width:38px !important;
+  height:38px !important;
+  font-size:20px !important;
+  color:#f4f7fb !important;
+  opacity:.95 !important;
+  margin:0 !important;
+}
+
+/* Open sidebar: icon + name right beside it */
+.app:not(.sidebar-closed) .sidebar .nav button,
+.app.sidebar-open .sidebar .nav button{
+  justify-content:flex-start !important;
+  padding:0 16px !important;
+  gap:14px !important;
+  font-size:16px !important;
+}
+
+.app:not(.sidebar-closed) .sidebar .nav button::before,
+.app.sidebar-open .sidebar .nav button::before{
+  margin-right:0 !important;
+}
+
+/* Generated labels */
+.app:not(.sidebar-closed) .nav button[data-target="secDashboard"]::after,
+.app.sidebar-open .nav button[data-target="secDashboard"]::after{ content:"Dashboard"; }
+
+.app:not(.sidebar-closed) .nav button[data-target="secInventory"]::after,
+.app.sidebar-open .nav button[data-target="secInventory"]::after{ content:"Inventory"; }
+
+.app:not(.sidebar-closed) .nav button[data-target="secHolds"]::after,
+.app.sidebar-open .nav button[data-target="secHolds"]::after{ content:"Inventory Holds"; }
+
+.app:not(.sidebar-closed) .nav button[data-target="secSold"]::after,
+.app.sidebar-open .nav button[data-target="secSold"]::after{ content:"Sold"; }
+
+.app:not(.sidebar-closed) .nav button[data-target="secImportExport"]::after,
+.app.sidebar-open .nav button[data-target="secImportExport"]::after{ content:"Import / Export"; }
+
+.app:not(.sidebar-closed) .nav button[data-target="secTools"]::after,
+.app.sidebar-open .nav button[data-target="secTools"]::after{ content:"Tools"; }
+
+.app:not(.sidebar-closed) .nav button[data-target="secSettings"]::after,
+.app.sidebar-open .nav button[data-target="secSettings"]::after{ content:"Settings"; }
+
+.app:not(.sidebar-closed) .nav button::after,
+.app.sidebar-open .nav button::after{
+  display:inline-block !important;
+  color:#f4f7fb !important;
+  font-size:16px !important;
+  font-weight:500 !important;
+  line-height:1 !important;
+}
+
+/* Active state */
+.nav button.active::before{
+  color:var(--mdv-blue) !important;
+}
+
+.nav button.active::after{
+  color:#fff !important;
+}
+
+/* More sane laptop sizing */
+@media(max-width:1280px){
+  .canvas{
+    padding:28px 28px !important;
+  }
+
+  #secDashboard > .grid{
+    grid-template-columns:1fr !important;
+  }
+
+  .command-hero{
+    grid-template-columns:repeat(2, minmax(220px, 1fr)) !important;
+  }
+}
+
+@media(max-width:760px){
+  .canvas{
+    padding:18px 12px !important;
+  }
+
+  .command-hero{
+    grid-template-columns:1fr !important;
+  }
+
+  #secDashboard > .grid{
+    grid-template-columns:1fr !important;
+  }
+}
+
 </style>
 </head>
 
