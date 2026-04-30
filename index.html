@@ -5423,6 +5423,147 @@ body.skin-retro::after{
 }
 
 
+
+/* ===== Global Search Bar ===== */
+.global-search-wrap{
+  position:relative;
+  flex:1 1 420px;
+  max-width:520px;
+  min-width:220px;
+  margin-left:12px;
+  z-index:20;
+}
+
+#globalSearchInput{
+  width:100% !important;
+  height:38px !important;
+  margin:0 !important;
+  padding:9px 13px !important;
+  border-radius:999px !important;
+  font-size:13px !important;
+}
+
+.global-search-results{
+  position:absolute;
+  top:calc(100% + 8px);
+  left:0;
+  right:0;
+  max-height:360px;
+  overflow:auto;
+  background:#0f151e;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;
+  box-shadow:0 18px 42px rgba(0,0,0,.42);
+  padding:6px;
+  display:none;
+  z-index:999999;
+}
+
+.global-search-results.show{
+  display:block;
+}
+
+.search-result-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 11px;
+  border-radius:10px;
+  cursor:pointer;
+  color:#eef2f7;
+}
+
+.search-result-item:hover{
+  background:rgba(138,199,255,.12);
+}
+
+.search-result-main{
+  min-width:0;
+}
+
+.search-result-title{
+  font-size:13px;
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.search-result-meta{
+  margin-top:3px;
+  font-size:11px;
+  color:#9aa3b2;
+}
+
+.search-result-pill{
+  flex:0 0 auto;
+  font-size:10px;
+  padding:4px 7px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  color:#9aa3b2;
+}
+
+body.skin-mono .global-search-results{
+  background:#0a0a0a;
+  border-color:#3a3a3a;
+  border-radius:6px;
+}
+body.skin-mono .search-result-item{
+  color:#f5f5f5;
+  border-radius:4px;
+}
+body.skin-mono .search-result-item:hover{
+  background:#1f1f1f;
+}
+
+body.skin-unifi .global-search-results{
+  background:#101821;
+  border-color:rgba(128,151,174,.16);
+}
+
+body.skin-retro .global-search-wrap{
+  max-width:460px;
+}
+body.skin-retro #globalSearchInput{
+  border-radius:0 !important;
+  height:40px !important;
+}
+body.skin-retro .global-search-results{
+  background:#080b18;
+  border:2px solid #55e6ff;
+  border-radius:0;
+  box-shadow:4px 4px 0 #000;
+}
+body.skin-retro .search-result-item{
+  border-radius:0;
+  font-family:"VT323","IBM Plex Mono",monospace;
+  font-size:15px;
+}
+body.skin-retro .search-result-title{
+  font-family:"Press Start 2P","IBM Plex Mono",monospace;
+  font-size:8px;
+}
+body.skin-retro .search-result-item:hover{
+  background:#55e6ff;
+  color:#05070d;
+}
+
+@media (max-width: 900px){
+  .global-search-wrap{
+    flex-basis:260px;
+    min-width:160px;
+    max-width:320px;
+  }
+}
+
+@media (max-width: 680px){
+  .global-search-wrap{
+    display:none;
+  }
+}
+
 </style>
 </head>
 
@@ -5587,6 +5728,10 @@ body.skin-retro::after{
     <div class="topbar-left">
       <button class="hamburger" onclick="toggleSidebar()">☰</button>
       <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>FINAL-CLEAN-2026-04-22-02</span></div>
+      <div class="global-search-wrap">
+        <input id="globalSearchInput" type="search" placeholder="Search inventory, holds, sold..." autocomplete="off">
+        <div id="globalSearchResults" class="global-search-results"></div>
+      </div>
       <div class="topbar-inline-viz">
         <div class="music-visualizer" id="musicVisualizer" title="Click: change visual • Double-click: color • Long press: expand">
           <canvas id="vizCanvas"></canvas>
