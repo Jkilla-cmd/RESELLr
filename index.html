@@ -5136,6 +5136,52 @@ body.skin-pro .custom-select-menu{
   height:1px !important;
 }
 
+
+/* ===== Custom Dark Net Worth Dropdown ===== */
+#netWorthRangeCustomWrap,
+#nwRangeCustomWrap{
+  position:relative;
+  display:inline-block;
+  min-width:220px;
+  z-index:1000;
+}
+
+/* Hide original net worth select but keep app logic */
+#nwRange.custom-hidden-select,
+#netWorthRange.custom-hidden-select,
+#netWorthMode.custom-hidden-select,
+#netWorthYear.custom-hidden-select,
+#netWorthMonth.custom-hidden-select{
+  position:absolute !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  width:1px !important;
+  height:1px !important;
+  min-width:1px !important;
+  min-height:1px !important;
+  padding:0 !important;
+  margin:0 !important;
+}
+
+#netWorthPanel .custom-select-wrap{
+  min-width:220px;
+  max-width:100%;
+}
+
+#netWorthPanel .custom-select-trigger{
+  min-height:40px;
+  border-radius:14px;
+}
+
+/* Make the opened dropdown stay above the net worth cards */
+#netWorthPanel{
+  overflow:visible !important;
+}
+
+#netWorthPanel .custom-select-menu{
+  z-index:999999 !important;
+}
+
 </style>
 </head>
 
@@ -10182,6 +10228,102 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
   document.addEventListener("DOMContentLoaded", ()=>setTimeout(buildCustomBudgetDropdown, 400));
   window.addEventListener("load", ()=>setTimeout(buildCustomBudgetDropdown, 700));
+})();
+</script>
+
+
+<script>
+/* ===== Custom Net Worth Dropdown ===== */
+(function(){
+  function buildCustomDropdown(select, customId){
+    if(!select || select.dataset.customizedNetworth === "true") return;
+
+    select.dataset.customizedNetworth = "true";
+    select.classList.add("custom-hidden-select");
+
+    const wrap = document.createElement("div");
+    wrap.className = "custom-select-wrap";
+    wrap.id = customId;
+
+    const trigger = document.createElement("div");
+    trigger.className = "custom-select-trigger";
+    trigger.textContent = select.options[select.selectedIndex]?.text || "Select";
+
+    const menu = document.createElement("div");
+    menu.className = "custom-select-menu";
+
+    Array.from(select.options).forEach(opt=>{
+      const item = document.createElement("div");
+      item.className = "custom-select-option";
+      item.textContent = opt.text;
+      item.dataset.value = opt.value;
+      if(opt.value === select.value) item.classList.add("active");
+
+      item.addEventListener("click", ()=>{
+        select.value = opt.value;
+        select.dispatchEvent(new Event("change", {bubbles:true}));
+        trigger.textContent = opt.text;
+
+        menu.querySelectorAll(".custom-select-option").forEach(x=>x.classList.remove("active"));
+        item.classList.add("active");
+        wrap.classList.remove("open");
+      });
+
+      menu.appendChild(item);
+    });
+
+    trigger.addEventListener("click", (e)=>{
+      e.stopPropagation();
+
+      document.querySelectorAll(".custom-select-wrap.open").forEach(x=>{
+        if(x !== wrap) x.classList.remove("open");
+      });
+
+      wrap.classList.toggle("open");
+    });
+
+    document.addEventListener("click", ()=>wrap.classList.remove("open"));
+
+    wrap.appendChild(trigger);
+    wrap.appendChild(menu);
+
+    select.parentNode.insertBefore(wrap, select.nextSibling);
+
+    select.addEventListener("change", ()=>{
+      const selected = select.options[select.selectedIndex];
+      if(selected) trigger.textContent = selected.text;
+
+      menu.querySelectorAll(".custom-select-option").forEach(item=>{
+        item.classList.toggle("active", item.dataset.value === select.value);
+      });
+    });
+  }
+
+  function buildNetWorthDropdowns(){
+    const candidates = [
+      ["nwRange", "nwRangeCustomWrap"],
+      ["netWorthRange", "netWorthRangeCustomWrap"],
+      ["netWorthMode", "netWorthModeCustomWrap"],
+      ["netWorthYear", "netWorthYearCustomWrap"],
+      ["netWorthMonth", "netWorthMonthCustomWrap"]
+    ];
+
+    candidates.forEach(([id, customId])=>{
+      const select = document.getElementById(id);
+      if(select) buildCustomDropdown(select, customId);
+    });
+
+    // Fallback: any select inside the Net Worth panel
+    const panel = document.getElementById("netWorthPanel");
+    if(panel){
+      panel.querySelectorAll("select").forEach((select, i)=>{
+        buildCustomDropdown(select, "netWorthPanelCustomSelect" + i);
+      });
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>setTimeout(buildNetWorthDropdowns, 500));
+  window.addEventListener("load", ()=>setTimeout(buildNetWorthDropdowns, 900));
 })();
 </script>
 
