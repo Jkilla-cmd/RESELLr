@@ -5700,6 +5700,27 @@ body.skin-retro .global-search-hint{
   font-size:8px;
 }
 
+
+/* Force overlay above everything */
+
+
+
+/* FIXED overlay visibility */
+#addInventoryOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 9vh;
+}
+
+#addInventoryOverlay.show{
+  display: flex;
+}
+
 </style>
 </head>
 
@@ -11401,6 +11422,47 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       });
     }
   });
+})();
+</script>
+
+
+<script>
+/* ===== FIXED Ctrl+I Add Inventory Overlay ===== */
+(function(){
+  document.addEventListener("keydown", (e) => {
+    const tag = (document.activeElement?.tagName || "").toLowerCase();
+
+    if (e.ctrlKey && e.key.toLowerCase() === "i") {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      if (!["input", "textarea", "select"].includes(tag)) {
+        if (typeof openAddInventoryOverlay === "function") {
+          openAddInventoryOverlay();
+        }
+      }
+      return false;
+    }
+
+    const overlay = document.getElementById("addInventoryOverlay");
+    const isOpen = overlay && overlay.classList.contains("show");
+
+    if (isOpen && e.key === "Escape") {
+      e.preventDefault();
+      if (typeof closeAddInventoryOverlay === "function") {
+        closeAddInventoryOverlay();
+      }
+    }
+
+    if (isOpen && e.key === "Enter" && tag !== "textarea") {
+      e.preventDefault();
+      if (typeof quickAddInventory === "function") {
+        quickAddInventory();
+      }
+    }
+
+  }, true);
 })();
 </script>
 
