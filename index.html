@@ -6163,6 +6163,14 @@ body.bookmarklet-import #loginScreen{
   pointer-events:none !important;
 }
 
+
+/* ===== Clean bookmarklet URL display ===== */
+body.bookmarklet-import .build-line,
+body.bookmarklet-import .canary-line,
+body.bookmarklet-import .debug-line{
+  word-break:normal !important;
+}
+
 </style>
 </head>
 
@@ -12651,6 +12659,51 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.addEventListener("load", hideLockForImport);
   setTimeout(hideLockForImport, 300);
   setTimeout(hideLockForImport, 900);
+})();
+</script>
+
+
+<script>
+/* ===== Clean URL/debug display after bookmarklet import ===== */
+(function(){
+  function cleanBookmarkletDisplay(){
+    let isImport = false;
+    try{ isImport = new URLSearchParams(window.location.search).get("add") === "1"; }catch(e){}
+    if(!isImport && !document.body.classList.contains("bookmarklet-import")) return;
+
+    const cleanUrl = window.location.origin + window.location.pathname;
+    const shortUrl = cleanUrl.replace(/\/$/, "/");
+
+    // Clean the actual browser URL
+    try{
+      window.history.replaceState({}, document.title, cleanUrl);
+    }catch(e){}
+
+    // Clean any visible build/debug line that prints the full URL
+    document.querySelectorAll("*").forEach(el=>{
+      if(!el || !el.childNodes || el.children.length > 2) return;
+
+      el.childNodes.forEach(node=>{
+        if(node.nodeType === Node.TEXT_NODE){
+          const txt = node.textContent || "";
+          if(txt.includes("URL:") && txt.includes("?add=1")){
+            node.textContent = txt.replace(/URL:\s*https?:\/\/[^|]+/i, "URL: " + shortUrl + " ");
+          }
+        }
+      });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    setTimeout(cleanBookmarkletDisplay, 300);
+    setTimeout(cleanBookmarkletDisplay, 900);
+    setTimeout(cleanBookmarkletDisplay, 1600);
+  });
+
+  window.addEventListener("load", ()=>{
+    setTimeout(cleanBookmarkletDisplay, 500);
+    setTimeout(cleanBookmarkletDisplay, 1300);
+  });
 })();
 </script>
 
