@@ -6364,6 +6364,279 @@ body.bookmarklet-import .debug-line{
   border-radius: 10px;
 }
 
+
+/* ===== Unified Overlay System ===== */
+
+/* Shared overlay backdrop */
+#globalSearchOverlay,
+#addInventoryOverlay,
+#inventoryHoldsOverlay,
+#addHoldOverlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:30000 !important;
+  display:none !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:24px !important;
+  overflow:hidden !important;
+  background:rgba(0,0,0,.52) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+}
+
+#globalSearchOverlay.show,
+#addInventoryOverlay.show,
+#inventoryHoldsOverlay.show,
+#addHoldOverlay.show{
+  display:flex !important;
+}
+
+/* Shared modal shell */
+.global-search-modal,
+.add-inventory-modal,
+.holds-modal{
+  width:min(760px, calc(100vw - 28px)) !important;
+  max-height:90vh !important;
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+  background:#0f151e !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  border-radius:18px !important;
+  box-shadow:0 28px 80px rgba(0,0,0,.52) !important;
+  padding:16px !important;
+}
+
+/* Search gets slightly narrower like Spotlight */
+.global-search-modal{
+  width:min(720px, calc(100vw - 28px)) !important;
+}
+
+/* Shared headers */
+.global-search-top,
+.add-inventory-header,
+.holds-header{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  margin-bottom:14px !important;
+  flex:0 0 auto !important;
+}
+
+/* Shared title text */
+.add-inventory-title,
+.holds-title{
+  color:#eef2f7 !important;
+  font-size:16px !important;
+  font-weight:800 !important;
+}
+
+.add-inventory-subtitle,
+.holds-subtitle,
+.global-search-hint{
+  color:#9aa3b2 !important;
+  font-size:12px !important;
+}
+
+/* Shared keyboard pill */
+.global-search-shortcut,
+.add-inventory-shortcut,
+.holds-shortcut{
+  flex:0 0 auto !important;
+  color:#9aa3b2 !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  border-radius:999px !important;
+  padding:7px 10px !important;
+  font-size:11px !important;
+  white-space:nowrap !important;
+  background:transparent !important;
+}
+
+/* Shared scroll body */
+.add-inventory-grid,
+.holds-grid,
+#globalSearchOverlay .global-search-results{
+  overflow-y:auto !important;
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  padding-right:4px !important;
+}
+
+/* Search results spacing */
+#globalSearchOverlay .global-search-results{
+  margin-top:10px !important;
+  max-height:none !important;
+}
+
+/* Shared inputs */
+#globalSearchOverlay input,
+#addInventoryOverlay input,
+#addInventoryOverlay select,
+#addInventoryOverlay textarea,
+#inventoryHoldsOverlay input,
+#inventoryHoldsOverlay select,
+#inventoryHoldsOverlay textarea,
+#addHoldOverlay input,
+#addHoldOverlay select,
+#addHoldOverlay textarea{
+  background:#0b111a !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  color:#eef2f7 !important;
+  border-radius:12px !important;
+  opacity:1 !important;
+}
+
+#globalSearchOverlay input:focus,
+#addInventoryOverlay input:focus,
+#addInventoryOverlay select:focus,
+#addInventoryOverlay textarea:focus,
+#inventoryHoldsOverlay input:focus,
+#inventoryHoldsOverlay select:focus,
+#inventoryHoldsOverlay textarea:focus,
+#addHoldOverlay input:focus,
+#addHoldOverlay select:focus,
+#addHoldOverlay textarea:focus{
+  border-color:rgba(138,199,255,.55) !important;
+  box-shadow:0 0 0 3px rgba(138,199,255,.10) !important;
+}
+
+/* Shared sticky footers */
+.add-inventory-actions,
+.holds-actions{
+  position:sticky !important;
+  bottom:0 !important;
+  flex:0 0 auto !important;
+  background:rgba(15,21,30,.96) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  padding-top:12px !important;
+  margin-top:12px !important;
+  border-top:1px solid rgba(255,255,255,.08) !important;
+  display:flex !important;
+  justify-content:flex-end !important;
+  gap:10px !important;
+  z-index:5 !important;
+}
+
+.add-inventory-hint,
+.holds-hint,
+.global-search-hint{
+  flex:0 0 auto !important;
+  padding-top:10px !important;
+}
+
+/* Shared scrollbars */
+.add-inventory-grid::-webkit-scrollbar,
+.holds-grid::-webkit-scrollbar,
+#globalSearchOverlay .global-search-results::-webkit-scrollbar{
+  width:6px;
+}
+
+.add-inventory-grid::-webkit-scrollbar-thumb,
+.holds-grid::-webkit-scrollbar-thumb,
+#globalSearchOverlay .global-search-results::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.22);
+  border-radius:10px;
+}
+
+/* Subtle modal entrance */
+#globalSearchOverlay.show .global-search-modal,
+#addInventoryOverlay.show .add-inventory-modal,
+#inventoryHoldsOverlay.show .holds-modal,
+#addHoldOverlay.show .add-inventory-modal{
+  animation: overlayPop .16s ease-out;
+}
+
+@keyframes overlayPop{
+  from{ opacity:.72; transform:translateY(8px) scale(.985); }
+  to{ opacity:1; transform:translateY(0) scale(1); }
+}
+
+/* Mono mode */
+body.skin-mono #globalSearchOverlay,
+body.skin-mono #addInventoryOverlay,
+body.skin-mono #inventoryHoldsOverlay,
+body.skin-mono #addHoldOverlay{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+body.skin-mono .global-search-modal,
+body.skin-mono .add-inventory-modal,
+body.skin-mono .holds-modal{
+  background:#0a0a0a !important;
+  border-color:#3a3a3a !important;
+  border-radius:6px !important;
+}
+
+/* UniFi mode */
+body.skin-unifi .global-search-modal,
+body.skin-unifi .add-inventory-modal,
+body.skin-unifi .holds-modal{
+  background:#101821 !important;
+  border-color:rgba(128,151,174,.16) !important;
+}
+
+/* Retro mode */
+body.skin-retro .global-search-modal,
+body.skin-retro .add-inventory-modal,
+body.skin-retro .holds-modal{
+  background:#080b18 !important;
+  border:2px solid #55e6ff !important;
+  border-radius:0 !important;
+  box-shadow:6px 6px 0 #000 !important;
+}
+
+body.skin-retro .global-search-shortcut,
+body.skin-retro .global-search-hint,
+body.skin-retro .add-inventory-title,
+body.skin-retro .add-inventory-subtitle,
+body.skin-retro .add-inventory-shortcut,
+body.skin-retro .add-inventory-hint,
+body.skin-retro .holds-title,
+body.skin-retro .holds-subtitle,
+body.skin-retro .holds-shortcut,
+body.skin-retro .holds-hint{
+  font-family:"Press Start 2P","IBM Plex Mono",monospace !important;
+}
+
+body.skin-retro .add-inventory-title,
+body.skin-retro .holds-title{
+  font-size:10px !important;
+  color:#fff06a !important;
+}
+
+body.skin-retro .add-inventory-subtitle,
+body.skin-retro .add-inventory-shortcut,
+body.skin-retro .add-inventory-hint,
+body.skin-retro .holds-subtitle,
+body.skin-retro .holds-shortcut,
+body.skin-retro .holds-hint,
+body.skin-retro .global-search-shortcut,
+body.skin-retro .global-search-hint{
+  font-size:8px !important;
+}
+
+/* Mobile */
+@media (max-width:680px){
+  #globalSearchOverlay,
+  #addInventoryOverlay,
+  #inventoryHoldsOverlay,
+  #addHoldOverlay{
+    padding:14px !important;
+    align-items:flex-start !important;
+    padding-top:7vh !important;
+  }
+
+  .global-search-modal,
+  .add-inventory-modal,
+  .holds-modal{
+    max-height:88vh !important;
+  }
+}
+
 </style>
 </head>
 
