@@ -4891,6 +4891,139 @@ body.skin-pro select option{
   margin-bottom:0 !important;
 }
 
+
+/* ===== Budget + Net Worth Dropdown Match Fix ===== */
+
+/* Match YTD dropdown style for budget + net worth controls */
+#budgetMode,
+#budgetPercent,
+#reinvestPercent,
+#profitBufferPercent,
+#nwRange,
+#netWorthRange,
+#netWorthYear,
+#netWorthMonth,
+#netWorthMode,
+#nextMonthBudget select,
+#netWorthPanel select,
+#budgetPanel select{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  -moz-appearance:none !important;
+
+  min-width:110px !important;
+  min-height:36px !important;
+  height:36px !important;
+  line-height:1.2 !important;
+
+  padding:7px 34px 7px 12px !important;
+  border-radius:999px !important;
+
+  color:inherit !important;
+  cursor:pointer !important;
+
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%) !important;
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px) !important;
+  background-size:6px 6px, 6px 6px !important;
+  background-repeat:no-repeat !important;
+}
+
+/* Budget + net worth select containers */
+#budgetPanel .pill,
+#netWorthPanel .pill,
+#nextMonthBudget .pill{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  min-height:36px !important;
+  padding:4px 8px !important;
+}
+
+/* prevent dropdowns from stretching weirdly */
+#budgetPanel select,
+#netWorthPanel select,
+#nextMonthBudget select{
+  margin:0 !important;
+  flex:0 0 auto !important;
+}
+
+/* Mono */
+body.skin-mono #budgetMode,
+body.skin-mono #budgetPercent,
+body.skin-mono #reinvestPercent,
+body.skin-mono #profitBufferPercent,
+body.skin-mono #nwRange,
+body.skin-mono #netWorthRange,
+body.skin-mono #netWorthYear,
+body.skin-mono #netWorthMonth,
+body.skin-mono #netWorthMode,
+body.skin-mono #budgetPanel select,
+body.skin-mono #netWorthPanel select,
+body.skin-mono #nextMonthBudget select{
+  color:#f5f5f5 !important;
+  background-color:#0a0a0a !important;
+  border:1px solid #3a3a3a !important;
+}
+
+/* UniFi */
+body.skin-unifi #budgetMode,
+body.skin-unifi #budgetPercent,
+body.skin-unifi #reinvestPercent,
+body.skin-unifi #profitBufferPercent,
+body.skin-unifi #nwRange,
+body.skin-unifi #netWorthRange,
+body.skin-unifi #netWorthYear,
+body.skin-unifi #netWorthMonth,
+body.skin-unifi #netWorthMode,
+body.skin-unifi #budgetPanel select,
+body.skin-unifi #netWorthPanel select,
+body.skin-unifi #nextMonthBudget select{
+  color:#e7edf5 !important;
+  background-color:#0d141c !important;
+  border:1px solid rgba(128,151,174,.16) !important;
+}
+
+/* Pro */
+body.skin-pro #budgetMode,
+body.skin-pro #budgetPercent,
+body.skin-pro #reinvestPercent,
+body.skin-pro #profitBufferPercent,
+body.skin-pro #nwRange,
+body.skin-pro #netWorthRange,
+body.skin-pro #netWorthYear,
+body.skin-pro #netWorthMonth,
+body.skin-pro #netWorthMode,
+body.skin-pro #budgetPanel select,
+body.skin-pro #netWorthPanel select,
+body.skin-pro #nextMonthBudget select{
+  color:#eef2f7 !important;
+  background-color:#0e131b !important;
+  border:1px solid rgba(255,255,255,.075) !important;
+}
+
+/* Hover/focus */
+#budgetPanel select:hover,
+#netWorthPanel select:hover,
+#nextMonthBudget select:hover,
+#budgetMode:hover,
+#nwRange:hover{
+  border-color:rgba(138,199,255,.35) !important;
+}
+
+#budgetPanel select:focus,
+#netWorthPanel select:focus,
+#nextMonthBudget select:focus,
+#budgetMode:focus,
+#nwRange:focus{
+  outline:none !important;
+  border-color:rgba(138,199,255,.55) !important;
+  box-shadow:0 0 0 3px rgba(138,199,255,.10) !important;
+}
+
 </style>
 </head>
 
