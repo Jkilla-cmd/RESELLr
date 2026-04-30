@@ -5960,6 +5960,93 @@ body.skin-retro #addHoldOverlay .add-inventory-modal{
   box-shadow:6px 6px 0 #000 !important;
 }
 
+
+/* ===== Match Search + Inventory Overlay Blur to Holds ===== */
+
+/* Search overlay */
+#globalSearchOverlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:30000 !important;
+
+  display:none !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  padding-top:12vh !important;
+
+  background:rgba(0,0,0,.48) !important;
+  backdrop-filter:blur(8px) !important;
+  -webkit-backdrop-filter:blur(8px) !important;
+}
+
+#globalSearchOverlay.show{
+  display:flex !important;
+}
+
+#globalSearchOverlay .global-search-modal{
+  background:#0f151e !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  border-radius:18px !important;
+  box-shadow:0 28px 80px rgba(0,0,0,.50) !important;
+  opacity:1 !important;
+}
+
+/* Add Inventory overlay */
+#addInventoryOverlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:30010 !important;
+
+  display:none !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  padding-top:9vh !important;
+
+  background:rgba(0,0,0,.48) !important;
+  backdrop-filter:blur(8px) !important;
+  -webkit-backdrop-filter:blur(8px) !important;
+}
+
+#addInventoryOverlay.show{
+  display:flex !important;
+}
+
+#addInventoryOverlay .add-inventory-modal{
+  background:#0f151e !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  border-radius:18px !important;
+  box-shadow:0 28px 80px rgba(0,0,0,.50) !important;
+  opacity:1 !important;
+}
+
+/* Theme matching */
+body.skin-mono #globalSearchOverlay,
+body.skin-mono #addInventoryOverlay{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+body.skin-mono #globalSearchOverlay .global-search-modal,
+body.skin-mono #addInventoryOverlay .add-inventory-modal{
+  background:#0a0a0a !important;
+  border-color:#3a3a3a !important;
+  border-radius:6px !important;
+}
+
+body.skin-unifi #globalSearchOverlay .global-search-modal,
+body.skin-unifi #addInventoryOverlay .add-inventory-modal{
+  background:#101821 !important;
+  border-color:rgba(128,151,174,.16) !important;
+}
+
+body.skin-retro #globalSearchOverlay .global-search-modal,
+body.skin-retro #addInventoryOverlay .add-inventory-modal{
+  background:#080b18 !important;
+  border:2px solid #55e6ff !important;
+  border-radius:0 !important;
+  box-shadow:6px 6px 0 #000 !important;
+}
+
 </style>
 </head>
 
