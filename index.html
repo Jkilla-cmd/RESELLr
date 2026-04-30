@@ -12289,8 +12289,9 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 </script>
 
 
+
 <script>
-/* ===== Mercari Link Autofill for Add Inventory ===== */
+/* ===== Mercari Link Autofill for Add Inventory - Blocker Safe ===== */
 (function(){
   function setMercariStatus(text, type){
     const el = document.getElementById("mercariAutofillStatus");
@@ -12300,13 +12301,30 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     if(type) el.classList.add(type);
   }
 
-  function setField(id, value){
+  function setField(id, value, allowBadTitle){
     const el = document.getElementById(id);
-    if(el && value !== undefined && value !== null && String(value).trim() !== ""){
-      el.value = String(value).trim();
-      el.dispatchEvent(new Event("input", {bubbles:true}));
-      el.dispatchEvent(new Event("change", {bubbles:true}));
-    }
+    const v = String(value || "").trim();
+    if(!el || !v) return;
+
+    if(!allowBadTitle && id === "quickInvItem" && isBadMercariTitle(v)) return;
+
+    el.value = v;
+    el.dispatchEvent(new Event("input", {bubbles:true}));
+    el.dispatchEvent(new Event("change", {bubbles:true}));
+  }
+
+  function isBadMercariTitle(title){
+    const t = String(title || "").trim().toLowerCase();
+    return (
+      !t ||
+      t === "just a moment..." ||
+      t === "just a moment" ||
+      t.includes("checking if the site connection is secure") ||
+      t.includes("enable javascript") ||
+      t.includes("access denied") ||
+      t.includes("blocked") ||
+      t.includes("captcha")
+    );
   }
 
   function cleanTitle(title){
@@ -12333,7 +12351,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   function guessType(title){
     const t = String(title || "").toLowerCase();
 
-    if(/\b(comic|variant|virgin|foil|cover|issue|#\d+|marvel|dc|image comics|idw|dark horse)\b/.test(t)){
+    if(/\b(comic|variant|virgin|foil|cover|issue|#\d+|marvel|dc|image comics|idw|dark horse|batman|spider-man|x-men|tmnt)\b/.test(t)){
       return "Comic";
     }
 
@@ -12342,6 +12360,12 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     }
 
     return "";
+  }
+
+  function parseMercariItemId(url){
+    const s = String(url || "");
+    const m = s.match(/\/item\/([^/?#]+)/i);
+    return m ? m[1] : "";
   }
 
   function parseHtmlForListing(htmlText){
@@ -12367,10 +12391,15 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
     const title = cleanTitle(ogTitle);
 
+    const blocker =
+      isBadMercariTitle(title) ||
+      /just a moment|cloudflare|captcha|access denied|checking if the site connection is secure/i.test(htmlText.slice(0, 3000));
+
     return {
       title,
       price: price ? String(price).replace(/[^0-9.]/g, "") : "",
-      type: guessType(title + " " + desc)
+      type: guessType(title + " " + desc),
+      blocker
     };
   }
 
@@ -12396,41 +12425,59 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       return;
     }
 
-    setMercariStatus("Fetching listing details...", "");
+    setField("quickInvPlatform", "Mercari", true);
+    setMercariStatus("Trying to read Mercari listing...", "");
 
     try{
       const htmlText = await fetchViaAllOrigins(url);
 
       if(!htmlText){
-        throw new Error("Mercari blocked the listing request.");
+        throw new Error("Mercari returned an empty page.");
       }
 
       const data = parseHtmlForListing(htmlText);
 
-      if(!data.title && !data.price){
-        throw new Error("Could not read listing details.");
+      if(data.blocker){
+        const itemId = parseMercariItemId(url);
+        if(itemId){
+          setField("quickInvNotes", "Mercari listing: " + url, true);
+        }
+        setMercariStatus("Mercari blocked the listing details. Platform was set to Mercari — fill title/price manually.", "err");
+        return;
       }
 
-      setField("quickInvItem", data.title);
-      setField("quickInvValue", data.price);
-      setField("quickInvPlatform", "Mercari");
+      let filled = false;
+
+      if(data.title && !isBadMercariTitle(data.title)){
+        setField("quickInvItem", data.title, false);
+        filled = true;
+      }
+
+      if(data.price){
+        setField("quickInvValue", data.price, true);
+        filled = true;
+      }
 
       if(data.type){
-        setField("quickInvType", data.type);
+        setField("quickInvType", data.type, true);
       }
 
-      setMercariStatus("Autofill complete. Review before adding.", "ok");
+      if(filled){
+        setMercariStatus("Autofill complete. Review before adding.", "ok");
+      }else{
+        setMercariStatus("Could not find title or price. Platform was set to Mercari — fill the rest manually.", "err");
+      }
     }catch(err){
       console.warn("Mercari autofill failed:", err);
-      setField("quickInvPlatform", "Mercari");
-      setMercariStatus("Could not fully read the listing. Platform set to Mercari — fill the rest manually.", "err");
+      setField("quickInvPlatform", "Mercari", true);
+      setMercariStatus("Mercari blocked the request. Platform was set to Mercari — fill title/price manually.", "err");
     }
   };
 
   document.addEventListener("input", (e)=>{
     if(e.target && e.target.id === "quickInvMercariUrl"){
       if(/mercari\.com/i.test(e.target.value || "")){
-        setField("quickInvPlatform", "Mercari");
+        setField("quickInvPlatform", "Mercari", true);
       }
     }
   });
