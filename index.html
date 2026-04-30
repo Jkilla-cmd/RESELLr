@@ -7307,6 +7307,229 @@ button.small:hover{
   }
 }
 
+
+/* ===== TRUE COLLAPSED SIDEBAR FIX ===== */
+
+/* App always reserves space for sidebar */
+#appShell.app{
+  display:grid !important;
+  grid-template-columns:76px minmax(0, 1fr) !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  gap:0 !important;
+  transition:grid-template-columns .18s ease !important;
+}
+
+#appShell.app:not(.sidebar-closed){
+  grid-template-columns:280px minmax(0, 1fr) !important;
+}
+
+/* Sidebar is never hidden */
+#sidebar.sidebar{
+  display:flex !important;
+  position:fixed !important;
+  top:56px !important;
+  left:0 !important;
+  bottom:0 !important;
+  width:76px !important;
+  height:calc(100vh - 56px) !important;
+  transform:none !important;
+  translate:none !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+
+  background:#2b323d !important;
+  border:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  padding:18px 8px !important;
+  overflow:hidden !important;
+  z-index:8000 !important;
+
+  transition:width .18s ease !important;
+}
+
+/* Expanded width */
+#appShell.app:not(.sidebar-closed) #sidebar.sidebar{
+  width:280px !important;
+  padding:18px 10px !important;
+}
+
+/* Kill old peek/hidden behavior */
+#appShell.sidebar-closed #sidebar.sidebar{
+  display:flex !important;
+  transform:none !important;
+}
+
+.sidebar-peek #sidebar,
+#sidebar:hover{
+  transform:none !important;
+}
+
+/* Hide old brand area to match reference */
+#sidebar .brand{
+  display:none !important;
+}
+
+/* Nav base */
+#sidebar .nav{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+  width:100% !important;
+}
+
+/* Collapsed: icons only */
+#sidebar .nav button{
+  width:100% !important;
+  height:46px !important;
+  min-height:46px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  padding:0 !important;
+  margin:0 !important;
+  gap:0 !important;
+
+  background:transparent !important;
+  border:1px solid transparent !important;
+  border-radius:8px !important;
+  box-shadow:none !important;
+
+  color:transparent !important;
+  font-size:0 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-indent:-9999px !important;
+}
+
+/* Icons */
+#sidebar .nav button::before{
+  text-indent:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:46px !important;
+  min-width:46px !important;
+  height:46px !important;
+  margin:0 !important;
+
+  font-size:20px !important;
+  line-height:1 !important;
+  color:#f4f7fb !important;
+  opacity:.95 !important;
+}
+
+/* Icon mapping */
+#sidebar .nav button[data-target="secDashboard"]::before{ content:"▥" !important; color:#35a8e8 !important; }
+#sidebar .nav button[data-target="secInventory"]::before{ content:"▤" !important; }
+#sidebar .nav button[data-target="secHolds"]::before{ content:"▣" !important; }
+#sidebar .nav button[data-target="secSold"]::before{ content:"☷" !important; }
+#sidebar .nav button[data-target="secImportExport"]::before{ content:"⇅" !important; }
+#sidebar .nav button[data-target="secTools"]::before{ content:"⚙" !important; }
+#sidebar .nav button[data-target="secSettings"]::before{ content:"⚙" !important; }
+
+/* Active/hover */
+#sidebar .nav button:hover{
+  background:rgba(255,255,255,.055) !important;
+  transform:none !important;
+}
+
+#sidebar .nav button.active{
+  background:#444c5b !important;
+  border-color:transparent !important;
+}
+
+#sidebar .nav button.active::before{
+  color:#35a8e8 !important;
+}
+
+/* Expanded: icons + labels */
+#appShell.app:not(.sidebar-closed) #sidebar .nav button{
+  justify-content:flex-start !important;
+  padding:0 14px !important;
+  gap:14px !important;
+  text-indent:0 !important;
+}
+
+#appShell.app:not(.sidebar-closed) #sidebar .nav button::before{
+  width:30px !important;
+  min-width:30px !important;
+  height:30px !important;
+  font-size:19px !important;
+}
+
+/* Add clean labels in expanded mode */
+#appShell.app:not(.sidebar-closed) #sidebar .nav button::after{
+  display:block !important;
+  color:#f4f7fb !important;
+  font-size:16px !important;
+  font-weight:500 !important;
+  line-height:1 !important;
+  text-indent:0 !important;
+}
+
+#appShell.app:not(.sidebar-closed) #sidebar .nav button[data-target="secDashboard"]::after{ content:"Dashboard" !important; }
+#appShell.app:not(.sidebar-closed) #sidebar .nav button[data-target="secInventory"]::after{ content:"Inventory" !important; }
+#appShell.app:not(.sidebar-closed) #sidebar .nav button[data-target="secHolds"]::after{ content:"Inventory Holds" !important; }
+#appShell.app:not(.sidebar-closed) #sidebar .nav button[data-target="secSold"]::after{ content:"Sold" !important; }
+#appShell.app:not(.sidebar-closed) #sidebar .nav button[data-target="secImportExport"]::after{ content:"Import / Export" !important; }
+#appShell.app:not(.sidebar-closed) #sidebar .nav button[data-target="secTools"]::after{ content:"Tools" !important; }
+#appShell.app:not(.sidebar-closed) #sidebar .nav button[data-target="secSettings"]::after{ content:"Settings" !important; }
+
+/* Canvas starts after grid column; no sidebar overlap */
+#appShell .canvas{
+  grid-column:2 !important;
+  margin-left:0 !important;
+  margin-top:56px !important;
+  min-width:0 !important;
+  width:100% !important;
+}
+
+/* Topbar spans full width */
+.topbar{
+  left:0 !important;
+  right:0 !important;
+}
+
+/* Scrim should not cover desktop */
+#drawerScrim{
+  display:none !important;
+}
+
+/* Mobile: keep icon rail, don't fully hide */
+@media(max-width:760px){
+  #appShell.app,
+  #appShell.app.sidebar-closed,
+  #appShell.app:not(.sidebar-closed){
+    grid-template-columns:68px minmax(0, 1fr) !important;
+  }
+
+  #sidebar.sidebar,
+  #appShell.app:not(.sidebar-closed) #sidebar.sidebar{
+    width:68px !important;
+    top:54px !important;
+    height:calc(100vh - 54px) !important;
+    padding:14px 6px !important;
+  }
+
+  #appShell.app:not(.sidebar-closed) #sidebar .nav button::after{
+    display:none !important;
+    content:"" !important;
+  }
+
+  #appShell.app:not(.sidebar-closed) #sidebar .nav button{
+    justify-content:center !important;
+    padding:0 !important;
+    gap:0 !important;
+  }
+}
+
 </style>
 </head>
 
@@ -13953,6 +14176,44 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
   document.addEventListener("DOMContentLoaded", initMdvSidebar);
   window.addEventListener("load", initMdvSidebar);
+})();
+</script>
+
+
+<script>
+/* ===== True collapsed sidebar behavior ===== */
+(function(){
+  function applySidebarState(){
+    const app = document.getElementById("appShell");
+    if(!app) return;
+
+    let state = "closed";
+    try{ state = localStorage.getItem("resellr_mdv_sidebar") || "closed"; }catch(e){}
+
+    app.classList.toggle("sidebar-closed", state !== "open");
+  }
+
+  window.toggleSidebar = function(){
+    const app = document.getElementById("appShell");
+    if(!app) return;
+
+    const willOpen = app.classList.contains("sidebar-closed");
+    app.classList.toggle("sidebar-closed", !willOpen);
+
+    try{ localStorage.setItem("resellr_mdv_sidebar", willOpen ? "open" : "closed"); }catch(e){}
+  };
+
+  window.closeSidebar = function(){
+    const app = document.getElementById("appShell");
+    if(app){
+      app.classList.add("sidebar-closed");
+      try{ localStorage.setItem("resellr_mdv_sidebar", "closed"); }catch(e){}
+    }
+  };
+
+  document.addEventListener("DOMContentLoaded", applySidebarState);
+  window.addEventListener("load", applySidebarState);
+  setTimeout(applySidebarState, 100);
 })();
 </script>
 
