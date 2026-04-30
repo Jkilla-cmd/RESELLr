@@ -12642,6 +12642,9 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 (function(){
   function isBookmarkletImport(){
     try{
+      if(window.__RESELLR_BOOKMARKLET_PARAMS__ && window.__RESELLR_BOOKMARKLET_PARAMS__.add === "1"){
+        return true;
+      }
       return new URLSearchParams(window.location.search).get("add") === "1";
     }catch(e){
       return false;
@@ -12751,6 +12754,51 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     setTimeout(forceCleanVisibleUrl, 1200);
   });
   window.addEventListener("load", ()=>setTimeout(forceCleanVisibleUrl, 300));
+})();
+</script>
+
+
+<script>
+/* ===== Bookmarklet clean URL + skip login fix ===== */
+(function(){
+  function isImport(){
+    try{
+      return (window.__RESELLR_BOOKMARKLET_PARAMS__ && window.__RESELLR_BOOKMARKLET_PARAMS__.add === "1") ||
+             new URLSearchParams(window.location.search).get("add") === "1";
+    }catch(e){ return false; }
+  }
+
+  function forceSkipLogin(){
+    if(!isImport()) return;
+
+    document.body.classList.add("bookmarklet-import");
+
+    ["lockScreen", "loginScreen"].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el){
+        el.style.display = "none";
+        el.style.pointerEvents = "none";
+        el.setAttribute("aria-hidden", "true");
+      }
+    });
+
+    document.querySelectorAll(".app, .canvas, main").forEach(el=>{
+      el.style.visibility = "visible";
+      el.style.opacity = "1";
+      el.style.display = el.style.display === "none" ? "" : el.style.display;
+    });
+
+    try{ sessionStorage.setItem("resellr_bookmarklet_import", "1"); }catch(e){}
+  }
+
+  forceSkipLogin();
+  document.addEventListener("DOMContentLoaded", ()=>{
+    forceSkipLogin();
+    setTimeout(forceSkipLogin, 200);
+    setTimeout(forceSkipLogin, 700);
+    setTimeout(forceSkipLogin, 1300);
+  });
+  window.addEventListener("load", ()=>setTimeout(forceSkipLogin, 300));
 })();
 </script>
 
