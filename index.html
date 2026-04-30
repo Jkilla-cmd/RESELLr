@@ -5589,6 +5589,117 @@ body.skin-retro .search-focus-flash{
   100%{ background:transparent !important; }
 }
 
+
+/* ===== Global Search Overlay Mode ===== */
+.global-search-wrap{
+  display:none !important;
+}
+
+.global-search-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.48);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  z-index:30000;
+  display:none;
+  align-items:flex-start;
+  justify-content:center;
+  padding-top:12vh;
+}
+
+.global-search-overlay.show{
+  display:flex;
+}
+
+.global-search-modal{
+  width:min(720px, calc(100vw - 28px));
+  background:#0f151e;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:18px;
+  box-shadow:0 28px 80px rgba(0,0,0,.50);
+  padding:12px;
+}
+
+.global-search-top{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+#globalSearchOverlay #globalSearchInput{
+  width:100% !important;
+  height:48px !important;
+  margin:0 !important;
+  padding:12px 14px !important;
+  border-radius:14px !important;
+  font-size:15px !important;
+}
+
+.global-search-shortcut{
+  flex:0 0 auto;
+  color:#9aa3b2;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:11px;
+  white-space:nowrap;
+}
+
+#globalSearchOverlay .global-search-results{
+  position:relative !important;
+  top:auto !important;
+  left:auto !important;
+  right:auto !important;
+  display:none;
+  margin-top:10px;
+  max-height:420px;
+  overflow:auto;
+  background:transparent;
+  border:none;
+  border-radius:12px;
+  box-shadow:none;
+  padding:0;
+  z-index:auto;
+}
+
+#globalSearchOverlay .global-search-results.show{
+  display:block;
+}
+
+.global-search-hint{
+  color:#8f9aa8;
+  font-size:12px;
+  padding:10px 4px 2px;
+}
+
+body.skin-mono .global-search-modal{
+  background:#0a0a0a;
+  border-color:#3a3a3a;
+  border-radius:6px;
+}
+body.skin-mono .global-search-overlay{
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+
+body.skin-unifi .global-search-modal{
+  background:#101821;
+  border-color:rgba(128,151,174,.16);
+}
+
+body.skin-retro .global-search-modal{
+  background:#080b18;
+  border:2px solid #55e6ff;
+  border-radius:0;
+  box-shadow:6px 6px 0 #000;
+}
+body.skin-retro .global-search-shortcut,
+body.skin-retro .global-search-hint{
+  font-family:"Press Start 2P","IBM Plex Mono",monospace;
+  font-size:8px;
+}
+
 </style>
 </head>
 
@@ -5753,10 +5864,6 @@ body.skin-retro .search-focus-flash{
     <div class="topbar-left">
       <button class="hamburger" onclick="toggleSidebar()">☰</button>
       <div class="title" id="topbarTitle">RESELLr <span class="canary-badge"><span class="canary-dot"></span>FINAL-CLEAN-2026-04-22-02</span></div>
-      <div class="global-search-wrap">
-        <input id="globalSearchInput" type="search" placeholder="Search inventory, holds, sold..." autocomplete="off">
-        <div id="globalSearchResults" class="global-search-results"></div>
-      </div>
       <div class="topbar-inline-viz">
         <div class="music-visualizer" id="musicVisualizer" title="Click: change visual • Double-click: color • Long press: expand">
           <canvas id="vizCanvas"></canvas>
@@ -10895,6 +11002,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     }, 350);
 
     if(box) box.classList.remove("show");
+    try{ if(typeof closeSearchOverlay === "function") closeSearchOverlay(); }catch(e){}
     if(input){
       input.blur();
       // Keep query visible so user knows what was searched
@@ -11009,7 +11117,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
     document.addEventListener("keydown", (e)=>{
       const tag = (document.activeElement && document.activeElement.tagName || "").toLowerCase();
-      if(e.key === "/" && !["input","textarea","select"].includes(tag)){
+      if(false && e.key === "/" && !["input","textarea","select"].includes(tag)){
         e.preventDefault();
         input.focus();
       }
@@ -11018,6 +11126,74 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
   document.addEventListener("DOMContentLoaded", ()=>setTimeout(setupGlobalSearch, 300));
   window.addEventListener("load", ()=>setTimeout(setupGlobalSearch, 500));
+})();
+</script>
+
+
+<!-- Global Search Overlay -->
+<div id="globalSearchOverlay" class="global-search-overlay" aria-hidden="true">
+  <div class="global-search-modal">
+    <div class="global-search-top">
+      <input id="globalSearchInput" type="search" placeholder="Search inventory, holds, sold..." autocomplete="off">
+      <span class="global-search-shortcut">Ctrl + Space</span>
+    </div>
+    <div id="globalSearchResults" class="global-search-results overlay-results"></div>
+    <div class="global-search-hint">Enter opens first result • Esc closes</div>
+  </div>
+</div>
+
+
+<script>
+/* ===== Global Search Overlay Controller ===== */
+(function(){
+  function openSearchOverlay(){
+    const overlay = document.getElementById("globalSearchOverlay");
+    const input = document.getElementById("globalSearchInput");
+    if(!overlay || !input) return;
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden", "false");
+    setTimeout(()=>{
+      input.focus();
+      input.select();
+      input.dispatchEvent(new Event("focus", {bubbles:true}));
+      input.dispatchEvent(new Event("input", {bubbles:true}));
+    }, 40);
+  }
+
+  function closeSearchOverlay(){
+    const overlay = document.getElementById("globalSearchOverlay");
+    const results = document.getElementById("globalSearchResults");
+    if(!overlay) return;
+    overlay.classList.remove("show");
+    overlay.setAttribute("aria-hidden", "true");
+    if(results) results.classList.remove("show");
+  }
+
+  window.openSearchOverlay = openSearchOverlay;
+  window.closeSearchOverlay = closeSearchOverlay;
+
+  document.addEventListener("keydown", (e)=>{
+    if(e.ctrlKey && e.code === "Space"){
+      e.preventDefault();
+      openSearchOverlay();
+    }
+
+    if(e.key === "Escape"){
+      const overlay = document.getElementById("globalSearchOverlay");
+      if(overlay && overlay.classList.contains("show")){
+        closeSearchOverlay();
+      }
+    }
+  }, true);
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    const overlay = document.getElementById("globalSearchOverlay");
+    if(overlay){
+      overlay.addEventListener("click", (e)=>{
+        if(e.target === overlay) closeSearchOverlay();
+      });
+    }
+  });
 })();
 </script>
 
