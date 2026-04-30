@@ -12484,5 +12484,115 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+<script>
+/* ===== Add to RESELLr Bookmarklet Receiver ===== */
+(function(){
+  function param(name){
+    try{ return new URLSearchParams(window.location.search).get(name) || ""; }
+    catch(e){ return ""; }
+  }
+
+  function setField(id, value){
+    const el = document.getElementById(id);
+    const v = String(value || "").trim();
+    if(!el || !v) return false;
+    el.value = v;
+    el.dispatchEvent(new Event("input", {bubbles:true}));
+    el.dispatchEvent(new Event("change", {bubbles:true}));
+    return true;
+  }
+
+  function cleanTitle(title){
+    return String(title || "")
+      .replace(/\s*\|\s*Mercari.*$/i, "")
+      .replace(/\s*-\s*Mercari.*$/i, "")
+      .replace(/\s*for sale.*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function guessType(text){
+    const t = String(text || "").toLowerCase();
+
+    if(/\b(comic|variant|virgin|foil|cover|issue|#\d+|marvel|dc|image comics|idw|dark horse|batman|spider-man|x-men|tmnt|superman|wolverine)\b/.test(t)){
+      return "Comic";
+    }
+
+    if(/\b(card|psa|cgc card|pokemon|pokémon|mtg|magic the gathering|topps|panini|refractor|xfractor|sapphire|rookie)\b/.test(t)){
+      return "Card";
+    }
+
+    return "";
+  }
+
+  function openOverlaySafe(){
+    try{
+      if(typeof openAddInventoryOverlay === "function"){
+        openAddInventoryOverlay();
+        return true;
+      }
+    }catch(e){}
+
+    const overlay = document.getElementById("addInventoryOverlay");
+    if(overlay){
+      overlay.classList.add("show");
+      overlay.setAttribute("aria-hidden", "false");
+      return true;
+    }
+
+    return false;
+  }
+
+  function applyBookmarkletData(){
+    if(param("add") !== "1") return;
+
+    const title = cleanTitle(param("title") || "");
+    const price = String(param("price") || "").replace(/[^0-9.]/g, "");
+    const platform = param("platform") || "Mercari";
+    const url = param("url") || "";
+    const image = param("image") || "";
+    const type = guessType(title);
+
+    openOverlaySafe();
+
+    setTimeout(()=>{
+      openOverlaySafe();
+
+      setField("quickInvMercariUrl", url);
+      setField("quickInvItem", title);
+      setField("quickInvValue", price);
+      setField("quickInvPlatform", platform);
+      if(type) setField("quickInvType", type);
+
+      const notes = [];
+      if(url) notes.push("Mercari listing: " + url);
+      if(image) notes.push("Image: " + image);
+      setField("quickInvNotes", notes.join("\n"));
+
+      const status = document.getElementById("mercariAutofillStatus");
+      if(status){
+        status.textContent = "Added from Mercari bookmarklet. Review before adding.";
+        status.classList.remove("err");
+        status.classList.add("ok");
+      }
+
+      const cost = document.getElementById("quickInvCost");
+      const item = document.getElementById("quickInvItem");
+      if(cost) cost.focus();
+      else if(item) item.focus();
+
+      try{
+        const cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }catch(e){}
+    }, 700);
+  }
+
+  document.addEventListener("DOMContentLoaded", applyBookmarkletData);
+  window.addEventListener("load", ()=>setTimeout(applyBookmarkletData, 300));
+})();
+</script>
+
 </body>
 </html>
