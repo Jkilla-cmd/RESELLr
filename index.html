@@ -5721,6 +5721,110 @@ body.skin-retro .global-search-hint{
   display: flex;
 }
 
+
+/* ===== Add Inventory Overlay: Match Search Overlay ===== */
+#addInventoryOverlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:30010 !important;
+
+  display:none !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  padding-top:9vh !important;
+
+  background:rgba(0,0,0,.48) !important;
+  backdrop-filter:blur(8px) !important;
+  -webkit-backdrop-filter:blur(8px) !important;
+}
+
+#addInventoryOverlay.show{
+  display:flex !important;
+}
+
+.add-inventory-modal{
+  width:min(760px, calc(100vw - 28px)) !important;
+  background:#0f151e !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  border-radius:18px !important;
+  box-shadow:0 28px 80px rgba(0,0,0,.50) !important;
+  padding:16px !important;
+  opacity:1 !important;
+}
+
+.add-inventory-header{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  margin-bottom:14px !important;
+}
+
+.add-inventory-title{
+  color:#eef2f7 !important;
+  font-size:16px !important;
+  font-weight:800 !important;
+}
+
+.add-inventory-subtitle{
+  color:#9aa3b2 !important;
+  font-size:12px !important;
+  margin-top:3px !important;
+}
+
+.add-inventory-shortcut{
+  flex:0 0 auto !important;
+  color:#9aa3b2 !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  border-radius:999px !important;
+  padding:7px 10px !important;
+  font-size:11px !important;
+  white-space:nowrap !important;
+  background:transparent !important;
+}
+
+#addInventoryOverlay input,
+#addInventoryOverlay textarea{
+  background:#0b111a !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  color:#eef2f7 !important;
+  opacity:1 !important;
+}
+
+#addInventoryOverlay input:focus,
+#addInventoryOverlay textarea:focus{
+  border-color:rgba(138,199,255,.55) !important;
+  box-shadow:0 0 0 3px rgba(138,199,255,.10) !important;
+}
+
+.add-inventory-actions button{
+  background:#151c27 !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+}
+
+/* theme-specific overlay match */
+body.skin-mono .add-inventory-modal{
+  background:#0a0a0a !important;
+  border-color:#3a3a3a !important;
+  border-radius:6px !important;
+}
+body.skin-mono #addInventoryOverlay{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+body.skin-unifi .add-inventory-modal{
+  background:#101821 !important;
+  border-color:rgba(128,151,174,.16) !important;
+}
+
+body.skin-retro .add-inventory-modal{
+  background:#080b18 !important;
+  border:2px solid #55e6ff !important;
+  border-radius:0 !important;
+  box-shadow:6px 6px 0 #000 !important;
+}
+
 </style>
 </head>
 
