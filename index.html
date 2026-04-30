@@ -7530,6 +7530,263 @@ button.small:hover{
   }
 }
 
+
+/* ===== MyDoorView Final Sidebar + Dashboard Fit Fix ===== */
+
+/* Always reserve sidebar rail space */
+#appShell.app{
+  display:grid !important;
+  grid-template-columns:78px minmax(0,1fr) !important;
+  gap:0 !important;
+  max-width:none !important;
+  width:100% !important;
+}
+
+#appShell.app.mdv-sidebar-open{
+  grid-template-columns:282px minmax(0,1fr) !important;
+}
+
+#appShell.app.sidebar-closed{
+  grid-template-columns:78px minmax(0,1fr) !important;
+}
+
+/* Sidebar rail */
+#sidebar.sidebar{
+  display:flex !important;
+  position:fixed !important;
+  top:56px !important;
+  left:0 !important;
+  bottom:0 !important;
+  width:78px !important;
+  height:calc(100vh - 56px) !important;
+  transform:none !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+  z-index:8000 !important;
+  background:#2b323d !important;
+  border-radius:0 !important;
+  border:0 !important;
+  padding:18px 8px !important;
+  overflow:hidden !important;
+  transition:width .18s ease !important;
+}
+
+#appShell.app.mdv-sidebar-open #sidebar.sidebar{
+  width:282px !important;
+  padding:18px 12px !important;
+}
+
+/* Remove old brand/extra sidebar clutter */
+#sidebar .brand{
+  display:none !important;
+}
+
+/* Hide non-nav loose buttons/text in sidebar that are leaking in */
+#sidebar > button,
+#sidebar > .small,
+#sidebar > .muted:not(.brand .muted){
+  display:none !important;
+}
+
+/* Nav rebuilt with spans */
+#sidebar .nav{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+  width:100% !important;
+}
+
+#sidebar .nav button{
+  width:100% !important;
+  height:48px !important;
+  min-height:48px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  border-radius:8px !important;
+  box-shadow:none !important;
+  overflow:hidden !important;
+  text-indent:0 !important;
+  color:#f4f7fb !important;
+}
+
+#sidebar .nav button::before,
+#sidebar .nav button::after{
+  display:none !important;
+  content:none !important;
+}
+
+#sidebar .nav button .mdv-icon{
+  width:42px !important;
+  min-width:42px !important;
+  height:42px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:21px !important;
+  line-height:1 !important;
+  color:#f4f7fb !important;
+}
+
+#sidebar .nav button .mdv-label{
+  display:none !important;
+  color:#f4f7fb !important;
+  font-size:16px !important;
+  font-weight:500 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+}
+
+#sidebar .nav button:hover{
+  background:rgba(255,255,255,.06) !important;
+}
+
+#sidebar .nav button.active{
+  background:#444c5b !important;
+}
+
+#sidebar .nav button.active .mdv-icon{
+  color:#35a8e8 !important;
+}
+
+/* Expanded sidebar: icon + label */
+#appShell.app.mdv-sidebar-open #sidebar .nav button{
+  justify-content:flex-start !important;
+  gap:14px !important;
+  padding:0 14px !important;
+}
+
+#appShell.app.mdv-sidebar-open #sidebar .nav button .mdv-label{
+  display:block !important;
+}
+
+/* Canvas spacing */
+#appShell .canvas{
+  grid-column:2 !important;
+  margin-top:56px !important;
+  margin-left:0 !important;
+  min-width:0 !important;
+  width:100% !important;
+  padding:34px 42px !important;
+}
+
+/* Dashboard fit: give cards space and avoid cramped 3-column squeeze */
+.command-hero{
+  grid-template-columns:repeat(auto-fit, minmax(245px, 1fr)) !important;
+  gap:18px !important;
+}
+
+.command-stat{
+  min-height:140px !important;
+  padding:24px !important;
+}
+
+/* Main dashboard should not force narrow columns */
+#secDashboard > .grid{
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit, minmax(520px, 1fr)) !important;
+  gap:22px !important;
+  align-items:start !important;
+}
+
+/* At laptop/tablet widths, stack old dashboard panels */
+@media(max-width:1450px){
+  #secDashboard > .grid{
+    grid-template-columns:1fr !important;
+  }
+
+  #secDashboard > .grid > .panel{
+    max-width:980px !important;
+    width:100% !important;
+  }
+}
+
+#secDashboard > .grid > .panel{
+  padding:26px !important;
+  min-width:0 !important;
+  overflow:hidden !important;
+}
+
+/* Better internal wrapping for cramped budget/YTD widgets */
+#netWorthPanel,
+#budgetPanel,
+#nextMonthBudget,
+#secDashboard .panel{
+  min-width:0 !important;
+}
+
+#budgetPanel *,
+#nextMonthBudget *,
+#netWorthPanel *,
+#privateSaleIncomeCard *,
+.market-card *{
+  max-width:100% !important;
+}
+
+/* Make marketplace cards full-width inside summary */
+.market-card,
+#privateSaleIncomeCard{
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+
+/* Budget controls can wrap instead of squeezing */
+#budgetPanel .pill,
+#nextMonthBudget .pill,
+#netWorthPanel .pill{
+  flex-wrap:wrap !important;
+  max-width:100% !important;
+}
+
+/* If old dashboard has columns inside panels, let them wrap */
+#secDashboard .panel .row,
+#secDashboard .panel [style*="display:flex"]{
+  flex-wrap:wrap !important;
+}
+
+/* Small screens */
+@media(max-width:900px){
+  #appShell.app,
+  #appShell.app.sidebar-closed,
+  #appShell.app.mdv-sidebar-open{
+    grid-template-columns:70px minmax(0,1fr) !important;
+  }
+
+  #sidebar.sidebar,
+  #appShell.app.mdv-sidebar-open #sidebar.sidebar{
+    width:70px !important;
+    padding:14px 6px !important;
+  }
+
+  #appShell.app.mdv-sidebar-open #sidebar .nav button{
+    justify-content:center !important;
+    padding:0 !important;
+    gap:0 !important;
+  }
+
+  #appShell.app.mdv-sidebar-open #sidebar .nav button .mdv-label{
+    display:none !important;
+  }
+
+  #appShell .canvas{
+    padding:22px 16px !important;
+  }
+
+  .command-hero{
+    grid-template-columns:1fr !important;
+  }
+
+  #secDashboard > .grid{
+    grid-template-columns:1fr !important;
+  }
+}
+
 </style>
 </head>
 
@@ -14214,6 +14471,86 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   document.addEventListener("DOMContentLoaded", applySidebarState);
   window.addEventListener("load", applySidebarState);
   setTimeout(applySidebarState, 100);
+})();
+</script>
+
+
+<script>
+/* ===== MyDoorView Final Sidebar Rebuild ===== */
+(function(){
+  const map = {
+    secDashboard: ["▥", "Dashboard"],
+    secInventory: ["▤", "Inventory"],
+    secHolds: ["▣", "Inventory Holds"],
+    secSold: ["☷", "Sold"],
+    secImportExport: ["⇅", "Import / Export"],
+    secTools: ["⚙", "Tools"],
+    secSettings: ["⚙", "Settings"]
+  };
+
+  function rebuildNav(){
+    const nav = document.getElementById("nav");
+    if(!nav) return;
+
+    nav.querySelectorAll("button[data-target]").forEach(btn=>{
+      const target = btn.getAttribute("data-target");
+      const item = map[target] || ["•", btn.textContent.trim()];
+      if(btn.dataset.mdvBuilt === "true") return;
+
+      btn.dataset.mdvBuilt = "true";
+      btn.innerHTML = '<span class="mdv-icon">' + item[0] + '</span><span class="mdv-label">' + item[1] + '</span>';
+    });
+  }
+
+  function applyState(){
+    const app = document.getElementById("appShell");
+    if(!app) return;
+
+    let state = "closed";
+    try{ state = localStorage.getItem("resellr_mdv_sidebar") || "closed"; }catch(e){}
+
+    app.classList.toggle("mdv-sidebar-open", state === "open");
+    app.classList.toggle("sidebar-closed", state !== "open");
+  }
+
+  window.toggleSidebar = function(){
+    const app = document.getElementById("appShell");
+    if(!app) return;
+
+    const open = !app.classList.contains("mdv-sidebar-open");
+    app.classList.toggle("mdv-sidebar-open", open);
+    app.classList.toggle("sidebar-closed", !open);
+
+    try{ localStorage.setItem("resellr_mdv_sidebar", open ? "open" : "closed"); }catch(e){}
+  };
+
+  window.closeSidebar = function(){
+    const app = document.getElementById("appShell");
+    if(!app) return;
+    app.classList.remove("mdv-sidebar-open");
+    app.classList.add("sidebar-closed");
+    try{ localStorage.setItem("resellr_mdv_sidebar", "closed"); }catch(e){}
+  };
+
+  function init(){
+    rebuildNav();
+    applyState();
+
+    const hamburger = document.querySelector(".hamburger");
+    if(hamburger && hamburger.dataset.mdvClick !== "true"){
+      hamburger.dataset.mdvClick = "true";
+      hamburger.addEventListener("click", function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        window.toggleSidebar();
+      }, true);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("load", init);
+  setTimeout(init, 100);
+  setTimeout(init, 600);
 })();
 </script>
 
