@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="hackercyan">
 <head>
+
+<script>
+/* ===== Early bookmarklet URL strip ===== */
+(function(){
+  try{
+    const params = new URLSearchParams(window.location.search);
+    if(params.get("add") === "1"){
+      window.__RESELLR_BOOKMARKLET_PARAMS__ = Object.fromEntries(params.entries());
+      const clean = window.location.origin + window.location.pathname + window.location.hash;
+      window.history.replaceState({}, document.title, clean);
+      document.documentElement.classList.add("bookmarklet-import-pending");
+    }
+  }catch(e){}
+})();
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <meta charset="UTF-8" />
@@ -12511,7 +12527,12 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 /* ===== Add to RESELLr Bookmarklet Receiver ===== */
 (function(){
   function param(name){
-    try{ return new URLSearchParams(window.location.search).get(name) || ""; }
+    try{
+      if(window.__RESELLR_BOOKMARKLET_PARAMS__ && window.__RESELLR_BOOKMARKLET_PARAMS__[name]){
+        return window.__RESELLR_BOOKMARKLET_PARAMS__[name] || "";
+      }
+      return new URLSearchParams(window.location.search).get(name) || "";
+    }
     catch(e){ return ""; }
   }
 
@@ -12588,8 +12609,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       if(type) setField("quickInvType", type);
 
       const notes = [];
-      if(url) notes.push("Mercari listing: " + url);
-      if(image) notes.push("Image: " + image);
+      if(url) notes.push("Mercari Listing");
       setField("quickInvNotes", notes.join("\n"));
 
       const status = document.getElementById("mercariAutofillStatus");
@@ -12704,6 +12724,33 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     setTimeout(cleanBookmarkletDisplay, 500);
     setTimeout(cleanBookmarkletDisplay, 1300);
   });
+})();
+</script>
+
+
+<script>
+/* ===== Force clean visible dashboard URL line ===== */
+(function(){
+  function forceCleanVisibleUrl(){
+    const clean = window.location.origin + window.location.pathname.replace(/\/$/, "/");
+    const walker = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+
+    nodes.forEach(node=>{
+      const txt = node.nodeValue || "";
+      if(txt.includes("URL:") && txt.includes("?add=1")){
+        node.nodeValue = txt.replace(/URL:\s*https?:\/\/[^|]+/i, "URL: " + clean + " ");
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    setTimeout(forceCleanVisibleUrl, 100);
+    setTimeout(forceCleanVisibleUrl, 500);
+    setTimeout(forceCleanVisibleUrl, 1200);
+  });
+  window.addEventListener("load", ()=>setTimeout(forceCleanVisibleUrl, 300));
 })();
 </script>
 
