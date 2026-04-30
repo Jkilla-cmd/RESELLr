@@ -5911,6 +5911,55 @@ body.skin-retro #addHoldOverlay select{
   color:#eaffff !important;
 }
 
+
+/* ===== FIX Ctrl+H Holds Overlay Visibility + Floating ===== */
+#addHoldOverlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:30010 !important;
+
+  display:none !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  padding-top:9vh !important;
+
+  background:rgba(0,0,0,.48) !important;
+  backdrop-filter:blur(8px) !important;
+  -webkit-backdrop-filter:blur(8px) !important;
+}
+
+#addHoldOverlay.show{
+  display:flex !important;
+}
+
+#addHoldOverlay .add-inventory-modal{
+  width:min(760px, calc(100vw - 28px)) !important;
+  background:#0f151e !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  border-radius:18px !important;
+  box-shadow:0 28px 80px rgba(0,0,0,.50) !important;
+  padding:16px !important;
+  opacity:1 !important;
+}
+
+body.skin-mono #addHoldOverlay .add-inventory-modal{
+  background:#0a0a0a !important;
+  border-color:#3a3a3a !important;
+  border-radius:6px !important;
+}
+
+body.skin-unifi #addHoldOverlay .add-inventory-modal{
+  background:#101821 !important;
+  border-color:rgba(128,151,174,.16) !important;
+}
+
+body.skin-retro #addHoldOverlay .add-inventory-modal{
+  background:#080b18 !important;
+  border:2px solid #55e6ff !important;
+  border-radius:0 !important;
+  box-shadow:6px 6px 0 #000 !important;
+}
+
 </style>
 </head>
 
