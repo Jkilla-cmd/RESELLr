@@ -5825,6 +5825,49 @@ body.skin-retro .add-inventory-modal{
   box-shadow:6px 6px 0 #000 !important;
 }
 
+
+/* ===== Quick Add Inventory Type Dropdown Fix ===== */
+#addInventoryOverlay select{
+  width:100% !important;
+  margin:6px 0 0 !important;
+  background:#0b111a !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  color:#eef2f7 !important;
+  opacity:1 !important;
+  border-radius:12px !important;
+  min-height:40px !important;
+  padding:9px 36px 9px 12px !important;
+}
+
+#addInventoryOverlay select:focus{
+  border-color:rgba(138,199,255,.55) !important;
+  box-shadow:0 0 0 3px rgba(138,199,255,.10) !important;
+}
+
+#addInventoryOverlay select option{
+  background:#0f151e !important;
+  color:#eef2f7 !important;
+}
+
+body.skin-mono #addInventoryOverlay select{
+  background:#0a0a0a !important;
+  border-color:#3a3a3a !important;
+  color:#f5f5f5 !important;
+}
+
+body.skin-unifi #addInventoryOverlay select{
+  background:#0d141c !important;
+  border-color:rgba(128,151,174,.16) !important;
+  color:#e7edf5 !important;
+}
+
+body.skin-retro #addInventoryOverlay select{
+  background:#080b18 !important;
+  border:2px solid #55e6ff !important;
+  border-radius:0 !important;
+  color:#eaffff !important;
+}
+
 </style>
 </head>
 
@@ -11342,7 +11385,12 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
       <div class="field">
         <label>Type</label>
-        <input id="quickInvType" type="text" placeholder="Comic / Card / Other">
+        <select id="quickInvType">
+          <option value="">Select type</option>
+          <option value="Comic">Comic</option>
+          <option value="Card">Card</option>
+          <option value="Other">Other</option>
+        </select>
       </div>
 
       <div class="field">
@@ -11462,6 +11510,8 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       return;
     }
 
+    const listPrice = num("quickInvValue");
+
     const row = {
       _id: genQuickId(),
       date: val("quickInvDate") || today(),
@@ -11469,8 +11519,9 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       type: val("quickInvType"),
       platform: val("quickInvPlatform"),
       cost: num("quickInvCost"),
-      value: num("quickInvValue"),
-      price: num("quickInvValue"),
+      list: listPrice,
+      value: listPrice,
+      price: listPrice,
       qty: Math.max(1, Math.round(num("quickInvQty") || 1)),
       notes: val("quickInvNotes")
     };
