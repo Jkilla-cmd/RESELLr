@@ -5422,6 +5422,99 @@ body.skin-retro::after{
   mix-blend-mode:screen;
 }
 
+
+/* ===== Gamified Reseller Layer ===== */
+.game-hud{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap:12px;
+  margin:0 0 16px;
+}
+
+.game-card{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.075);
+  border-radius:14px;
+  padding:14px;
+}
+
+.game-card .game-label{
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:8px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  font-weight:800;
+}
+
+.game-card .game-value{
+  font-size:22px;
+  font-weight:850;
+  letter-spacing:-.03em;
+}
+
+.game-xp-bar{
+  height:8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.08);
+  overflow:hidden;
+  margin-top:9px;
+}
+
+.game-xp-fill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background:linear-gradient(90deg, var(--accent), var(--green));
+}
+
+/* Retro mode makes the HUD feel like a game UI */
+body.skin-retro .game-hud{
+  gap:10px;
+}
+
+body.skin-retro .game-card{
+  background:#101427 !important;
+  border:2px solid #fff06a !important;
+  border-radius:0 !important;
+  box-shadow:4px 4px 0 #000 !important;
+}
+
+body.skin-retro .game-card .game-label{
+  font-family:"Press Start 2P","VT323","IBM Plex Mono",monospace !important;
+  color:#55e6ff !important;
+  font-size:8px !important;
+}
+
+body.skin-retro .game-card .game-value{
+  font-family:"Press Start 2P","VT323","IBM Plex Mono",monospace !important;
+  color:#7dff8a !important;
+  font-size:13px !important;
+  text-shadow:2px 2px 0 #000;
+}
+
+body.skin-retro .game-xp-bar{
+  background:#05070d !important;
+  border:1px solid #55e6ff !important;
+  border-radius:0 !important;
+}
+
+body.skin-retro .game-xp-fill{
+  background:repeating-linear-gradient(90deg,#7dff8a 0 8px,#55e6ff 8px 16px) !important;
+  border-radius:0 !important;
+}
+
+/* Retro label swaps */
+body.skin-retro #ccDailyGoalLabelText::after{ content:"MISSION"; }
+body.skin-retro #ccTotalSalesLabelText::after{ content:"SCORE"; }
+
+@media (max-width: 900px){
+  .game-hud{ grid-template-columns:repeat(2, minmax(140px, 1fr)); }
+}
+@media (max-width: 560px){
+  .game-hud{ grid-template-columns:1fr; }
+}
+
 </style>
 </head>
 
@@ -5658,6 +5751,27 @@ body.skin-retro::after{
     
 <section id="secDashboard" class="section active">
       <div id="storageProbe">Storage probe loading… (final clean patch)</div>
+
+      
+      <div class="game-hud" id="gameHud">
+        <div class="game-card">
+          <div class="game-label">Level</div>
+          <div class="game-value" id="gameLevel">LVL 1</div>
+          <div class="game-xp-bar"><div class="game-xp-fill" id="gameXpFill"></div></div>
+        </div>
+        <div class="game-card">
+          <div class="game-label">XP</div>
+          <div class="game-value" id="gameXp">0 XP</div>
+        </div>
+        <div class="game-card">
+          <div class="game-label">Mission</div>
+          <div class="game-value" id="gameMission">$100/day</div>
+        </div>
+        <div class="game-card">
+          <div class="game-label">High Score</div>
+          <div class="game-value" id="gameHighScore">$0</div>
+        </div>
+      </div>
 
       <div class="command-hero">
         <div class="command-stat"><div class="label">Today’s Sales</div><div class="value" id="ccTodaySales">$0.00</div><div class="sub" id="ccTodayCount">0 items sold today</div></div>
@@ -10565,6 +10679,104 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
   document.addEventListener("DOMContentLoaded", ()=>setTimeout(buildNetWorthDropdowns, 500));
   window.addEventListener("load", ()=>setTimeout(buildNetWorthDropdowns, 900));
+})();
+</script>
+
+
+<script>
+/* ===== Gamified reseller dashboard logic ===== */
+(function(){
+  function gNum(v){
+    const n = Number(v || 0);
+    return Number.isFinite(n) ? n : 0;
+  }
+  function gMoney(n){
+    try{ return money(n); }catch(e){ return "$" + Number(n || 0).toFixed(2); }
+  }
+  function gSold(){
+    try{ return readSold(); }catch(e){ return []; }
+  }
+  function gActive(){
+    try{ return readActive(); }catch(e){ return []; }
+  }
+  function gDateKey(d){ return String(d || "").slice(0,10); }
+
+  function updateGameHud(){
+    const sold = gSold();
+    const active = gActive();
+
+    const totalSales = sold.reduce((s,r)=>s+gNum(r.sale),0);
+    const totalProfit = sold.reduce((s,r)=>s+gNum(r.profit),0);
+    const xp = Math.round((sold.length * 25) + Math.max(0,totalProfit) + (active.length * 2));
+    const level = Math.max(1, Math.floor(xp / 250) + 1);
+    const nextLevelXp = level * 250;
+    const prevLevelXp = (level - 1) * 250;
+    const progress = Math.max(0, Math.min(100, ((xp - prevLevelXp) / (nextLevelXp - prevLevelXp)) * 100));
+
+    const byDay = {};
+    sold.forEach(r=>{
+      const k = gDateKey(r.date);
+      if(!k) return;
+      byDay[k] = (byDay[k] || 0) + gNum(r.sale);
+    });
+    const highScore = Object.values(byDay).reduce((m,v)=>Math.max(m,v),0);
+
+    const set = (id, txt)=>{
+      const el = document.getElementById(id);
+      if(el) el.textContent = txt;
+    };
+
+    set("gameLevel", "LVL " + level);
+    set("gameXp", xp.toLocaleString() + " XP");
+    set("gameMission", totalSales >= 100 ? "Mission Clear" : "$100/day");
+    set("gameHighScore", gMoney(highScore));
+
+    const fill = document.getElementById("gameXpFill");
+    if(fill) fill.style.width = progress + "%";
+
+    // In retro mode, rename visible command stat labels for flavor without changing logic
+    const daily = document.querySelector("#ccDailyGoal")?.closest(".command-stat")?.querySelector(".label");
+    const today = document.querySelector("#ccTodaySales")?.closest(".command-stat")?.querySelector(".label");
+    const activeLabel = document.querySelector("#ccActiveCount")?.closest(".command-stat")?.querySelector(".label");
+    const sellLabel = document.querySelector("#ccSellThrough")?.closest(".command-stat")?.querySelector(".label");
+    const avgLabel = document.querySelector("#ccAvgProfit")?.closest(".command-stat")?.querySelector(".label");
+
+    if(document.body.classList.contains("skin-retro")){
+      if(today) today.textContent = "Score";
+      if(daily) daily.textContent = "Mission";
+      if(activeLabel) activeLabel.textContent = "Items";
+      if(sellLabel) sellLabel.textContent = "Accuracy";
+      if(avgLabel) avgLabel.textContent = "Loot / Sale";
+    }else{
+      if(today) today.textContent = "Today’s Sales";
+      if(daily) daily.textContent = "Daily Goal";
+      if(activeLabel) activeLabel.textContent = "Active Listings";
+      if(sellLabel) sellLabel.textContent = "Sell-through";
+      if(avgLabel) avgLabel.textContent = "Avg Profit / Sale";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>setTimeout(updateGameHud, 700));
+  window.addEventListener("load", ()=>setTimeout(updateGameHud, 1000));
+
+  ["click","change"].forEach(evt=>{
+    document.addEventListener(evt, ()=>{
+      clearTimeout(window.__gameHudTimer);
+      window.__gameHudTimer = setTimeout(updateGameHud, 300);
+    });
+  });
+
+  const oldCycle = window.cycleResellrStyle;
+  if(typeof oldCycle === "function" && !window.__gameStyleHooked){
+    window.__gameStyleHooked = true;
+    window.cycleResellrStyle = function(){
+      const out = oldCycle.apply(this, arguments);
+      setTimeout(updateGameHud, 80);
+      return out;
+    };
+  }
+
+  window.updateGameHud = updateGameHud;
 })();
 </script>
 
