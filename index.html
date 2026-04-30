@@ -6109,6 +6109,46 @@ body.skin-retro .private-sale-icon{
   font-size:18px;
 }
 
+
+/* ===== Mercari Autofill Controls ===== */
+.mercari-autofill-controls{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:10px;
+  align-items:center;
+  margin-top:6px;
+}
+
+#quickInvMercariUrl{
+  margin:0 !important;
+}
+
+.mercari-autofill-status{
+  min-height:18px;
+  color:#9aa3b2;
+  font-size:12px;
+  margin-top:6px;
+}
+
+.mercari-autofill-status.ok{
+  color:#7ee0a3;
+}
+
+.mercari-autofill-status.err{
+  color:#ff8c8c;
+}
+
+body.skin-retro .mercari-autofill-status{
+  font-family:"Press Start 2P","IBM Plex Mono",monospace;
+  font-size:8px;
+}
+
+@media (max-width:680px){
+  .mercari-autofill-controls{
+    grid-template-columns:1fr;
+  }
+}
+
 </style>
 </head>
 
@@ -11620,6 +11660,15 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     </div>
 
     <div class="add-inventory-grid">
+      <div class="field full mercari-autofill-row">
+        <label>Mercari Listing Link</label>
+        <div class="mercari-autofill-controls">
+          <input id="quickInvMercariUrl" type="url" placeholder="Paste Mercari listing URL...">
+          <button class="small" type="button" onclick="fetchMercariData()">Auto Fill</button>
+        </div>
+        <div id="mercariAutofillStatus" class="mercari-autofill-status"></div>
+      </div>
+
       <div class="field full">
         <label>Item</label>
         <input id="quickInvItem" type="text" placeholder="e.g. Batman #1 Variant">
@@ -12236,6 +12285,155 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   }
 
   window.updatePrivateSaleCard = updatePrivateSaleCard;
+})();
+</script>
+
+
+<script>
+/* ===== Mercari Link Autofill for Add Inventory ===== */
+(function(){
+  function setMercariStatus(text, type){
+    const el = document.getElementById("mercariAutofillStatus");
+    if(!el) return;
+    el.textContent = text || "";
+    el.classList.remove("ok", "err");
+    if(type) el.classList.add(type);
+  }
+
+  function setField(id, value){
+    const el = document.getElementById(id);
+    if(el && value !== undefined && value !== null && String(value).trim() !== ""){
+      el.value = String(value).trim();
+      el.dispatchEvent(new Event("input", {bubbles:true}));
+      el.dispatchEvent(new Event("change", {bubbles:true}));
+    }
+  }
+
+  function cleanTitle(title){
+    return String(title || "")
+      .replace(/\s*\|\s*Mercari.*$/i, "")
+      .replace(/\s*for sale.*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function extractPrice(text){
+    const src = String(text || "");
+    const matches = src.match(/\$\s?([0-9][0-9,]*(?:\.[0-9]{2})?)/g);
+    if(!matches || !matches.length) return "";
+
+    const nums = matches
+      .map(m => Number(m.replace(/[^0-9.]/g, "")))
+      .filter(n => Number.isFinite(n) && n > 0 && n < 100000);
+
+    if(!nums.length) return "";
+    return nums[0].toFixed(2);
+  }
+
+  function guessType(title){
+    const t = String(title || "").toLowerCase();
+
+    if(/\b(comic|variant|virgin|foil|cover|issue|#\d+|marvel|dc|image comics|idw|dark horse)\b/.test(t)){
+      return "Comic";
+    }
+
+    if(/\b(card|psa|cgc card|pokemon|pokémon|mtg|magic the gathering|topps|panini|refractor|xfractor|sapphire)\b/.test(t)){
+      return "Card";
+    }
+
+    return "";
+  }
+
+  function parseHtmlForListing(htmlText){
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlText, "text/html");
+
+    const ogTitle = doc.querySelector('meta[property="og:title"]')?.content ||
+                    doc.querySelector('meta[name="twitter:title"]')?.content ||
+                    doc.querySelector("title")?.textContent || "";
+
+    const desc = doc.querySelector('meta[property="og:description"]')?.content ||
+                 doc.querySelector('meta[name="description"]')?.content ||
+                 doc.body?.innerText || "";
+
+    let price = doc.querySelector('meta[property="product:price:amount"]')?.content ||
+                doc.querySelector('meta[property="og:price:amount"]')?.content ||
+                doc.querySelector('[itemprop="price"]')?.getAttribute("content") ||
+                doc.querySelector('[itemprop="price"]')?.textContent ||
+                "";
+
+    if(!price) price = extractPrice(desc);
+    if(!price) price = extractPrice(htmlText);
+
+    const title = cleanTitle(ogTitle);
+
+    return {
+      title,
+      price: price ? String(price).replace(/[^0-9.]/g, "") : "",
+      type: guessType(title + " " + desc)
+    };
+  }
+
+  async function fetchViaAllOrigins(url){
+    const endpoint = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
+    const res = await fetch(endpoint);
+    if(!res.ok) throw new Error("Proxy fetch failed");
+    const data = await res.json();
+    return data.contents || "";
+  }
+
+  window.fetchMercariData = async function(){
+    const urlEl = document.getElementById("quickInvMercariUrl");
+    const url = urlEl ? urlEl.value.trim() : "";
+
+    if(!url){
+      setMercariStatus("Paste a Mercari listing link first.", "err");
+      return;
+    }
+
+    if(!/mercari\.com/i.test(url)){
+      setMercariStatus("This does not look like a Mercari link.", "err");
+      return;
+    }
+
+    setMercariStatus("Fetching listing details...", "");
+
+    try{
+      const htmlText = await fetchViaAllOrigins(url);
+
+      if(!htmlText){
+        throw new Error("Mercari blocked the listing request.");
+      }
+
+      const data = parseHtmlForListing(htmlText);
+
+      if(!data.title && !data.price){
+        throw new Error("Could not read listing details.");
+      }
+
+      setField("quickInvItem", data.title);
+      setField("quickInvValue", data.price);
+      setField("quickInvPlatform", "Mercari");
+
+      if(data.type){
+        setField("quickInvType", data.type);
+      }
+
+      setMercariStatus("Autofill complete. Review before adding.", "ok");
+    }catch(err){
+      console.warn("Mercari autofill failed:", err);
+      setField("quickInvPlatform", "Mercari");
+      setMercariStatus("Could not fully read the listing. Platform set to Mercari — fill the rest manually.", "err");
+    }
+  };
+
+  document.addEventListener("input", (e)=>{
+    if(e.target && e.target.id === "quickInvMercariUrl"){
+      if(/mercari\.com/i.test(e.target.value || "")){
+        setField("quickInvPlatform", "Mercari");
+      }
+    }
+  });
 })();
 </script>
 
