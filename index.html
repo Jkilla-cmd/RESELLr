@@ -6648,6 +6648,494 @@ body.skin-retro .global-search-hint{
   margin-top: 0 !important;
 }
 
+
+/* ===== MyDoorView-inspired UI Skin ===== */
+:root{
+  --mdv-bg:#111312;
+  --mdv-top:#29303b;
+  --mdv-sidebar:#2b323d;
+  --mdv-panel:#29303b;
+  --mdv-panel-2:#303744;
+  --mdv-border:#3b4451;
+  --mdv-blue:#2fa3e6;
+  --mdv-blue-soft:rgba(47,163,230,.15);
+  --mdv-text:#f4f7fb;
+  --mdv-muted:#c8ced8;
+  --mdv-dim:#8f98a7;
+  --mdv-orange:#f59a23;
+  --mdv-green:#33c8bd;
+}
+
+body{
+  background:var(--mdv-bg) !important;
+  color:var(--mdv-text) !important;
+  padding:0 !important;
+}
+
+body::before,
+body::after{
+  display:none !important;
+}
+
+/* App shell becomes fixed sidebar + dashboard canvas */
+.app{
+  max-width:none !important;
+  width:100% !important;
+  min-height:100vh !important;
+  display:grid !important;
+  grid-template-columns:86px 1fr !important;
+  gap:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  background:var(--mdv-bg) !important;
+  transition:grid-template-columns .18s ease !important;
+}
+
+.app:not(.sidebar-closed),
+.app.sidebar-open{
+  grid-template-columns:290px 1fr !important;
+}
+
+/* Top bar like screenshot */
+.topbar{
+  position:fixed !important;
+  top:0 !important;
+  left:0 !important;
+  right:0 !important;
+  height:56px !important;
+  min-height:56px !important;
+  z-index:9000 !important;
+  background:var(--mdv-top) !important;
+  border:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  padding:0 18px !important;
+  margin:0 !important;
+}
+
+.topbar-content{
+  height:56px !important;
+  align-items:center !important;
+}
+
+.topbar-left{
+  gap:16px !important;
+}
+
+.hamburger{
+  width:34px !important;
+  height:34px !important;
+  border:none !important;
+  background:transparent !important;
+  border-radius:8px !important;
+  font-size:20px !important;
+  color:#fff !important;
+  box-shadow:none !important;
+}
+
+.hamburger:hover{
+  background:rgba(255,255,255,.06) !important;
+}
+
+#topbarTitle{
+  font-size:0 !important;
+}
+
+#topbarTitle::before{
+  content:"RESELLr";
+  font-size:17px !important;
+  font-weight:700 !important;
+  color:#fff !important;
+  letter-spacing:.01em !important;
+}
+
+.canary-badge,
+.topbar-inline-viz{
+  display:none !important;
+}
+
+/* Right controls */
+.topbar-right{
+  gap:10px !important;
+}
+
+.topbar-right .lofi-avatar-wrap{
+  width:42px !important;
+  height:42px !important;
+  flex-basis:42px !important;
+}
+
+.topbar-right .small{
+  height:40px !important;
+  border-radius:7px !important;
+  background:#35a8e8 !important;
+  border:1px solid rgba(255,255,255,.08) !important;
+  color:#fff !important;
+  padding:0 14px !important;
+  box-shadow:none !important;
+}
+
+#styleModeToggle{
+  background:#35a8e8 !important;
+}
+
+#lockButton{
+  background:#313945 !important;
+  border-color:#4b5564 !important;
+}
+
+.topbar-right .danger{
+  background:#313945 !important;
+  color:#fff !important;
+  border-color:#4b5564 !important;
+}
+
+/* Sidebar */
+.sidebar{
+  position:fixed !important;
+  top:56px !important;
+  left:0 !important;
+  bottom:0 !important;
+  width:86px !important;
+  height:calc(100vh - 56px) !important;
+  transform:none !important;
+  z-index:8000 !important;
+  background:var(--mdv-sidebar) !important;
+  border:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  padding:22px 10px !important;
+  gap:14px !important;
+  overflow:hidden !important;
+  transition:width .18s ease !important;
+}
+
+.app:not(.sidebar-closed) .sidebar,
+.app.sidebar-open .sidebar{
+  width:290px !important;
+}
+
+/* hide old brand text in collapsed rail */
+.brand{
+  display:none !important;
+}
+
+.nav{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:6px !important;
+}
+
+.nav button{
+  min-height:48px !important;
+  width:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:14px !important;
+  padding:0 14px !important;
+  background:transparent !important;
+  border:1px solid transparent !important;
+  border-radius:8px !important;
+  color:#f4f7fb !important;
+  box-shadow:none !important;
+  font-size:0 !important;
+  text-align:left !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+}
+
+.nav button:hover{
+  background:rgba(255,255,255,.06) !important;
+  border-color:transparent !important;
+  transform:none !important;
+}
+
+.nav button.active{
+  background:#444c5b !important;
+  border-color:transparent !important;
+  color:#fff !important;
+  box-shadow:none !important;
+}
+
+.nav button.active::before{
+  display:none !important;
+}
+
+.nav button::before{
+  width:30px;
+  min-width:30px;
+  text-align:center;
+  font-size:20px;
+  color:#e9eef6;
+  opacity:.95;
+}
+
+.nav button[data-target="secDashboard"]::before{ content:"▥"; color:var(--mdv-blue); }
+.nav button[data-target="secInventory"]::before{ content:"☷"; }
+.nav button[data-target="secHolds"]::before{ content:"▣"; }
+.nav button[data-target="secSold"]::before{ content:"▤"; }
+.nav button[data-target="secImportExport"]::before{ content:"⇅"; }
+.nav button[data-target="secTools"]::before{ content:"⚙"; }
+.nav button[data-target="secSettings"]::before{ content:"⚙"; }
+
+/* labels appear when expanded */
+.app:not(.sidebar-closed) .nav button,
+.app.sidebar-open .nav button{
+  font-size:16px !important;
+}
+
+.app:not(.sidebar-closed) .nav button[data-target="secDashboard"]::after{ content:"Dashboard"; }
+.app:not(.sidebar-closed) .nav button[data-target="secInventory"]::after{ content:"Inventory"; }
+.app:not(.sidebar-closed) .nav button[data-target="secHolds"]::after{ content:"Inventory Holds"; }
+.app:not(.sidebar-closed) .nav button[data-target="secSold"]::after{ content:"Sold"; }
+.app:not(.sidebar-closed) .nav button[data-target="secImportExport"]::after{ content:"Import / Export"; }
+.app:not(.sidebar-closed) .nav button[data-target="secTools"]::after{ content:"Tools"; }
+.app:not(.sidebar-closed) .nav button[data-target="secSettings"]::after{ content:"Settings"; }
+
+/* hide original emoji/text by painting after labels only */
+.app:not(.sidebar-closed) .nav button{
+  color:transparent !important;
+}
+.app:not(.sidebar-closed) .nav button::after{
+  color:#f4f7fb !important;
+}
+.nav button::before{
+  color:#f4f7fb !important;
+}
+.nav button.active::before{
+  color:var(--mdv-blue) !important;
+}
+
+/* Main canvas */
+.canvas{
+  grid-column:2 !important;
+  margin-top:56px !important;
+  padding:34px 36px !important;
+  min-height:calc(100vh - 56px) !important;
+  background:#121413 !important;
+  overflow-x:hidden !important;
+}
+
+.section h2,
+#secDashboard > h2{
+  font-size:28px !important;
+  font-weight:750 !important;
+  color:#fff !important;
+  margin:0 0 22px !important;
+}
+
+/* Make dashboard title visible if section has none */
+#secDashboard::before{
+  content:"Dashboard";
+  display:block;
+  font-size:28px;
+  line-height:1.2;
+  font-weight:750;
+  color:#fff;
+  margin:0 0 22px;
+}
+
+/* Hide debug line from this clean UI */
+#storageProbe{
+  display:none !important;
+}
+
+/* Cards */
+.panel,
+.command-stat,
+.market-card,
+#netWorthPanel .nw-card,
+.table-wrap,
+.snapshot-item,
+.flip-card,
+.insight-card{
+  background:var(--mdv-panel) !important;
+  border:1px solid transparent !important;
+  border-radius:12px !important;
+  box-shadow:none !important;
+  color:var(--mdv-text) !important;
+}
+
+.command-hero{
+  display:grid !important;
+  grid-template-columns:repeat(5, minmax(170px, 1fr)) !important;
+  gap:12px !important;
+  margin-bottom:14px !important;
+}
+
+.command-stat{
+  min-height:138px !important;
+  padding:22px 24px !important;
+  position:relative !important;
+  overflow:hidden !important;
+}
+
+.command-stat:first-child{
+  border:2px solid var(--mdv-blue) !important;
+}
+
+.command-stat .label{
+  color:#fff !important;
+  font-size:17px !important;
+  text-transform:none !important;
+  letter-spacing:0 !important;
+  font-weight:500 !important;
+}
+
+.command-stat .value{
+  color:#fff !important;
+  font-size:28px !important;
+  font-weight:700 !important;
+  letter-spacing:0 !important;
+  margin-top:8px !important;
+}
+
+.command-stat .sub{
+  color:#d5dbe5 !important;
+  font-size:13px !important;
+  margin-top:12px !important;
+}
+
+.goal-mini{
+  height:7px !important;
+  background:#556070 !important;
+  border-radius:999px !important;
+  margin-top:18px !important;
+}
+
+.goal-mini-fill{
+  background:var(--mdv-blue) !important;
+}
+
+/* Original dashboard grid */
+#secDashboard > .grid{
+  display:grid !important;
+  grid-template-columns:repeat(2, minmax(360px, 1fr)) !important;
+  gap:14px !important;
+  align-items:start !important;
+}
+
+#secDashboard > .grid > .panel{
+  padding:22px !important;
+}
+
+#secDashboard .panel h3{
+  color:#fff !important;
+  font-size:20px !important;
+  font-weight:650 !important;
+  text-transform:none !important;
+  letter-spacing:0 !important;
+}
+
+/* charts + tables */
+.chart-wrap,
+canvas{
+  border-radius:10px !important;
+}
+
+thead th{
+  background:#202733 !important;
+  color:#c8ced8 !important;
+  border-bottom:1px solid #3b4451 !important;
+}
+
+tbody td{
+  border-bottom:1px solid rgba(255,255,255,.07) !important;
+}
+
+/* inputs */
+input,
+select,
+textarea{
+  background:#353d4a !important;
+  border:1px solid #4d5868 !important;
+  color:#fff !important;
+  border-radius:8px !important;
+}
+
+/* buttons */
+button,
+button.small{
+  border-radius:7px !important;
+  background:#343c49 !important;
+  border:1px solid #4b5564 !important;
+  color:#fff !important;
+  box-shadow:none !important;
+}
+
+button:hover,
+button.small:hover{
+  background:#3d4655 !important;
+  border-color:#5b6677 !important;
+  transform:none !important;
+}
+
+/* MyDoorView-like lower map/card feel for panels */
+#netWorthPanel,
+#secDashboard .panel{
+  background:#29303b !important;
+}
+
+/* Expanded sidebar toggle state: default collapsed */
+.app.sidebar-closed{
+  grid-template-columns:86px 1fr !important;
+}
+
+.app.sidebar-closed .sidebar{
+  display:flex !important;
+  width:86px !important;
+}
+
+.app.sidebar-closed .nav button{
+  font-size:0 !important;
+  justify-content:center !important;
+  padding:0 !important;
+}
+
+.app.sidebar-closed .nav button::before{
+  margin:0 !important;
+}
+
+/* Mobile fallback */
+@media(max-width:980px){
+  .app,
+  .app:not(.sidebar-closed),
+  .app.sidebar-open{
+    grid-template-columns:86px 1fr !important;
+  }
+  .canvas{
+    padding:24px 18px !important;
+  }
+  .command-hero{
+    grid-template-columns:repeat(2, minmax(160px,1fr)) !important;
+  }
+  #secDashboard > .grid{
+    grid-template-columns:1fr !important;
+  }
+}
+
+@media(max-width:680px){
+  .topbar{
+    height:54px !important;
+  }
+  .sidebar{
+    top:54px !important;
+    height:calc(100vh - 54px) !important;
+    width:72px !important;
+  }
+  .app,
+  .app.sidebar-closed{
+    grid-template-columns:72px 1fr !important;
+  }
+  .canvas{
+    margin-top:54px !important;
+    padding:18px 12px !important;
+  }
+  .command-hero{
+    grid-template-columns:1fr !important;
+  }
+}
+
 </style>
 </head>
 
@@ -13260,6 +13748,40 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     setTimeout(forceSkipLogin, 1300);
   });
   window.addEventListener("load", ()=>setTimeout(forceSkipLogin, 300));
+})();
+</script>
+
+
+<script>
+/* ===== MyDoorView sidebar behavior ===== */
+(function(){
+  function initMdvSidebar(){
+    const app = document.getElementById("appShell");
+    if(!app) return;
+    if(!localStorage.getItem("resellr_mdv_sidebar")){
+      app.classList.add("sidebar-closed");
+      localStorage.setItem("resellr_mdv_sidebar", "closed");
+    }else{
+      const state = localStorage.getItem("resellr_mdv_sidebar");
+      app.classList.toggle("sidebar-closed", state !== "open");
+    }
+  }
+
+  const oldToggle = window.toggleSidebar;
+  window.toggleSidebar = function(){
+    const app = document.getElementById("appShell");
+    if(!app){
+      if(typeof oldToggle === "function") return oldToggle();
+      return;
+    }
+    app.classList.toggle("sidebar-closed");
+    try{
+      localStorage.setItem("resellr_mdv_sidebar", app.classList.contains("sidebar-closed") ? "closed" : "open");
+    }catch(e){}
+  };
+
+  document.addEventListener("DOMContentLoaded", initMdvSidebar);
+  window.addEventListener("load", initMdvSidebar);
 })();
 </script>
 
