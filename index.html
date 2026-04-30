@@ -5564,6 +5564,31 @@ body.skin-retro .search-result-item:hover{
   }
 }
 
+
+/* ===== Global Search Row Focus ===== */
+.search-focus-flash{
+  animation: searchFocusFlash 1.8s ease-out 1;
+  outline:2px solid rgba(138,199,255,.75) !important;
+  outline-offset:-2px;
+}
+
+@keyframes searchFocusFlash{
+  0%{ background:rgba(138,199,255,.24) !important; }
+  55%{ background:rgba(138,199,255,.14) !important; }
+  100%{ background:transparent !important; }
+}
+
+body.skin-retro .search-focus-flash{
+  outline:2px solid #fff06a !important;
+  animation: searchFocusFlashRetro 1.8s ease-out 1;
+}
+
+@keyframes searchFocusFlashRetro{
+  0%{ background:#55e6ff !important; color:#05070d !important; }
+  55%{ background:rgba(85,230,255,.28) !important; }
+  100%{ background:transparent !important; }
+}
+
 </style>
 </head>
 
@@ -10715,8 +10740,9 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 
+
 <script>
-/* ===== Global Search FIXED ===== */
+/* ===== Global Search FIXED + Row Focus ===== */
 (function(){
   function parseJsonArray(key){
     try{
@@ -10751,37 +10777,19 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     let sold = safeCall("readSold");
 
     if(!active.length){
-      active = getRowsFromPossibleKeys([
-        "activeInventory",
-        "inventory",
-        "resellr_active",
-        "resellr_inventory",
-        "inventoryItems"
-      ]);
+      active = getRowsFromPossibleKeys(["activeInventory","inventory","resellr_active","resellr_inventory","inventoryItems"]);
     }
-
     if(!holds.length){
-      holds = getRowsFromPossibleKeys([
-        "inventoryHolds",
-        "holds",
-        "resellr_holds",
-        "holdInventory"
-      ]);
+      holds = getRowsFromPossibleKeys(["inventoryHolds","holds","resellr_holds","holdInventory"]);
     }
-
     if(!sold.length){
-      sold = getRowsFromPossibleKeys([
-        "soldInventory",
-        "sold",
-        "resellr_sold",
-        "soldItems"
-      ]);
+      sold = getRowsFromPossibleKeys(["soldInventory","sold","resellr_sold","soldItems"]);
     }
 
     return [
-      ...active.map(r => Object.assign({}, r, {_bucket:"Inventory", _section:"secInventory"})),
-      ...holds.map(r => Object.assign({}, r, {_bucket:"Holds", _section:"secHolds"})),
-      ...sold.map(r => Object.assign({}, r, {_bucket:"Sold", _section:"secSold"}))
+      ...active.map((r,i) => Object.assign({}, r, {_bucket:"Inventory", _section:"secInventory", _idx:i})),
+      ...holds.map((r,i) => Object.assign({}, r, {_bucket:"Holds", _section:"secHolds", _idx:i})),
+      ...sold.map((r,i) => Object.assign({}, r, {_bucket:"Sold", _section:"secSold", _idx:i}))
     ];
   }
 
@@ -10825,6 +10833,75 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     if(target) target.classList.add("active");
   }
 
+  function findBestMatchingRow(section, row, query){
+    const sec = document.getElementById(section);
+    if(!sec) return null;
+
+    const title = getTitle(row).trim().toLowerCase();
+    const q = String(query || "").trim().toLowerCase();
+
+    const candidates = Array.from(sec.querySelectorAll("tbody tr"));
+    if(!candidates.length) return null;
+
+    // Best: match exact visible title text
+    let found = candidates.find(tr => tr.textContent.toLowerCase().includes(title));
+    if(found) return found;
+
+    // Next: match query words
+    const words = q.split(/\s+/).filter(Boolean);
+    found = candidates.find(tr => {
+      const text = tr.textContent.toLowerCase();
+      return words.every(w => text.includes(w));
+    });
+    if(found) return found;
+
+    // Fallback: same index if table order matches
+    return candidates[row._idx] || candidates[0] || null;
+  }
+
+  function applyNativeTabSearch(section, query){
+    // Use existing tab search boxes if they exist
+    const sec = document.getElementById(section);
+    if(!sec) return;
+
+    const inputs = Array.from(sec.querySelectorAll('input[type="search"], input[placeholder*="Search"], input[id*="search" i]'));
+    const target = inputs[0];
+
+    if(target){
+      target.value = query;
+      target.dispatchEvent(new Event("input", {bubbles:true}));
+      target.dispatchEvent(new Event("change", {bubbles:true}));
+    }
+  }
+
+  function focusResult(row, query){
+    const input = document.getElementById("globalSearchInput");
+    const box = document.getElementById("globalSearchResults");
+
+    openSection(row._section);
+
+    // Apply query to the tab's own search if available
+    setTimeout(()=>applyNativeTabSearch(row._section, query), 120);
+
+    // Highlight + scroll the matching row after section render/search
+    setTimeout(()=>{
+      const tr = findBestMatchingRow(row._section, row, query);
+      if(tr){
+        tr.classList.remove("search-focus-flash");
+        void tr.offsetWidth;
+        tr.classList.add("search-focus-flash");
+        tr.scrollIntoView({behavior:"smooth", block:"center", inline:"nearest"});
+      }
+    }, 350);
+
+    if(box) box.classList.remove("show");
+    if(input){
+      input.blur();
+      // Keep query visible so user knows what was searched
+      input.value = query;
+    }
+  }
+
   function renderResults(query){
     const box = document.getElementById("globalSearchResults");
     if(!box) return;
@@ -10837,10 +10914,9 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       return;
     }
 
-    const all = getSearchData();
     const words = q.split(/\s+/).filter(Boolean);
 
-    const rows = all
+    const rows = getSearchData()
       .filter(r => {
         const text = searchableText(r);
         return words.every(w => text.includes(w));
@@ -10863,9 +10939,10 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       return;
     }
 
-    rows.forEach(r=>{
+    rows.forEach((r, idx)=>{
       const item = document.createElement("div");
       item.className = "search-result-item";
+      if(idx === 0) item.dataset.firstResult = "true";
 
       const title = getTitle(r);
       const value = moneyish(getValue(r));
@@ -10883,12 +10960,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       item.querySelector(".search-result-meta").textContent = meta || "No extra details";
       item.querySelector(".search-result-pill").textContent = r._bucket;
 
-      item.addEventListener("click", ()=>{
-        openSection(r._section);
-        box.classList.remove("show");
-        const input = document.getElementById("globalSearchInput");
-        if(input) input.blur();
-      });
+      item.addEventListener("click", ()=>focusResult(r, query));
 
       box.appendChild(item);
     });
@@ -10914,8 +10986,18 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       }
 
       if(e.key === "Enter"){
-        const first = box.querySelector(".search-result-item");
-        if(first) first.click();
+        e.preventDefault();
+        const q = input.value;
+        const first = box.querySelector('[data-first-result="true"]');
+        if(first){
+          first.click();
+        }else{
+          renderResults(q);
+          setTimeout(()=>{
+            const firstNow = box.querySelector('[data-first-result="true"]');
+            if(firstNow) firstNow.click();
+          }, 50);
+        }
       }
     });
 
