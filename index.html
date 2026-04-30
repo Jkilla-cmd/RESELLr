@@ -4776,6 +4776,121 @@ body.skin-pro .command-stat .value{
   letter-spacing:-.04em;
 }
 
+
+/* ===== Dashboard Dropdown Fix ===== */
+
+/* Base select fix across dashboard */
+#secDashboard select,
+.topbar select,
+.panel select,
+.command-stat select,
+.command-tabs select{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  -moz-appearance:none !important;
+
+  min-height:36px !important;
+  height:auto !important;
+  line-height:1.2 !important;
+  padding:8px 36px 8px 12px !important;
+
+  border-radius:10px !important;
+  cursor:pointer !important;
+
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%) !important;
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px) !important;
+  background-size:6px 6px, 6px 6px !important;
+  background-repeat:no-repeat !important;
+}
+
+/* Make pill/dropdown combo not get squished */
+#secDashboard .pill select,
+#secDashboard select.pill,
+#ytdYearSelect,
+#budgetMode,
+#nwRange,
+#themeSelect,
+#styleModeToggle + select{
+  min-width:110px !important;
+  padding-right:34px !important;
+  white-space:nowrap !important;
+}
+
+/* Native dropdown option readability */
+select option{
+  color:#f3f6fb !important;
+  background:#101821 !important;
+}
+
+/* Mono dropdowns */
+body.skin-mono select,
+body.skin-mono #secDashboard select{
+  color:#f5f5f5 !important;
+  background-color:#0a0a0a !important;
+  border:1px solid #3a3a3a !important;
+  border-radius:6px !important;
+}
+
+body.skin-mono select option{
+  color:#f5f5f5 !important;
+  background:#0a0a0a !important;
+}
+
+/* UniFi dropdowns */
+body.skin-unifi select,
+body.skin-unifi #secDashboard select{
+  color:#e7edf5 !important;
+  background-color:#0d141c !important;
+  border:1px solid rgba(128,151,174,.16) !important;
+  border-radius:10px !important;
+}
+
+body.skin-unifi select option{
+  color:#e7edf5 !important;
+  background:#101821 !important;
+}
+
+/* Pro dropdowns */
+body.skin-pro select,
+body.skin-pro #secDashboard select{
+  color:#eef2f7 !important;
+  background-color:#0e131b !important;
+  border:1px solid rgba(255,255,255,.075) !important;
+  border-radius:12px !important;
+}
+
+body.skin-pro select option{
+  color:#eef2f7 !important;
+  background:#111720 !important;
+}
+
+/* Focus / hover */
+#secDashboard select:hover,
+.panel select:hover{
+  border-color:rgba(138,199,255,.35) !important;
+}
+
+#secDashboard select:focus,
+.panel select:focus{
+  outline:none !important;
+  border-color:rgba(138,199,255,.55) !important;
+  box-shadow:0 0 0 3px rgba(138,199,255,.10) !important;
+}
+
+/* Fix label/select rows in dashboard so text doesn't overlap */
+#secDashboard .pill,
+#secDashboard [style*="display:flex"]{
+  align-items:center !important;
+}
+
+#secDashboard label{
+  margin-bottom:0 !important;
+}
+
 </style>
 </head>
 
