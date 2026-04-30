@@ -6187,6 +6187,126 @@ body.bookmarklet-import .debug-line{
   word-break:normal !important;
 }
 
+
+/* Ensure overlay centers properly */
+#addInventoryOverlay,
+.add-inventory-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Limit modal height */
+.add-inventory-container,
+.addInventoryContainer {
+  max-height: 90vh !important;
+  width: min(720px, 95%) !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Make inner content scrollable */
+.add-inventory-container form,
+.add-inventory-container .content,
+.addInventoryContainer form {
+  overflow-y: auto !important;
+  flex: 1;
+  padding-bottom: 80px; /* space for buttons */
+}
+
+/* Sticky bottom button area */
+.add-inventory-container .actions,
+.add-inventory-container .buttons,
+.add-inventory-container .footer,
+.addInventoryContainer .actions {
+  position: sticky;
+  bottom: 0;
+  background: rgba(15,15,15,0.95);
+  backdrop-filter: blur(10px);
+  padding: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  z-index: 5;
+}
+
+/* Smooth scrollbar */
+.add-inventory-container form::-webkit-scrollbar {
+  width: 6px;
+}
+.add-inventory-container form::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+}
+
+
+/* ===== Overlay Scroll + Sticky Footer Fix v2 ===== */
+
+/* hidden by default */
+#addInventoryOverlay{
+  position: fixed !important;
+  inset: 0 !important;
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  overflow: hidden !important;
+}
+
+/* show only when active */
+#addInventoryOverlay.show{
+  display: flex !important;
+}
+
+/* modal fits viewport */
+#addInventoryOverlay .add-inventory-modal{
+  max-height: 90vh !important;
+  width: min(760px, calc(100vw - 28px)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* scrollable fields */
+#addInventoryOverlay .add-inventory-grid{
+  overflow-y: auto !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding-right: 4px !important;
+}
+
+/* sticky buttons */
+#addInventoryOverlay .add-inventory-actions{
+  position: sticky !important;
+  bottom: 0 !important;
+  flex: 0 0 auto !important;
+  background: rgba(15,21,30,.96) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  padding-top: 12px !important;
+  margin-top: 12px !important;
+  border-top: 1px solid rgba(255,255,255,.08) !important;
+  z-index: 5 !important;
+}
+
+/* keep hint visible below buttons */
+#addInventoryOverlay .add-inventory-hint{
+  flex: 0 0 auto !important;
+}
+
+/* smooth scrollbar */
+#addInventoryOverlay .add-inventory-grid::-webkit-scrollbar{
+  width: 6px;
+}
+#addInventoryOverlay .add-inventory-grid::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.22);
+  border-radius: 10px;
+}
+
 </style>
 </head>
 
