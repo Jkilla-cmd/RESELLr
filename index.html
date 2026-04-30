@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="hackercyan">
 <head>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -5182,6 +5183,245 @@ body.skin-pro .custom-select-menu{
   z-index:999999 !important;
 }
 
+
+/* ===== RETRO 8-BIT STYLE MODE ===== */
+body.skin-retro{
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    radial-gradient(900px 520px at 50% -10%, rgba(0,255,204,.10), transparent 60%),
+    #080a12 !important;
+  background-size: 18px 18px, 18px 18px, auto, auto !important;
+  color:#eaffff !important;
+  font-family:"Press Start 2P","VT323","IBM Plex Mono",monospace !important;
+  image-rendering: pixelated;
+}
+
+/* Pixel cards */
+body.skin-retro .panel,
+body.skin-retro .command-stat,
+body.skin-retro .command-tabs,
+body.skin-retro .snapshot-item,
+body.skin-retro .flip-card,
+body.skin-retro .insight-card,
+body.skin-retro .market-card,
+body.skin-retro .table-wrap,
+body.skin-retro #netWorthPanel .nw-card{
+  background:#101427 !important;
+  border:2px solid #55e6ff !important;
+  border-radius:0 !important;
+  box-shadow:
+    4px 4px 0 #000,
+    inset 0 0 0 2px rgba(255,255,255,.04) !important;
+}
+
+/* Pixel top bar */
+body.skin-retro .topbar{
+  background:#0c1022 !important;
+  border:2px solid #55e6ff !important;
+  border-radius:0 !important;
+  box-shadow:4px 4px 0 #000 !important;
+}
+
+body.skin-retro #topbarTitle,
+body.skin-retro .topbar .title,
+body.skin-retro h3,
+body.skin-retro .command-section-title h3{
+  color:#fff6a8 !important;
+  font-family:"Press Start 2P","VT323","IBM Plex Mono",monospace !important;
+  font-size:10px !important;
+  letter-spacing:.03em !important;
+  text-transform:uppercase !important;
+  text-shadow:2px 2px 0 #000 !important;
+}
+
+/* Pixel stats */
+body.skin-retro .command-stat .label,
+body.skin-retro label,
+body.skin-retro .muted,
+body.skin-retro .snapshot-item .meta,
+body.skin-retro .flip-card .body,
+body.skin-retro .command-stat .sub{
+  color:#9be8ff !important;
+  font-size:9px !important;
+}
+
+body.skin-retro .command-stat .value,
+body.skin-retro #netWorthPanel .nw-total,
+body.skin-retro #netWorthPanel .nw-value{
+  color:#7dff8a !important;
+  font-family:"Press Start 2P","VT323","IBM Plex Mono",monospace !important;
+  text-shadow:2px 2px 0 #001b08 !important;
+}
+
+/* Pixel buttons */
+body.skin-retro button,
+body.skin-retro button.small,
+body.skin-retro .custom-select-trigger{
+  background:#151a33 !important;
+  border:2px solid #f7d65c !important;
+  border-radius:0 !important;
+  color:#fff6a8 !important;
+  font-family:"Press Start 2P","VT323","IBM Plex Mono",monospace !important;
+  font-size:9px !important;
+  text-transform:uppercase !important;
+  box-shadow:3px 3px 0 #000 !important;
+}
+
+body.skin-retro button:hover,
+body.skin-retro button.small:hover,
+body.skin-retro .custom-select-trigger:hover{
+  background:#232a50 !important;
+  border-color:#55e6ff !important;
+  transform:translate(-1px,-1px) !important;
+  box-shadow:4px 4px 0 #000 !important;
+}
+
+body.skin-retro button.danger{
+  color:#ff8f8f !important;
+  border-color:#ff5f7a !important;
+}
+
+/* Pixel inputs/selects */
+body.skin-retro input,
+body.skin-retro select,
+body.skin-retro textarea{
+  background:#080b18 !important;
+  border:2px solid #55e6ff !important;
+  border-radius:0 !important;
+  color:#eaffff !important;
+  font-family:"Press Start 2P","VT323","IBM Plex Mono",monospace !important;
+  font-size:9px !important;
+  box-shadow:3px 3px 0 #000 !important;
+}
+
+/* Custom dropdown menus */
+body.skin-retro .custom-select-menu{
+  background:#080b18 !important;
+  border:2px solid #55e6ff !important;
+  border-radius:0 !important;
+  box-shadow:4px 4px 0 #000 !important;
+}
+
+body.skin-retro .custom-select-option{
+  color:#eaffff !important;
+  font-family:"Press Start 2P","VT323","IBM Plex Mono",monospace !important;
+  font-size:9px !important;
+  border-radius:0 !important;
+}
+
+body.skin-retro .custom-select-option:hover,
+body.skin-retro .custom-select-option.active{
+  background:#55e6ff !important;
+  color:#05070d !important;
+}
+
+/* Pixel table */
+body.skin-retro thead th{
+  background:#080b18 !important;
+  color:#fff6a8 !important;
+  border-bottom:2px solid #55e6ff !important;
+  font-family:"Press Start 2P","VT323","IBM Plex Mono",monospace !important;
+  font-size:8px !important;
+}
+
+body.skin-retro tbody td{
+  color:#eaffff !important;
+  border-bottom:1px solid rgba(85,230,255,.22) !important;
+  font-family:"VT323","IBM Plex Mono",monospace !important;
+  font-size:15px !important;
+}
+
+body.skin-retro tbody tr:hover td{
+  background:rgba(85,230,255,.10) !important;
+}
+
+/* Pixel sidebar */
+body.skin-retro #sidebar,
+body.skin-retro .sidebar{
+  background:#080b18 !important;
+  border:2px solid #55e6ff !important;
+  border-radius:0 !important;
+  box-shadow:5px 5px 0 #000 !important;
+}
+
+body.skin-retro .nav button.active,
+body.skin-retro #sidebar button.active{
+  background:#55e6ff !important;
+  color:#05070d !important;
+  border-color:#fff6a8 !important;
+}
+
+/* Pixel colors */
+body.skin-retro .blue{ color:#55e6ff !important; }
+body.skin-retro .green{ color:#7dff8a !important; }
+body.skin-retro .red{ color:#ff5f7a !important; }
+body.skin-retro .yellow{ color:#fff06a !important; }
+
+body.skin-retro .goal-mini{
+  background:#05070d !important;
+  border:1px solid #55e6ff !important;
+  border-radius:0 !important;
+}
+
+body.skin-retro .goal-mini-fill{
+  background:repeating-linear-gradient(
+    90deg,
+    #7dff8a 0 8px,
+    #55e6ff 8px 16px
+  ) !important;
+  border-radius:0 !important;
+}
+
+/* Pixel visualizer */
+body.skin-retro .music-visualizer .viz-bars span,
+body.skin-retro .topbar-inline-viz .viz-bars span{
+  background:linear-gradient(180deg,#fff06a,#55e6ff) !important;
+  border-radius:0 !important;
+  width:5px !important;
+}
+
+body.skin-retro .music-visualizer.wave canvas,
+body.skin-retro .music-visualizer.expanded canvas{
+  filter:drop-shadow(0 0 4px #55e6ff) !important;
+}
+
+/* Easter eggs stay fun */
+body.skin-retro .ka-ching{
+  font-family:"Press Start 2P","VT323","IBM Plex Mono",monospace !important;
+  color:#7dff8a !important;
+  text-shadow:3px 3px 0 #000, 0 0 12px rgba(125,255,138,.55) !important;
+}
+
+body.skin-retro #holdCharacter{
+  image-rendering:pixelated;
+  filter:drop-shadow(5px 5px 0 #000) contrast(1.08) saturate(1.1) !important;
+}
+
+body.skin-retro .bmc-float{
+  border:2px solid #fff06a !important;
+  border-radius:0 !important;
+  box-shadow:4px 4px 0 #000 !important;
+}
+
+/* Retro scanline overlay */
+body.skin-retro::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:999999;
+  background:repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,.035) 0px,
+    rgba(255,255,255,.035) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  opacity:.18 !important;
+  mix-blend-mode:screen;
+}
+
 </style>
 </head>
 
@@ -10131,13 +10371,14 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   const modes = [
     { key:"mono", label:"Mono" },
     { key:"unifi", label:"UniFi" },
-    { key:"pro", label:"Pro" }
+    { key:"pro", label:"Pro" },
+    { key:"retro", label:"8-Bit" }
   ];
 
   function applyStyleMode(mode){
     const safe = modes.some(m => m.key === mode) ? mode : "mono";
 
-    document.body.classList.remove("skin-mono", "skin-unifi", "skin-pro");
+    document.body.classList.remove("skin-mono", "skin-unifi", "skin-pro", "skin-retro");
     document.body.classList.add("skin-" + safe);
 
     try{ localStorage.setItem("resellr_style_mode", safe); }catch(e){}
