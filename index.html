@@ -10714,5 +10714,230 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 </script>
 
 
+
+<script>
+/* ===== Global Search FIXED ===== */
+(function(){
+  function parseJsonArray(key){
+    try{
+      const raw = localStorage.getItem(key);
+      if(!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    }catch(e){ return []; }
+  }
+
+  function getRowsFromPossibleKeys(keys){
+    for(const key of keys){
+      const rows = parseJsonArray(key);
+      if(rows.length) return rows;
+    }
+    return [];
+  }
+
+  function safeCall(name){
+    try{
+      if(typeof window[name] === "function"){
+        const rows = window[name]();
+        return Array.isArray(rows) ? rows : [];
+      }
+    }catch(e){}
+    return [];
+  }
+
+  function getSearchData(){
+    let active = safeCall("readActive");
+    let holds = safeCall("readHolds");
+    let sold = safeCall("readSold");
+
+    if(!active.length){
+      active = getRowsFromPossibleKeys([
+        "activeInventory",
+        "inventory",
+        "resellr_active",
+        "resellr_inventory",
+        "inventoryItems"
+      ]);
+    }
+
+    if(!holds.length){
+      holds = getRowsFromPossibleKeys([
+        "inventoryHolds",
+        "holds",
+        "resellr_holds",
+        "holdInventory"
+      ]);
+    }
+
+    if(!sold.length){
+      sold = getRowsFromPossibleKeys([
+        "soldInventory",
+        "sold",
+        "resellr_sold",
+        "soldItems"
+      ]);
+    }
+
+    return [
+      ...active.map(r => Object.assign({}, r, {_bucket:"Inventory", _section:"secInventory"})),
+      ...holds.map(r => Object.assign({}, r, {_bucket:"Holds", _section:"secHolds"})),
+      ...sold.map(r => Object.assign({}, r, {_bucket:"Sold", _section:"secSold"}))
+    ];
+  }
+
+  function getTitle(r){
+    return r.item || r.title || r.name || r.description || r.card || r.comic || "Untitled";
+  }
+
+  function getValue(r){
+    const fields = [r.value, r.price, r.listPrice, r.listedValue, r.sale, r.profit, r.cost];
+    for(const v of fields){
+      const n = Number(v || 0);
+      if(Number.isFinite(n) && n > 0) return n;
+    }
+    return 0;
+  }
+
+  function moneyish(v){
+    const n = Number(v || 0);
+    if(!Number.isFinite(n) || n <= 0) return "";
+    try{ return money(n); }catch(e){ return "$" + n.toFixed(2); }
+  }
+
+  function searchableText(r){
+    return Object.entries(r)
+      .filter(([k]) => !String(k).startsWith("_"))
+      .map(([,v]) => String(v ?? ""))
+      .join(" ")
+      .toLowerCase();
+  }
+
+  function openSection(section){
+    try{
+      if(typeof showSection === "function"){
+        showSection(section);
+        return;
+      }
+    }catch(e){}
+
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    const target = document.getElementById(section);
+    if(target) target.classList.add("active");
+  }
+
+  function renderResults(query){
+    const box = document.getElementById("globalSearchResults");
+    if(!box) return;
+
+    const q = String(query || "").trim().toLowerCase();
+
+    if(!q){
+      box.classList.remove("show");
+      box.innerHTML = "";
+      return;
+    }
+
+    const all = getSearchData();
+    const words = q.split(/\s+/).filter(Boolean);
+
+    const rows = all
+      .filter(r => {
+        const text = searchableText(r);
+        return words.every(w => text.includes(w));
+      })
+      .slice(0, 14);
+
+    box.innerHTML = "";
+
+    if(!rows.length){
+      const empty = document.createElement("div");
+      empty.className = "search-result-item";
+      empty.innerHTML = `
+        <div class="search-result-main">
+          <div class="search-result-title">No results found</div>
+          <div class="search-result-meta">Try item title, type, platform, price, or date.</div>
+        </div>
+      `;
+      box.appendChild(empty);
+      box.classList.add("show");
+      return;
+    }
+
+    rows.forEach(r=>{
+      const item = document.createElement("div");
+      item.className = "search-result-item";
+
+      const title = getTitle(r);
+      const value = moneyish(getValue(r));
+      const meta = [r.type, r.platform, r.date, value].filter(Boolean).join(" • ");
+
+      item.innerHTML = `
+        <div class="search-result-main">
+          <div class="search-result-title"></div>
+          <div class="search-result-meta"></div>
+        </div>
+        <div class="search-result-pill"></div>
+      `;
+
+      item.querySelector(".search-result-title").textContent = title;
+      item.querySelector(".search-result-meta").textContent = meta || "No extra details";
+      item.querySelector(".search-result-pill").textContent = r._bucket;
+
+      item.addEventListener("click", ()=>{
+        openSection(r._section);
+        box.classList.remove("show");
+        const input = document.getElementById("globalSearchInput");
+        if(input) input.blur();
+      });
+
+      box.appendChild(item);
+    });
+
+    box.classList.add("show");
+  }
+
+  function setupGlobalSearch(){
+    const input = document.getElementById("globalSearchInput");
+    const box = document.getElementById("globalSearchResults");
+    if(!input || !box || input.dataset.searchReady === "true") return;
+
+    input.dataset.searchReady = "true";
+
+    input.addEventListener("input", ()=>renderResults(input.value));
+    input.addEventListener("focus", ()=>renderResults(input.value));
+
+    input.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape"){
+        input.value = "";
+        box.classList.remove("show");
+        input.blur();
+      }
+
+      if(e.key === "Enter"){
+        const first = box.querySelector(".search-result-item");
+        if(first) first.click();
+      }
+    });
+
+    document.addEventListener("click", (e)=>{
+      if(!input.contains(e.target) && !box.contains(e.target)){
+        box.classList.remove("show");
+      }
+    });
+
+    document.addEventListener("keydown", (e)=>{
+      const tag = (document.activeElement && document.activeElement.tagName || "").toLowerCase();
+      if(e.key === "/" && !["input","textarea","select"].includes(tag)){
+        e.preventDefault();
+        input.focus();
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>setTimeout(setupGlobalSearch, 300));
+  window.addEventListener("load", ()=>setTimeout(setupGlobalSearch, 500));
+})();
+</script>
+
 </body>
 </html>
