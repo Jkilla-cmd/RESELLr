@@ -11197,5 +11197,212 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+<!-- Add Inventory Overlay -->
+<div id="addInventoryOverlay" class="add-inventory-overlay" aria-hidden="true">
+  <div class="add-inventory-modal">
+    <div class="add-inventory-header">
+      <div>
+        <div class="add-inventory-title">Add Inventory</div>
+        <div class="add-inventory-subtitle">Quick add from anywhere</div>
+      </div>
+      <span class="add-inventory-shortcut">Ctrl + I</span>
+    </div>
+
+    <div class="add-inventory-grid">
+      <div class="field full">
+        <label>Item</label>
+        <input id="quickInvItem" type="text" placeholder="e.g. Batman #1 Variant">
+      </div>
+
+      <div class="field">
+        <label>Type</label>
+        <input id="quickInvType" type="text" placeholder="Comic / Card / Other">
+      </div>
+
+      <div class="field">
+        <label>Platform</label>
+        <input id="quickInvPlatform" type="text" placeholder="Mercari / eBay">
+      </div>
+
+      <div class="field">
+        <label>Cost</label>
+        <input id="quickInvCost" type="number" step="0.01" placeholder="0.00">
+      </div>
+
+      <div class="field">
+        <label>Value / List Price</label>
+        <input id="quickInvValue" type="number" step="0.01" placeholder="0.00">
+      </div>
+
+      <div class="field">
+        <label>Qty</label>
+        <input id="quickInvQty" type="number" step="1" value="1">
+      </div>
+
+      <div class="field">
+        <label>Date</label>
+        <input id="quickInvDate" type="date">
+      </div>
+
+      <div class="field full">
+        <label>Notes</label>
+        <textarea id="quickInvNotes" rows="3" placeholder="Optional notes"></textarea>
+      </div>
+    </div>
+
+    <div class="add-inventory-actions">
+      <button class="small" onclick="closeAddInventoryOverlay()">Cancel</button>
+      <button class="small" onclick="quickAddInventory()">Add Inventory</button>
+    </div>
+
+    <div class="add-inventory-hint">Enter adds item • Esc closes</div>
+  </div>
+</div>
+
+
+<script>
+/* ===== Ctrl+I Add Inventory Overlay ===== */
+(function(){
+  function today(){
+    const d = new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+
+  function num(id){
+    const el = document.getElementById(id);
+    const n = Number(el ? el.value : 0);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function val(id){
+    const el = document.getElementById(id);
+    return el ? String(el.value || "").trim() : "";
+  }
+
+  function genQuickId(){
+    try{ if(typeof genId === "function") return genId(); }catch(e){}
+    return "id_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+  }
+
+  function getActiveRows(){
+    try{ if(typeof readActive === "function") return readActive(); }catch(e){}
+    try{
+      const raw = localStorage.getItem("activeInventory");
+      const arr = JSON.parse(raw || "[]");
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){}
+    return [];
+  }
+
+  function saveActiveRows(rows){
+    try{
+      if(typeof writeActive === "function"){
+        writeActive(rows);
+        return;
+      }
+    }catch(e){}
+    try{ localStorage.setItem("activeInventory", JSON.stringify(rows)); }catch(e){}
+  }
+
+  window.openAddInventoryOverlay = function(){
+    const overlay = document.getElementById("addInventoryOverlay");
+    if(!overlay) return;
+
+    overlay.classList.add("show");
+    overlay.setAttribute("aria-hidden", "false");
+
+    const date = document.getElementById("quickInvDate");
+    if(date && !date.value) date.value = today();
+
+    setTimeout(()=>{
+      const item = document.getElementById("quickInvItem");
+      if(item) item.focus();
+    }, 40);
+  };
+
+  window.closeAddInventoryOverlay = function(){
+    const overlay = document.getElementById("addInventoryOverlay");
+    if(!overlay) return;
+    overlay.classList.remove("show");
+    overlay.setAttribute("aria-hidden", "true");
+  };
+
+  window.quickAddInventory = function(){
+    const item = val("quickInvItem");
+    if(!item){
+      const itemEl = document.getElementById("quickInvItem");
+      if(itemEl) itemEl.focus();
+      try{ showToast("Enter an item name"); }catch(e){}
+      return;
+    }
+
+    const row = {
+      _id: genQuickId(),
+      date: val("quickInvDate") || today(),
+      item,
+      type: val("quickInvType"),
+      platform: val("quickInvPlatform"),
+      cost: num("quickInvCost"),
+      value: num("quickInvValue"),
+      price: num("quickInvValue"),
+      qty: Math.max(1, Math.round(num("quickInvQty") || 1)),
+      notes: val("quickInvNotes")
+    };
+
+    const rows = getActiveRows();
+    rows.push(row);
+    saveActiveRows(rows);
+
+    try{ if(typeof renderActive === "function") renderActive(); }catch(e){}
+    try{ if(typeof updateDashboard === "function") updateDashboard(); }catch(e){}
+    try{ if(typeof updateCommandCenter === "function") updateCommandCenter(); }catch(e){}
+    try{ if(typeof markResellrUnsaved === "function") markResellrUnsaved(); }catch(e){}
+    try{ showToast("Inventory item added"); }catch(e){}
+
+    ["quickInvItem","quickInvType","quickInvPlatform","quickInvCost","quickInvValue","quickInvNotes"].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.value = "";
+    });
+    const qty = document.getElementById("quickInvQty");
+    if(qty) qty.value = "1";
+
+    closeAddInventoryOverlay();
+  };
+
+  document.addEventListener("keydown", (e)=>{
+    const tag = (document.activeElement && document.activeElement.tagName || "").toLowerCase();
+
+    if(e.ctrlKey && String(e.key).toLowerCase() === "i"){
+      e.preventDefault();
+      openAddInventoryOverlay();
+      return;
+    }
+
+    const overlay = document.getElementById("addInventoryOverlay");
+    const isOpen = overlay && overlay.classList.contains("show");
+
+    if(isOpen && e.key === "Escape"){
+      e.preventDefault();
+      closeAddInventoryOverlay();
+    }
+
+    if(isOpen && e.key === "Enter" && !e.shiftKey && tag !== "textarea"){
+      e.preventDefault();
+      quickAddInventory();
+    }
+  }, true);
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    const overlay = document.getElementById("addInventoryOverlay");
+    if(overlay){
+      overlay.addEventListener("click", (e)=>{
+        if(e.target === overlay) closeAddInventoryOverlay();
+      });
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
