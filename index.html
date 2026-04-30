@@ -5024,6 +5024,118 @@ body.skin-pro #nextMonthBudget select{
   box-shadow:0 0 0 3px rgba(138,199,255,.10) !important;
 }
 
+
+/* ===== Custom Dark Budget Dropdown ===== */
+.custom-select-wrap{
+  position:relative;
+  display:inline-block;
+  min-width:220px;
+  z-index:1000;
+}
+
+.custom-select-trigger{
+  width:100%;
+  min-height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:7px 12px;
+  border-radius:999px;
+  background:#0e131b;
+  border:1px solid rgba(255,255,255,.075);
+  color:#eef2f7;
+  cursor:pointer;
+  user-select:none;
+  font-size:13px;
+}
+
+.custom-select-trigger::after{
+  content:"";
+  width:6px;
+  height:6px;
+  border-right:2px solid currentColor;
+  border-bottom:2px solid currentColor;
+  transform:rotate(45deg) translateY(-2px);
+  opacity:.75;
+}
+
+.custom-select-menu{
+  position:absolute;
+  left:0;
+  top:calc(100% + 6px);
+  min-width:100%;
+  background:#0f151e;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:12px;
+  padding:6px;
+  box-shadow:0 18px 38px rgba(0,0,0,.38);
+  display:none;
+  z-index:99999;
+}
+
+.custom-select-wrap.open .custom-select-menu{
+  display:block;
+}
+
+.custom-select-option{
+  padding:9px 12px;
+  border-radius:8px;
+  color:#eef2f7;
+  cursor:pointer;
+  font-size:13px;
+}
+
+.custom-select-option:hover,
+.custom-select-option.active{
+  background:rgba(138,199,255,.12);
+}
+
+body.skin-mono .custom-select-trigger{
+  background:#0a0a0a;
+  border-color:#3a3a3a;
+  color:#f5f5f5;
+  border-radius:6px;
+}
+body.skin-mono .custom-select-menu{
+  background:#0a0a0a;
+  border-color:#3a3a3a;
+  border-radius:6px;
+}
+body.skin-mono .custom-select-option:hover,
+body.skin-mono .custom-select-option.active{
+  background:#1f1f1f;
+}
+
+body.skin-unifi .custom-select-trigger{
+  background:#0d141c;
+  border-color:rgba(128,151,174,.16);
+  color:#e7edf5;
+}
+body.skin-unifi .custom-select-menu{
+  background:#101821;
+  border-color:rgba(128,151,174,.16);
+}
+
+body.skin-pro .custom-select-trigger{
+  background:#0e131b;
+  border-color:rgba(255,255,255,.075);
+  color:#eef2f7;
+}
+body.skin-pro .custom-select-menu{
+  background:#111720;
+  border-color:rgba(255,255,255,.10);
+}
+
+/* Hide original budget select but keep it functional for app logic */
+#budgetMode.custom-hidden-select{
+  position:absolute !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  width:1px !important;
+  height:1px !important;
+}
+
 </style>
 </head>
 
@@ -10002,6 +10114,74 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     try{ saved = localStorage.getItem("resellr_style_mode") || "mono"; }catch(e){}
     applyStyleMode(saved);
   });
+})();
+</script>
+
+
+<script>
+/* ===== Custom Budget Mode Dropdown ===== */
+(function(){
+  function buildCustomBudgetDropdown(){
+    const select = document.getElementById("budgetMode");
+    if(!select || select.dataset.customized === "true") return;
+
+    select.dataset.customized = "true";
+    select.classList.add("custom-hidden-select");
+
+    const wrap = document.createElement("div");
+    wrap.className = "custom-select-wrap";
+    wrap.id = "budgetModeCustomWrap";
+
+    const trigger = document.createElement("div");
+    trigger.className = "custom-select-trigger";
+    trigger.id = "budgetModeCustomTrigger";
+    trigger.textContent = select.options[select.selectedIndex]?.text || "Select";
+
+    const menu = document.createElement("div");
+    menu.className = "custom-select-menu";
+
+    Array.from(select.options).forEach(opt=>{
+      const item = document.createElement("div");
+      item.className = "custom-select-option";
+      item.textContent = opt.text;
+      item.dataset.value = opt.value;
+      if(opt.value === select.value) item.classList.add("active");
+
+      item.addEventListener("click", ()=>{
+        select.value = opt.value;
+        select.dispatchEvent(new Event("change", {bubbles:true}));
+        trigger.textContent = opt.text;
+        menu.querySelectorAll(".custom-select-option").forEach(x=>x.classList.remove("active"));
+        item.classList.add("active");
+        wrap.classList.remove("open");
+      });
+
+      menu.appendChild(item);
+    });
+
+    trigger.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      wrap.classList.toggle("open");
+    });
+
+    document.addEventListener("click", ()=>wrap.classList.remove("open"));
+
+    wrap.appendChild(trigger);
+    wrap.appendChild(menu);
+
+    select.parentNode.insertBefore(wrap, select.nextSibling);
+
+    select.addEventListener("change", ()=>{
+      const selected = select.options[select.selectedIndex];
+      if(selected) trigger.textContent = selected.text;
+      menu.querySelectorAll(".custom-select-option").forEach(item=>{
+        item.classList.toggle("active", item.dataset.value === select.value);
+      });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>setTimeout(buildCustomBudgetDropdown, 400));
+  window.addEventListener("load", ()=>setTimeout(buildCustomBudgetDropdown, 700));
 })();
 </script>
 
