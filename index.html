@@ -5961,90 +5961,47 @@ body.skin-retro #addHoldOverlay .add-inventory-modal{
 }
 
 
-/* ===== Match Search + Inventory Overlay Blur to Holds ===== */
-
-/* Search overlay */
-#globalSearchOverlay{
-  position:fixed !important;
-  inset:0 !important;
-  z-index:30000 !important;
-
-  display:none !important;
-  align-items:flex-start !important;
-  justify-content:center !important;
-  padding-top:12vh !important;
-
-  background:rgba(0,0,0,.48) !important;
-  backdrop-filter:blur(8px) !important;
-  -webkit-backdrop-filter:blur(8px) !important;
+/* ===== Private Sale Platform Card ===== */
+.private-sale-card{
+  margin-top:12px;
 }
 
-#globalSearchOverlay.show{
-  display:flex !important;
+.private-sale-icon{
+  width:52px;
+  height:52px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--text, #fff);
+  font-weight:900;
+  font-size:20px;
+  letter-spacing:-.04em;
 }
 
-#globalSearchOverlay .global-search-modal{
-  background:#0f151e !important;
-  border:1px solid rgba(255,255,255,.10) !important;
-  border-radius:18px !important;
-  box-shadow:0 28px 80px rgba(0,0,0,.50) !important;
-  opacity:1 !important;
+body.skin-mono .private-sale-icon{
+  background:#000;
+  border-color:#fff;
+  border-radius:4px;
+  color:#fff;
 }
 
-/* Add Inventory overlay */
-#addInventoryOverlay{
-  position:fixed !important;
-  inset:0 !important;
-  z-index:30010 !important;
-
-  display:none !important;
-  align-items:flex-start !important;
-  justify-content:center !important;
-  padding-top:9vh !important;
-
-  background:rgba(0,0,0,.48) !important;
-  backdrop-filter:blur(8px) !important;
-  -webkit-backdrop-filter:blur(8px) !important;
+body.skin-unifi .private-sale-icon{
+  background:#101821;
+  border-color:rgba(128,151,174,.18);
+  color:#e7edf5;
 }
 
-#addInventoryOverlay.show{
-  display:flex !important;
-}
-
-#addInventoryOverlay .add-inventory-modal{
-  background:#0f151e !important;
-  border:1px solid rgba(255,255,255,.10) !important;
-  border-radius:18px !important;
-  box-shadow:0 28px 80px rgba(0,0,0,.50) !important;
-  opacity:1 !important;
-}
-
-/* Theme matching */
-body.skin-mono #globalSearchOverlay,
-body.skin-mono #addInventoryOverlay{
-  backdrop-filter:none !important;
-  -webkit-backdrop-filter:none !important;
-}
-
-body.skin-mono #globalSearchOverlay .global-search-modal,
-body.skin-mono #addInventoryOverlay .add-inventory-modal{
-  background:#0a0a0a !important;
-  border-color:#3a3a3a !important;
-  border-radius:6px !important;
-}
-
-body.skin-unifi #globalSearchOverlay .global-search-modal,
-body.skin-unifi #addInventoryOverlay .add-inventory-modal{
-  background:#101821 !important;
-  border-color:rgba(128,151,174,.16) !important;
-}
-
-body.skin-retro #globalSearchOverlay .global-search-modal,
-body.skin-retro #addInventoryOverlay .add-inventory-modal{
-  background:#080b18 !important;
-  border:2px solid #55e6ff !important;
-  border-radius:0 !important;
-  box-shadow:6px 6px 0 #000 !important;
+body.skin-retro .private-sale-icon{
+  background:#080b18;
+  border:2px solid #fff06a;
+  border-radius:0;
+  box-shadow:3px 3px 0 #000;
+  color:#fff06a;
+  font-family:"Press Start 2P","IBM Plex Mono",monospace;
+  font-size:12px;
 }
 
 </style>
@@ -6449,6 +6406,16 @@ body.skin-retro #addInventoryOverlay .add-inventory-modal{
                 <div class="market-value" id="ebayIncomeStat">$0.00</div>
                 <div class="market-sub" id="ebayCountStat">0 sales</div>
               </div>
+
+          <div class="market-card private-sale-card" id="privateSaleIncomeCard">
+            <div class="private-sale-icon">PS</div>
+            <div>
+              <div class="muted">PRIVATE SALE INCOME</div>
+              <div class="big" id="privateSaleIncome">$0.00</div>
+              <div class="muted" id="privateSaleCount">0 sales</div>
+            </div>
+          </div>
+
             </div>
           </div>
 
@@ -12018,6 +11985,88 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       });
     }
   });
+})();
+</script>
+
+
+<script>
+/* ===== Private Sale Income Card Logic ===== */
+(function(){
+  function moneyFmt(n){
+    try{ return money(Number(n || 0)); }catch(e){ return "$" + Number(n || 0).toFixed(2); }
+  }
+
+  function getSoldRows(){
+    try{ if(typeof readSold === "function") return readSold(); }catch(e){}
+    try{
+      const raw = localStorage.getItem("soldInventory") || localStorage.getItem("sold") || "[]";
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){}
+    return [];
+  }
+
+  function isPrivateSale(platform){
+    const p = String(platform || "").trim().toLowerCase();
+    return !["mercari","ebay","e bay","e-bay"].includes(p);
+  }
+
+  function selectedYear(){
+    const selectors = ["ytdYearSelect", "yearSelect", "soldYearSelect"];
+    for(const id of selectors){
+      const el = document.getElementById(id);
+      if(el && el.value && !String(el.value).toLowerCase().includes("all")){
+        return String(el.value);
+      }
+    }
+
+    const ytdText = document.body.textContent || "";
+    if(/All Years/i.test(ytdText)) return "all";
+    return "all";
+  }
+
+  function updatePrivateSaleCard(){
+    const incomeEl = document.getElementById("privateSaleIncome");
+    const countEl = document.getElementById("privateSaleCount");
+    const card = document.getElementById("privateSaleIncomeCard");
+    if(!incomeEl || !countEl || !card) return;
+
+    const year = selectedYear();
+    const rows = getSoldRows().filter(r=>{
+      if(!isPrivateSale(r.platform)) return false;
+      if(year === "all") return true;
+      const d = String(r.date || "");
+      return d.slice(0,4) === year;
+    });
+
+    const income = rows.reduce((s,r)=>s + Number(r.sale || r.price || r.value || 0), 0);
+
+    incomeEl.textContent = moneyFmt(income);
+    countEl.textContent = rows.length + " sale" + (rows.length === 1 ? "" : "s");
+
+    // Hide only if there are no private sales in selected range.
+    card.style.display = rows.length ? "" : "none";
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>setTimeout(updatePrivateSaleCard, 800));
+  window.addEventListener("load", ()=>setTimeout(updatePrivateSaleCard, 1200));
+
+  ["click","change","input"].forEach(evt=>{
+    document.addEventListener(evt, ()=>{
+      clearTimeout(window.__privateSaleCardTimer);
+      window.__privateSaleCardTimer = setTimeout(updatePrivateSaleCard, 250);
+    });
+  });
+
+  const oldUpdate = window.updateDashboard;
+  if(typeof oldUpdate === "function" && !window.__privateSaleDashboardHooked){
+    window.__privateSaleDashboardHooked = true;
+    window.updateDashboard = function(){
+      const out = oldUpdate.apply(this, arguments);
+      setTimeout(updatePrivateSaleCard, 120);
+      return out;
+    };
+  }
 })();
 </script>
 
