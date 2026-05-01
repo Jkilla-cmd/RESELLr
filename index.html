@@ -8183,6 +8183,103 @@ button.small:hover{
   }
 }
 
+
+/* ===== FINAL v5: lower dashboard decramp + icon click expand ===== */
+
+/* Lower dashboard: stop Net Worth / Holds from squeezing */
+#secDashboard > .grid{
+  grid-template-columns:1fr !important;
+  gap:26px !important;
+  max-width:1180px !important;
+  width:100% !important;
+}
+
+#secDashboard > .grid > .panel{
+  width:100% !important;
+  max-width:1180px !important;
+  min-width:0 !important;
+  padding:28px !important;
+  box-sizing:border-box !important;
+}
+
+/* Net Worth panel gets full comfortable width */
+#netWorthPanel{
+  max-width:1180px !important;
+  width:100% !important;
+  overflow:visible !important;
+}
+
+#netWorthPanel .nw-grid,
+#netWorthPanel .networth-grid,
+#netWorthPanel [class*="grid"],
+#netWorthPanel [style*="grid"]{
+  grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)) !important;
+  gap:16px !important;
+}
+
+#netWorthPanel .nw-card{
+  min-width:220px !important;
+  padding:20px !important;
+}
+
+/* Inventory Holds dashboard card/list/table gets more room */
+#secDashboard .panel:has(#ccNewestHolds),
+#secDashboard .panel:has([id*="Hold"]),
+#secDashboard .panel:has([id*="hold"]){
+  max-width:1180px !important;
+  width:100% !important;
+}
+
+#secHolds .panel,
+#secHolds .table-wrap{
+  max-width:1180px !important;
+  width:100% !important;
+  overflow-x:auto !important;
+}
+
+/* Prevent text/controls from creating skinny columns */
+#secDashboard .panel,
+#secDashboard .market-card,
+#privateSaleIncomeCard{
+  min-width:0 !important;
+}
+
+#secDashboard .panel [style*="display:flex"],
+#secDashboard .panel .row{
+  flex-wrap:wrap !important;
+  gap:14px !important;
+}
+
+#secDashboard .panel [style*="display:grid"]{
+  grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)) !important;
+  gap:16px !important;
+}
+
+/* Budget/YTD panels: breathe more */
+#budgetPanel,
+#nextMonthBudget{
+  max-width:1180px !important;
+  width:100% !important;
+}
+
+#budgetPanel .pill,
+#nextMonthBudget .pill,
+#netWorthPanel .pill{
+  max-width:100% !important;
+  white-space:normal !important;
+}
+
+/* Sidebar icon click should feel clickable */
+#sidebar .nav button,
+#sidebar .nav button .mdv-icon{
+  cursor:pointer !important;
+}
+
+/* Updated icon visual sizing */
+#sidebar .nav button .mdv-icon{
+  font-weight:800 !important;
+}
+
 </style>
 </head>
 
@@ -15153,6 +15250,105 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   setTimeout(init, 100);
   setTimeout(init, 700);
   setTimeout(init, 1500);
+})();
+</script>
+
+
+<script>
+/* ===== FINAL v5 Sidebar Icons + Click Expand ===== */
+(function(){
+  const labels = {
+    secDashboard: ["▥", "Dashboard"],
+    secInventory: ["▤", "Inventory"],
+    secHolds: ["◇", "Inventory Holds"],
+    secSold: ["$", "Sold"],
+    secImportExport: ["⇅", "Import / Export"],
+    secTools: ["🔧", "Tools"],
+    secSettings: ["⚙", "Settings"]
+  };
+
+  function rebuildNavV5(){
+    const nav = document.getElementById("nav");
+    if(!nav) return;
+
+    nav.querySelectorAll("button[data-target]").forEach(btn=>{
+      const target = btn.getAttribute("data-target");
+      const data = labels[target] || ["•", "Menu"];
+
+      btn.innerHTML = "";
+      btn.textContent = "";
+
+      const icon = document.createElement("span");
+      icon.className = "mdv-icon";
+      icon.textContent = data[0];
+
+      const label = document.createElement("span");
+      label.className = "mdv-label";
+      label.textContent = data[1];
+
+      btn.appendChild(icon);
+      btn.appendChild(label);
+    });
+  }
+
+  function sidebarIsOpen(){
+    const app = document.getElementById("appShell");
+    return !!(app && app.classList.contains("mdv-sidebar-open"));
+  }
+
+  function setSidebarV5(open){
+    const app = document.getElementById("appShell");
+    if(!app) return;
+
+    app.classList.toggle("mdv-sidebar-open", !!open);
+    app.classList.toggle("sidebar-closed", !open);
+
+    try{ localStorage.setItem("resellr_mdv_sidebar", open ? "open" : "closed"); }catch(e){}
+  }
+
+  window.toggleSidebar = function(){
+    setSidebarV5(!sidebarIsOpen());
+  };
+
+  window.closeSidebar = function(){
+    setSidebarV5(false);
+  };
+
+  function bindIconClicks(){
+    const nav = document.getElementById("nav");
+    if(!nav || nav.dataset.mdvV5Bound === "true") return;
+    nav.dataset.mdvV5Bound = "true";
+
+    nav.addEventListener("click", function(e){
+      const btn = e.target.closest("button[data-target]");
+      if(!btn) return;
+
+      // If collapsed, clicking any icon expands the sidebar like hamburger.
+      // Stop this first click from navigating away, so it behaves as "expand".
+      if(!sidebarIsOpen()){
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        setSidebarV5(true);
+        return false;
+      }
+    }, true);
+  }
+
+  function initV5(){
+    rebuildNavV5();
+    bindIconClicks();
+
+    let state = "closed";
+    try{ state = localStorage.getItem("resellr_mdv_sidebar") || "closed"; }catch(e){}
+    setSidebarV5(state === "open");
+  }
+
+  document.addEventListener("DOMContentLoaded", initV5);
+  window.addEventListener("load", initV5);
+  setTimeout(initV5, 100);
+  setTimeout(initV5, 800);
+  setTimeout(initV5, 1600);
 })();
 </script>
 
