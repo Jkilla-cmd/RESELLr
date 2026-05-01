@@ -8559,6 +8559,132 @@ body.skin-retro #netWorthPanel input[type="checkbox"]:checked{
   background:#55e6ff !important;
 }
 
+
+/* ===== FINAL v8: Correct dashboard panel placement ===== */
+
+/* Main lower dashboard grid: two columns only for selected panels */
+#secDashboard > .grid{
+  display:grid !important;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap:24px !important;
+  max-width:1180px !important;
+  width:100% !important;
+  align-items:start !important;
+}
+
+/* Default dashboard panels go full width unless specifically paired */
+#secDashboard > .grid > .panel{
+  grid-column:1 / -1 !important;
+  width:100% !important;
+  max-width:1180px !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:28px !important;
+  box-sizing:border-box !important;
+  overflow:visible !important;
+}
+
+/* Net Worth must never be squeezed */
+#netWorthPanel,
+#netWorthPanel.panel,
+#secDashboard > .grid > .panel:has(#netWorthRangeCustomWrap),
+#secDashboard > .grid > .panel:has(#netWorthValue),
+#secDashboard > .grid > .panel:has(#netWorthTotal){
+  grid-column:1 / -1 !important;
+  max-width:1180px !important;
+  width:100% !important;
+}
+
+/* Put Next Month Inventory Budget in left column */
+#budgetPanel,
+#nextMonthBudget,
+#secDashboard > .grid > .panel:has(#budgetMode),
+#secDashboard > .grid > .panel:has(#budgetModeCustomWrap),
+#secDashboard > .grid > .panel:has(#reinvestPct){
+  grid-column:1 / 2 !important;
+  max-width:none !important;
+  width:100% !important;
+}
+
+/* Put Inventory Holds in right column */
+#secDashboard > .grid > .panel:has(#ccNewestHolds),
+#secDashboard > .grid > .panel:has(#holdsSummary),
+#secDashboard > .grid > .panel:has(#holdValue),
+#secDashboard > .grid > .panel:has(#holdsTable),
+#secDashboard > .grid > .panel:has([id*="Hold"]:not(#netWorthPanel)),
+#secDashboard > .grid > .panel:has([id*="hold"]:not(#netWorthPanel)){
+  grid-column:2 / 3 !important;
+  max-width:none !important;
+  width:100% !important;
+}
+
+/* But if the Holds selector accidentally hits Net Worth, keep Net Worth full width */
+#netWorthPanel{
+  grid-column:1 / -1 !important;
+}
+
+/* YTD Sold Summary stays full width */
+#secDashboard > .grid > .panel:has(.market-card),
+#secDashboard > .grid > .panel:has(#privateSaleIncomeCard),
+#secDashboard > .grid > .panel:has(#ytdYearSelect){
+  grid-column:1 / -1 !important;
+}
+
+/* Budget card internals should not become a skinny vertical strip */
+#budgetPanel,
+#nextMonthBudget,
+#secDashboard > .grid > .panel:has(#budgetMode),
+#secDashboard > .grid > .panel:has(#budgetModeCustomWrap){
+  min-width:0 !important;
+  overflow:hidden !important;
+}
+
+#budgetPanel [style*="display:grid"],
+#nextMonthBudget [style*="display:grid"],
+#secDashboard > .grid > .panel:has(#budgetMode) [style*="display:grid"],
+#secDashboard > .grid > .panel:has(#budgetModeCustomWrap) [style*="display:grid"]{
+  grid-template-columns:repeat(2, minmax(120px, 1fr)) !important;
+  gap:14px !important;
+}
+
+#budgetPanel [style*="display:flex"],
+#nextMonthBudget [style*="display:flex"],
+#secDashboard > .grid > .panel:has(#budgetMode) [style*="display:flex"],
+#secDashboard > .grid > .panel:has(#budgetModeCustomWrap) [style*="display:flex"]{
+  flex-wrap:wrap !important;
+}
+
+/* Net Worth internals get breathing room */
+#netWorthPanel [style*="display:grid"],
+#netWorthPanel [class*="grid"]{
+  grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)) !important;
+  gap:16px !important;
+}
+
+#netWorthPanel .nw-card{
+  min-width:220px !important;
+}
+
+/* On laptop / narrow screens, stack budget and holds instead of squeezing */
+@media(max-width:1250px){
+  #secDashboard > .grid{
+    grid-template-columns:1fr !important;
+  }
+
+  #secDashboard > .grid > .panel,
+  #budgetPanel,
+  #nextMonthBudget,
+  #netWorthPanel,
+  #secDashboard > .grid > .panel:has(#budgetMode),
+  #secDashboard > .grid > .panel:has(#budgetModeCustomWrap),
+  #secDashboard > .grid > .panel:has(#ccNewestHolds),
+  #secDashboard > .grid > .panel:has([id*="Hold"]),
+  #secDashboard > .grid > .panel:has([id*="hold"]){
+    grid-column:1 / -1 !important;
+    max-width:1180px !important;
+  }
+}
+
 </style>
 </head>
 
