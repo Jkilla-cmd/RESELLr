@@ -8786,6 +8786,54 @@ body.skin-retro #netWorthPanel input[type="checkbox"]:checked{
   }
 }
 
+
+/* ===== FINAL v11: Force Budget + Holds side-by-side ===== */
+
+.mdv-budget-holds-row{
+  grid-column:1 / -1 !important;
+  display:flex !important;
+  flex-direction:row !important;
+  gap:24px !important;
+  width:100% !important;
+  max-width:1180px !important;
+  align-items:stretch !important;
+  order:2 !important;
+}
+
+.mdv-budget-holds-row > .panel{
+  flex:1 1 0 !important;
+  min-width:0 !important;
+  max-width:none !important;
+  width:auto !important;
+  margin:0 !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+}
+
+.mdv-budget-holds-row .panel *{
+  min-width:0 !important;
+}
+
+/* Balance the two cards visually */
+.mdv-budget-holds-row > .panel{
+  min-height:260px !important;
+}
+
+.mdv-budget-holds-row > .panel h3{
+  margin-bottom:16px !important;
+}
+
+/* Stack only on smaller screens */
+@media(max-width:1200px){
+  .mdv-budget-holds-row{
+    flex-direction:column !important;
+  }
+
+  .mdv-budget-holds-row > .panel{
+    width:100% !important;
+  }
+}
+
 </style>
 </head>
 
