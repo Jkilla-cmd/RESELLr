@@ -7911,6 +7911,278 @@ button.small:hover{
   }
 }
 
+
+/* ===== FINAL v4: smaller dashboard cards + single sidebar labels ===== */
+
+#appShell.app{
+  display:grid !important;
+  grid-template-columns:78px minmax(0,1fr) !important;
+  width:100% !important;
+  max-width:none !important;
+  padding:0 !important;
+  margin:0 !important;
+  gap:0 !important;
+  overflow-x:hidden !important;
+}
+
+#appShell.app.mdv-sidebar-open{
+  grid-template-columns:270px minmax(0,1fr) !important;
+}
+
+#appShell.app.sidebar-closed{
+  grid-template-columns:78px minmax(0,1fr) !important;
+}
+
+#sidebar.sidebar{
+  display:flex !important;
+  position:fixed !important;
+  top:56px !important;
+  left:0 !important;
+  bottom:0 !important;
+  width:78px !important;
+  height:calc(100vh - 56px) !important;
+  transform:none !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+  z-index:8000 !important;
+  overflow:hidden !important;
+  background:#2b323d !important;
+  border:0 !important;
+  border-radius:0 !important;
+  padding:18px 8px !important;
+  transition:width .18s ease !important;
+}
+
+#appShell.app.mdv-sidebar-open #sidebar.sidebar{
+  width:270px !important;
+  padding:18px 12px !important;
+}
+
+#sidebar .brand,
+#sidebar > button,
+#sidebar > .small,
+#sidebar > .muted{
+  display:none !important;
+}
+
+#sidebar .nav button::before,
+#sidebar .nav button::after,
+#sidebar button[data-target]::before,
+#sidebar button[data-target]::after,
+.nav button[data-target]::before,
+.nav button[data-target]::after{
+  content:"" !important;
+  display:none !important;
+  width:0 !important;
+  height:0 !important;
+  overflow:hidden !important;
+}
+
+#sidebar .nav{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+  width:100% !important;
+}
+
+#sidebar .nav button,
+#sidebar button[data-target]{
+  width:100% !important;
+  height:46px !important;
+  min-height:46px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  border-radius:8px !important;
+  box-shadow:none !important;
+  overflow:hidden !important;
+  text-indent:0 !important;
+  font-size:0 !important;
+  color:transparent !important;
+  white-space:nowrap !important;
+}
+
+#sidebar .nav button .mdv-icon{
+  width:40px !important;
+  min-width:40px !important;
+  height:40px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:20px !important;
+  color:#f4f7fb !important;
+  line-height:1 !important;
+  pointer-events:none !important;
+}
+
+#sidebar .nav button .mdv-label{
+  display:none !important;
+  color:#f4f7fb !important;
+  font-size:15px !important;
+  font-weight:500 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  pointer-events:none !important;
+}
+
+#appShell.app.mdv-sidebar-open #sidebar .nav button{
+  justify-content:flex-start !important;
+  gap:13px !important;
+  padding:0 14px !important;
+}
+
+#appShell.app.mdv-sidebar-open #sidebar .nav button .mdv-label{
+  display:block !important;
+}
+
+#sidebar .nav button:hover{
+  background:rgba(255,255,255,.06) !important;
+}
+
+#sidebar .nav button.active{
+  background:#444c5b !important;
+}
+
+#sidebar .nav button.active .mdv-icon{
+  color:#35a8e8 !important;
+}
+
+#appShell .canvas{
+  grid-column:2 !important;
+  margin-top:56px !important;
+  margin-left:0 !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  padding:30px 34px !important;
+  overflow-x:hidden !important;
+}
+
+.command-hero{
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit, minmax(185px, 1fr)) !important;
+  gap:14px !important;
+  margin-bottom:22px !important;
+  max-width:1120px !important;
+}
+
+.command-stat{
+  min-width:0 !important;
+  min-height:108px !important;
+  padding:18px 20px !important;
+  border-radius:12px !important;
+}
+
+.command-stat .label{
+  font-size:14px !important;
+  line-height:1.2 !important;
+}
+
+.command-stat .value{
+  font-size:25px !important;
+  margin-top:6px !important;
+}
+
+.command-stat .sub{
+  font-size:12px !important;
+  margin-top:7px !important;
+}
+
+.goal-mini{
+  height:6px !important;
+  margin-top:12px !important;
+}
+
+#secDashboard > .grid{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:22px !important;
+  max-width:1120px !important;
+  width:100% !important;
+  align-items:start !important;
+}
+
+#secDashboard > .grid > .panel{
+  width:100% !important;
+  max-width:1120px !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  padding:24px !important;
+}
+
+#netWorthPanel,
+#budgetPanel,
+#nextMonthBudget{
+  width:100% !important;
+  max-width:1120px !important;
+  min-width:0 !important;
+}
+
+#secDashboard .panel [style*="display:flex"],
+#secDashboard .panel .row{
+  flex-wrap:wrap !important;
+}
+
+#secDashboard .panel [style*="display:grid"]{
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)) !important;
+}
+
+.market-card,
+#privateSaleIncomeCard{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+}
+
+@media(max-width:1150px){
+  #appShell .canvas{
+    padding:24px 22px !important;
+  }
+
+  .command-hero{
+    grid-template-columns:repeat(2, minmax(180px, 1fr)) !important;
+  }
+}
+
+@media(max-width:760px){
+  #appShell.app,
+  #appShell.app.mdv-sidebar-open,
+  #appShell.app.sidebar-closed{
+    grid-template-columns:70px minmax(0,1fr) !important;
+  }
+
+  #sidebar.sidebar,
+  #appShell.app.mdv-sidebar-open #sidebar.sidebar{
+    width:70px !important;
+    padding:14px 6px !important;
+  }
+
+  #appShell.app.mdv-sidebar-open #sidebar .nav button{
+    justify-content:center !important;
+    padding:0 !important;
+    gap:0 !important;
+  }
+
+  #appShell.app.mdv-sidebar-open #sidebar .nav button .mdv-label{
+    display:none !important;
+  }
+
+  .command-hero{
+    grid-template-columns:1fr !important;
+  }
+
+  #appShell .canvas{
+    padding:18px 12px !important;
+  }
+}
+
 </style>
 </head>
 
@@ -14769,6 +15041,118 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.addEventListener("load", init);
   setTimeout(init, 100);
   setTimeout(init, 700);
+})();
+</script>
+
+
+<script>
+/* ===== FINAL v4 Sidebar Controller ===== */
+(function(){
+  const labels = {
+    secDashboard: ["▥", "Dashboard"],
+    secInventory: ["▤", "Inventory"],
+    secHolds: ["▣", "Inventory Holds"],
+    secSold: ["☷", "Sold"],
+    secImportExport: ["⇅", "Import / Export"],
+    secTools: ["⚙", "Tools"],
+    secSettings: ["⚙", "Settings"]
+  };
+
+  function rebuildNav(){
+    const nav = document.getElementById("nav");
+    if(!nav) return;
+
+    nav.querySelectorAll("button[data-target]").forEach(btn=>{
+      const target = btn.getAttribute("data-target");
+      const data = labels[target] || ["•", "Menu"];
+
+      btn.innerHTML = "";
+      btn.textContent = "";
+
+      const icon = document.createElement("span");
+      icon.className = "mdv-icon";
+      icon.textContent = data[0];
+
+      const label = document.createElement("span");
+      label.className = "mdv-label";
+      label.textContent = data[1];
+
+      btn.appendChild(icon);
+      btn.appendChild(label);
+    });
+  }
+
+  function setSidebar(open){
+    const app = document.getElementById("appShell");
+    if(!app) return;
+
+    app.classList.toggle("mdv-sidebar-open", !!open);
+    app.classList.toggle("sidebar-closed", !open);
+
+    try{ localStorage.setItem("resellr_mdv_sidebar", open ? "open" : "closed"); }catch(e){}
+  }
+
+  function isOpen(){
+    const app = document.getElementById("appShell");
+    return !!(app && app.classList.contains("mdv-sidebar-open"));
+  }
+
+  window.toggleSidebar = function(){
+    setSidebar(!isOpen());
+  };
+
+  window.closeSidebar = function(){
+    setSidebar(false);
+  };
+
+  function replaceHamburger(){
+    const oldBtn = document.querySelector(".hamburger");
+    if(!oldBtn || oldBtn.dataset.finalV4 === "true") return;
+
+    const newBtn = oldBtn.cloneNode(true);
+    newBtn.dataset.finalV4 = "true";
+    newBtn.removeAttribute("onclick");
+    oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+
+    newBtn.addEventListener("click", function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      window.toggleSidebar();
+      return false;
+    }, true);
+  }
+
+  function bindNavExpand(){
+    const nav = document.getElementById("nav");
+    if(!nav || nav.dataset.finalV4 === "true") return;
+    nav.dataset.finalV4 = "true";
+
+    nav.addEventListener("click", function(e){
+      const btn = e.target.closest("button[data-target]");
+      if(!btn) return;
+
+      if(!isOpen()){
+        setSidebar(true);
+      }
+    }, true);
+  }
+
+  function init(){
+    rebuildNav();
+    replaceHamburger();
+    bindNavExpand();
+
+    let state = "closed";
+    try{ state = localStorage.getItem("resellr_mdv_sidebar") || "closed"; }catch(e){}
+    setSidebar(state === "open");
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("load", init);
+  setTimeout(init, 100);
+  setTimeout(init, 700);
+  setTimeout(init, 1500);
 })();
 </script>
 
