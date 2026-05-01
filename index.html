@@ -8408,6 +8408,157 @@ button.small:hover{
   }
 }
 
+
+/* ===== FINAL v7: Budget + Holds side-by-side + Net Worth toggles ===== */
+
+/* Create a side-by-side pair for Budget + Inventory Holds when both exist in dashboard */
+#secDashboard > .grid{
+  display:grid !important;
+  grid-template-columns:repeat(2, minmax(360px, 1fr)) !important;
+  gap:24px !important;
+  max-width:1180px !important;
+  width:100% !important;
+  align-items:start !important;
+}
+
+/* Let Net Worth and YTD summary take full row */
+#netWorthPanel,
+#secDashboard > .grid > .panel:has(.market-card),
+#secDashboard > .grid > .panel:has(#privateSaleIncomeCard){
+  grid-column:1 / -1 !important;
+}
+
+/* Budget panel should fit nicely in one column */
+#budgetPanel,
+#nextMonthBudget,
+#secDashboard > .grid > .panel:has(#budgetMode),
+#secDashboard > .grid > .panel:has(#budgetModeCustomWrap){
+  grid-column:auto !important;
+  max-width:none !important;
+}
+
+/* Holds panel should sit beside budget */
+#secDashboard > .grid > .panel:has(#ccNewestHolds),
+#secDashboard > .grid > .panel:has([id*="Hold"]),
+#secDashboard > .grid > .panel:has([id*="hold"]){
+  grid-column:auto !important;
+  max-width:none !important;
+}
+
+/* Panel sizing */
+#secDashboard > .grid > .panel{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:26px !important;
+  box-sizing:border-box !important;
+}
+
+/* If screen is narrower, stack again */
+@media(max-width:1150px){
+  #secDashboard > .grid{
+    grid-template-columns:1fr !important;
+  }
+
+  #secDashboard > .grid > .panel{
+    grid-column:1 / -1 !important;
+  }
+}
+
+/* ===== Net Worth toggle switch cleanup ===== */
+
+/* Remove pill/circle wrapper look around checkbox labels inside Net Worth */
+#netWorthPanel label,
+#netWorthPanel .pill:has(input[type="checkbox"]),
+#netWorthPanel span:has(input[type="checkbox"]){
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+}
+
+/* Hide native checkbox only in Net Worth controls */
+#netWorthPanel input[type="checkbox"]{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  width:42px !important;
+  height:24px !important;
+  min-width:42px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,.18) !important;
+  background:#202733 !important;
+  position:relative !important;
+  vertical-align:middle !important;
+  cursor:pointer !important;
+  margin:0 8px 0 0 !important;
+  transition:background .15s ease, border-color .15s ease !important;
+  box-shadow:none !important;
+}
+
+/* Toggle knob */
+#netWorthPanel input[type="checkbox"]::after{
+  content:"" !important;
+  position:absolute !important;
+  top:3px !important;
+  left:3px !important;
+  width:16px !important;
+  height:16px !important;
+  border-radius:50% !important;
+  background:#cbd5e1 !important;
+  transition:transform .15s ease, background .15s ease !important;
+}
+
+/* On state */
+#netWorthPanel input[type="checkbox"]:checked{
+  background:#2fa3e6 !important;
+  border-color:#2fa3e6 !important;
+}
+
+#netWorthPanel input[type="checkbox"]:checked::after{
+  transform:translateX(18px) !important;
+  background:#fff !important;
+}
+
+/* Make toggle labels align cleanly */
+#netWorthPanel label:has(input[type="checkbox"]){
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:4px !important;
+  padding:0 !important;
+  margin-right:18px !important;
+  color:#f4f7fb !important;
+}
+
+/* If checkboxes are inside pill wrappers, flatten the wrapper spacing */
+#netWorthPanel .pill:has(input[type="checkbox"]){
+  display:inline-flex !important;
+  align-items:center !important;
+  padding:0 !important;
+  margin-right:18px !important;
+}
+
+/* Mono / Retro compatibility */
+body.skin-mono #netWorthPanel input[type="checkbox"]{
+  background:#111 !important;
+  border-color:#555 !important;
+}
+
+body.skin-retro #netWorthPanel input[type="checkbox"]{
+  border-radius:0 !important;
+  border:2px solid #55e6ff !important;
+  background:#080b18 !important;
+}
+
+body.skin-retro #netWorthPanel input[type="checkbox"]::after{
+  border-radius:0 !important;
+  background:#fff06a !important;
+}
+
+body.skin-retro #netWorthPanel input[type="checkbox"]:checked{
+  background:#55e6ff !important;
+}
+
 </style>
 </head>
 
