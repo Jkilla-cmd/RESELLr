@@ -7787,6 +7787,130 @@ button.small:hover{
   }
 }
 
+
+/* ===== MyDoorView v3: Sidebar Expand on Icon + Dashboard Decramp ===== */
+
+/* Remove duplicate label generation from older CSS */
+#sidebar .nav button::after{
+  display:none !important;
+  content:none !important;
+}
+
+/* Use only the real span label */
+#sidebar .nav button .mdv-label{
+  display:none !important;
+}
+
+#appShell.app.mdv-sidebar-open #sidebar .nav button .mdv-label{
+  display:block !important;
+}
+
+/* Stronger collapsed/open behavior */
+#appShell.app{
+  grid-template-columns:78px minmax(0,1fr) !important;
+}
+
+#appShell.app.mdv-sidebar-open{
+  grid-template-columns:282px minmax(0,1fr) !important;
+}
+
+#sidebar.sidebar{
+  width:78px !important;
+}
+
+#appShell.app.mdv-sidebar-open #sidebar.sidebar{
+  width:282px !important;
+}
+
+/* Clicking icons should feel natural */
+#sidebar .nav button{
+  cursor:pointer !important;
+}
+
+#sidebar .nav button .mdv-icon{
+  pointer-events:none !important;
+}
+
+#sidebar .nav button .mdv-label{
+  pointer-events:none !important;
+}
+
+/* De-cramp dashboard cards */
+#secDashboard > .grid{
+  grid-template-columns:1fr !important;
+  gap:24px !important;
+}
+
+/* Net Worth gets full width and better internal spacing */
+#netWorthPanel{
+  width:100% !important;
+  max-width:1100px !important;
+}
+
+#netWorthPanel .nw-grid,
+#netWorthPanel .networth-grid,
+#netWorthPanel [class*="nw-"]{
+  min-width:0 !important;
+}
+
+/* Let Net Worth internal cards wrap with larger minimums */
+#netWorthPanel .nw-card,
+#netWorthPanel .market-card{
+  min-width:220px !important;
+}
+
+/* Make Inventory Holds panel/list full width and not squeezed */
+#secDashboard .panel:has(#ccNewestHolds),
+#secDashboard .panel:has([id*="Hold"]),
+#secDashboard .panel:has([id*="hold"]){
+  width:100% !important;
+  max-width:1100px !important;
+}
+
+/* Inventory Holds section/table/list decramp */
+#secHolds .panel,
+#secHolds .table-wrap,
+#secHolds table{
+  width:100% !important;
+}
+
+#secHolds .panel{
+  max-width:none !important;
+}
+
+/* Prevent narrow columns in old dashboard */
+#secDashboard > .grid > .panel{
+  width:100% !important;
+  max-width:1100px !important;
+  box-sizing:border-box !important;
+}
+
+/* If panels contain inline grids, allow wrapping */
+#secDashboard .panel > div,
+#secDashboard .panel .row,
+#secDashboard .panel [style*="grid"],
+#secDashboard .panel [style*="flex"]{
+  max-width:100% !important;
+}
+
+/* Budget and YTD cards no longer squeeze beside net worth on smaller laptop screens */
+@media(max-width:1600px){
+  #secDashboard > .grid{
+    grid-template-columns:1fr !important;
+  }
+
+  #secDashboard > .grid > .panel{
+    max-width:1120px !important;
+  }
+}
+
+@media(max-width:900px){
+  #netWorthPanel .nw-card,
+  #netWorthPanel .market-card{
+    min-width:160px !important;
+  }
+}
+
 </style>
 </head>
 
@@ -14551,6 +14675,100 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.addEventListener("load", init);
   setTimeout(init, 100);
   setTimeout(init, 600);
+})();
+</script>
+
+
+<script>
+/* ===== MyDoorView v3 sidebar click-expand fix ===== */
+(function(){
+  const map = {
+    secDashboard: ["▥", "Dashboard"],
+    secInventory: ["▤", "Inventory"],
+    secHolds: ["▣", "Inventory Holds"],
+    secSold: ["☷", "Sold"],
+    secImportExport: ["⇅", "Import / Export"],
+    secTools: ["⚙", "Tools"],
+    secSettings: ["⚙", "Settings"]
+  };
+
+  function rebuildLabelsClean(){
+    const nav = document.getElementById("nav");
+    if(!nav) return;
+
+    nav.querySelectorAll("button[data-target]").forEach(btn=>{
+      const target = btn.getAttribute("data-target");
+      const item = map[target] || ["•", btn.textContent.trim() || "Menu"];
+
+      // Force clean innerHTML every time to remove duplicate old text.
+      btn.innerHTML = '<span class="mdv-icon">' + item[0] + '</span><span class="mdv-label">' + item[1] + '</span>';
+      btn.dataset.mdvBuilt = "true";
+    });
+  }
+
+  function isOpen(){
+    const app = document.getElementById("appShell");
+    return app && app.classList.contains("mdv-sidebar-open");
+  }
+
+  function setSidebar(open){
+    const app = document.getElementById("appShell");
+    if(!app) return;
+
+    app.classList.toggle("mdv-sidebar-open", !!open);
+    app.classList.toggle("sidebar-closed", !open);
+
+    try{ localStorage.setItem("resellr_mdv_sidebar", open ? "open" : "closed"); }catch(e){}
+  }
+
+  window.toggleSidebar = function(){
+    setSidebar(!isOpen());
+  };
+
+  window.closeSidebar = function(){
+    setSidebar(false);
+  };
+
+  function init(){
+    rebuildLabelsClean();
+
+    const app = document.getElementById("appShell");
+    if(app){
+      let state = "closed";
+      try{ state = localStorage.getItem("resellr_mdv_sidebar") || "closed"; }catch(e){}
+      setSidebar(state === "open");
+    }
+
+    const nav = document.getElementById("nav");
+    if(nav && nav.dataset.mdvExpandClick !== "true"){
+      nav.dataset.mdvExpandClick = "true";
+
+      nav.addEventListener("click", function(e){
+        const btn = e.target.closest("button[data-target]");
+        if(!btn) return;
+
+        // If collapsed, expand on first icon click, then allow section navigation.
+        if(!isOpen()){
+          setSidebar(true);
+        }
+      }, true);
+    }
+
+    const hamburger = document.querySelector(".hamburger");
+    if(hamburger && hamburger.dataset.mdvV3 !== "true"){
+      hamburger.dataset.mdvV3 = "true";
+      hamburger.addEventListener("click", function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        window.toggleSidebar();
+      }, true);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+  window.addEventListener("load", init);
+  setTimeout(init, 100);
+  setTimeout(init, 700);
 })();
 </script>
 
