@@ -8685,6 +8685,67 @@ body.skin-retro #netWorthPanel input[type="checkbox"]:checked{
   }
 }
 
+
+/* ===== FINAL v9: Budget + Holds Pair Before YTD ===== */
+
+/* Dashboard lower grid: two columns */
+#secDashboard > .grid{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  gap:24px !important;
+  max-width:1180px !important;
+  width:100% !important;
+  align-items:start !important;
+}
+
+/* Default panels full width */
+#secDashboard > .grid > .panel{
+  grid-column:1 / -1 !important;
+}
+
+/* Net Worth full width first */
+#netWorthPanel{
+  grid-column:1 / -1 !important;
+  order:1 !important;
+}
+
+/* Budget left column */
+#budgetPanel,
+#nextMonthBudget,
+#secDashboard > .grid > .panel[data-mdv-panel="budget"]{
+  grid-column:1 / 2 !important;
+  order:2 !important;
+}
+
+/* Holds right column */
+#secDashboard > .grid > .panel[data-mdv-panel="holds"]{
+  grid-column:2 / 3 !important;
+  order:3 !important;
+}
+
+/* YTD full width after Budget/Holds */
+#secDashboard > .grid > .panel[data-mdv-panel="ytd"],
+#secDashboard > .grid > .panel:has(#ytdYearSelect),
+#secDashboard > .grid > .panel:has(.market-card){
+  grid-column:1 / -1 !important;
+  order:4 !important;
+}
+
+/* If screen is not wide enough, stack everything */
+@media(max-width:1250px){
+  #secDashboard > .grid{
+    grid-template-columns:1fr !important;
+  }
+
+  #budgetPanel,
+  #nextMonthBudget,
+  #secDashboard > .grid > .panel[data-mdv-panel="budget"],
+  #secDashboard > .grid > .panel[data-mdv-panel="holds"],
+  #secDashboard > .grid > .panel[data-mdv-panel="ytd"]{
+    grid-column:1 / -1 !important;
+  }
+}
+
 </style>
 </head>
 
@@ -15794,6 +15855,80 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       collapseSidebar();
     }
   }, true);
+})();
+</script>
+
+
+<script>
+/* ===== FINAL v9: Reorder dashboard panels ===== */
+(function(){
+  function textOf(el){
+    return (el && el.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  function tagDashboardPanels(){
+    const grid = document.querySelector("#secDashboard > .grid");
+    if(!grid) return;
+
+    const panels = Array.from(grid.children).filter(el => el.classList && el.classList.contains("panel"));
+
+    let budget = null;
+    let holds = null;
+    let ytd = null;
+
+    panels.forEach(panel=>{
+      const t = textOf(panel);
+
+      if(!budget && (t.includes("next month inventory budget") || t.includes("next budget") || t.includes("reinvest %"))){
+        budget = panel;
+        panel.dataset.mdvPanel = "budget";
+      }
+
+      if(!holds && t.includes("inventory holds") && !t.includes("ytd sold summary") && !t.includes("next month inventory budget")){
+        holds = panel;
+        panel.dataset.mdvPanel = "holds";
+      }
+
+      if(!ytd && (t.includes("ytd sold summary") || t.includes("mercari income") || t.includes("ebay income"))){
+        ytd = panel;
+        panel.dataset.mdvPanel = "ytd";
+      }
+    });
+
+    const netWorth = document.getElementById("netWorthPanel");
+    if(netWorth) netWorth.dataset.mdvPanel = "networth";
+
+    // Physically move holds right after budget so it appears beside it,
+    // then move YTD after the pair.
+    if(budget && holds && holds.previousElementSibling !== budget){
+      grid.insertBefore(holds, budget.nextSibling);
+    }
+
+    if(ytd && holds && ytd.previousElementSibling !== holds){
+      grid.insertBefore(ytd, holds.nextSibling);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    tagDashboardPanels();
+    setTimeout(tagDashboardPanels, 300);
+    setTimeout(tagDashboardPanels, 900);
+  });
+
+  window.addEventListener("load", ()=>{
+    tagDashboardPanels();
+    setTimeout(tagDashboardPanels, 600);
+  });
+
+  const oldUpdate = window.updateDashboard;
+  if(typeof oldUpdate === "function" && !window.__mdvV9DashboardHooked){
+    window.__mdvV9DashboardHooked = true;
+    window.updateDashboard = function(){
+      const out = oldUpdate.apply(this, arguments);
+      setTimeout(tagDashboardPanels, 150);
+      return out;
+    };
+  }
 })();
 </script>
 
