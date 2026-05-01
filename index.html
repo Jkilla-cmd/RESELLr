@@ -8901,6 +8901,96 @@ body.skin-retro #netWorthPanel input[type="checkbox"]:checked{
   }
 }
 
+
+/* ===== FINAL v13: Net Worth first, Budget/Holds compact, Income graph last ===== */
+
+#secDashboard > .grid{
+  display:block !important;
+  max-width:1180px !important;
+  width:100% !important;
+}
+
+#secDashboard > .grid > .panel,
+#secDashboard > .grid > .mdv-budget-holds-row{
+  margin-bottom:22px !important;
+}
+
+.mdv-budget-holds-row{
+  display:flex !important;
+  flex-direction:row !important;
+  gap:20px !important;
+  width:100% !important;
+  max-width:1180px !important;
+  align-items:flex-start !important;
+}
+
+.mdv-budget-holds-row > .panel{
+  flex:1 1 50% !important;
+  width:50% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  padding:16px !important;
+  min-height:unset !important;
+  height:auto !important;
+  overflow:hidden !important;
+}
+
+.mdv-budget-holds-row h3{
+  margin:0 0 10px 0 !important;
+  font-size:16px !important;
+  line-height:1.15 !important;
+}
+
+.mdv-budget-holds-row .pill{
+  padding:5px 8px !important;
+  font-size:12px !important;
+}
+
+.mdv-budget-holds-row input,
+.mdv-budget-holds-row select{
+  height:32px !important;
+  min-height:32px !important;
+  padding:4px 8px !important;
+}
+
+.mdv-budget-holds-row input[type="range"]{
+  margin-top:8px !important;
+}
+
+.mdv-budget-holds-row .muted,
+.mdv-budget-holds-row .sub,
+.mdv-budget-holds-row p{
+  line-height:1.25 !important;
+}
+
+.mdv-budget-holds-row *{
+  margin-top:4px !important;
+}
+
+#netWorthPanel{
+  width:100% !important;
+  max-width:1180px !important;
+  margin-bottom:22px !important;
+}
+
+#secDashboard > .grid > .panel[data-mdv-panel="income-last"],
+#secDashboard > .grid > .panel[data-mdv-panel="ytd"]{
+  width:100% !important;
+  max-width:1180px !important;
+  margin-bottom:22px !important;
+}
+
+@media(max-width:900px){
+  .mdv-budget-holds-row{
+    flex-direction:column !important;
+  }
+
+  .mdv-budget-holds-row > .panel{
+    width:100% !important;
+    flex-basis:auto !important;
+  }
+}
+
 </style>
 </head>
 
@@ -16200,6 +16290,122 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   }
 
   window.groupBudgetAndHolds = groupBudgetAndHolds;
+})();
+</script>
+
+
+<script>
+/* ===== FINAL v13 Dashboard Order ===== */
+(function(){
+  function panelText(el){
+    return (el && el.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  function reorderDashboardV13(){
+    const grid = document.querySelector("#secDashboard > .grid");
+    if(!grid) return;
+
+    const panels = Array.from(grid.querySelectorAll(":scope > .panel, :scope > .mdv-budget-holds-row > .panel"));
+
+    let netWorth = document.getElementById("netWorthPanel");
+    let budget = null;
+    let holds = null;
+    let income = null;
+
+    panels.forEach(p=>{
+      const t = panelText(p);
+
+      if(!netWorth && t.includes("net worth")) netWorth = p;
+
+      if(!budget && (
+        t.includes("next month inventory budget") ||
+        t.includes("next budget") ||
+        t.includes("reinvest %") ||
+        t.includes("proj sales")
+      )){
+        budget = p;
+      }
+
+      if(!holds && (
+        t.includes("inventory holds") ||
+        t.includes("holds items") ||
+        t.includes("holds cost") ||
+        t.includes("holds value")
+      ) && !t.includes("next month inventory budget")){
+        holds = p;
+      }
+
+      if(!income && (
+        t.includes("ytd sold summary") ||
+        t.includes("mercari income") ||
+        t.includes("ebay income") ||
+        t.includes("income vs profit")
+      )){
+        income = p;
+      }
+    });
+
+    let pairRow = grid.querySelector(":scope > .mdv-budget-holds-row");
+
+    if(budget && holds){
+      if(!pairRow){
+        pairRow = document.createElement("div");
+        pairRow.className = "mdv-budget-holds-row";
+      }
+
+      budget.dataset.mdvPanel = "budget";
+      holds.dataset.mdvPanel = "holds";
+
+      if(budget.parentNode !== pairRow) pairRow.appendChild(budget);
+      if(holds.parentNode !== pairRow) pairRow.appendChild(holds);
+
+      if(pairRow.firstElementChild !== budget){
+        pairRow.insertBefore(budget, pairRow.firstChild);
+      }
+      if(holds.previousElementSibling !== budget){
+        pairRow.insertBefore(holds, budget.nextSibling);
+      }
+    }
+
+    if(netWorth){
+      netWorth.dataset.mdvPanel = "networth";
+      grid.appendChild(netWorth);
+    }
+
+    if(pairRow){
+      grid.appendChild(pairRow);
+    }
+
+    if(income){
+      income.dataset.mdvPanel = "income-last";
+      grid.appendChild(income);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    reorderDashboardV13();
+    setTimeout(reorderDashboardV13, 300);
+    setTimeout(reorderDashboardV13, 900);
+    setTimeout(reorderDashboardV13, 1600);
+  });
+
+  window.addEventListener("load", ()=>{
+    reorderDashboardV13();
+    setTimeout(reorderDashboardV13, 600);
+    setTimeout(reorderDashboardV13, 1400);
+  });
+
+  const oldUpdate = window.updateDashboard;
+  if(typeof oldUpdate === "function" && !window.__mdvV13DashboardHooked){
+    window.__mdvV13DashboardHooked = true;
+    window.updateDashboard = function(){
+      const result = oldUpdate.apply(this, arguments);
+      setTimeout(reorderDashboardV13, 120);
+      return result;
+    };
+  }
+
+  window.reorderDashboardV13 = reorderDashboardV13;
 })();
 </script>
 
