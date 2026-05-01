@@ -8834,6 +8834,73 @@ body.skin-retro #netWorthPanel input[type="checkbox"]:checked{
   }
 }
 
+
+/* ===== FINAL v12: Shorter Budget + Holds cards, side-by-side longer ===== */
+
+/* Force the grouped row to stay horizontal on laptop widths */
+.mdv-budget-holds-row{
+  display:flex !important;
+  flex-direction:row !important;
+  gap:20px !important;
+  width:100% !important;
+  max-width:1180px !important;
+  align-items:stretch !important;
+}
+
+/* Make each card half-width and less tall */
+.mdv-budget-holds-row > .panel{
+  flex:1 1 50% !important;
+  width:50% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  min-height:0 !important;
+  height:auto !important;
+  padding:20px !important;
+  overflow:hidden !important;
+}
+
+/* Compact the content inside those two cards */
+.mdv-budget-holds-row > .panel h3{
+  margin:0 0 12px 0 !important;
+  font-size:17px !important;
+  line-height:1.15 !important;
+}
+
+.mdv-budget-holds-row > .panel p,
+.mdv-budget-holds-row > .panel .muted,
+.mdv-budget-holds-row > .panel .sub{
+  margin-top:6px !important;
+  line-height:1.25 !important;
+}
+
+.mdv-budget-holds-row > .panel .pill{
+  padding:6px 10px !important;
+}
+
+/* Budget controls: compact instead of tall */
+.mdv-budget-holds-row input[type="range"]{
+  max-width:220px !important;
+}
+
+.mdv-budget-holds-row select,
+.mdv-budget-holds-row input{
+  min-height:34px !important;
+  padding-top:6px !important;
+  padding-bottom:6px !important;
+}
+
+/* Only stack on truly small screens */
+@media(max-width:860px){
+  .mdv-budget-holds-row{
+    flex-direction:column !important;
+  }
+
+  .mdv-budget-holds-row > .panel{
+    width:100% !important;
+    flex-basis:auto !important;
+  }
+}
+
 </style>
 </head>
 
