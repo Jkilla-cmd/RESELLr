@@ -8746,6 +8746,46 @@ body.skin-retro #netWorthPanel input[type="checkbox"]:checked{
   }
 }
 
+
+/* ===== FINAL v10: Real Budget + Holds Pair Row ===== */
+
+.mdv-budget-holds-row{
+  grid-column:1 / -1 !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  gap:24px !important;
+  width:100% !important;
+  max-width:1180px !important;
+  align-items:start !important;
+  order:2 !important;
+}
+
+.mdv-budget-holds-row > .panel{
+  grid-column:auto !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  margin:0 !important;
+}
+
+#netWorthPanel{
+  grid-column:1 / -1 !important;
+  order:1 !important;
+}
+
+#secDashboard > .grid > .panel[data-mdv-panel="ytd"],
+#secDashboard > .grid > .panel:has(#ytdYearSelect),
+#secDashboard > .grid > .panel:has(.market-card){
+  grid-column:1 / -1 !important;
+  order:3 !important;
+}
+
+@media(max-width:1250px){
+  .mdv-budget-holds-row{
+    grid-template-columns:1fr !important;
+  }
+}
+
 </style>
 </head>
 
@@ -15929,6 +15969,122 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       return out;
     };
   }
+})();
+</script>
+
+
+<script>
+/* ===== FINAL v10: Physically group Budget + Holds ===== */
+(function(){
+  function norm(el){
+    return (el && el.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  function groupBudgetAndHolds(){
+    const grid = document.querySelector("#secDashboard > .grid");
+    if(!grid) return;
+
+    const panels = Array.from(grid.querySelectorAll(":scope > .panel, :scope > .mdv-budget-holds-row > .panel"));
+
+    let budget = null;
+    let holds = null;
+    let ytd = null;
+
+    panels.forEach(panel=>{
+      const t = norm(panel);
+
+      if(!budget && (
+        t.includes("next month inventory budget") ||
+        t.includes("next budget") ||
+        t.includes("reinvest %") ||
+        t.includes("proj sales")
+      )){
+        budget = panel;
+      }
+
+      if(!holds && (
+        t.includes("inventory holds") ||
+        t.includes("holds items") ||
+        t.includes("holds cost") ||
+        t.includes("holds value")
+      ) && !t.includes("next month inventory budget")){
+        holds = panel;
+      }
+
+      if(!ytd && (
+        t.includes("ytd sold summary") ||
+        t.includes("mercari income") ||
+        t.includes("ebay income")
+      )){
+        ytd = panel;
+      }
+    });
+
+    if(!budget || !holds) return;
+
+    let row = grid.querySelector(":scope > .mdv-budget-holds-row");
+    if(!row){
+      row = document.createElement("div");
+      row.className = "mdv-budget-holds-row";
+    }
+
+    budget.dataset.mdvPanel = "budget";
+    holds.dataset.mdvPanel = "holds";
+    if(ytd) ytd.dataset.mdvPanel = "ytd";
+
+    const netWorth = document.getElementById("netWorthPanel");
+    if(!row.parentNode){
+      if(netWorth && netWorth.parentNode === grid){
+        grid.insertBefore(row, netWorth.nextSibling);
+      }else if(ytd && ytd.parentNode === grid){
+        grid.insertBefore(row, ytd);
+      }else{
+        grid.appendChild(row);
+      }
+    }
+
+    if(budget.parentNode !== row) row.appendChild(budget);
+    if(holds.parentNode !== row) row.appendChild(holds);
+
+    if(row.firstElementChild !== budget){
+      row.insertBefore(budget, row.firstChild);
+    }
+    if(holds.previousElementSibling !== budget){
+      row.insertBefore(holds, budget.nextSibling);
+    }
+
+    if(ytd && ytd.parentNode !== grid){
+      grid.appendChild(ytd);
+    }
+    if(ytd && ytd.previousElementSibling !== row){
+      grid.insertBefore(ytd, row.nextSibling);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    groupBudgetAndHolds();
+    setTimeout(groupBudgetAndHolds, 300);
+    setTimeout(groupBudgetAndHolds, 900);
+    setTimeout(groupBudgetAndHolds, 1600);
+  });
+
+  window.addEventListener("load", ()=>{
+    groupBudgetAndHolds();
+    setTimeout(groupBudgetAndHolds, 600);
+    setTimeout(groupBudgetAndHolds, 1400);
+  });
+
+  const oldUpdate = window.updateDashboard;
+  if(typeof oldUpdate === "function" && !window.__mdvV10DashboardHooked){
+    window.__mdvV10DashboardHooked = true;
+    window.updateDashboard = function(){
+      const out = oldUpdate.apply(this, arguments);
+      setTimeout(groupBudgetAndHolds, 150);
+      return out;
+    };
+  }
+
+  window.groupBudgetAndHolds = groupBudgetAndHolds;
 })();
 </script>
 
