@@ -8280,6 +8280,134 @@ button.small:hover{
   font-weight:800 !important;
 }
 
+
+/* ===== FINAL v6: click-outside collapse + lower dashboard wide cards ===== */
+
+/* Give the page more usable width and stop horizontal cramming */
+#appShell .canvas{
+  padding:28px 32px !important;
+}
+
+/* Lower dashboard should be a clean vertical stack */
+#secDashboard > .grid{
+  display:block !important;
+  max-width:1180px !important;
+  width:100% !important;
+}
+
+#secDashboard > .grid > .panel{
+  display:block !important;
+  width:100% !important;
+  max-width:1180px !important;
+  min-width:0 !important;
+  margin:0 0 24px 0 !important;
+  padding:28px !important;
+  box-sizing:border-box !important;
+  overflow:visible !important;
+}
+
+/* Do not let old inline grid/flex layouts make skinny columns */
+#secDashboard > .grid > .panel > div{
+  max-width:100% !important;
+}
+
+#secDashboard .panel [style*="display:grid"]{
+  grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)) !important;
+  gap:18px !important;
+}
+
+#secDashboard .panel [style*="display:flex"],
+#secDashboard .panel .row{
+  flex-wrap:wrap !important;
+  gap:16px !important;
+}
+
+/* Net Worth section gets real breathing room */
+#netWorthPanel{
+  width:100% !important;
+  max-width:1180px !important;
+  min-width:0 !important;
+  overflow:visible !important;
+}
+
+#netWorthPanel .nw-card,
+#netWorthPanel .market-card,
+#netWorthPanel [class*="card"]{
+  min-width:230px !important;
+  box-sizing:border-box !important;
+}
+
+/* If net worth has a tiny internal control column, allow normal wrapping */
+#netWorthPanel [style*="grid-template-columns"],
+#netWorthPanel [class*="grid"]{
+  grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)) !important;
+}
+
+/* Inventory Holds dashboard card / holds areas */
+#secDashboard .panel:has(#ccNewestHolds),
+#secDashboard .panel:has([id*="Hold"]),
+#secDashboard .panel:has([id*="hold"]){
+  width:100% !important;
+  max-width:1180px !important;
+  overflow:visible !important;
+}
+
+#secHolds .panel,
+#secHolds .table-wrap{
+  max-width:1180px !important;
+  width:100% !important;
+  overflow-x:auto !important;
+}
+
+/* Budget and YTD no longer sit skinny beside other cards */
+#budgetPanel,
+#nextMonthBudget,
+#ytdPanel,
+#soldSummaryPanel{
+  width:100% !important;
+  max-width:1180px !important;
+}
+
+/* Make top cards a touch smaller so the lower section has more room on laptops */
+.command-hero{
+  max-width:1180px !important;
+  grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)) !important;
+}
+
+.command-stat{
+  min-height:98px !important;
+  padding:16px 18px !important;
+}
+
+.command-stat .value{
+  font-size:23px !important;
+}
+
+/* When sidebar is open, page content should still not squeeze too hard */
+#appShell.app.mdv-sidebar-open .command-hero{
+  grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)) !important;
+}
+
+@media(max-width:1200px){
+  #appShell .canvas{
+    padding:22px 18px !important;
+  }
+
+  #secDashboard > .grid > .panel{
+    padding:22px !important;
+  }
+
+  .command-hero{
+    grid-template-columns:repeat(2, minmax(160px, 1fr)) !important;
+  }
+}
+
+@media(max-width:760px){
+  .command-hero{
+    grid-template-columns:1fr !important;
+  }
+}
+
 </style>
 </head>
 
@@ -15349,6 +15477,46 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   setTimeout(initV5, 100);
   setTimeout(initV5, 800);
   setTimeout(initV5, 1600);
+})();
+</script>
+
+
+<script>
+/* ===== FINAL v6 Click Page to Collapse Sidebar ===== */
+(function(){
+  function sidebarIsOpen(){
+    const app = document.getElementById("appShell");
+    return !!(app && app.classList.contains("mdv-sidebar-open"));
+  }
+
+  function collapseSidebar(){
+    const app = document.getElementById("appShell");
+    if(!app) return;
+    app.classList.remove("mdv-sidebar-open");
+    app.classList.add("sidebar-closed");
+    try{ localStorage.setItem("resellr_mdv_sidebar", "closed"); }catch(e){}
+  }
+
+  document.addEventListener("click", function(e){
+    if(!sidebarIsOpen()) return;
+
+    const sidebar = document.getElementById("sidebar");
+    const hamburger = document.querySelector(".hamburger");
+
+    if(sidebar && sidebar.contains(e.target)) return;
+    if(hamburger && hamburger.contains(e.target)) return;
+
+    // Do not collapse when clicking overlays/modals
+    if(e.target.closest("#globalSearchOverlay, #addInventoryOverlay, #addHoldOverlay, #inventoryHoldsOverlay, .modal, .toast")) return;
+
+    collapseSidebar();
+  }, true);
+
+  window.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && sidebarIsOpen()){
+      collapseSidebar();
+    }
+  }, true);
 })();
 </script>
 
