@@ -9296,6 +9296,32 @@ body.skin-retro .music-viz-bars-overlay span{
   }
 }
 
+
+/* ===== Visualizer Fix: controls + fallback state ===== */
+.music-viz-controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.music-viz-controls button{
+  height:34px !important;
+  padding:0 12px !important;
+  border-radius:8px !important;
+}
+
+.music-viz-status{
+  color:#9aa3b2;
+  font-size:12px;
+}
+
+body.skin-retro .music-viz-status{
+  font-family:"Press Start 2P","IBM Plex Mono",monospace;
+  font-size:8px;
+}
+
 </style>
 </head>
 
@@ -16801,6 +16827,11 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       </div>
     </div>
 
+    
+    <div class="music-viz-controls">
+      <button class="small" type="button" onclick="startMusicVizAudio()">Start audio reactive</button>
+      <span id="musicVizStatus" class="music-viz-status">Fallback visualizer active</span>
+    </div>
     <div class="music-viz-hint">Esc closes • Ctrl + U toggles</div>
   </div>
 </div>
@@ -17162,6 +17193,232 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     setTimeout(upgradeVisualizer, 400);
   });
 
+})();
+</script>
+
+
+<script>
+/* ===== Visualizer Shortcut + Audio Fix v2 ===== */
+(function(){
+  let ctx = null;
+  let analyser = null;
+  let data = null;
+  let micStream = null;
+  let raf = null;
+  let phase = 0;
+
+  function status(msg){
+    const el = document.getElementById("musicVizStatus");
+    if(el) el.textContent = msg;
+  }
+
+  function overlay(){
+    return document.getElementById("musicVizOverlay");
+  }
+
+  function canvas(){
+    return document.getElementById("musicVizOverlayCanvas");
+  }
+
+  function isOpen(){
+    const el = overlay();
+    return !!(el && el.classList.contains("show"));
+  }
+
+  function openViz(){
+    const el = overlay();
+    if(!el) return;
+    el.classList.add("show");
+    el.setAttribute("aria-hidden", "false");
+    startDraw();
+  }
+
+  function closeViz(){
+    const el = overlay();
+    if(!el) return;
+    el.classList.remove("show");
+    el.setAttribute("aria-hidden", "true");
+  }
+
+  function toggleViz(){
+    if(isOpen()) closeViz();
+    else openViz();
+  }
+
+  function setupCanvas(c){
+    const rect = c.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.floor(rect.width * dpr));
+    const h = Math.max(1, Math.floor(rect.height * dpr));
+    if(c.width !== w || c.height !== h){
+      c.width = w;
+      c.height = h;
+    }
+    return {w,h};
+  }
+
+  async function hookPageAudio(){
+    try{
+      const media = Array.from(document.querySelectorAll("audio, video"))
+        .find(el => !el.paused && !el.muted) || document.querySelector("audio, video");
+
+      if(!media) return false;
+
+      if(!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if(ctx.state === "suspended") await ctx.resume();
+
+      analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      data = new Uint8Array(analyser.frequencyBinCount);
+
+      // Avoid double-connecting same element if browser blocks it.
+      if(!media.__resellrVizSource){
+        media.__resellrVizSource = ctx.createMediaElementSource(media);
+        media.__resellrVizSource.connect(analyser);
+        analyser.connect(ctx.destination);
+      }else{
+        media.__resellrVizSource.connect(analyser);
+      }
+
+      status("Reacting to page audio");
+      return true;
+    }catch(e){
+      console.warn("Page audio hook failed:", e);
+      return false;
+    }
+  }
+
+  window.startMusicVizAudio = async function(){
+    // First try page audio.
+    const pageOk = await hookPageAudio();
+    if(pageOk){
+      startDraw();
+      return;
+    }
+
+    // If music is not inside the page, browser cannot hear system audio.
+    // Optional mic fallback can react to room/system speaker sound if user allows it.
+    try{
+      if(!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if(ctx.state === "suspended") await ctx.resume();
+
+      micStream = await navigator.mediaDevices.getUserMedia({audio:true});
+      const src = ctx.createMediaStreamSource(micStream);
+
+      analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      data = new Uint8Array(analyser.frequencyBinCount);
+
+      src.connect(analyser);
+
+      status("Reacting through microphone");
+      startDraw();
+    }catch(e){
+      console.warn("Mic audio failed:", e);
+      status("Could not access audio. Fallback visualizer active.");
+      startDraw();
+    }
+  };
+
+  function draw(){
+    const c = canvas();
+    if(!c || !isOpen()){
+      raf = null;
+      return;
+    }
+
+    const g = c.getContext("2d");
+    const size = setupCanvas(c);
+    const w = size.w;
+    const h = size.h;
+
+    phase += 0.04;
+    g.clearRect(0,0,w,h);
+
+    const bg = g.createLinearGradient(0,0,0,h);
+    bg.addColorStop(0,"#111927");
+    bg.addColorStop(1,"#080d14");
+    g.fillStyle = bg;
+    g.fillRect(0,0,w,h);
+
+    let values = [];
+
+    if(analyser && data){
+      analyser.getByteFrequencyData(data);
+      values = Array.from(data).map(v => v / 255);
+    }else{
+      for(let i=0;i<64;i++){
+        values.push((Math.sin(phase*2 + i*.42) + Math.sin(phase*4 + i*.17) + 2) / 4);
+      }
+    }
+
+    const bars = values.length;
+    const bw = w / bars;
+    let avg = 0;
+
+    for(let i=0;i<bars;i++){
+      const v = values[i];
+      avg += v;
+      const bh = Math.max(8, v * h * .72);
+      const x = i * bw;
+      const y = h - bh - h*.08;
+
+      const grad = g.createLinearGradient(0,y,0,y+bh);
+      grad.addColorStop(0,"#7ee0a3");
+      grad.addColorStop(.5,"#35a8e8");
+      grad.addColorStop(1,"#fff06a");
+      g.fillStyle = grad;
+      g.fillRect(x+2, y, Math.max(3,bw-4), bh);
+    }
+
+    avg /= bars;
+
+    const pulse = g.createRadialGradient(w/2,h*.38,0,w/2,h*.38,80 + avg*280);
+    pulse.addColorStop(0,"rgba(53,168,232,.30)");
+    pulse.addColorStop(1,"rgba(53,168,232,0)");
+    g.fillStyle = pulse;
+    g.fillRect(0,0,w,h);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function startDraw(){
+    if(!raf) raf = requestAnimationFrame(draw);
+  }
+
+  window.openMusicVizOverlay = openViz;
+  window.closeMusicVizOverlay = closeViz;
+  window.toggleMusicVizOverlay = toggleViz;
+
+  // Stronger Ctrl+U capture. Browser may still reserve it in some contexts,
+  // but this catches it before app handlers.
+  function shortcutHandler(e){
+    const key = String(e.key || "").toLowerCase();
+    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "u" || e.code === "KeyU")){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      toggleViz();
+      return false;
+    }
+
+    if(e.key === "Escape" && isOpen()){
+      e.preventDefault();
+      closeViz();
+    }
+  }
+
+  window.addEventListener("keydown", shortcutHandler, true);
+  document.addEventListener("keydown", shortcutHandler, true);
+
+  document.addEventListener("DOMContentLoaded", function(){
+    const el = overlay();
+    if(el){
+      el.addEventListener("click", function(e){
+        if(e.target === el) closeViz();
+      });
+    }
+  });
 })();
 </script>
 
