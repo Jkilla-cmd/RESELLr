@@ -16969,5 +16969,201 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+<script>
+/* ===== Audio Reactive Upgrade ===== */
+(function(){
+  let audioCtx = null;
+  let analyser = null;
+  let dataArray = null;
+  let sourceNode = null;
+  let connectedMedia = null;
+
+  function findMedia(){
+    const media = Array.from(document.querySelectorAll("audio, video"))
+      .find(el => !el.paused && !el.muted);
+
+    return media || document.querySelector("audio, video");
+  }
+
+  async function setupAudioReactive(){
+    try{
+      const media = findMedia();
+      if(!media) return false;
+
+      if(connectedMedia === media && analyser) return true;
+
+      if(!audioCtx){
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      if(audioCtx.state === "suspended"){
+        await audioCtx.resume();
+      }
+
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      sourceNode = audioCtx.createMediaElementSource(media);
+      sourceNode.connect(analyser);
+      analyser.connect(audioCtx.destination);
+
+      connectedMedia = media;
+
+      return true;
+    }catch(err){
+      console.warn("Audio reactive setup failed:", err);
+      return false;
+    }
+  }
+
+  function audioReactiveDraw(){
+    const canvas = document.getElementById("musicVizOverlayCanvas");
+    const overlay = document.getElementById("musicVizOverlay");
+
+    if(!canvas || !overlay || !overlay.classList.contains("show")){
+      window.__musicVizRAF = null;
+      return;
+    }
+
+    const ctx = canvas.getContext("2d");
+
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0,0,w,h);
+
+    const bg = ctx.createLinearGradient(0,0,0,h);
+    bg.addColorStop(0,"rgba(17,25,39,1)");
+    bg.addColorStop(1,"rgba(8,13,20,1)");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,w,h);
+
+    ctx.globalAlpha = 0.15;
+
+    for(let x=0; x<w; x+=60){
+      ctx.beginPath();
+      ctx.moveTo(x,0);
+      ctx.lineTo(x,h);
+      ctx.strokeStyle = "rgba(120,180,255,.2)";
+      ctx.stroke();
+    }
+
+    for(let y=0; y<h; y+=60){
+      ctx.beginPath();
+      ctx.moveTo(0,y);
+      ctx.lineTo(w,y);
+      ctx.strokeStyle = "rgba(120,180,255,.14)";
+      ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+
+    let avg = 0;
+
+    if(analyser && dataArray){
+      analyser.getByteFrequencyData(dataArray);
+
+      const bars = dataArray.length;
+      const barWidth = w / bars;
+
+      for(let i=0;i<bars;i++){
+        const v = dataArray[i] / 255;
+        avg += v;
+
+        const bh = Math.max(8, v * h * 0.72);
+        const x = i * barWidth;
+        const y = h - bh - (h * 0.08);
+
+        const grad = ctx.createLinearGradient(0,y,0,y+bh);
+        grad.addColorStop(0,"#7ee0a3");
+        grad.addColorStop(.5,"#35a8e8");
+        grad.addColorStop(1,"#fff06a");
+
+        ctx.fillStyle = grad;
+        ctx.fillRect(x + 2, y, Math.max(4, barWidth - 4), bh);
+      }
+
+      avg /= bars;
+
+      const radius = 50 + (avg * 140);
+
+      const pulse = ctx.createRadialGradient(
+        w/2, h*0.38, 0,
+        w/2, h*0.38, radius * 2.5
+      );
+
+      pulse.addColorStop(0,"rgba(53,168,232,.28)");
+      pulse.addColorStop(1,"rgba(53,168,232,0)");
+
+      ctx.fillStyle = pulse;
+      ctx.fillRect(0,0,w,h);
+    }else{
+      const t = Date.now() * 0.002;
+
+      for(let i=0;i<40;i++){
+        const v = (Math.sin(t + i * 0.4) + 1) / 2;
+        const bw = (w / 40) - 6;
+        const bh = Math.max(12, v * h * 0.55);
+
+        ctx.fillStyle = "rgba(53,168,232,.85)";
+        ctx.fillRect(i * (bw + 6), h - bh - 40, bw, bh);
+      }
+    }
+
+    window.__musicVizRAF = requestAnimationFrame(audioReactiveDraw);
+  }
+
+  async function upgradeVisualizer(){
+    await setupAudioReactive();
+
+    const openOld = window.openMusicVizOverlay;
+
+    window.openMusicVizOverlay = async function(){
+      await setupAudioReactive();
+
+      if(typeof openOld === "function"){
+        openOld();
+      }else{
+        const el = document.getElementById("musicVizOverlay");
+        if(el) el.classList.add("show");
+      }
+
+      if(!window.__musicVizRAF){
+        window.__musicVizRAF = requestAnimationFrame(audioReactiveDraw);
+      }
+    };
+
+    const toggleOld = window.toggleMusicVizOverlay;
+
+    window.toggleMusicVizOverlay = async function(){
+      await setupAudioReactive();
+
+      if(typeof toggleOld === "function"){
+        toggleOld();
+      }
+
+      const el = document.getElementById("musicVizOverlay");
+      if(el && el.classList.contains("show") && !window.__musicVizRAF){
+        window.__musicVizRAF = requestAnimationFrame(audioReactiveDraw);
+      }
+    };
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(upgradeVisualizer, 400);
+  });
+
+})();
+</script>
+
 </body>
 </html>
