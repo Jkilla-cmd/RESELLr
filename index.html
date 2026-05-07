@@ -8991,6 +8991,126 @@ body.skin-retro #netWorthPanel input[type="checkbox"]:checked{
   }
 }
 
+
+/* ===== Final UI Cleanup Patch ===== */
+
+/* Remove top bar visualizer completely */
+.topbar-inline-viz,
+.music-visualizer,
+#musicVisualizer,
+#vizCanvas{
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+/* Fix hamburger outline/square so it blends into the top bar */
+.hamburger,
+button.hamburger{
+  background:transparent !important;
+  border:0 !important;
+  outline:none !important;
+  box-shadow:none !important;
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  border-radius:8px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:0 !important;
+  color:#fff !important;
+}
+
+.hamburger:hover,
+button.hamburger:hover{
+  background:rgba(255,255,255,.06) !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+.hamburger:focus,
+.hamburger:focus-visible,
+button.hamburger:focus,
+button.hamburger:focus-visible{
+  outline:none !important;
+  box-shadow:none !important;
+}
+
+/* Make lofi avatar sit cleanly inside top bar */
+.topbar-right{
+  align-items:center !important;
+}
+
+.lofi-avatar-wrap,
+#lofiAvatarWrap{
+  width:40px !important;
+  height:40px !important;
+  flex:0 0 40px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:hidden !important;
+  border-radius:10px !important;
+  margin:0 2px !important;
+  transform:none !important;
+}
+
+.lofi-avatar-trigger,
+#lofiAvatarTrigger,
+.lofi-avatar-wrap img,
+#lofiAvatarWrap img{
+  width:40px !important;
+  height:40px !important;
+  max-width:40px !important;
+  max-height:40px !important;
+  object-fit:cover !important;
+  border-radius:10px !important;
+  transform:none !important;
+  margin:0 !important;
+  position:relative !important;
+  top:auto !important;
+  bottom:auto !important;
+}
+
+.lofi-avatar-wrap:hover .lofi-avatar-trigger,
+#lofiAvatarWrap:hover #lofiAvatarTrigger{
+  transform:none !important;
+}
+
+/* Mono style should not force uppercase everywhere */
+body.skin-mono,
+body.skin-mono button,
+body.skin-mono input,
+body.skin-mono select,
+body.skin-mono textarea,
+body.skin-mono label,
+body.skin-mono .label,
+body.skin-mono .muted,
+body.skin-mono .nav button,
+body.skin-mono .mdv-label{
+  text-transform:none !important;
+  letter-spacing:normal !important;
+}
+
+body.skin-mono h1,
+body.skin-mono h2,
+body.skin-mono h3{
+  text-transform:none !important;
+}
+
+/* Lock button */
+#lockButton{
+  cursor:pointer !important;
+  pointer-events:auto !important;
+  opacity:1 !important;
+}
+
+#storageProbe,
+.canary-badge{
+  display:none !important;
+}
+
 </style>
 </head>
 
@@ -16406,6 +16526,70 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   }
 
   window.reorderDashboardV13 = reorderDashboardV13;
+})();
+</script>
+
+
+<script>
+/* ===== Final Lock Button Fix ===== */
+(function(){
+  function showLockScreen(){
+    const lockIds = ["lockScreen", "loginScreen"];
+    let found = false;
+
+    lockIds.forEach(id=>{
+      const el = document.getElementById(id);
+      if(el){
+        el.style.display = "";
+        el.style.pointerEvents = "";
+        el.removeAttribute("aria-hidden");
+        found = true;
+      }
+    });
+
+    document.body.classList.remove("bookmarklet-import");
+
+    try{ sessionStorage.removeItem("resellr_bookmarklet_import"); }catch(e){}
+    try{ localStorage.setItem("resellr_locked", "1"); }catch(e){}
+
+    return found;
+  }
+
+  window.lockNow = function(){
+    try{
+      if(typeof saveNow === "function") saveNow();
+    }catch(e){}
+
+    const showed = showLockScreen();
+
+    if(!showed){
+      document.body.classList.add("locked");
+      try{ alert("Locked. Refresh the page to show the login screen."); }catch(e){}
+    }
+  };
+
+  function bindLockButton(){
+    const oldBtn = document.getElementById("lockButton");
+    if(!oldBtn || oldBtn.dataset.lockFixed === "true") return;
+
+    const newBtn = oldBtn.cloneNode(true);
+    newBtn.id = "lockButton";
+    newBtn.dataset.lockFixed = "true";
+    newBtn.removeAttribute("onclick");
+    oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+
+    newBtn.addEventListener("click", function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      window.lockNow();
+      return false;
+    }, true);
+  }
+
+  document.addEventListener("DOMContentLoaded", bindLockButton);
+  window.addEventListener("load", bindLockButton);
+  setTimeout(bindLockButton, 300);
+  setTimeout(bindLockButton, 1000);
 })();
 </script>
 
