@@ -9111,6 +9111,191 @@ body.skin-mono h3{
   display:none !important;
 }
 
+
+/* ===== Ctrl+U Music Visualizer Overlay ===== */
+#musicVizOverlay{
+  position:fixed;
+  inset:0;
+  z-index:30020;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(0,0,0,.52);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+
+#musicVizOverlay.show{
+  display:flex;
+}
+
+.music-viz-modal{
+  width:min(820px, calc(100vw - 32px));
+  height:min(460px, calc(100vh - 80px));
+  background:#0f151e;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:18px;
+  box-shadow:0 28px 80px rgba(0,0,0,.52);
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.music-viz-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+.music-viz-title{
+  font-size:16px;
+  font-weight:800;
+  color:#eef2f7;
+}
+
+.music-viz-subtitle{
+  font-size:12px;
+  color:#9aa3b2;
+  margin-top:3px;
+}
+
+.music-viz-shortcut{
+  color:#9aa3b2;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:11px;
+  white-space:nowrap;
+}
+
+.music-viz-stage{
+  position:relative;
+  flex:1;
+  min-height:0;
+  border-radius:14px;
+  background:
+    radial-gradient(circle at 50% 25%, rgba(47,163,230,.16), transparent 45%),
+    linear-gradient(180deg, #111927, #080d14);
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.08);
+}
+
+#musicVizOverlayCanvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+
+.music-viz-bars-overlay{
+  position:absolute;
+  inset:auto 22px 22px 22px;
+  height:170px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  gap:8px;
+  pointer-events:none;
+}
+
+.music-viz-bars-overlay span{
+  width:12px;
+  height:30%;
+  border-radius:999px 999px 4px 4px;
+  background:linear-gradient(180deg, #7ee0a3, #35a8e8);
+  opacity:.9;
+  transform-origin:bottom;
+  animation: vizOverlayBars 1s ease-in-out infinite;
+  animation-delay:calc(var(--i) * -0.08s);
+}
+
+@keyframes vizOverlayBars{
+  0%,100%{ height:24%; opacity:.55; }
+  50%{ height:92%; opacity:1; }
+}
+
+.music-viz-hint{
+  color:#8f9aa8;
+  font-size:12px;
+  padding-top:10px;
+}
+
+body.skin-mono .music-viz-modal{
+  background:#0a0a0a;
+  border-color:#3a3a3a;
+  border-radius:6px;
+}
+
+body.skin-mono #musicVizOverlay{
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+
+body.skin-mono .music-viz-bars-overlay span{
+  background:#fff;
+  border-radius:2px;
+}
+
+body.skin-unifi .music-viz-modal{
+  background:#101821;
+  border-color:rgba(128,151,174,.16);
+}
+
+body.skin-retro .music-viz-modal{
+  background:#080b18;
+  border:2px solid #55e6ff;
+  border-radius:0;
+  box-shadow:6px 6px 0 #000;
+}
+
+body.skin-retro .music-viz-title,
+body.skin-retro .music-viz-subtitle,
+body.skin-retro .music-viz-shortcut,
+body.skin-retro .music-viz-hint{
+  font-family:"Press Start 2P","IBM Plex Mono",monospace;
+}
+
+body.skin-retro .music-viz-title{
+  color:#fff06a;
+  font-size:10px;
+}
+
+body.skin-retro .music-viz-subtitle,
+body.skin-retro .music-viz-shortcut,
+body.skin-retro .music-viz-hint{
+  font-size:8px;
+}
+
+body.skin-retro .music-viz-stage{
+  border-radius:0;
+  border:2px solid #55e6ff;
+}
+
+body.skin-retro .music-viz-bars-overlay span{
+  border-radius:0;
+  background:linear-gradient(180deg,#fff06a,#55e6ff);
+  box-shadow:3px 3px 0 #000;
+}
+
+@media(max-width:680px){
+  .music-viz-modal{
+    height:min(420px, calc(100vh - 60px));
+  }
+
+  .music-viz-bars-overlay{
+    gap:5px;
+    inset:auto 14px 18px 14px;
+  }
+
+  .music-viz-bars-overlay span{
+    width:8px;
+  }
+}
+
 </style>
 </head>
 
@@ -16590,6 +16775,197 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.addEventListener("load", bindLockButton);
   setTimeout(bindLockButton, 300);
   setTimeout(bindLockButton, 1000);
+})();
+</script>
+
+
+<!-- Ctrl+U Music Visualizer Overlay -->
+<div id="musicVizOverlay" aria-hidden="true">
+  <div class="music-viz-modal">
+    <div class="music-viz-header">
+      <div>
+        <div class="music-viz-title">Music Visualizer</div>
+        <div class="music-viz-subtitle">Reactive overlay for your music session</div>
+      </div>
+      <span class="music-viz-shortcut">Ctrl + U</span>
+    </div>
+
+    <div class="music-viz-stage">
+      <canvas id="musicVizOverlayCanvas"></canvas>
+      <div class="music-viz-bars-overlay">
+        <span style="--i:1"></span><span style="--i:2"></span><span style="--i:3"></span><span style="--i:4"></span>
+        <span style="--i:5"></span><span style="--i:6"></span><span style="--i:7"></span><span style="--i:8"></span>
+        <span style="--i:9"></span><span style="--i:10"></span><span style="--i:11"></span><span style="--i:12"></span>
+        <span style="--i:13"></span><span style="--i:14"></span><span style="--i:15"></span><span style="--i:16"></span>
+        <span style="--i:17"></span><span style="--i:18"></span><span style="--i:19"></span><span style="--i:20"></span>
+      </div>
+    </div>
+
+    <div class="music-viz-hint">Esc closes • Ctrl + U toggles</div>
+  </div>
+</div>
+
+
+<script>
+/* ===== Ctrl+U Music Visualizer Overlay Logic ===== */
+(function(){
+  let rafId = null;
+  let phase = 0;
+
+  function overlay(){
+    return document.getElementById("musicVizOverlay");
+  }
+
+  function isOpen(){
+    const el = overlay();
+    return !!(el && el.classList.contains("show"));
+  }
+
+  function resizeCanvas(canvas){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.floor(rect.width * dpr));
+    const h = Math.max(1, Math.floor(rect.height * dpr));
+
+    if(canvas.width !== w || canvas.height !== h){
+      canvas.width = w;
+      canvas.height = h;
+    }
+
+    return {w, h};
+  }
+
+  function draw(){
+    const canvas = document.getElementById("musicVizOverlayCanvas");
+    if(!canvas || !isOpen()){
+      rafId = null;
+      return;
+    }
+
+    const ctx = canvas.getContext("2d");
+    const size = resizeCanvas(canvas);
+    const w = size.w;
+    const h = size.h;
+
+    phase += 0.035;
+    ctx.clearRect(0,0,w,h);
+
+    ctx.globalAlpha = 0.18;
+    ctx.lineWidth = 1;
+
+    for(let x=0; x<w; x+=48){
+      ctx.beginPath();
+      ctx.moveTo(x,0);
+      ctx.lineTo(x,h);
+      ctx.strokeStyle = "rgba(138,199,255,.24)";
+      ctx.stroke();
+    }
+
+    for(let y=0; y<h; y+=48){
+      ctx.beginPath();
+      ctx.moveTo(0,y);
+      ctx.lineTo(w,y);
+      ctx.strokeStyle = "rgba(138,199,255,.18)";
+      ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = Math.max(2, w/420);
+    ctx.beginPath();
+
+    const mid = h * 0.43;
+    const amp = h * 0.13;
+
+    for(let x=0; x<=w; x+=8){
+      const p = x / w;
+      const y =
+        mid +
+        Math.sin(p * Math.PI * 4 + phase * 2.2) * amp * 0.55 +
+        Math.sin(p * Math.PI * 11 + phase * 3.7) * amp * 0.22 +
+        Math.sin(p * Math.PI * 21 + phase * 1.5) * amp * 0.10;
+
+      if(x === 0) ctx.moveTo(x,y);
+      else ctx.lineTo(x,y);
+    }
+
+    const grad = ctx.createLinearGradient(0,0,w,0);
+    grad.addColorStop(0,"rgba(126,224,163,.85)");
+    grad.addColorStop(.5,"rgba(53,168,232,1)");
+    grad.addColorStop(1,"rgba(255,240,106,.85)");
+
+    ctx.strokeStyle = grad;
+    ctx.shadowColor = "rgba(53,168,232,.55)";
+    ctx.shadowBlur = 16;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    const r = (Math.sin(phase * 2.5) * 0.5 + 0.5) * 42 + 52;
+    const pulse = ctx.createRadialGradient(w/2, h*0.42, 0, w/2, h*0.42, r*3);
+    pulse.addColorStop(0, "rgba(53,168,232,.18)");
+    pulse.addColorStop(1, "rgba(53,168,232,0)");
+
+    ctx.fillStyle = pulse;
+    ctx.fillRect(0,0,w,h);
+
+    rafId = requestAnimationFrame(draw);
+  }
+
+  function openMusicViz(){
+    const el = overlay();
+    if(!el) return;
+
+    el.classList.add("show");
+    el.setAttribute("aria-hidden","false");
+
+    if(!rafId){
+      rafId = requestAnimationFrame(draw);
+    }
+  }
+
+  function closeMusicViz(){
+    const el = overlay();
+    if(!el) return;
+
+    el.classList.remove("show");
+    el.setAttribute("aria-hidden","true");
+  }
+
+  function toggleMusicViz(){
+    if(isOpen()) closeMusicViz();
+    else openMusicViz();
+  }
+
+  window.openMusicVizOverlay = openMusicViz;
+  window.closeMusicVizOverlay = closeMusicViz;
+  window.toggleMusicVizOverlay = toggleMusicViz;
+
+  document.addEventListener("keydown", function(e){
+    if(e.ctrlKey && String(e.key).toLowerCase() === "u"){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      toggleMusicViz();
+      return false;
+    }
+
+    if(e.key === "Escape" && isOpen()){
+      e.preventDefault();
+      closeMusicViz();
+    }
+  }, true);
+
+  document.addEventListener("DOMContentLoaded", function(){
+    const el = overlay();
+    if(el){
+      el.addEventListener("click", function(e){
+        if(e.target === el) closeMusicViz();
+      });
+    }
+  });
+
+  window.addEventListener("resize", function(){
+    if(isOpen() && !rafId) rafId = requestAnimationFrame(draw);
+  });
 })();
 </script>
 
