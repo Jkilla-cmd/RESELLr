@@ -4794,6 +4794,186 @@ body.skin-pro .command-stat .value{
 }
 
 
+
+/* ===== Dream Trip Style Mode ===== */
+body.skin-dreamtrip{
+  font-family: "Inter", "JetBrains Mono", system-ui, sans-serif !important;
+  color:#f8f4ff !important;
+  background:
+    radial-gradient(900px 560px at 16% 10%, rgba(96, 190, 255, .22), transparent 58%),
+    radial-gradient(820px 520px at 86% 14%, rgba(255, 118, 214, .18), transparent 56%),
+    radial-gradient(820px 520px at 52% 88%, rgba(168, 85, 247, .18), transparent 58%),
+    linear-gradient(180deg, #060414 0%, #090d22 50%, #05040f 100%) !important;
+  background-attachment: fixed !important;
+  overflow-x:hidden;
+}
+
+body.skin-dreamtrip::before{
+  content:"" !important;
+  position:fixed !important;
+  inset:-18% !important;
+  pointer-events:none !important;
+  z-index:0 !important;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(125,249,255,.16), transparent 18%),
+    radial-gradient(circle at 75% 42%, rgba(255,135,218,.16), transparent 20%),
+    radial-gradient(circle at 48% 72%, rgba(157,196,255,.12), transparent 24%) !important;
+  filter: blur(38px) !important;
+  opacity:.8 !important;
+  animation: dreamTripDrift 22s ease-in-out infinite alternate !important;
+}
+
+body.skin-dreamtrip .topbar,
+body.skin-dreamtrip .app,
+body.skin-dreamtrip .modal,
+body.skin-dreamtrip .toast{
+  position:relative;
+  z-index:1;
+}
+
+body.skin-dreamtrip .panel,
+body.skin-dreamtrip .command-stat,
+body.skin-dreamtrip .command-tabs,
+body.skin-dreamtrip .snapshot-item,
+body.skin-dreamtrip .flip-card,
+body.skin-dreamtrip .insight-card,
+body.skin-dreamtrip .market-card,
+body.skin-dreamtrip .table-wrap,
+body.skin-dreamtrip #netWorthPanel .nw-card{
+  background: rgba(13, 15, 38, .66) !important;
+  border:1px solid rgba(190,210,255,.16) !important;
+  border-radius:18px !important;
+  box-shadow:
+    0 16px 44px rgba(0,0,0,.32),
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 0 28px rgba(157,196,255,.07) !important;
+  backdrop-filter: blur(14px) saturate(1.18) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.18) !important;
+  animation: dreamTripFloat 10s ease-in-out infinite;
+}
+
+body.skin-dreamtrip .topbar,
+body.skin-dreamtrip #sidebar,
+body.skin-dreamtrip .sidebar{
+  background: rgba(9, 10, 28, .72) !important;
+  border:1px solid rgba(190,210,255,.14) !important;
+  border-radius:18px !important;
+  box-shadow: 0 14px 40px rgba(0,0,0,.32), 0 0 30px rgba(255,135,218,.06) !important;
+  backdrop-filter: blur(16px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.2) !important;
+}
+
+body.skin-dreamtrip button,
+body.skin-dreamtrip button.small,
+body.skin-dreamtrip .custom-select-trigger{
+  background: rgba(157,196,255,.16) !important;
+  border:1px solid rgba(157,196,255,.28) !important;
+  color:#f8f4ff !important;
+  border-radius:14px !important;
+}
+
+body.skin-dreamtrip button:hover,
+body.skin-dreamtrip button.small:hover,
+body.skin-dreamtrip .custom-select-trigger:hover{
+  background: rgba(255,135,218,.18) !important;
+  border-color: rgba(255,135,218,.34) !important;
+}
+
+body.skin-dreamtrip input,
+body.skin-dreamtrip select,
+body.skin-dreamtrip textarea{
+  background: rgba(11, 14, 34, .72) !important;
+  border:1px solid rgba(190,210,255,.14) !important;
+  color:#f8f4ff !important;
+  border-radius:14px !important;
+}
+
+body.skin-dreamtrip #topbarTitle,
+body.skin-dreamtrip .topbar .title,
+body.skin-dreamtrip h3,
+body.skin-dreamtrip .command-section-title h3{
+  color:#e2ebff !important;
+  text-shadow: 0 0 18px rgba(157,196,255,.14);
+}
+
+body.skin-dreamtrip .blue{ color:#9dc4ff !important; }
+body.skin-dreamtrip .green{ color:#8df0b3 !important; }
+body.skin-dreamtrip .red{ color:#fb7185 !important; }
+body.skin-dreamtrip .yellow{ color:#fde68a !important; }
+
+body.skin-dreamtrip .music-visualizer .viz-bars span,
+body.skin-dreamtrip .topbar-inline-viz .viz-bars span{
+  background: linear-gradient(180deg, #9dc4ff, #ff87da) !important;
+  box-shadow: 0 0 12px rgba(157,196,255,.22);
+}
+
+@keyframes dreamTripDrift{
+  0%{ transform:translate3d(-14px,-7px,0) scale(1); filter:hue-rotate(0deg) blur(38px); }
+  100%{ transform:translate3d(14px,9px,0) scale(1.03); filter:hue-rotate(16deg) blur(38px); }
+}
+
+@keyframes dreamTripFloat{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  body.skin-dreamtrip::before,
+  body.skin-dreamtrip .panel,
+  body.skin-dreamtrip .command-stat,
+  body.skin-dreamtrip .market-card{
+    animation:none !important;
+  }
+}
+
+/* ===== Shared topbar image button sizing ===== */
+#ebayPriceTopButton,
+#lofiMusicToggle,
+.lofi-avatar-wrap{
+  width:52px !important;
+  height:52px !important;
+  min-width:52px !important;
+  min-height:52px !important;
+  max-width:52px !important;
+  max-height:52px !important;
+  flex:0 0 52px !important;
+  aspect-ratio:1 / 1 !important;
+}
+
+#ebayPriceTopButton,
+#lofiMusicToggle{
+  padding:0 !important;
+  margin:0 !important;
+  border-radius:16px !important;
+  overflow:hidden !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  line-height:0 !important;
+}
+
+#ebayPriceTopButton img,
+#lofiAvatarImg,
+#lofiMusicToggle img{
+  width:100% !important;
+  height:100% !important;
+  min-width:100% !important;
+  min-height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:cover !important;
+  object-position:center !important;
+  border-radius:16px !important;
+  display:block !important;
+  transform:none !important;
+}
+
+#ebayPriceTopButton span,
+#ebayPriceTopButton .market-logo{
+  display:none !important;
+}
+
+
 /* ===== Dashboard Dropdown Fix ===== */
 
 /* Base select fix across dashboard */
@@ -9551,148 +9731,6 @@ button[aria-label*="eBay"] img{
 
 
 
-
-/* ===== DREAM TRIP FORCE THEME - DOES NOT ALTER OTHER THEMES ===== */
-html[data-theme="dreamtrip"],
-body.dreamtrip-active{
-  --bg:#07051a !important;
-  --panel:rgba(16, 14, 38, 0.68) !important;
-  --panel-solid:rgba(18, 16, 42, 0.88) !important;
-  --panel-2:rgba(24, 22, 52, 0.66) !important;
-  --border:rgba(190,210,255,0.18) !important;
-  --text:#faf7ff !important;
-  --muted:#c9c2e8 !important;
-  --accent:#9dc4ff !important;
-  --accent-2:#ff87da !important;
-  --blue:#9dc4ff !important;
-  --green:#8df0b3 !important;
-  --red:#fb7185 !important;
-  --yellow:#fde68a !important;
-}
-
-html[data-theme="dreamtrip"] body,
-body.dreamtrip-active{
-  background:
-    radial-gradient(circle at 18% 16%, rgba(95,190,255,.34), transparent 27%),
-    radial-gradient(circle at 82% 24%, rgba(255,105,210,.30), transparent 29%),
-    radial-gradient(circle at 50% 84%, rgba(168,85,247,.24), transparent 36%),
-    linear-gradient(180deg,#07051a 0%, #0b1028 52%, #07051a 100%) !important;
-  background-attachment: fixed !important;
-  overflow-x:hidden !important;
-}
-
-html[data-theme="dreamtrip"] body::before,
-body.dreamtrip-active::before{
-  content:"" !important;
-  position:fixed !important;
-  inset:-18% !important;
-  pointer-events:none !important;
-  z-index:-1 !important;
-  background:
-    radial-gradient(circle at 25% 35%, rgba(125,249,255,.22), transparent 17%),
-    radial-gradient(circle at 72% 48%, rgba(255,135,218,.20), transparent 19%),
-    radial-gradient(circle at 48% 68%, rgba(157,196,255,.16), transparent 24%) !important;
-  filter: blur(38px) !important;
-  opacity:.95 !important;
-  animation: dreamTripDriftForce 18s ease-in-out infinite alternate !important;
-}
-
-html[data-theme="dreamtrip"] .panel,
-html[data-theme="dreamtrip"] .topbar,
-html[data-theme="dreamtrip"] .sidebar,
-html[data-theme="dreamtrip"] .market-card,
-html[data-theme="dreamtrip"] .nw-card,
-html[data-theme="dreamtrip"] .toast,
-html[data-theme="dreamtrip"] .modal .box,
-body.dreamtrip-active .panel,
-body.dreamtrip-active .topbar,
-body.dreamtrip-active .sidebar,
-body.dreamtrip-active .market-card,
-body.dreamtrip-active .nw-card,
-body.dreamtrip-active .toast,
-body.dreamtrip-active .modal .box{
-  background: rgba(15, 14, 38, 0.66) !important;
-  border-color: rgba(190,210,255,0.18) !important;
-  box-shadow:
-    0 16px 44px rgba(0,0,0,.34),
-    0 0 34px rgba(157,196,255,.10) !important;
-  backdrop-filter: blur(14px) saturate(1.22) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(1.22) !important;
-}
-
-html[data-theme="dreamtrip"] .panel,
-body.dreamtrip-active .panel{
-  animation: dreamTripFloatForce 9s ease-in-out infinite !important;
-}
-
-html[data-theme="dreamtrip"] button,
-body.dreamtrip-active button{
-  border-color: rgba(157,196,255,.32) !important;
-}
-
-html[data-theme="dreamtrip"] .topbar .title,
-html[data-theme="dreamtrip"] .brand .name,
-html[data-theme="dreamtrip"] h3,
-body.dreamtrip-active .topbar .title,
-body.dreamtrip-active .brand .name,
-body.dreamtrip-active h3{
-  color:#e6edff !important;
-}
-
-@keyframes dreamTripDriftForce{
-  0%{ transform:translate3d(-18px,-8px,0) scale(1); filter:hue-rotate(0deg) blur(38px); }
-  100%{ transform:translate3d(18px,10px,0) scale(1.035); filter:hue-rotate(18deg) blur(38px); }
-}
-@keyframes dreamTripFloatForce{
-  0%,100%{ transform:translateY(0); }
-  50%{ transform:translateY(-3px); }
-}
-
-/* ===== EXACT TOPBAR ICON MATCH ===== */
-.topbar .ebay-sold-logo-frame,
-.topbar .lofi-avatar-wrap,
-.topbar .lofi-avatar-trigger{
-  width:58px !important;
-  height:58px !important;
-  min-width:58px !important;
-  min-height:58px !important;
-  max-width:58px !important;
-  max-height:58px !important;
-  flex:0 0 58px !important;
-  aspect-ratio:1/1 !important;
-}
-
-.topbar .ebay-sold-logo-frame,
-.topbar .lofi-avatar-trigger{
-  padding:0 !important;
-  margin:0 6px 0 0 !important;
-  border-radius:18px !important;
-  overflow:hidden !important;
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  line-height:0 !important;
-}
-
-.topbar .ebay-sold-logo-frame img,
-.topbar .lofi-avatar-trigger img,
-.topbar #lofiAvatarImg{
-  width:58px !important;
-  height:58px !important;
-  min-width:58px !important;
-  min-height:58px !important;
-  max-width:58px !important;
-  max-height:58px !important;
-  object-fit:cover !important;
-  object-position:center !important;
-  border-radius:18px !important;
-  display:block !important;
-  transform:none !important;
-}
-
-.topbar .ebay-sold-logo-frame span:not(.sr-only){
-  display:none !important;
-}
 
 </style>
 </head>
@@ -14646,13 +14684,14 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     { key:"mono", label:"Mono" },
     { key:"unifi", label:"UniFi" },
     { key:"pro", label:"Pro" },
-    { key:"retro", label:"8-Bit" }
+    { key:"retro", label:"8-Bit" },
+    { key:"dreamtrip", label:"Dream Trip" }
   ];
 
   function applyStyleMode(mode){
     const safe = modes.some(m => m.key === mode) ? mode : "mono";
 
-    document.body.classList.remove("skin-mono", "skin-unifi", "skin-pro", "skin-retro");
+    document.body.classList.remove("skin-mono", "skin-unifi", "skin-pro", "skin-retro", "skin-dreamtrip");
     document.body.classList.add("skin-" + safe);
 
     try{ localStorage.setItem("resellr_style_mode", safe); }catch(e){}
@@ -18417,127 +18456,6 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 
-<script>
-/* ===== Force Dream button + exact icon match ===== */
-(function(){
-  function applyDreamTrip(){
-    document.documentElement.setAttribute("data-theme", "dreamtrip");
-    document.body.classList.add("dreamtrip-active");
-    try{
-      localStorage.setItem("theme", "dreamtrip");
-      localStorage.setItem("ots_theme", "dreamtrip");
-    }catch(e){}
-    const styleBtn = Array.from(document.querySelectorAll(".topbar button")).find(b => /^Style:/i.test((b.textContent||"").trim()));
-    if(styleBtn) styleBtn.textContent = "Style: Dream Trip";
-    const chip = document.querySelector(".dreamtrip-style-chip");
-    if(chip) chip.textContent = "Dream ON";
-  }
-
-  function markEbay(){
-    const topbar = document.querySelector(".topbar");
-    if(!topbar) return;
-    Array.from(topbar.querySelectorAll("button, a")).forEach(el=>{
-      const label = [el.id, el.className, el.title, el.getAttribute("aria-label"), el.textContent].join(" ").toLowerCase();
-      const img = el.querySelector("img[src*='pngwing'], img[src*='ebay'], img[alt*='eBay' i]");
-      const isEbay = !!img || label.includes("ebay") || label.includes("sold");
-      if(isEbay && !el.classList.contains("lofi-avatar-trigger")){
-        el.classList.add("ebay-sold-logo-frame");
-        el.style.width = "58px";
-        el.style.height = "58px";
-        el.style.minWidth = "58px";
-        el.style.minHeight = "58px";
-        el.style.maxWidth = "58px";
-        el.style.maxHeight = "58px";
-        el.style.padding = "0";
-        el.style.borderRadius = "18px";
-        if(img){
-          img.removeAttribute("width");
-          img.removeAttribute("height");
-          img.style.width = "58px";
-          img.style.height = "58px";
-          img.style.minWidth = "58px";
-          img.style.minHeight = "58px";
-          img.style.maxWidth = "58px";
-          img.style.maxHeight = "58px";
-          img.style.objectFit = "cover";
-          img.style.borderRadius = "18px";
-          img.style.transform = "none";
-        }
-      }
-    });
-
-    // also force lo-fi to same exact numbers, without changing its image source
-    const lofi = topbar.querySelector(".lofi-avatar-trigger");
-    const wrap = topbar.querySelector(".lofi-avatar-wrap");
-    [lofi, wrap].forEach(el=>{
-      if(!el) return;
-      el.style.width = "58px";
-      el.style.height = "58px";
-      el.style.minWidth = "58px";
-      el.style.minHeight = "58px";
-      el.style.maxWidth = "58px";
-      el.style.maxHeight = "58px";
-    });
-    const lofiImg = topbar.querySelector("#lofiAvatarImg, .lofi-avatar-trigger img");
-    if(lofiImg){
-      lofiImg.style.width = "58px";
-      lofiImg.style.height = "58px";
-      lofiImg.style.minWidth = "58px";
-      lofiImg.style.minHeight = "58px";
-      lofiImg.style.maxWidth = "58px";
-      lofiImg.style.maxHeight = "58px";
-      lofiImg.style.objectFit = "cover";
-      lofiImg.style.borderRadius = "18px";
-      lofiImg.style.transform = "none";
-    }
-  }
-
-  function addDreamButton(){
-    const topbar = document.querySelector(".topbar");
-    if(!topbar) return;
-    let chip = topbar.querySelector(".dreamtrip-style-chip");
-    if(!chip){
-      const styleBtn = Array.from(topbar.querySelectorAll("button")).find(b => /^Style:/i.test((b.textContent||"").trim()));
-      if(!styleBtn) return;
-      chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "dreamtrip-style-chip small";
-      chip.textContent = "Dream";
-      chip.title = "Switch to Dream Trip style";
-      styleBtn.insertAdjacentElement("afterend", chip);
-    }
-    if(!chip.dataset.forceDreamWired){
-      chip.dataset.forceDreamWired = "1";
-      chip.addEventListener("click", function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        applyDreamTrip();
-      }, true);
-    }
-  }
-
-  function run(){
-    markEbay();
-    addDreamButton();
-  }
-
-  document.addEventListener("DOMContentLoaded", function(){
-    setTimeout(run, 200);
-    setTimeout(run, 800);
-  });
-  window.addEventListener("load", run);
-  document.addEventListener("click", function(e){
-    if(e.target && e.target.closest && e.target.closest(".dreamtrip-style-chip")){
-      e.preventDefault();
-      e.stopPropagation();
-      applyDreamTrip();
-      return false;
-    }
-    setTimeout(run, 60);
-  }, true);
-})();
-</script>
-
 </body>
 </html>
 
@@ -18708,3 +18626,36 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   runPatch();
 })();
 </script>
+
+
+<style id="resellrFinalDreamTripIconOverride">
+/* Final override: keep the two topbar image buttons identical */
+#ebayPriceTopButton,
+#lofiMusicToggle,
+.lofi-avatar-wrap{
+  width:52px !important;
+  height:52px !important;
+  min-width:52px !important;
+  min-height:52px !important;
+  max-width:52px !important;
+  max-height:52px !important;
+  flex:0 0 52px !important;
+}
+#ebayPriceTopButton,
+#lofiMusicToggle{
+  padding:0 !important;
+  margin:0 !important;
+  border-radius:16px !important;
+  overflow:hidden !important;
+}
+#ebayPriceTopButton img,
+#lofiMusicToggle img,
+#lofiAvatarImg{
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:cover !important;
+  border-radius:16px !important;
+}
+</style>
