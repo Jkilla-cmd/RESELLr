@@ -18659,3 +18659,129 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   border-radius:16px !important;
 }
 </style>
+
+
+<style id="dreamTripVisibleFinalPatch">
+/* ===== Dream Trip visible final patch ===== */
+body.skin-dreamtrip{
+  background:
+    radial-gradient(circle at 12% 14%, rgba(0, 229, 255, .30), transparent 24%),
+    radial-gradient(circle at 88% 18%, rgba(255, 0, 170, .28), transparent 26%),
+    radial-gradient(circle at 45% 90%, rgba(140, 80, 255, .26), transparent 34%),
+    linear-gradient(135deg, #050214 0%, #07132d 45%, #16071f 100%) !important;
+  background-attachment: fixed !important;
+  color:#faf7ff !important;
+}
+
+body.skin-dreamtrip::before{
+  content:"" !important;
+  position:fixed !important;
+  inset:-25% !important;
+  pointer-events:none !important;
+  z-index:0 !important;
+  background:
+    conic-gradient(
+      from 0deg at 50% 50%,
+      rgba(0,229,255,.18),
+      rgba(255,0,170,.16),
+      rgba(140,80,255,.16),
+      rgba(0,229,255,.18)
+    ) !important;
+  filter: blur(54px) saturate(1.5) !important;
+  opacity:.55 !important;
+  animation:dreamTripSpin 34s linear infinite !important;
+}
+
+body.skin-dreamtrip::after{
+  content:"" !important;
+  position:fixed !important;
+  inset:0 !important;
+  pointer-events:none !important;
+  z-index:0 !important;
+  background:
+    radial-gradient(circle at var(--dream-x, 20%) var(--dream-y, 30%), rgba(255,255,255,.08), transparent 18%),
+    linear-gradient(115deg, rgba(0,229,255,.08), transparent 32%, rgba(255,0,170,.08), transparent 72%) !important;
+  mix-blend-mode: screen !important;
+  opacity:.45 !important;
+  animation:dreamTripWave 16s ease-in-out infinite alternate !important;
+}
+
+body.skin-dreamtrip .app,
+body.skin-dreamtrip .topbar,
+body.skin-dreamtrip .sidebar,
+body.skin-dreamtrip .modal,
+body.skin-dreamtrip .toast{
+  position:relative !important;
+  z-index:1 !important;
+}
+
+body.skin-dreamtrip .topbar{
+  background: linear-gradient(135deg, rgba(8,16,38,.78), rgba(32,14,48,.72)) !important;
+  border-color: rgba(0,229,255,.24) !important;
+  box-shadow:
+    0 14px 38px rgba(0,0,0,.34),
+    0 0 24px rgba(0,229,255,.12),
+    inset 0 0 0 1px rgba(255,255,255,.04) !important;
+}
+
+body.skin-dreamtrip .panel,
+body.skin-dreamtrip .command-stat,
+body.skin-dreamtrip .market-card,
+body.skin-dreamtrip .table-wrap,
+body.skin-dreamtrip #netWorthPanel .nw-card{
+  background:
+    linear-gradient(135deg, rgba(13,18,45,.74), rgba(34,14,48,.66)) !important;
+  border-color: rgba(170,210,255,.20) !important;
+  box-shadow:
+    0 16px 44px rgba(0,0,0,.35),
+    0 0 28px rgba(0,229,255,.09),
+    inset 0 1px 0 rgba(255,255,255,.05) !important;
+  backdrop-filter: blur(15px) saturate(1.25) !important;
+  -webkit-backdrop-filter: blur(15px) saturate(1.25) !important;
+}
+
+body.skin-dreamtrip .panel:hover,
+body.skin-dreamtrip .command-stat:hover,
+body.skin-dreamtrip .market-card:hover{
+  box-shadow:
+    0 18px 48px rgba(0,0,0,.38),
+    0 0 34px rgba(255,0,170,.12),
+    inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+
+body.skin-dreamtrip button,
+body.skin-dreamtrip button.small,
+body.skin-dreamtrip .custom-select-trigger{
+  background: linear-gradient(135deg, rgba(0,229,255,.20), rgba(255,0,170,.16)) !important;
+  border-color: rgba(190,225,255,.28) !important;
+  color:#fffaff !important;
+}
+
+body.skin-dreamtrip #topbarTitle,
+body.skin-dreamtrip .topbar .title,
+body.skin-dreamtrip h3,
+body.skin-dreamtrip .command-section-title h3{
+  color:#eff6ff !important;
+  text-shadow:
+    0 0 14px rgba(0,229,255,.28),
+    0 0 22px rgba(255,0,170,.12) !important;
+}
+
+@keyframes dreamTripSpin{
+  0%{ transform:rotate(0deg) scale(1); filter:hue-rotate(0deg) blur(54px) saturate(1.5); }
+  100%{ transform:rotate(360deg) scale(1.05); filter:hue-rotate(40deg) blur(54px) saturate(1.5); }
+}
+
+@keyframes dreamTripWave{
+  0%{ transform:translate3d(-20px,-10px,0) scale(1); opacity:.35; }
+  50%{ transform:translate3d(18px,8px,0) scale(1.03); opacity:.50; }
+  100%{ transform:translate3d(-8px,18px,0) scale(1.02); opacity:.42; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  body.skin-dreamtrip::before,
+  body.skin-dreamtrip::after{
+    animation:none !important;
+  }
+}
+</style>
