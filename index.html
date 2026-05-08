@@ -9458,6 +9458,30 @@ body.skin-retro .ebay-price-hint{
   }
 }
 
+
+/* ===== eBay Search Reliable Open Fix ===== */
+#ebayPriceTopButton{
+  cursor:pointer !important;
+  pointer-events:auto !important;
+}
+
+#ebayPriceOverlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:999999 !important;
+  display:none !important;
+  align-items:flex-start !important;
+  justify-content:center !important;
+  padding:10vh 24px 24px !important;
+  background:rgba(0,0,0,.52) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+}
+
+#ebayPriceOverlay.show{
+  display:flex !important;
+}
+
 </style>
 </head>
 
@@ -9639,6 +9663,7 @@ body.skin-retro .ebay-price-hint{
       </div>
     </div>
     <div class="topbar-right">
+      <button class="small" id="ebayPriceTopButton" type="button" title="eBay Price Search">eBay $</button>
       <div class="lofi-avatar-wrap" id="lofiAvatarWrap">
         <button class="lofi-avatar-trigger" id="lofiMusicToggle" onclick="toggleLofiMusic()" title="Lo-Fi Music">
           <img src="assets/images/lofi-avatar.webp" alt="Lo-Fi music toggle" id="lofiAvatarImg">
@@ -17734,6 +17759,187 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
   window.addEventListener("keydown", forceEbayShortcut, true);
   document.addEventListener("keydown", forceEbayShortcut, true);
+})();
+</script>
+
+
+<script>
+/* ===== eBay Price Search Reliable Controller ===== */
+(function(){
+  function getOverlay(){
+    return document.getElementById("ebayPriceOverlay");
+  }
+
+  function getInput(){
+    return document.getElementById("ebayPriceInput");
+  }
+
+  function ensureOverlay(){
+    let el = getOverlay();
+    if(el) return el;
+
+    el = document.createElement("div");
+    el.id = "ebayPriceOverlay";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = `
+      <div class="ebay-price-modal">
+        <div class="ebay-price-header">
+          <div>
+            <div class="ebay-price-title">eBay Price Search</div>
+            <div class="ebay-price-subtitle">Search sold/completed listings for quick comps</div>
+          </div>
+          <span class="ebay-price-shortcut">Ctrl + U</span>
+        </div>
+
+        <div class="ebay-price-search-row">
+          <input id="ebayPriceInput" type="search" placeholder="Search eBay prices..." autocomplete="off">
+          <button class="small" type="button" id="ebaySearchSoldBtn">Search Sold</button>
+        </div>
+
+        <div class="ebay-price-actions">
+          <button class="small" type="button" id="ebaySoldBtn">Sold Listings</button>
+          <button class="small" type="button" id="ebayActiveBtn">Active Listings</button>
+          <button class="small" type="button" id="ebayTerapeakBtn">Terapeak</button>
+        </div>
+
+        <div class="ebay-price-hint">Enter searches sold listings • Esc closes • Ctrl + U toggles</div>
+      </div>
+    `;
+    document.body.appendChild(el);
+    bindOverlayButtons();
+    return el;
+  }
+
+  function openEbaySearch(){
+    const el = ensureOverlay();
+    const inp = getInput();
+
+    el.classList.add("show");
+    el.setAttribute("aria-hidden", "false");
+
+    setTimeout(()=>{
+      const input = getInput();
+      if(input){
+        input.focus();
+        input.select();
+      }
+    }, 40);
+  }
+
+  function closeEbaySearch(){
+    const el = getOverlay();
+    if(!el) return;
+    el.classList.remove("show");
+    el.setAttribute("aria-hidden", "true");
+  }
+
+  function toggleEbaySearch(){
+    const el = ensureOverlay();
+    if(el.classList.contains("show")) closeEbaySearch();
+    else openEbaySearch();
+  }
+
+  function runSearch(mode){
+    const inp = getInput();
+    const q = inp ? inp.value.trim() : "";
+    if(!q){
+      if(inp) inp.focus();
+      return;
+    }
+
+    const query = encodeURIComponent(q);
+    let url;
+
+    if(mode === "active"){
+      url = "https://www.ebay.com/sch/i.html?_nkw=" + query;
+    }else if(mode === "terapeak"){
+      url = "https://www.ebay.com/sh/research?marketplace=EBAY-US&keywords=" + query;
+    }else{
+      url = "https://www.ebay.com/sch/i.html?_nkw=" + query + "&LH_Sold=1&LH_Complete=1";
+    }
+
+    window.open(url, "_blank");
+  }
+
+  function bindOverlayButtons(){
+    const sold1 = document.getElementById("ebaySearchSoldBtn");
+    const sold2 = document.getElementById("ebaySoldBtn");
+    const active = document.getElementById("ebayActiveBtn");
+    const tera = document.getElementById("ebayTerapeakBtn");
+
+    if(sold1) sold1.onclick = ()=>runSearch("sold");
+    if(sold2) sold2.onclick = ()=>runSearch("sold");
+    if(active) active.onclick = ()=>runSearch("active");
+    if(tera) tera.onclick = ()=>runSearch("terapeak");
+  }
+
+  window.openEbayPriceSearch = openEbaySearch;
+  window.closeEbayPriceSearch = closeEbaySearch;
+  window.toggleEbayPriceSearch = toggleEbaySearch;
+  window.runEbayPriceSearch = runSearch;
+
+  function bindTopButton(){
+    const btn = document.getElementById("ebayPriceTopButton");
+    if(btn && btn.dataset.bound !== "true"){
+      btn.dataset.bound = "true";
+      btn.addEventListener("click", function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        openEbaySearch();
+      }, true);
+    }
+  }
+
+  function keyHandler(e){
+    const key = String(e.key || "").toLowerCase();
+
+    // Ctrl+U is a browser shortcut in Firefox, so this may not always fire.
+    // When it does, force eBay search.
+    if(e.ctrlKey && !e.altKey && !e.shiftKey && (key === "u" || e.code === "KeyU")){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      toggleEbaySearch();
+      return false;
+    }
+
+    const el = getOverlay();
+    const open = el && el.classList.contains("show");
+
+    if(open && e.key === "Escape"){
+      e.preventDefault();
+      closeEbaySearch();
+    }
+
+    if(open && e.key === "Enter" && document.activeElement && document.activeElement.id === "ebayPriceInput"){
+      e.preventDefault();
+      runSearch("sold");
+    }
+  }
+
+  window.addEventListener("keydown", keyHandler, true);
+  document.addEventListener("keydown", keyHandler, true);
+
+  document.addEventListener("DOMContentLoaded", function(){
+    ensureOverlay();
+    bindOverlayButtons();
+    bindTopButton();
+
+    const el = getOverlay();
+    if(el){
+      el.addEventListener("click", function(e){
+        if(e.target === el) closeEbaySearch();
+      });
+    }
+  });
+
+  window.addEventListener("load", function(){
+    ensureOverlay();
+    bindOverlayButtons();
+    bindTopButton();
+  });
+
+  setTimeout(bindTopButton, 500);
 })();
 </script>
 
