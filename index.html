@@ -18661,49 +18661,59 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 </style>
 
 
+
+
+
 <style id="dreamTripVisibleFinalPatch">
-/* ===== Dream Trip visible final patch ===== */
+/* ===== Dream Trip dynamic color + subtle wave patch ===== */
 body.skin-dreamtrip{
   background:
-    radial-gradient(circle at 12% 14%, rgba(0, 229, 255, .30), transparent 24%),
-    radial-gradient(circle at 88% 18%, rgba(255, 0, 170, .28), transparent 26%),
-    radial-gradient(circle at 45% 90%, rgba(140, 80, 255, .26), transparent 34%),
+    radial-gradient(circle at 12% 14%, rgba(0, 229, 255, .32), transparent 24%),
+    radial-gradient(circle at 88% 18%, rgba(255, 0, 170, .30), transparent 26%),
+    radial-gradient(circle at 45% 90%, rgba(140, 80, 255, .28), transparent 34%),
     linear-gradient(135deg, #050214 0%, #07132d 45%, #16071f 100%) !important;
   background-attachment: fixed !important;
   color:#faf7ff !important;
+  animation: dreamTripColorShift 18s ease-in-out infinite alternate !important;
 }
 
 body.skin-dreamtrip::before{
   content:"" !important;
   position:fixed !important;
-  inset:-25% !important;
+  inset:-30% !important;
   pointer-events:none !important;
   z-index:0 !important;
   background:
     conic-gradient(
       from 0deg at 50% 50%,
-      rgba(0,229,255,.18),
-      rgba(255,0,170,.16),
-      rgba(140,80,255,.16),
-      rgba(0,229,255,.18)
+      rgba(0,229,255,.22),
+      rgba(255,0,170,.20),
+      rgba(140,80,255,.20),
+      rgba(0,229,255,.22)
     ) !important;
-  filter: blur(54px) saturate(1.5) !important;
-  opacity:.55 !important;
-  animation:dreamTripSpin 34s linear infinite !important;
+  filter: blur(58px) saturate(1.65) !important;
+  opacity:.62 !important;
+  animation:
+    dreamTripSpin 30s linear infinite,
+    dreamTripBreath 8s ease-in-out infinite alternate !important;
 }
 
 body.skin-dreamtrip::after{
   content:"" !important;
   position:fixed !important;
-  inset:0 !important;
+  inset:-8% !important;
   pointer-events:none !important;
   z-index:0 !important;
   background:
-    radial-gradient(circle at var(--dream-x, 20%) var(--dream-y, 30%), rgba(255,255,255,.08), transparent 18%),
-    linear-gradient(115deg, rgba(0,229,255,.08), transparent 32%, rgba(255,0,170,.08), transparent 72%) !important;
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,.10), transparent 16%),
+    linear-gradient(115deg, rgba(0,229,255,.10), transparent 30%, rgba(255,0,170,.10), transparent 72%),
+    repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.025) 0 1px, transparent 2px 14px) !important;
   mix-blend-mode: screen !important;
-  opacity:.45 !important;
-  animation:dreamTripWave 16s ease-in-out infinite alternate !important;
+  opacity:.48 !important;
+  transform-origin:center;
+  animation:
+    dreamTripWave 12s ease-in-out infinite alternate,
+    dreamTripHue 24s linear infinite !important;
 }
 
 body.skin-dreamtrip .app,
@@ -18738,6 +18748,17 @@ body.skin-dreamtrip #netWorthPanel .nw-card{
     inset 0 1px 0 rgba(255,255,255,.05) !important;
   backdrop-filter: blur(15px) saturate(1.25) !important;
   -webkit-backdrop-filter: blur(15px) saturate(1.25) !important;
+  animation: dreamTripPanelWave 9s ease-in-out infinite !important;
+}
+
+body.skin-dreamtrip .panel:nth-of-type(2n),
+body.skin-dreamtrip .command-stat:nth-of-type(2n){
+  animation-delay: -2s !important;
+}
+
+body.skin-dreamtrip .panel:nth-of-type(3n),
+body.skin-dreamtrip .command-stat:nth-of-type(3n){
+  animation-delay: -4s !important;
 }
 
 body.skin-dreamtrip .panel:hover,
@@ -18745,16 +18766,17 @@ body.skin-dreamtrip .command-stat:hover,
 body.skin-dreamtrip .market-card:hover{
   box-shadow:
     0 18px 48px rgba(0,0,0,.38),
-    0 0 34px rgba(255,0,170,.12),
+    0 0 34px rgba(255,0,170,.14),
     inset 0 1px 0 rgba(255,255,255,.06) !important;
 }
 
 body.skin-dreamtrip button,
 body.skin-dreamtrip button.small,
 body.skin-dreamtrip .custom-select-trigger{
-  background: linear-gradient(135deg, rgba(0,229,255,.20), rgba(255,0,170,.16)) !important;
-  border-color: rgba(190,225,255,.28) !important;
+  background: linear-gradient(135deg, rgba(0,229,255,.22), rgba(255,0,170,.18)) !important;
+  border-color: rgba(190,225,255,.30) !important;
   color:#fffaff !important;
+  animation: dreamTripButtonGlow 7s ease-in-out infinite alternate !important;
 }
 
 body.skin-dreamtrip #topbarTitle,
@@ -18763,24 +18785,68 @@ body.skin-dreamtrip h3,
 body.skin-dreamtrip .command-section-title h3{
   color:#eff6ff !important;
   text-shadow:
-    0 0 14px rgba(0,229,255,.28),
-    0 0 22px rgba(255,0,170,.12) !important;
+    0 0 14px rgba(0,229,255,.30),
+    0 0 22px rgba(255,0,170,.14) !important;
+}
+
+body.skin-dreamtrip .chart-wrap,
+body.skin-dreamtrip canvas{
+  filter: saturate(1.18) hue-rotate(4deg);
+}
+
+@keyframes dreamTripColorShift{
+  0%{ filter:hue-rotate(0deg) saturate(1); }
+  50%{ filter:hue-rotate(18deg) saturate(1.12); }
+  100%{ filter:hue-rotate(36deg) saturate(1.06); }
 }
 
 @keyframes dreamTripSpin{
-  0%{ transform:rotate(0deg) scale(1); filter:hue-rotate(0deg) blur(54px) saturate(1.5); }
-  100%{ transform:rotate(360deg) scale(1.05); filter:hue-rotate(40deg) blur(54px) saturate(1.5); }
+  0%{ transform:rotate(0deg) scale(1); }
+  100%{ transform:rotate(360deg) scale(1.05); }
+}
+
+@keyframes dreamTripBreath{
+  0%{ opacity:.46; filter: blur(58px) saturate(1.35); }
+  100%{ opacity:.72; filter: blur(62px) saturate(1.8); }
 }
 
 @keyframes dreamTripWave{
-  0%{ transform:translate3d(-20px,-10px,0) scale(1); opacity:.35; }
-  50%{ transform:translate3d(18px,8px,0) scale(1.03); opacity:.50; }
-  100%{ transform:translate3d(-8px,18px,0) scale(1.02); opacity:.42; }
+  0%{
+    transform: translate3d(-24px,-12px,0) rotate(-1deg) scale(1);
+    border-radius: 42% 58% 48% 52%;
+  }
+  50%{
+    transform: translate3d(20px,10px,0) rotate(1.5deg) scale(1.035);
+    border-radius: 58% 42% 54% 46%;
+  }
+  100%{
+    transform: translate3d(-8px,22px,0) rotate(-.5deg) scale(1.02);
+    border-radius: 48% 52% 42% 58%;
+  }
+}
+
+@keyframes dreamTripHue{
+  0%{ filter:hue-rotate(0deg) blur(0px); }
+  100%{ filter:hue-rotate(80deg) blur(1px); }
+}
+
+@keyframes dreamTripPanelWave{
+  0%,100%{ transform: translateY(0) skewX(0deg); }
+  50%{ transform: translateY(-3px) skewX(-.18deg); }
+}
+
+@keyframes dreamTripButtonGlow{
+  0%{ box-shadow: 0 0 0 rgba(0,229,255,0); }
+  100%{ box-shadow: 0 0 18px rgba(0,229,255,.16), 0 0 22px rgba(255,0,170,.10); }
 }
 
 @media (prefers-reduced-motion: reduce){
+  body.skin-dreamtrip,
   body.skin-dreamtrip::before,
-  body.skin-dreamtrip::after{
+  body.skin-dreamtrip::after,
+  body.skin-dreamtrip .panel,
+  body.skin-dreamtrip .command-stat,
+  body.skin-dreamtrip button{
     animation:none !important;
   }
 }
