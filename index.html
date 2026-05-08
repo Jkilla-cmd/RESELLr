@@ -17691,5 +17691,51 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+<script>
+/* ===== Disable old Ctrl+U visualizer ===== */
+(function(){
+  // Remove old visualizer overlay if present
+  const oldViz = document.getElementById("musicVizOverlay");
+  if(oldViz){
+    oldViz.remove();
+  }
+
+  // Neutralize old visualizer functions
+  window.openMusicVizOverlay = function(){};
+  window.closeMusicVizOverlay = function(){};
+  window.toggleMusicVizOverlay = function(){};
+
+  // Force Ctrl+U to ONLY open eBay search
+  function forceEbayShortcut(e){
+    const key = String(e.key || "").toLowerCase();
+
+    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "u" || e.code === "KeyU")){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      const overlay = document.getElementById("ebayPriceOverlay");
+      if(overlay){
+        overlay.classList.toggle("show");
+
+        const input = document.getElementById("ebayPriceInput");
+        if(overlay.classList.contains("show") && input){
+          setTimeout(()=>{
+            input.focus();
+            input.select();
+          }, 40);
+        }
+      }
+
+      return false;
+    }
+  }
+
+  window.addEventListener("keydown", forceEbayShortcut, true);
+  document.addEventListener("keydown", forceEbayShortcut, true);
+})();
+</script>
+
 </body>
 </html>
