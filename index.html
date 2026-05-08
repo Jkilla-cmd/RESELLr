@@ -9112,7 +9112,7 @@ body.skin-mono h3{
 }
 
 
-/* ===== Ctrl+E Music Visualizer Overlay ===== */
+/* ===== Ctrl+X Music Visualizer Overlay ===== */
 #musicVizOverlay{
   position:fixed;
   inset:0;
@@ -9490,6 +9490,197 @@ body.skin-retro .ebay-price-hint{
   border-radius:999px !important;
   display:block !important;
 }
+
+/* ===== eBay sold topbar logo sizing fix ===== */
+.ebay-search-topbar,
+#ebaySearchTopbar,
+#ebaySoldTopbar,
+#ebaySearchBtn,
+#ebaySoldBtn,
+button[title*="eBay"],
+button[aria-label*="eBay"]{
+  width: 58px !important;
+  height: 58px !important;
+  min-width: 58px !important;
+  min-height: 58px !important;
+  max-width: 58px !important;
+  max-height: 58px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+}
+.ebay-search-topbar img,
+#ebaySearchTopbar img,
+#ebaySoldTopbar img,
+#ebaySearchBtn img,
+#ebaySoldBtn img,
+button[title*="eBay"] img,
+button[aria-label*="eBay"] img{
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: 999px !important;
+  display: block !important;
+}
+.ebay-search-topbar span,
+#ebaySearchTopbar span,
+#ebaySoldTopbar span,
+#ebaySearchBtn span,
+#ebaySoldBtn span{
+  display: none !important;
+}
+/* overlay helper buttons */
+.ebay-card-point-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin: 8px 0 12px;
+}
+.ebay-card-point-row button{
+  width:auto !important;
+  white-space:nowrap;
+}
+
+
+/* ===== DREAMTRIP THEME ===== */
+html[data-theme="dreamtrip"]{
+  --bg:#060714;
+  --panel:rgba(10,12,26,0.62);
+  --panel-solid:rgba(12,14,30,0.82);
+  --panel-2:rgba(18,22,42,0.60);
+  --border:rgba(255,255,255,0.10);
+
+  --text:#f6f3ff;
+  --muted:#b8b5d6;
+
+  --accent:#8ab4ff;
+  --accent-2:#ff86d8;
+
+  --green:#86efac;
+  --red:#fb7185;
+  --yellow:#facc15;
+}
+
+html[data-theme="dreamtrip"] body{
+  background:
+    radial-gradient(circle at 20% 20%, rgba(138,180,255,.16), transparent 28%),
+    radial-gradient(circle at 80% 25%, rgba(255,134,216,.14), transparent 30%),
+    radial-gradient(circle at 50% 85%, rgba(167,139,250,.12), transparent 34%),
+    linear-gradient(180deg,#060714 0%, #090b18 50%, #060714 100%) !important;
+
+  animation: dreamHueShift 26s linear infinite;
+}
+
+html[data-theme="dreamtrip"] body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:-1;
+
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,.025), transparent 18%),
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,.02), transparent 20%);
+
+  filter: blur(40px);
+  animation: dreamFog 18s ease-in-out infinite alternate;
+}
+
+html[data-theme="dreamtrip"] .panel,
+html[data-theme="dreamtrip"] .topbar,
+html[data-theme="dreamtrip"] .sidebar,
+html[data-theme="dreamtrip"] .market-card,
+html[data-theme="dreamtrip"] .nw-card,
+html[data-theme="dreamtrip"] .toast,
+html[data-theme="dreamtrip"] .modal .box{
+  background: rgba(10,12,28,0.54) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+
+  box-shadow:
+    0 14px 40px rgba(0,0,0,.30),
+    0 0 24px rgba(138,180,255,.05);
+
+  animation: dreamFloat 9s ease-in-out infinite;
+}
+
+html[data-theme="dreamtrip"] .sidebar button.active{
+  background: rgba(138,180,255,.12) !important;
+  border-color: rgba(138,180,255,.28) !important;
+}
+
+html[data-theme="dreamtrip"] .sidebar button.active::before{
+  background: linear-gradient(
+    180deg,
+    rgba(138,180,255,.95),
+    rgba(255,134,216,.85)
+  );
+  box-shadow: 0 0 18px rgba(138,180,255,.22);
+}
+
+html[data-theme="dreamtrip"] input,
+html[data-theme="dreamtrip"] select,
+html[data-theme="dreamtrip"] textarea{
+  background: rgba(18,22,42,.60) !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+
+html[data-theme="dreamtrip"] h3,
+html[data-theme="dreamtrip"] .topbar .title,
+html[data-theme="dreamtrip"] .brand .name{
+  color:#dbe7ff !important;
+}
+
+html[data-theme="dreamtrip"] .table-wrap{
+  background: rgba(255,255,255,.02);
+}
+
+html[data-theme="dreamtrip"] tbody tr:hover td{
+  background: rgba(138,180,255,.06) !important;
+}
+
+@keyframes dreamHueShift{
+  0%{ filter:hue-rotate(0deg); }
+  50%{ filter:hue-rotate(12deg); }
+  100%{ filter:hue-rotate(0deg); }
+}
+
+@keyframes dreamFloat{
+  0%,100%{ transform:translateY(0px); }
+  50%{ transform:translateY(-3px); }
+}
+
+@keyframes dreamFog{
+  from{
+    transform:translateX(-12px) translateY(-6px);
+    opacity:.65;
+  }
+  to{
+    transform:translateX(12px) translateY(6px);
+    opacity:.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  html[data-theme="dreamtrip"] body,
+  html[data-theme="dreamtrip"] body::before,
+  html[data-theme="dreamtrip"] .panel,
+  html[data-theme="dreamtrip"] .topbar,
+  html[data-theme="dreamtrip"] .sidebar{
+    animation:none !important;
+  }
+}
+
 </style>
 </head>
 
@@ -10541,7 +10732,8 @@ body.skin-retro .ebay-price-hint{
             <option value="glass">Glass</option>
             <option value="arcade">Arcade</option>
             <option value="vault">Comic Vault</option>
-            <option value="lofi">Lo‑Fi</option>
+            <option value="dreamtrip">Dream Trip</option>
+<option value="lofi">Lo‑Fi</option>
           </select>
 
           <div class="divider"></div>
@@ -16974,7 +17166,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 </script>
 
 
-<!-- Ctrl+E Music Visualizer Overlay -->
+<!-- Ctrl+X Music Visualizer Overlay -->
 <div id="musicVizOverlay" aria-hidden="true">
   <div class="music-viz-modal">
     <div class="music-viz-header">
@@ -16982,7 +17174,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
         <div class="music-viz-title">Music Visualizer</div>
         <div class="music-viz-subtitle">Reactive overlay for your music session</div>
       </div>
-      <span class="music-viz-shortcut">Ctrl + E</span>
+      <span class="music-viz-shortcut">Ctrl + X</span>
     </div>
 
     <div class="music-viz-stage">
@@ -17001,13 +17193,13 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       <button class="small" type="button" onclick="startMusicVizAudio()">Start audio reactive</button>
       <span id="musicVizStatus" class="music-viz-status">Fallback visualizer active</span>
     </div>
-    <div class="music-viz-hint">Esc closes • Ctrl + E toggles</div>
+    <div class="music-viz-hint">Esc closes • Ctrl + X toggles toggles</div>
   </div>
 </div>
 
 
 <script>
-/* ===== Ctrl+E Music Visualizer Overlay Logic ===== */
+/* ===== Ctrl+X Music Visualizer Overlay Logic ===== */
 (function(){
   let rafId = null;
   let phase = 0;
@@ -17140,7 +17332,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.toggleMusicVizOverlay = toggleMusicViz;
 
   document.addEventListener("keydown", function(e){
-    if(e.ctrlKey && String(e.key).toLowerCase() === "y"){
+    if(e.ctrlKey && String(e.key).toLowerCase() === "x"){
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -17559,11 +17751,11 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.closeMusicVizOverlay = closeViz;
   window.toggleMusicVizOverlay = toggleViz;
 
-  // Stronger Ctrl+E capture. Browser may still reserve it in some contexts,
+  // Stronger Ctrl+X capture. Browser may still reserve it in some contexts,
   // but this catches it before app handlers.
   function shortcutHandler(e){
     const key = String(e.key || "").toLowerCase();
-    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "y" || e.code === "KeyY")){
+    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "x" || e.code === "KeyX")){
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -17600,7 +17792,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
         <div class="ebay-price-title">eBay Price Search</div>
         <div class="ebay-price-subtitle">Search sold/completed listings for quick comps</div>
       </div>
-      <span class="ebay-price-shortcut">Ctrl + E</span>
+      <span class="ebay-price-shortcut">Ctrl + X</span>
     </div>
 
     <div class="ebay-price-search-row">
@@ -17614,7 +17806,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       <button class="small" type="button" onclick="runEbayPriceSearch('terapeak')">Terapeak</button>
     </div>
 
-    <div class="ebay-price-hint">Enter searches sold listings • Esc closes • Ctrl + E toggles</div>
+    <div class="ebay-price-hint">Enter searches sold listings • Esc closes • Ctrl + X toggles toggles</div>
   </div>
 </div>
 
@@ -17688,7 +17880,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   document.addEventListener("keydown", function(e){
     const key = String(e.key || "").toLowerCase();
 
-    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "y" || e.code === "KeyY")){
+    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "x" || e.code === "KeyX")){
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -17726,7 +17918,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 <script>
-/* ===== Disable old Ctrl+E visualizer ===== */
+/* ===== Disable old Ctrl+X visualizer ===== */
 (function(){
   // Remove old visualizer overlay if present
   const oldViz = document.getElementById("musicVizOverlay");
@@ -17739,11 +17931,11 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.closeMusicVizOverlay = function(){};
   window.toggleMusicVizOverlay = function(){};
 
-  // Force Ctrl+E to ONLY open eBay search
+  // Force Ctrl+X to ONLY open eBay search
   function forceEbayShortcut(e){
     const key = String(e.key || "").toLowerCase();
 
-    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "y" || e.code === "KeyY")){
+    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "x" || e.code === "KeyX")){
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -17796,7 +17988,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
             <div class="ebay-price-title">eBay Price Search</div>
             <div class="ebay-price-subtitle">Search sold/completed listings for quick comps</div>
           </div>
-          <span class="ebay-price-shortcut">Ctrl + E</span>
+          <span class="ebay-price-shortcut">Ctrl + X</span>
         </div>
 
         <div class="ebay-price-search-row">
@@ -17810,7 +18002,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
           <button class="small" type="button" id="ebayTerapeakBtn">Terapeak</button>
         </div>
 
-        <div class="ebay-price-hint">Enter searches sold listings • Esc closes • Ctrl + E toggles</div>
+        <div class="ebay-price-hint">Enter searches sold listings • Esc closes • Ctrl + X toggles toggles</div>
       </div>
     `;
     document.body.appendChild(el);
@@ -17901,9 +18093,9 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   function keyHandler(e){
     const key = String(e.key || "").toLowerCase();
 
-    // Ctrl+E is a browser shortcut in Firefox, so this may not always fire.
+    // Ctrl+X is a browser shortcut in Firefox, so this may not always fire.
     // When it does, force eBay search.
-    if(e.ctrlKey && !e.altKey && !e.shiftKey && (key === "y" || e.code === "KeyY")){
+    if(e.ctrlKey && !e.altKey && !e.shiftKey && (key === "x" || e.code === "KeyX")){
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -18057,12 +18249,151 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   }, true);
   window.addEventListener("keydown", function(e){
     const key = String(e.key || "").toLowerCase();
-    if(e.ctrlKey && !e.altKey && !e.shiftKey && (key === "y" || e.code === "KeyY")){
+    if(e.ctrlKey && !e.altKey && !e.shiftKey && (key === "x" || e.code === "KeyX")){
       setTimeout(addEbayLogo, 60);
     }
   }, true);
   setTimeout(runPatch, 250);
   setTimeout(runPatch, 1000);
+})();
+</script>
+
+
+<script>
+/* ===== RESELLr eBay sold overlay polish: Ctrl+X + 140pt helper ===== */
+(function(){
+  function norm(s){ return String(s || "").toLowerCase(); }
+
+  function findEbayOverlay(){
+    const nodes = Array.from(document.querySelectorAll(".modal, [id*='ebay' i], [class*='ebay' i]"));
+    return nodes.find(el => /ebay|sold/i.test(el.textContent || el.id || el.className || "")) || null;
+  }
+
+  function findEbayInput(root){
+    if(!root) return null;
+    return root.querySelector("input[type='search'], input[placeholder*='eBay' i], input[placeholder*='sold' i], input");
+  }
+
+  function runSearch(){
+    const root = findEbayOverlay() || document;
+    const input = findEbayInput(root);
+    const q = input ? input.value.trim() : "";
+    const url = "https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(q) + "&LH_Sold=1&LH_Complete=1";
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  function run140ptSearch(){
+    const root = findEbayOverlay() || document;
+    const input = findEbayInput(root);
+    let q = input ? input.value.trim() : "";
+    q = (q + " 140pt").trim();
+    const url = "https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(q) + "&LH_Sold=1&LH_Complete=1";
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  function polishOverlay(){
+    const root = findEbayOverlay();
+    if(!root) return;
+
+    if(!root.querySelector("[data-ebay-shortcut-note]")){
+      const note = document.createElement("div");
+      note.setAttribute("data-ebay-shortcut-note", "1");
+      note.className = "muted";
+      note.style.fontSize = "12px";
+      note.style.margin = "6px 0 10px";
+      note.textContent = "Shortcut: Ctrl + X toggles this eBay sold search overlay.";
+      const anchor = root.querySelector("h3, .lockTitle, .modal-title, input") || root.firstElementChild || root;
+      if(anchor && anchor.parentNode){
+        anchor.parentNode.insertBefore(note, anchor.nextSibling);
+      }else{
+        root.prepend(note);
+      }
+    }
+
+    const input = findEbayInput(root);
+    if(input && !root.querySelector("[data-ebay-140pt-row]")){
+      const row = document.createElement("div");
+      row.className = "ebay-card-point-row";
+      row.setAttribute("data-ebay-140pt-row", "1");
+
+      const btn140 = document.createElement("button");
+      btn140.type = "button";
+      btn140.className = "small";
+      btn140.textContent = "Sold results: 140pt";
+      btn140.addEventListener("click", run140ptSearch);
+
+      row.appendChild(btn140);
+      input.insertAdjacentElement("afterend", row);
+    }
+  }
+
+  function toggleEbayOverlay(){
+    const root = findEbayOverlay();
+    if(root){
+      const visible = getComputedStyle(root).display !== "none" && !root.hidden;
+      if(visible){
+        root.style.display = "none";
+      }else{
+        root.style.display = root.classList.contains("modal") ? "flex" : "block";
+        root.hidden = false;
+        polishOverlay();
+        const input = findEbayInput(root);
+        if(input) setTimeout(()=>input.focus(), 50);
+      }
+      return;
+    }
+
+    // Fallback overlay if the original markup cannot be found.
+    let modal = document.getElementById("ebaySoldOverlayFallback");
+    if(!modal){
+      modal = document.createElement("div");
+      modal.id = "ebaySoldOverlayFallback";
+      modal.className = "modal";
+      modal.innerHTML = `
+        <div class="box">
+          <h3>eBay sold search</h3>
+          <div class="muted" data-ebay-shortcut-note="1" style="font-size:12px;margin:6px 0 10px;">Shortcut: Ctrl + X toggles this eBay sold search overlay.</div>
+          <input id="ebaySoldFallbackInput" type="search" placeholder="Search sold eBay comps..." />
+          <div class="ebay-card-point-row" data-ebay-140pt-row="1">
+            <button type="button" class="small" id="ebaySoldFallbackSearch">Search sold</button>
+            <button type="button" class="small" id="ebaySoldFallback140">Sold results: 140pt</button>
+            <button type="button" class="small" id="ebaySoldFallbackClose">Close</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.querySelector("#ebaySoldFallbackSearch").addEventListener("click", runSearch);
+      modal.querySelector("#ebaySoldFallback140").addEventListener("click", run140ptSearch);
+      modal.querySelector("#ebaySoldFallbackClose").addEventListener("click", ()=>modal.style.display="none");
+      modal.addEventListener("click", (e)=>{ if(e.target === modal) modal.style.display = "none"; });
+    }
+    modal.style.display = "flex";
+    setTimeout(()=>modal.querySelector("input")?.focus(), 50);
+  }
+
+  document.addEventListener("keydown", function(e){
+    const key = String(e.key || "").toLowerCase();
+    if((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && key === "x"){
+      e.preventDefault();
+      e.stopPropagation();
+      toggleEbayOverlay();
+    }
+    if(e.key === "Escape"){
+      const root = findEbayOverlay();
+      if(root && getComputedStyle(root).display !== "none") root.style.display = "none";
+    }
+  }, true);
+
+  document.addEventListener("click", function(e){
+    const btn = e.target && e.target.closest ? e.target.closest(".ebay-search-topbar,#ebaySearchTopbar,#ebaySoldTopbar,#ebaySearchBtn,#ebaySoldBtn,button[title*='eBay'],button[aria-label*='eBay']") : null;
+    if(btn){
+      e.preventDefault();
+      toggleEbayOverlay();
+    }
+  }, true);
+
+  document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(polishOverlay, 250);
+  });
 })();
 </script>
 
