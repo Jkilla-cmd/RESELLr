@@ -9112,7 +9112,7 @@ body.skin-mono h3{
 }
 
 
-/* ===== Ctrl+U Music Visualizer Overlay ===== */
+/* ===== Ctrl+E Music Visualizer Overlay ===== */
 #musicVizOverlay{
   position:fixed;
   inset:0;
@@ -9482,6 +9482,14 @@ body.skin-retro .ebay-price-hint{
   display:flex !important;
 }
 
+
+.ebay-logo-btn img, #ebayTopbarLogo, .ebay-topbar-logo{
+  width:58px !important;
+  height:58px !important;
+  object-fit:cover !important;
+  border-radius:999px !important;
+  display:block !important;
+}
 </style>
 </head>
 
@@ -16966,7 +16974,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 </script>
 
 
-<!-- Ctrl+U Music Visualizer Overlay -->
+<!-- Ctrl+E Music Visualizer Overlay -->
 <div id="musicVizOverlay" aria-hidden="true">
   <div class="music-viz-modal">
     <div class="music-viz-header">
@@ -16974,7 +16982,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
         <div class="music-viz-title">Music Visualizer</div>
         <div class="music-viz-subtitle">Reactive overlay for your music session</div>
       </div>
-      <span class="music-viz-shortcut">Ctrl + U</span>
+      <span class="music-viz-shortcut">Ctrl + E</span>
     </div>
 
     <div class="music-viz-stage">
@@ -16993,13 +17001,13 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       <button class="small" type="button" onclick="startMusicVizAudio()">Start audio reactive</button>
       <span id="musicVizStatus" class="music-viz-status">Fallback visualizer active</span>
     </div>
-    <div class="music-viz-hint">Esc closes • Ctrl + U toggles</div>
+    <div class="music-viz-hint">Esc closes • Ctrl + E toggles</div>
   </div>
 </div>
 
 
 <script>
-/* ===== Ctrl+U Music Visualizer Overlay Logic ===== */
+/* ===== Ctrl+E Music Visualizer Overlay Logic ===== */
 (function(){
   let rafId = null;
   let phase = 0;
@@ -17132,7 +17140,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.toggleMusicVizOverlay = toggleMusicViz;
 
   document.addEventListener("keydown", function(e){
-    if(e.ctrlKey && String(e.key).toLowerCase() === "u"){
+    if(e.ctrlKey && String(e.key).toLowerCase() === "y"){
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -17551,11 +17559,11 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.closeMusicVizOverlay = closeViz;
   window.toggleMusicVizOverlay = toggleViz;
 
-  // Stronger Ctrl+U capture. Browser may still reserve it in some contexts,
+  // Stronger Ctrl+E capture. Browser may still reserve it in some contexts,
   // but this catches it before app handlers.
   function shortcutHandler(e){
     const key = String(e.key || "").toLowerCase();
-    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "u" || e.code === "KeyU")){
+    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "y" || e.code === "KeyY")){
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -17592,7 +17600,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
         <div class="ebay-price-title">eBay Price Search</div>
         <div class="ebay-price-subtitle">Search sold/completed listings for quick comps</div>
       </div>
-      <span class="ebay-price-shortcut">Ctrl + U</span>
+      <span class="ebay-price-shortcut">Ctrl + E</span>
     </div>
 
     <div class="ebay-price-search-row">
@@ -17606,7 +17614,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       <button class="small" type="button" onclick="runEbayPriceSearch('terapeak')">Terapeak</button>
     </div>
 
-    <div class="ebay-price-hint">Enter searches sold listings • Esc closes • Ctrl + U toggles</div>
+    <div class="ebay-price-hint">Enter searches sold listings • Esc closes • Ctrl + E toggles</div>
   </div>
 </div>
 
@@ -17680,7 +17688,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   document.addEventListener("keydown", function(e){
     const key = String(e.key || "").toLowerCase();
 
-    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "u" || e.code === "KeyU")){
+    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "y" || e.code === "KeyY")){
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -17718,7 +17726,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 <script>
-/* ===== Disable old Ctrl+U visualizer ===== */
+/* ===== Disable old Ctrl+E visualizer ===== */
 (function(){
   // Remove old visualizer overlay if present
   const oldViz = document.getElementById("musicVizOverlay");
@@ -17731,11 +17739,11 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.closeMusicVizOverlay = function(){};
   window.toggleMusicVizOverlay = function(){};
 
-  // Force Ctrl+U to ONLY open eBay search
+  // Force Ctrl+E to ONLY open eBay search
   function forceEbayShortcut(e){
     const key = String(e.key || "").toLowerCase();
 
-    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "u" || e.code === "KeyU")){
+    if(e.ctrlKey && !e.shiftKey && !e.altKey && (key === "y" || e.code === "KeyY")){
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -17788,7 +17796,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
             <div class="ebay-price-title">eBay Price Search</div>
             <div class="ebay-price-subtitle">Search sold/completed listings for quick comps</div>
           </div>
-          <span class="ebay-price-shortcut">Ctrl + U</span>
+          <span class="ebay-price-shortcut">Ctrl + E</span>
         </div>
 
         <div class="ebay-price-search-row">
@@ -17802,7 +17810,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
           <button class="small" type="button" id="ebayTerapeakBtn">Terapeak</button>
         </div>
 
-        <div class="ebay-price-hint">Enter searches sold listings • Esc closes • Ctrl + U toggles</div>
+        <div class="ebay-price-hint">Enter searches sold listings • Esc closes • Ctrl + E toggles</div>
       </div>
     `;
     document.body.appendChild(el);
@@ -17893,9 +17901,9 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   function keyHandler(e){
     const key = String(e.key || "").toLowerCase();
 
-    // Ctrl+U is a browser shortcut in Firefox, so this may not always fire.
+    // Ctrl+E is a browser shortcut in Firefox, so this may not always fire.
     // When it does, force eBay search.
-    if(e.ctrlKey && !e.altKey && !e.shiftKey && (key === "u" || e.code === "KeyU")){
+    if(e.ctrlKey && !e.altKey && !e.shiftKey && (key === "y" || e.code === "KeyY")){
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -18049,7 +18057,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   }, true);
   window.addEventListener("keydown", function(e){
     const key = String(e.key || "").toLowerCase();
-    if(e.ctrlKey && !e.altKey && !e.shiftKey && (key === "u" || e.code === "KeyU")){
+    if(e.ctrlKey && !e.altKey && !e.shiftKey && (key === "y" || e.code === "KeyY")){
       setTimeout(addEbayLogo, 60);
     }
   }, true);
