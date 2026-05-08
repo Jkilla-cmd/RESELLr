@@ -9550,43 +9550,7 @@ button[aria-label*="eBay"] img{
 }
 
 
-
-/* ===== eBay topbar logo match lo-fi avatar - hard fix ===== */
-.ebay-logo-match-lofi{
-  width:58px !important;
-  height:58px !important;
-  min-width:58px !important;
-  min-height:58px !important;
-  max-width:58px !important;
-  max-height:58px !important;
-  padding:0 !important;
-  margin:0 !important;
-  border-radius:999px !important;
-  overflow:hidden !important;
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  flex:0 0 58px !important;
-}
-.ebay-logo-match-lofi img{
-  width:58px !important;
-  height:58px !important;
-  min-width:58px !important;
-  min-height:58px !important;
-  max-width:58px !important;
-  max-height:58px !important;
-  object-fit:cover !important;
-  object-position:center !important;
-  border-radius:999px !important;
-  display:block !important;
-}
-.ebay-logo-match-lofi .market-logo,
-.ebay-logo-match-lofi span:not(.sr-only){
-  display:none !important;
-}
-
-
-/* ===== DREAM TRIP THEME - ACTIVE PATCH ===== */
+/* ===== DREAM TRIP THEME - SUBTLE CSS ONLY ===== */
 html[data-theme="dreamtrip"]{
   --bg:#060714;
   --panel:rgba(10,12,26,0.64);
@@ -9602,41 +9566,31 @@ html[data-theme="dreamtrip"]{
   --red:#fb7185;
   --yellow:#facc15;
 }
+
 html[data-theme="dreamtrip"] body{
   background:
-    radial-gradient(circle at 18% 18%, rgba(138,180,255,.22), transparent 30%),
-    radial-gradient(circle at 82% 26%, rgba(255,134,216,.20), transparent 32%),
-    radial-gradient(circle at 50% 85%, rgba(167,139,250,.16), transparent 36%),
+    radial-gradient(circle at 18% 18%, rgba(138,180,255,.20), transparent 30%),
+    radial-gradient(circle at 82% 26%, rgba(255,134,216,.18), transparent 32%),
+    radial-gradient(circle at 50% 85%, rgba(167,139,250,.15), transparent 36%),
     linear-gradient(180deg,#060714 0%, #090b18 52%, #060714 100%) !important;
   overflow-x:hidden;
 }
+
 html[data-theme="dreamtrip"] body::before{
   content:"";
   position:fixed;
-  inset:-14%;
+  inset:-12%;
   pointer-events:none;
   z-index:-1;
   background:
-    radial-gradient(circle at 22% 35%, rgba(138,180,255,.17), transparent 18%),
-    radial-gradient(circle at 72% 48%, rgba(255,134,216,.15), transparent 20%),
-    radial-gradient(circle at 50% 70%, rgba(125,249,255,.10), transparent 24%);
+    radial-gradient(circle at 22% 35%, rgba(138,180,255,.14), transparent 18%),
+    radial-gradient(circle at 72% 48%, rgba(255,134,216,.12), transparent 20%),
+    radial-gradient(circle at 50% 70%, rgba(125,249,255,.08), transparent 24%);
   filter: blur(36px);
-  opacity:.95;
-  animation: dreamTripDrift 20s ease-in-out infinite alternate;
+  opacity:.85;
+  animation: dreamTripDrift 22s ease-in-out infinite alternate;
 }
-html[data-theme="dreamtrip"] body::after{
-  content:"";
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  z-index:-1;
-  background:
-    linear-gradient(115deg, rgba(138,180,255,.06), transparent 28%, rgba(255,134,216,.06), transparent 70%),
-    radial-gradient(circle, rgba(255,255,255,.028) 0 1px, transparent 1.5px);
-  background-size:auto, 5px 5px;
-  opacity:.36;
-  animation: dreamTripGlow 28s linear infinite;
-}
+
 html[data-theme="dreamtrip"] .panel,
 html[data-theme="dreamtrip"] .topbar,
 html[data-theme="dreamtrip"] .sidebar,
@@ -9646,47 +9600,57 @@ html[data-theme="dreamtrip"] .toast,
 html[data-theme="dreamtrip"] .modal .box{
   background: rgba(10,12,28,0.58) !important;
   border-color: rgba(255,255,255,0.10) !important;
-  backdrop-filter: blur(14px) saturate(1.18);
-  -webkit-backdrop-filter: blur(14px) saturate(1.18);
-  box-shadow: 0 14px 40px rgba(0,0,0,.30), 0 0 26px rgba(138,180,255,.055) !important;
+  backdrop-filter: blur(14px) saturate(1.16);
+  -webkit-backdrop-filter: blur(14px) saturate(1.16);
+  box-shadow: 0 14px 40px rgba(0,0,0,.30), 0 0 24px rgba(138,180,255,.05) !important;
 }
-html[data-theme="dreamtrip"] .panel{ animation: dreamTripFloat 10s ease-in-out infinite; }
+
+html[data-theme="dreamtrip"] .panel{
+  animation: dreamTripFloat 11s ease-in-out infinite;
+}
+
 html[data-theme="dreamtrip"] .sidebar button.active,
 html[data-theme="dreamtrip"] .nav button.active{
   background: rgba(138,180,255,.12) !important;
   border-color: rgba(138,180,255,.30) !important;
 }
+
 html[data-theme="dreamtrip"] .sidebar button.active::before{
   background: linear-gradient(180deg, rgba(138,180,255,.95), rgba(255,134,216,.85));
   box-shadow: 0 0 18px rgba(138,180,255,.24);
 }
+
 html[data-theme="dreamtrip"] input,
 html[data-theme="dreamtrip"] select,
 html[data-theme="dreamtrip"] textarea{
   background: rgba(18,22,42,.62) !important;
   border-color: rgba(255,255,255,.09) !important;
 }
+
 html[data-theme="dreamtrip"] h3,
 html[data-theme="dreamtrip"] .topbar .title,
-html[data-theme="dreamtrip"] .brand .name{ color:#dbe7ff !important; }
+html[data-theme="dreamtrip"] .brand .name{
+  color:#dbe7ff !important;
+}
 
 @keyframes dreamTripDrift{
-  0%{ transform:translate3d(-16px,-8px,0) scale(1); filter:hue-rotate(0deg) blur(36px); }
-  100%{ transform:translate3d(16px,10px,0) scale(1.03); filter:hue-rotate(18deg) blur(36px); }
+  0%{ transform:translate3d(-12px,-6px,0) scale(1); filter:hue-rotate(0deg) blur(36px); }
+  100%{ transform:translate3d(12px,8px,0) scale(1.025); filter:hue-rotate(14deg) blur(36px); }
 }
-@keyframes dreamTripGlow{
-  0%{ filter:hue-rotate(0deg); opacity:.30; }
-  50%{ filter:hue-rotate(14deg); opacity:.42; }
-  100%{ filter:hue-rotate(0deg); opacity:.30; }
-}
+
 @keyframes dreamTripFloat{
   0%,100%{ transform:translateY(0); }
   50%{ transform:translateY(-2px); }
 }
 
-/* ===== Topbar icon equal sizing patch ===== */
-.topbar .lofi-avatar-wrap,
-.topbar .lofi-avatar-trigger,
+@media (prefers-reduced-motion: reduce){
+  html[data-theme="dreamtrip"] body::before,
+  html[data-theme="dreamtrip"] .panel{
+    animation:none !important;
+  }
+}
+
+/* ===== eBay topbar icon sizing only - non-theme-safe ===== */
 .topbar .ebay-logo-match-lofi{
   width:56px !important;
   height:56px !important;
@@ -9694,10 +9658,6 @@ html[data-theme="dreamtrip"] .brand .name{ color:#dbe7ff !important; }
   min-height:56px !important;
   max-width:56px !important;
   max-height:56px !important;
-  flex:0 0 56px !important;
-}
-.topbar .lofi-avatar-trigger,
-.topbar .ebay-logo-match-lofi{
   padding:0 !important;
   margin:0 !important;
   border-radius:16px !important;
@@ -9705,8 +9665,8 @@ html[data-theme="dreamtrip"] .brand .name{ color:#dbe7ff !important; }
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
+  flex:0 0 56px !important;
 }
-.topbar .lofi-avatar-trigger img,
 .topbar .ebay-logo-match-lofi img{
   width:56px !important;
   height:56px !important;
@@ -9718,13 +9678,6 @@ html[data-theme="dreamtrip"] .brand .name{ color:#dbe7ff !important; }
   object-position:center !important;
   border-radius:16px !important;
   display:block !important;
-}
-.topbar .ebay-logo-match-lofi span:not(.sr-only){ display:none !important; }
-
-@media (prefers-reduced-motion: reduce){
-  html[data-theme="dreamtrip"] body::before,
-  html[data-theme="dreamtrip"] body::after,
-  html[data-theme="dreamtrip"] .panel{ animation:none !important; }
 }
 
 </style>
@@ -10778,8 +10731,8 @@ html[data-theme="dreamtrip"] .brand .name{ color:#dbe7ff !important; }
             <option value="glass">Glass</option>
             <option value="arcade">Arcade</option>
             <option value="vault">Comic Vault</option>
-            <option value="dreamtrip">Dream Trip</option>
-<option value="lofi">Lo‑Fi</option>
+            <option value="lofi">Lo‑Fi</option>
+<option value="dreamtrip">Dream Trip</option>
           </select>
 
           <div class="divider"></div>
@@ -18444,165 +18397,23 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 </script>
 
 
-
-
-
-
-
-
 <script>
-/* ===== Runtime fix: Dream Trip style + matching topbar icons ===== */
+/* ===== Safe eBay topbar icon sizing marker only ===== */
 (function(){
-  const THEMES = [
-    ["hackercyan","Hacker Cyan"],
-    ["cyberred","Cyber Red"],
-    ["monochrome","Mono"],
-    ["glass","Glass"],
-    ["arcade","Arcade"],
-    ["vault","Vault"],
-    ["lofi","Lo-Fi"],
-    ["dreamtrip","Dream Trip"]
-  ];
-
-  function labelForTheme(v){
-    const hit = THEMES.find(t => t[0] === v);
-    return hit ? hit[1] : v;
-  }
-
-  function getCurrentTheme(){
-    return document.documentElement.getAttribute("data-theme") || localStorage.getItem("theme") || localStorage.getItem("ots_theme") || "hackercyan";
-  }
-
-  function setTheme(v){
-    document.documentElement.setAttribute("data-theme", v);
-    try{
-      localStorage.setItem("theme", v);
-      localStorage.setItem("ots_theme", v);
-    }catch(e){}
-    updateStyleButtons();
-  }
-
-  function ensureThemeSelects(){
-    document.querySelectorAll("select").forEach(sel=>{
-      const vals = Array.from(sel.options || []).map(o => String(o.value || "").toLowerCase());
-      const isTheme = vals.some(v => ["hackercyan","cyberred","monochrome","mono","lofi","glass","arcade","vault"].includes(v));
-      if(!isTheme) return;
-      THEMES.forEach(([value,label])=>{
-        if(!Array.from(sel.options).some(o => o.value === value)){
-          const opt = document.createElement("option");
-          opt.value = value;
-          opt.textContent = label;
-          sel.appendChild(opt);
-        }
-      });
-      sel.value = getCurrentTheme();
-      if(!sel.dataset.dreamtripWired){
-        sel.dataset.dreamtripWired = "1";
-        sel.addEventListener("change", ()=>setTheme(sel.value), true);
-      }
-    });
-  }
-
-  function findStyleButton(){
-    const topbar = document.querySelector(".topbar");
-    if(!topbar) return null;
-    return Array.from(topbar.querySelectorAll("button")).find(b => /style\s*:/i.test(b.textContent || ""));
-  }
-
-  function updateStyleButtons(){
-    const cur = getCurrentTheme();
-    const btn = findStyleButton();
-    if(btn) btn.textContent = "Style: " + labelForTheme(cur);
-    document.querySelectorAll("select").forEach(sel=>{
-      if(Array.from(sel.options || []).some(o => o.value === cur)) sel.value = cur;
-    });
-  }
-
-  function installStyleMenu(){
-    const btn = findStyleButton();
-    if(!btn || btn.dataset.dreamtripMenuWired) return;
-    btn.dataset.dreamtripMenuWired = "1";
-
-    btn.addEventListener("click", function(e){
-      e.preventDefault();
-      e.stopPropagation();
-
-      let menu = document.getElementById("dreamtripStyleMenu");
-      if(menu){ menu.remove(); return; }
-
-      menu = document.createElement("div");
-      menu.id = "dreamtripStyleMenu";
-      menu.style.position = "fixed";
-      menu.style.zIndex = "10080";
-      menu.style.minWidth = "190px";
-      menu.style.padding = "8px";
-      menu.style.borderRadius = "16px";
-      menu.style.border = "1px solid var(--border)";
-      menu.style.background = "var(--panel)";
-      menu.style.boxShadow = "0 16px 42px rgba(0,0,0,.35)";
-
-      THEMES.forEach(([value,label])=>{
-        const item = document.createElement("button");
-        item.type = "button";
-        item.textContent = label;
-        item.style.width = "100%";
-        item.style.margin = "4px 0";
-        item.style.textAlign = "left";
-        item.addEventListener("click", ()=>{
-          setTheme(value);
-          menu.remove();
-        });
-        menu.appendChild(item);
-      });
-
-      document.body.appendChild(menu);
-      const r = btn.getBoundingClientRect();
-      menu.style.left = Math.max(8, Math.min(window.innerWidth - 210, r.left)) + "px";
-      menu.style.top = (r.bottom + 8) + "px";
-
-      setTimeout(()=>{
-        document.addEventListener("click", function close(ev){
-          if(!menu.contains(ev.target) && ev.target !== btn){
-            menu.remove();
-            document.removeEventListener("click", close, true);
-          }
-        }, true);
-      }, 0);
-    }, true);
-  }
-
   function markEbayIcon(){
     const topbar = document.querySelector(".topbar");
     if(!topbar) return;
     Array.from(topbar.querySelectorAll("button, a")).forEach(el=>{
-      const txt = [
-        el.id, el.className, el.title, el.getAttribute("aria-label"), el.textContent
-      ].join(" ").toLowerCase();
+      const txt = [el.id, el.className, el.title, el.getAttribute("aria-label"), el.textContent].join(" ").toLowerCase();
       const hasLogo = !!el.querySelector("img[src*='pngwing'], img[src*='ebay'], img[alt*='eBay' i]");
       const isEbay = hasLogo || txt.includes("ebay") || txt.includes("sold");
       if(isEbay && !el.classList.contains("lofi-avatar-trigger")){
         el.classList.add("ebay-logo-match-lofi");
-        const img = el.querySelector("img");
-        if(img){
-          img.removeAttribute("width");
-          img.removeAttribute("height");
-          img.style.cssText += ";width:56px!important;height:56px!important;object-fit:cover!important;border-radius:16px!important;";
-        }
       }
     });
   }
-
-  function runAll(){
-    ensureThemeSelects();
-    installStyleMenu();
-    updateStyleButtons();
-    markEbayIcon();
-  }
-
-  document.addEventListener("DOMContentLoaded", ()=>setTimeout(runAll, 250));
-  window.addEventListener("load", runAll);
-  document.addEventListener("click", ()=>setTimeout(runAll, 80), true);
-  setInterval(runAll, 1500);
+  document.addEventListener("DOMContentLoaded", ()=>setTimeout(markEbayIcon, 200));
+  window.addEventListener("load", markEbayIcon);
 })();
 </script>
 
