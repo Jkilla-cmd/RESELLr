@@ -9769,49 +9769,43 @@ button[aria-label*="eBay"] img{
 
 
 
+
 <style id="nativeEbaySoldCompsIconPatch">
-/* Compact inventory action cluster */
+/* Evenly spaced inventory action row */
 td.action-cell{
   text-align:right !important;
-  width:74px !important;
-  min-width:74px !important;
+  width:132px !important;
+  min-width:132px !important;
   white-space:nowrap !important;
 }
 
 td.action-cell .action{
-  display:grid !important;
-  grid-template-columns: repeat(3, 16px) !important;
-  grid-auto-rows:16px !important;
-  gap:4px 5px !important;
+  display:flex !important;
+  flex-direction:row !important;
   align-items:center !important;
-  justify-content:end !important;
-  justify-items:center !important;
-  width:68px !important;
-  min-width:68px !important;
-  overflow:visible !important;
+  justify-content:flex-end !important;
+  gap:12px !important;
+  width:100% !important;
+  padding-right:4px !important;
+  box-sizing:border-box !important;
 }
 
 td.action-cell .action > *{
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
-  width:16px !important;
-  height:16px !important;
-  min-width:16px !important;
-  min-height:16px !important;
-  max-width:16px !important;
-  max-height:16px !important;
+  width:18px !important;
+  height:18px !important;
+  min-width:18px !important;
+  min-height:18px !important;
   line-height:1 !important;
   margin:0 !important;
   padding:0 !important;
-  overflow:visible !important;
 }
 
 .ebay-comps-action{
   cursor:pointer !important;
-  opacity:.95 !important;
-  grid-column:1 !important;
-  grid-row:1 !important;
+  opacity:.96 !important;
 }
 
 .ebay-comps-action:hover{
@@ -9825,29 +9819,8 @@ td.action-cell .action > *{
   stroke:#111 !important;
   filter:drop-shadow(0 0 1px rgba(255,255,255,.65));
 }
-
-td.action-cell .edit{
-  grid-column:2 !important;
-  grid-row:1 !important;
-}
-
-td.action-cell .soldbtn{
-  grid-column:3 !important;
-  grid-row:1 !important;
-}
-
-td.action-cell .holdbtn,
-td.action-cell .hold,
-td.action-cell .blue{
-  grid-column:2 !important;
-  grid-row:2 !important;
-}
-
-td.action-cell .trash{
-  grid-column:3 !important;
-  grid-row:2 !important;
-}
 </style>
+
 
 </head>
 
