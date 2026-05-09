@@ -18563,7 +18563,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     btn.title = query ? ("Open eBay sold comps for: " + query) : "Open eBay sold comps";
     btn.setAttribute("aria-label", "Open eBay sold comps");
 
-    const src = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%3Cpath%20d%3D%22M3%2016.5%20L8.5%2010.8%20L13%2014.1%20L21%205.5%22%20fill%3D%22none%22%20stroke%3D%22%23111111%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M16.2%205.5%20H21%20V10.3%22%20fill%3D%22none%22%20stroke%3D%22%23111111%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%0A%3C/svg%3E";
+    const src = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%3Cpath%20d%3D%22M3%2016.5%20L8.5%2010.8%20L13%2014.1%20L21%205.5%22%20fill%3D%22none%22%20stroke%3D%22%232f3136%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M16.2%205.5%20H21%20V10.3%22%20fill%3D%22none%22%20stroke%3D%22%232f3136%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%0A%3C/svg%3E";
     if(src){
       const img = document.createElement("img");
       img.alt = "Sold Analytics";
@@ -19121,3 +19121,27 @@ body.skin-dreamtrip .chart-wrap{
 
 
 
+
+
+<style id="inventoryArrowVisibilityFix">
+.inventory-item-ebay-sold-btn{
+  all:unset !important;
+  width:16px !important;
+  height:16px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  vertical-align:middle !important;
+  margin-right:6px !important;
+  cursor:pointer !important;
+  opacity:1 !important;
+}
+
+.inventory-item-ebay-sold-btn img{
+  width:16px !important;
+  height:16px !important;
+  display:block !important;
+  object-fit:contain !important;
+  filter:none !important;
+}
+</style>
