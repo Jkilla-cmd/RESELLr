@@ -9736,47 +9736,46 @@ button[aria-label*="eBay"] img{
 
 
 
+
 <style id="inventoryItemEbaySoldButtonPatch">
 .inventory-item-ebay-sold-btn{
-  width:18px !important;
-  height:18px !important;
-  min-width:18px !important;
-  min-height:18px !important;
-  max-width:18px !important;
-  max-height:18px !important;
-  border-radius:5px !important;
-  overflow:hidden !important;
+  width:14px !important;
+  height:14px !important;
+  min-width:14px !important;
+  min-height:14px !important;
+  max-width:14px !important;
+  max-height:14px !important;
+  border:none !important;
+  background:transparent !important;
+  padding:0 !important;
+  margin:0 0 0 4px !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
-  padding:0 !important;
-  margin:0 0 0 4px !important;
+  overflow:visible !important;
+  opacity:.88;
   cursor:pointer !important;
-  border:none !important;
-  background:transparent !important;
   vertical-align:middle !important;
   line-height:0 !important;
-  opacity:.82;
-  transition:opacity .14s ease, transform .14s ease !important;
+  transition:opacity .12s ease, transform .12s ease !important;
 }
-
 .inventory-item-ebay-sold-btn:hover{
   opacity:1;
   transform:translateY(-1px);
 }
-
 .inventory-item-ebay-sold-btn img{
-  width:18px !important;
-  height:18px !important;
-  min-width:18px !important;
-  min-height:18px !important;
-  max-width:18px !important;
-  max-height:18px !important;
+  width:14px !important;
+  height:14px !important;
+  min-width:14px !important;
+  min-height:14px !important;
+  max-width:14px !important;
+  max-height:14px !important;
   object-fit:contain !important;
   display:block !important;
   border-radius:4px !important;
 }
 </style>
+
 
 
 
@@ -18559,7 +18558,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     btn.title = query ? ("Open eBay sold comps for: " + query) : "Open eBay sold comps";
     btn.setAttribute("aria-label", "Open eBay sold comps");
 
-    const src = "data:image/png;base64,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";
+    const src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAB50lEQVR4nO2bQVLDMAxFPwwnYApruAZH6QFyqB6g52CVDYcIa+hwBlYePJ7YlmUpsYjerk2T6n99y9NOAjiO4zjH5U7iIo/PL98S1+Hw8/X51HM+24A9RefgmHHP+aIRxQO8upoSMKrwNahpICfAkniAXi/JAGviA5S6WTNgRKZ5OXHOqxpgofsl8bX6iwZYFx8o6TC9BLixjzFrgIR4oGDAyPHniM/pMZcAqc4HzBlweXu9tbxfw5wBa3DFAwYNkF4CD5IXk+R9/lgVek1e93QfMJaAK0SbD8CYASm93QcMGaDRfcCIAWviJboP7GRAmOTciS4lHtjBgFT8NC+nkhFa0Q9sug2WhMbHSh0+44aLYE2bGdAS92leTul+r8UmBqyJP+OvydSYx+dIoT4DauLDaw1xFFQTQBEfE6/99Fwtg9QSsCa+ZfuKU6GZDhUDesXHaC8NcQMkxW+BqAHWxAOCBuQGXu53/SiIGNA67Uei2wDL4oFOA6yLBzoNSAecNfGAwBIIJlgUDwgNwdG3uhIm/hLTxA3Yu4C9yRrQewfmaOT0FO8THPkegVZyBvgSKB38L8ugpKOaAOsm1Or3JUD5kNUUUOomJ8CaCdR6WQ9MjLw9tjaKNQNGTQOnrsM/M+Q4jnNofgEQSMdfnqQXfgAAAABJRU5ErkJggg==";
     if(src){
       const img = document.createElement("img");
       img.alt = "Sold Analytics";
