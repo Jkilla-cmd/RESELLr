@@ -9803,31 +9803,36 @@ button[aria-label*="eBay"] img{
 </style>
 
 
-<style id="inventoryActionRowFinalPolish">
-.action{
-  display:flex !important;
-  flex-direction:row !important;
-  align-items:center !important;
-  justify-content:flex-start !important;
-  flex-wrap:nowrap !important;
-  gap:8px !important;
-  overflow:visible !important;
-  width:auto !important;
-}
 
-.action > *{
-  flex:0 0 auto !important;
-}
 
+
+<style id="inventoryCompsMicroFix">
+/* keep original inventory action layout untouched */
 .ebay-comps-action{
-  width:18px !important;
-  height:18px !important;
-  margin-right:2px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:14px !important;
+  height:14px !important;
+  margin-right:4px !important;
+  vertical-align:middle !important;
+  position:relative !important;
+  top:-1px !important;
+  opacity:.92 !important;
 }
 
 .ebay-comps-action svg{
-  width:18px !important;
-  height:18px !important;
+  width:14px !important;
+  height:14px !important;
+  display:block !important;
+  stroke:#222 !important;
+}
+
+/* undo previous action row overrides */
+.action{
+  display:block !important;
+  width:auto !important;
+  gap:0 !important;
 }
 </style>
 
