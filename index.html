@@ -9855,6 +9855,58 @@ td.action-cell .action > *{
 
 
 
+
+<style id="forceTwoRowInventoryActions">
+td.action-cell{
+  width:120px !important;
+  min-width:120px !important;
+}
+
+td.action-cell .action{
+  display:grid !important;
+  grid-template-columns:repeat(3,18px) !important;
+  grid-template-rows:repeat(2,18px) !important;
+  column-gap:10px !important;
+  row-gap:6px !important;
+  justify-content:end !important;
+  align-items:center !important;
+  justify-items:center !important;
+}
+
+/* TOP ROW */
+td.action-cell .action > *:nth-child(1){
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+
+td.action-cell .action > *:nth-child(2){
+  grid-column:2 !important;
+  grid-row:1 !important;
+}
+
+/* BOTTOM ROW */
+td.action-cell .action > *:nth-child(3){
+  grid-column:1 !important;
+  grid-row:2 !important;
+}
+
+td.action-cell .action > *:nth-child(4){
+  grid-column:2 !important;
+  grid-row:2 !important;
+}
+
+td.action-cell .action > *:nth-child(5){
+  grid-column:3 !important;
+  grid-row:2 !important;
+}
+
+.ebay-comps-action svg{
+  width:15px !important;
+  height:15px !important;
+  stroke:#111 !important;
+}
+</style>
+
 </head>
 
 <body>
