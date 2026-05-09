@@ -9738,34 +9738,51 @@ button[aria-label*="eBay"] img{
 
 
 
+
+
+
+
+
+
+
 <style id="inventoryItemEbaySoldButtonPatch">
+/* ===== Inventory sold-comps action icon: same scale as edit/sold/delete icons ===== */
+td .inventory-item-ebay-sold-btn,
+.action-cell .inventory-item-ebay-sold-btn,
 .inventory-item-ebay-sold-btn{
+  all: unset !important;
   width:16px !important;
   height:16px !important;
   min-width:16px !important;
   min-height:16px !important;
   max-width:16px !important;
   max-height:16px !important;
-  border:none !important;
-  background:transparent !important;
-  padding:0 !important;
-  margin:0 4px 0 0 !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
-  overflow:hidden !important;
-  opacity:.90;
-  cursor:pointer !important;
   vertical-align:middle !important;
-  line-height:0 !important;
-  transition:opacity .12s ease, transform .12s ease !important;
+  cursor:pointer !important;
+  margin:0 4px 0 0 !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  line-height:1 !important;
+  opacity:.92 !important;
 }
 
+td .inventory-item-ebay-sold-btn:hover,
+.action-cell .inventory-item-ebay-sold-btn:hover,
 .inventory-item-ebay-sold-btn:hover{
-  opacity:1;
-  transform:translateY(-1px);
+  opacity:1 !important;
+  transform:translateY(-1px) !important;
+  background:transparent !important;
+  box-shadow:none !important;
 }
 
+td .inventory-item-ebay-sold-btn img,
+.action-cell .inventory-item-ebay-sold-btn img,
 .inventory-item-ebay-sold-btn img{
   width:16px !important;
   height:16px !important;
@@ -9775,13 +9792,11 @@ button[aria-label*="eBay"] img{
   max-height:16px !important;
   object-fit:contain !important;
   display:block !important;
-  border-radius:3px !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
 }
 </style>
-
-
-
-
 
 </head>
 
@@ -18562,7 +18577,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     btn.title = query ? ("Open eBay sold comps for: " + query) : "Open eBay sold comps";
     btn.setAttribute("aria-label", "Open eBay sold comps");
 
-    const src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABWGlDQ1BJQ0MgUHJvZmlsZQAAeJx9kLFLw1AQxr9WpaB1EB0cHDKJQ5SSCro4tBVEcQhVweqUvqapkMZHkiIFN/+Bgv+BCs5uFoc6OjgIopPo5uSk4KLleS+JpCJ6j+N+fO+74zggOW5wbvcDqDu+W1zKK5ulLSX1jAS9IAzm8Zyur0r+rj/j/T703k7LWb///43Biukxqp+UGcZdH0ioxPqezyXvE4+5tBRxS7IV8onkcsjngWe9WCC+JlZYzagQvxCr5R7d6uG63WDRDnL7tOlsrMk5lBNYxA48cNgw0IQCHdk//LOBv4BdcjfhUp+FGnzqyZEiJ5jEy3DAMAOVWEOGUpN3ju53F91PjbWDJ2ChI4S4iLWVDnA2Rydrx9rUPDAyBFy1ueEagdRHmaxWgddTYLgEjN5Qz7ZXzWrh9uk8MPAoxNskkDoEui0hPo6E6B5T8wNw6XwBA6diE8HYWhMAAAKHSURBVHiclZK9T1NhFIef97a3ty2R2kQXIgsUJ8SwEipiJToRGcSRAaq7DGIioKIobBBN9D8QE0s3TARhgIJfE1RSckuIUJMSsBVCtffrdUAgNS6c7Zyc88t5zu8IKaXkGLG8vExaT5PJbBCJXMZ9nGGAxcVFPn34SCwWo76+HuW4ApFIBIDmS81Uh0L/32Bvbw/LsggEAiX1nZ0dBh4O0NZ2jVQqRTAYBPlPFItF2X27W96K3pS7u7uHdcMw5N07PXLy3WRJvyg9ouTx40HOhmooDwSYnZ3lwcMHKIrC8NAQFRUVNIbD/NjeRlVVQjU1pQgvX7wkeDLI9RvtAGxubvL82XPKyvx4vT6ut7cT7YpSVVXFajpNR0fHkUA8Hieb3SQcDvNkcBApoanpAolEgmw2y8CjAfK5HKHqavru9xOPjVP4VdgXSMwlmJmeYWh4iKeDT6g9V4thmExPT3OvtxfHcRBCgBAcEJuWicvlwq3rOmNjr+jr70fTNDRN42JzM8XfRb5nMoyOjLCysoJt2bS0tODRPCXOuDVNo7OzE8dxKBQKCCEwDAPDNDBNk3wuR09PD18+fyGVSiGUo9dxpIM7MTfH24kJNK+X06dOU15+4sgTKfGVlXGmspJv6+vouo60rQPDAFC2t7boikYZGR1F83iwLPtov31sbNvGcZz9RB7MS6QjcQtFOWR3qW6QEq+mHSpIKXG5XGgeDwJQ/iKoqop0nH0X3k9Nsbq6Sj6Xw+fzE3sTw7RMLMvkZ/4nr8fG0PU0Pp+P9bU14uPjLMwv0NDQgPiaTMqpySls26bufB1+v5/5+QUAGsON5H/kWEouIYTgypWrJJNJMpkNVNVDa2srfwC2w0WzaoI5ewAAAABJRU5ErkJggg==";
+    const src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABYklEQVR4nO2a2w3DIAxFnaoLdZ+M130yEv1CQlF42MY4Tu/5K0oq3xMwNCoRAAAAAP6VzbsALfuRUu+a72er5nzNLWc9rXAjhBdApJPwCAH7kZJUQngBuQdIJYQWcG6AEglhBVx1/xyeIyGkgFb42uca4QSMhO+Nl4Q6CHHCjxJmBliEJwoiwCo80UIBI2f20ftmhSdaIKAMsB8pcURYhycyboK9sK0wtXvDCOA86XMojTguJkuAu97LpbFi2pdMF6AJIG2UGqYK6J3PLZ+klGkCRp/83USoBdS2tl7IKxGSX3Na3pqbZzSsfH3+rtWzQzwDJOHP3b78Dq9lIRIgDc8ZXwVbwOp92hqWgKeFJ2IKkL52ujPsJeCxVVkiaoJPCU8U5I2QJSoBrX09ClMPQq3xu4Il4F2ANxDgXYA3EOBdgDcQ4F2ANxDgXYA3EOBdgDdiAdz/5ViPAwAAAAAAAFj8ANgGyt6ZDrg8AAAAAElFTkSuQmCC";
     if(src){
       const img = document.createElement("img");
       img.alt = "Sold Analytics";
@@ -18614,7 +18629,15 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
         row.lastElementChild;
 
       if(!targetCell) return;
-      targetCell.insertBefore(makeButton(query), targetCell.firstChild);
+      
+      const ebayBtn = makeButton(query);
+      const editIcon = targetCell.querySelector(".edit, [title*='Edit' i], [aria-label*='Edit' i]");
+      if(editIcon){
+        targetCell.insertBefore(ebayBtn, editIcon);
+      }else{
+        targetCell.insertBefore(ebayBtn, targetCell.firstChild);
+      }
+    
     });
 
     // Card/list fallback.
@@ -19098,3 +19121,29 @@ body.skin-dreamtrip .chart-wrap{
   setInterval(syncDreamLayer, 1000);
 })();
 </script>
+
+
+<style id="inventoryItemEbaySoldButtonFinalOverride">
+td .inventory-item-ebay-sold-btn,
+.action-cell .inventory-item-ebay-sold-btn,
+.inventory-item-ebay-sold-btn{
+  all:unset !important;
+  width:16px !important;
+  height:16px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 4px 0 0 !important;
+  vertical-align:middle !important;
+  cursor:pointer !important;
+}
+td .inventory-item-ebay-sold-btn img,
+.action-cell .inventory-item-ebay-sold-btn img,
+.inventory-item-ebay-sold-btn img{
+  width:16px !important;
+  height:16px !important;
+  object-fit:contain !important;
+  border-radius:0 !important;
+  background:transparent !important;
+}
+</style>
