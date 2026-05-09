@@ -9737,44 +9737,48 @@ button[aria-label*="eBay"] img{
 
 
 
+
 <style id="inventoryItemEbaySoldButtonPatch">
 .inventory-item-ebay-sold-btn{
-  width:14px !important;
-  height:14px !important;
-  min-width:14px !important;
-  min-height:14px !important;
-  max-width:14px !important;
-  max-height:14px !important;
+  width:16px !important;
+  height:16px !important;
+  min-width:16px !important;
+  min-height:16px !important;
+  max-width:16px !important;
+  max-height:16px !important;
   border:none !important;
   background:transparent !important;
   padding:0 !important;
-  margin:0 0 0 4px !important;
+  margin:0 4px 0 0 !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
-  overflow:visible !important;
-  opacity:.88;
+  overflow:hidden !important;
+  opacity:.90;
   cursor:pointer !important;
   vertical-align:middle !important;
   line-height:0 !important;
   transition:opacity .12s ease, transform .12s ease !important;
 }
+
 .inventory-item-ebay-sold-btn:hover{
   opacity:1;
   transform:translateY(-1px);
 }
+
 .inventory-item-ebay-sold-btn img{
-  width:14px !important;
-  height:14px !important;
-  min-width:14px !important;
-  min-height:14px !important;
-  max-width:14px !important;
-  max-height:14px !important;
+  width:16px !important;
+  height:16px !important;
+  min-width:16px !important;
+  min-height:16px !important;
+  max-width:16px !important;
+  max-height:16px !important;
   object-fit:contain !important;
   display:block !important;
-  border-radius:4px !important;
+  border-radius:3px !important;
 }
 </style>
+
 
 
 
@@ -18558,7 +18562,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     btn.title = query ? ("Open eBay sold comps for: " + query) : "Open eBay sold comps";
     btn.setAttribute("aria-label", "Open eBay sold comps");
 
-    const src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAB50lEQVR4nO2bQVLDMAxFPwwnYApruAZH6QFyqB6g52CVDYcIa+hwBlYePJ7YlmUpsYjerk2T6n99y9NOAjiO4zjH5U7iIo/PL98S1+Hw8/X51HM+24A9RefgmHHP+aIRxQO8upoSMKrwNahpICfAkniAXi/JAGviA5S6WTNgRKZ5OXHOqxpgofsl8bX6iwZYFx8o6TC9BLixjzFrgIR4oGDAyPHniM/pMZcAqc4HzBlweXu9tbxfw5wBa3DFAwYNkF4CD5IXk+R9/lgVek1e93QfMJaAK0SbD8CYASm93QcMGaDRfcCIAWviJboP7GRAmOTciS4lHtjBgFT8NC+nkhFa0Q9sug2WhMbHSh0+44aLYE2bGdAS92leTul+r8UmBqyJP+OvydSYx+dIoT4DauLDaw1xFFQTQBEfE6/99Fwtg9QSsCa+ZfuKU6GZDhUDesXHaC8NcQMkxW+BqAHWxAOCBuQGXu53/SiIGNA67Uei2wDL4oFOA6yLBzoNSAecNfGAwBIIJlgUDwgNwdG3uhIm/hLTxA3Yu4C9yRrQewfmaOT0FO8THPkegVZyBvgSKB38L8ugpKOaAOsm1Or3JUD5kNUUUOomJ8CaCdR6WQ9MjLw9tjaKNQNGTQOnrsM/M+Q4jnNofgEQSMdfnqQXfgAAAABJRU5ErkJggg==";
+    const src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABWGlDQ1BJQ0MgUHJvZmlsZQAAeJx9kLFLw1AQxr9WpaB1EB0cHDKJQ5SSCro4tBVEcQhVweqUvqapkMZHkiIFN/+Bgv+BCs5uFoc6OjgIopPo5uSk4KLleS+JpCJ6j+N+fO+74zggOW5wbvcDqDu+W1zKK5ulLSX1jAS9IAzm8Zyur0r+rj/j/T703k7LWb///43Biukxqp+UGcZdH0ioxPqezyXvE4+5tBRxS7IV8onkcsjngWe9WCC+JlZYzagQvxCr5R7d6uG63WDRDnL7tOlsrMk5lBNYxA48cNgw0IQCHdk//LOBv4BdcjfhUp+FGnzqyZEiJ5jEy3DAMAOVWEOGUpN3ju53F91PjbWDJ2ChI4S4iLWVDnA2Rydrx9rUPDAyBFy1ueEagdRHmaxWgddTYLgEjN5Qz7ZXzWrh9uk8MPAoxNskkDoEui0hPo6E6B5T8wNw6XwBA6diE8HYWhMAAAKHSURBVHiclZK9T1NhFIef97a3ty2R2kQXIgsUJ8SwEipiJToRGcSRAaq7DGIioKIobBBN9D8QE0s3TARhgIJfE1RSckuIUJMSsBVCtffrdUAgNS6c7Zyc88t5zu8IKaXkGLG8vExaT5PJbBCJXMZ9nGGAxcVFPn34SCwWo76+HuW4ApFIBIDmS81Uh0L/32Bvbw/LsggEAiX1nZ0dBh4O0NZ2jVQqRTAYBPlPFItF2X27W96K3pS7u7uHdcMw5N07PXLy3WRJvyg9ouTx40HOhmooDwSYnZ3lwcMHKIrC8NAQFRUVNIbD/NjeRlVVQjU1pQgvX7wkeDLI9RvtAGxubvL82XPKyvx4vT6ut7cT7YpSVVXFajpNR0fHkUA8Hieb3SQcDvNkcBApoanpAolEgmw2y8CjAfK5HKHqavru9xOPjVP4VdgXSMwlmJmeYWh4iKeDT6g9V4thmExPT3OvtxfHcRBCgBAcEJuWicvlwq3rOmNjr+jr70fTNDRN42JzM8XfRb5nMoyOjLCysoJt2bS0tODRPCXOuDVNo7OzE8dxKBQKCCEwDAPDNDBNk3wuR09PD18+fyGVSiGUo9dxpIM7MTfH24kJNK+X06dOU15+4sgTKfGVlXGmspJv6+vouo60rQPDAFC2t7boikYZGR1F83iwLPtov31sbNvGcZz9RB7MS6QjcQtFOWR3qW6QEq+mHSpIKXG5XGgeDwJQ/iKoqop0nH0X3k9Nsbq6Sj6Xw+fzE3sTw7RMLMvkZ/4nr8fG0PU0Pp+P9bU14uPjLMwv0NDQgPiaTMqpySls26bufB1+v5/5+QUAGsON5H/kWEouIYTgypWrJJNJMpkNVNVDa2srfwC2w0WzaoI5ewAAAABJRU5ErkJggg==";
     if(src){
       const img = document.createElement("img");
       img.alt = "Sold Analytics";
@@ -18610,7 +18614,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
         row.lastElementChild;
 
       if(!targetCell) return;
-      targetCell.appendChild(makeButton(query));
+      targetCell.insertBefore(makeButton(query), targetCell.firstChild);
     });
 
     // Card/list fallback.
