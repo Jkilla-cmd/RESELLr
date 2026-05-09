@@ -9733,6 +9733,41 @@ button[aria-label*="eBay"] img{
 
 
 </style>
+
+<style id="inventoryItemEbaySoldButtonPatch">
+/* ===== Per-item inventory eBay sold button ===== */
+.inventory-item-ebay-sold-btn{
+  width:34px !important;
+  height:34px !important;
+  min-width:34px !important;
+  min-height:34px !important;
+  max-width:34px !important;
+  max-height:34px !important;
+  border-radius:11px !important;
+  overflow:hidden !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:0 !important;
+  margin:0 0 0 6px !important;
+  cursor:pointer !important;
+  border:1px solid rgba(255,255,255,.14) !important;
+  background:rgba(15,18,32,.72) !important;
+  vertical-align:middle !important;
+}
+.inventory-item-ebay-sold-btn:hover{
+  transform:translateY(-1px) scale(1.04);
+  box-shadow:0 0 14px rgba(0,229,255,.16);
+}
+.inventory-item-ebay-sold-btn img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  border-radius:11px !important;
+  display:block !important;
+}
+</style>
+
 </head>
 
 <body>
@@ -18312,7 +18347,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 <script>
-/* ===== RESELLr eBay sold overlay polish: Ctrl+X + 140pt helper ===== */
+
 (function(){
   function norm(s){ return String(s || "").toLowerCase(); }
 
@@ -18334,11 +18369,11 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  function run140ptSearch(){
+
     const root = findEbayOverlay() || document;
     const input = findEbayInput(root);
     let q = input ? input.value.trim() : "";
-    q = (q + " 140pt").trim();
+
     const url = "https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(q) + "&LH_Sold=1&LH_Complete=1";
     window.open(url, "_blank", "noopener,noreferrer");
   }
@@ -18363,16 +18398,16 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     }
 
     const input = findEbayInput(root);
-    if(input && !root.querySelector("[data-ebay-140pt-row]")){
+
       const row = document.createElement("div");
       row.className = "ebay-card-point-row";
-      row.setAttribute("data-ebay-140pt-row", "1");
+
 
       const btn140 = document.createElement("button");
       btn140.type = "button";
       btn140.className = "small";
-      btn140.textContent = "Sold results: 140pt";
-      btn140.addEventListener("click", run140ptSearch);
+
+
 
       row.appendChild(btn140);
       input.insertAdjacentElement("afterend", row);
@@ -18406,15 +18441,15 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
           <h3>eBay sold search</h3>
           <div class="muted" data-ebay-shortcut-note="1" style="font-size:12px;margin:6px 0 10px;">Shortcut: Ctrl + X toggles this eBay sold search overlay.</div>
           <input id="ebaySoldFallbackInput" type="search" placeholder="Search sold eBay comps..." />
-          <div class="ebay-card-point-row" data-ebay-140pt-row="1">
+
             <button type="button" class="small" id="ebaySoldFallbackSearch">Search sold</button>
-            <button type="button" class="small" id="ebaySoldFallback140">Sold results: 140pt</button>
+
             <button type="button" class="small" id="ebaySoldFallbackClose">Close</button>
           </div>
         </div>`;
       document.body.appendChild(modal);
       modal.querySelector("#ebaySoldFallbackSearch").addEventListener("click", runSearch);
-      modal.querySelector("#ebaySoldFallback140").addEventListener("click", run140ptSearch);
+
       modal.querySelector("#ebaySoldFallbackClose").addEventListener("click", ()=>modal.style.display="none");
       modal.addEventListener("click", (e)=>{ if(e.target === modal) modal.style.display = "none"; });
     }
@@ -18455,6 +18490,157 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 
+
+
+<script id="inventoryItemEbaySoldButtonRuntime">
+/* Adds an eBay sold-comps button to each inventory item/row. */
+(function(){
+  function getTopbarEbayImgSrc(){
+    const img =
+      document.querySelector("#ebayPriceTopButton img") ||
+      document.querySelector("img[src*='ebay']") ||
+      document.querySelector("img[src*='pngwing']");
+    return img ? img.src : "";
+  }
+
+  function cleanItemQuery(txt){
+    return String(txt || "")
+      .replace(/[✎🗑✅💰$]/g, " ")
+      .replace(/\b(edit|delete|sold|move|hold|inventory|cost|list|price|profit|platform|type|date)\b/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function rowQuery(row){
+    const cells = Array.from(row.querySelectorAll("td"));
+    if(cells.length){
+      // Prefer the first few descriptive cells, avoiding action/number-heavy cells.
+      const preferred = cells
+        .slice(0, 4)
+        .map(td => cleanItemQuery(td.innerText))
+        .filter(Boolean)
+        .sort((a,b) => b.length - a.length)[0];
+      if(preferred) return preferred;
+    }
+
+    const nameLike =
+      row.querySelector("[data-name], [data-title], .item-name, .inventory-name, .title, .name") ||
+      row.querySelector("strong") ||
+      row.querySelector("td");
+
+    if(nameLike) return cleanItemQuery(nameLike.innerText || nameLike.value);
+
+    return cleanItemQuery(row.innerText);
+  }
+
+  function openSoldSearch(query){
+    const url = "https://www.ebay.com/sch/i.html?_nkw=" +
+      encodeURIComponent(query || "") +
+      "&LH_Sold=1&LH_Complete=1";
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  function makeButton(query){
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "inventory-item-ebay-sold-btn";
+    btn.title = query ? ("Open eBay sold comps for: " + query) : "Open eBay sold comps";
+    btn.setAttribute("aria-label", "Open eBay sold comps");
+
+    const src = getTopbarEbayImgSrc();
+    if(src){
+      const img = document.createElement("img");
+      img.alt = "eBay Sold";
+      img.src = src;
+      btn.appendChild(img);
+    }else{
+      btn.textContent = "e";
+      btn.style.fontWeight = "800";
+    }
+
+    btn.addEventListener("click", function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const liveRow = btn.closest("tr, .inventory-row, .item-row, .card, .panel");
+      const liveQuery = liveRow ? rowQuery(liveRow) : query;
+      openSoldSearch(liveQuery || query || "");
+    });
+
+    return btn;
+  }
+
+  function isInventoryVisible(){
+    const active = document.querySelector(".section.active, [id*='Inventory'].active, [id*='inventory'].active");
+    if(active && /inventory/i.test(active.id + " " + active.textContent)) return true;
+    return /inventory/i.test(document.body.innerText || "");
+  }
+
+  function patchInventoryRows(){
+    if(!isInventoryVisible()) return;
+
+    const inventorySection =
+      document.querySelector("#secInventory") ||
+      document.querySelector("#inventorySection") ||
+      document.querySelector("[id*='Inventory']") ||
+      document.querySelector("[id*='inventory']") ||
+      document;
+
+    // Table rows are the most likely inventory list format.
+    const rows = Array.from(inventorySection.querySelectorAll("tbody tr"))
+      .filter(row => row.offsetParent !== null && !row.querySelector(".inventory-item-ebay-sold-btn"));
+
+    rows.forEach(row => {
+      const query = rowQuery(row);
+      if(!query) return;
+
+      let targetCell =
+        row.querySelector(".action-cell") ||
+        Array.from(row.children).find(td => /✎|🗑|sold|edit|delete/i.test(td.innerText || "")) ||
+        row.lastElementChild;
+
+      if(!targetCell) return;
+      targetCell.appendChild(makeButton(query));
+    });
+
+    // Card/list fallback.
+    const cards = Array.from(inventorySection.querySelectorAll(".inventory-card, .inventory-item, .item-card, .card"))
+      .filter(card => card.offsetParent !== null && !card.querySelector(".inventory-item-ebay-sold-btn"));
+
+    cards.forEach(card => {
+      const query = rowQuery(card);
+      if(!query) return;
+      const actionArea =
+        card.querySelector(".actions, .btnRow, .button-row, .card-actions") ||
+        card;
+      actionArea.appendChild(makeButton(query));
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    setTimeout(patchInventoryRows, 500);
+    setTimeout(patchInventoryRows, 1200);
+  });
+
+  window.addEventListener("load", patchInventoryRows);
+
+  document.addEventListener("click", function(){
+    setTimeout(patchInventoryRows, 250);
+  }, true);
+
+  document.addEventListener("input", function(){
+    setTimeout(patchInventoryRows, 250);
+  }, true);
+
+  const obs = new MutationObserver(function(){
+    clearTimeout(window.__resellrEbayRowPatchTimer);
+    window.__resellrEbayRowPatchTimer = setTimeout(patchInventoryRows, 250);
+  });
+
+  document.addEventListener("DOMContentLoaded", function(){
+    obs.observe(document.body, {childList:true, subtree:true});
+  });
+})();
+</script>
 
 </body>
 </html>
@@ -18688,7 +18874,7 @@ body.skin-dreamtrip .dreamtrip-psychedelic-layer{
     radial-gradient(circle at 28% 82%, rgba(255,230,0,.28), transparent 18%),
     linear-gradient(135deg, #050014, #07123d, #24002d);
   filter:saturate(1.8) contrast(1.08);
-  animation: tripHue 10s linear infinite, tripMorph 9s ease-in-out infinite alternate;
+  animation: tripHue 12s linear infinite;
 }
 
 body.skin-dreamtrip .dreamtrip-psychedelic-layer::before{
@@ -18707,7 +18893,7 @@ body.skin-dreamtrip .dreamtrip-psychedelic-layer::before{
   filter:blur(42px);
   opacity:.75;
   mix-blend-mode:screen;
-  animation: tripSpin 18s linear infinite, tripPulse 5s ease-in-out infinite alternate;
+  animation: tripHue 18s linear infinite;
 }
 
 body.skin-dreamtrip .dreamtrip-psychedelic-layer::after{
@@ -18719,7 +18905,7 @@ body.skin-dreamtrip .dreamtrip-psychedelic-layer::after{
     repeating-linear-gradient(115deg, rgba(255,255,255,.045) 0 2px, transparent 2px 18px);
   opacity:.28;
   mix-blend-mode:overlay;
-  animation: tripTunnel 6s ease-in-out infinite alternate, tripHue 14s linear infinite reverse;
+  animation: tripHue 20s linear infinite reverse;
 }
 
 body.skin-dreamtrip .app,
@@ -18763,17 +18949,10 @@ body.skin-dreamtrip #netWorthPanel .nw-card{
     inset 0 1px 0 rgba(255,255,255,.07) !important;
   backdrop-filter:blur(15px) saturate(1.35) !important;
   -webkit-backdrop-filter:blur(15px) saturate(1.35) !important;
-  animation: tripPanelFloat 5.8s ease-in-out infinite alternate !important;
+  
 }
 
-body.skin-dreamtrip .panel:nth-of-type(2n),
-body.skin-dreamtrip .command-stat:nth-of-type(2n){
-  animation-delay:-1.4s !important;
-}
-body.skin-dreamtrip .panel:nth-of-type(3n),
-body.skin-dreamtrip .command-stat:nth-of-type(3n){
-  animation-delay:-2.8s !important;
-}
+
 
 body.skin-dreamtrip button,
 body.skin-dreamtrip button.small,
@@ -18814,8 +18993,7 @@ body.skin-dreamtrip .chart-wrap{
   0%{ filter:hue-rotate(0deg) saturate(1.75) contrast(1.08); }
   100%{ filter:hue-rotate(360deg) saturate(2.05) contrast(1.12); }
 }
-@keyframes tripMorph{
-  0%{ transform:translate3d(-2%, -1%, 0) scale(1) rotate(0deg); border-radius:42% 58% 51% 49%; }
+@keyframes tripMorph{from{opacity:.65;}to{opacity:.75;}}
   50%{ transform:translate3d(2%, 1%, 0) scale(1.06) rotate(1.5deg); border-radius:62% 38% 46% 54%; }
   100%{ transform:translate3d(-1%, 2%, 0) scale(1.03) rotate(-1deg); border-radius:48% 52% 64% 36%; }
 }
@@ -18827,12 +19005,10 @@ body.skin-dreamtrip .chart-wrap{
   from{ opacity:.50; }
   to{ opacity:.86; }
 }
-@keyframes tripTunnel{
-  from{ transform:scale(.96) rotate(-2deg); opacity:.18; }
+@keyframes tripTunnel{from{opacity:.18;}to{opacity:.26;}}
   to{ transform:scale(1.08) rotate(2deg); opacity:.38; }
 }
-@keyframes tripPanelFloat{
-  from{ transform:translateY(0) skewX(0deg); }
+@keyframes tripPanelFloat{from{transform:none;}to{transform:none;}}
   to{ transform:translateY(-5px) skewX(-.25deg); }
 }
 @keyframes tripButtonGlow{
