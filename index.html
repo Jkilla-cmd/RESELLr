@@ -9772,30 +9772,34 @@ button[aria-label*="eBay"] img{
 
 
 
-<style id="nativeEbaySoldCompsIconPatch">
-/* Two-row inventory action layout */
-td.action-cell{
-  text-align:right !important;
-  width:120px !important;
-  min-width:120px !important;
-  white-space:nowrap !important;
-}
 
-td.action-cell .action{
+
+
+
+
+
+
+
+
+<style id="inventoryActionCellTrueTwoRows">
+/* TRUE 2-row layout: action-cell itself is the grid */
+td.action-cell{
   display:grid !important;
   grid-template-columns: repeat(3, 18px) !important;
   grid-template-rows: repeat(2, 18px) !important;
-  column-gap:12px !important;
+  column-gap:10px !important;
   row-gap:6px !important;
   justify-content:end !important;
   align-items:center !important;
   justify-items:center !important;
-  width:100% !important;
-  padding-right:4px !important;
-  box-sizing:border-box !important;
+  width:118px !important;
+  min-width:118px !important;
+  white-space:nowrap !important;
+  padding-right:10px !important;
 }
 
-td.action-cell .action > *{
+/* Normalize every icon in the action cell */
+td.action-cell > *{
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
@@ -9803,107 +9807,46 @@ td.action-cell .action > *{
   height:18px !important;
   min-width:18px !important;
   min-height:18px !important;
+  max-width:18px !important;
+  max-height:18px !important;
   margin:0 !important;
   padding:0 !important;
   line-height:1 !important;
 }
 
-/* Top row */
-.ebay-comps-action{
+/* Top row: arrow then pencil */
+td.action-cell > .ebay-comps-action{
   grid-column:1 !important;
   grid-row:1 !important;
-  cursor:pointer !important;
-  opacity:.96 !important;
 }
 
-.edit{
+td.action-cell > .edit{
   grid-column:2 !important;
   grid-row:1 !important;
 }
 
-/* Bottom row */
-.soldbtn{
+/* Bottom row: sold, holds, delete */
+td.action-cell > .soldbtn{
   grid-column:1 !important;
   grid-row:2 !important;
 }
 
-.holdbtn,
-.hold,
-.blue{
+td.action-cell > .holdbtn,
+td.action-cell > .blue{
   grid-column:2 !important;
   grid-row:2 !important;
 }
 
-.trash{
+td.action-cell > .trash{
   grid-column:3 !important;
   grid-row:2 !important;
 }
 
-.ebay-comps-action:hover{
-  opacity:1 !important;
-  transform:translateY(-1px) !important;
-}
-
-.ebay-comps-action svg{
+td.action-cell > .ebay-comps-action svg{
   width:15px !important;
   height:15px !important;
   stroke:#111 !important;
   filter:drop-shadow(0 0 1px rgba(255,255,255,.65));
-}
-</style>
-
-
-
-
-
-<style id="forceTwoRowInventoryActions">
-td.action-cell{
-  width:120px !important;
-  min-width:120px !important;
-}
-
-td.action-cell .action{
-  display:grid !important;
-  grid-template-columns:repeat(3,18px) !important;
-  grid-template-rows:repeat(2,18px) !important;
-  column-gap:10px !important;
-  row-gap:6px !important;
-  justify-content:end !important;
-  align-items:center !important;
-  justify-items:center !important;
-}
-
-/* TOP ROW */
-td.action-cell .action > *:nth-child(1){
-  grid-column:1 !important;
-  grid-row:1 !important;
-}
-
-td.action-cell .action > *:nth-child(2){
-  grid-column:2 !important;
-  grid-row:1 !important;
-}
-
-/* BOTTOM ROW */
-td.action-cell .action > *:nth-child(3){
-  grid-column:1 !important;
-  grid-row:2 !important;
-}
-
-td.action-cell .action > *:nth-child(4){
-  grid-column:2 !important;
-  grid-row:2 !important;
-}
-
-td.action-cell .action > *:nth-child(5){
-  grid-column:3 !important;
-  grid-row:2 !important;
-}
-
-.ebay-comps-action svg{
-  width:15px !important;
-  height:15px !important;
-  stroke:#111 !important;
 }
 </style>
 
@@ -12622,14 +12565,14 @@ function renderActive() {
     sbtn.className = "soldbtn";
     sbtn.title = "Mark Sold";
     sbtn.textContent = "✅";
-    sbtn.style.marginLeft = "8px";
+    
     sbtn.onclick = () => openMarkSoldModal(r._id);
 
     const hbtn = document.createElement("span");
     hbtn.className = "yellow";
     hbtn.title = "Move to Holds";
     hbtn.textContent = "🧊";
-    hbtn.style.marginLeft = "8px";
+    
     hbtn.style.cursor = "pointer";
     hbtn.onclick = () => moveActiveToHolds(r._id);
 
@@ -12637,7 +12580,7 @@ function renderActive() {
     d.className = "trash";
     d.title = "Delete";
     d.textContent = "🗑";
-    d.style.marginLeft = "8px";
+    
     d.onclick = () => deleteActiveById(r._id);
 
     
