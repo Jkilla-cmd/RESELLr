@@ -9747,56 +9747,55 @@ button[aria-label*="eBay"] img{
 
 
 
+
+
+
+
+
 <style id="inventoryItemEbaySoldButtonPatch">
-/* ===== Inventory sold-comps action icon ===== */
-td .inventory-item-ebay-sold-btn,
-.action-cell .inventory-item-ebay-sold-btn,
+/* Tiny arrow-only sold-comps icon, same style as action icons */
 .inventory-item-ebay-sold-btn{
   all:unset !important;
-  width:20px !important;
-  height:20px !important;
-  min-width:20px !important;
-  min-height:20px !important;
-  max-width:20px !important;
-  max-height:20px !important;
+  width:18px !important;
+  height:18px !important;
+  min-width:18px !important;
+  min-height:18px !important;
+  max-width:18px !important;
+  max-height:18px !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
   vertical-align:middle !important;
   cursor:pointer !important;
-  margin:0 6px 0 0 !important;
+  margin:0 5px 0 0 !important;
   padding:0 !important;
   background:transparent !important;
   border:none !important;
   box-shadow:none !important;
-  border-radius:0 !important;
   line-height:1 !important;
-  opacity:1 !important;
-  position:relative !important;
-  top:-1px !important;
+  opacity:.95 !important;
+  position:static !important;
 }
 
 .inventory-item-ebay-sold-btn:hover{
-  transform:translateY(-1px) scale(1.06) !important;
+  opacity:1 !important;
+  transform:translateY(-1px) !important;
 }
 
-td .inventory-item-ebay-sold-btn img,
-.action-cell .inventory-item-ebay-sold-btn img,
 .inventory-item-ebay-sold-btn img{
-  width:20px !important;
-  height:20px !important;
-  min-width:20px !important;
-  min-height:20px !important;
-  max-width:20px !important;
-  max-height:20px !important;
+  width:18px !important;
+  height:18px !important;
+  min-width:18px !important;
+  min-height:18px !important;
+  max-width:18px !important;
+  max-height:18px !important;
   object-fit:contain !important;
   display:block !important;
-  border-radius:0 !important;
   background:transparent !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
 }
 </style>
-
-
 
 </head>
 
@@ -18577,7 +18576,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     btn.title = query ? ("Open eBay sold comps for: " + query) : "Open eBay sold comps";
     btn.setAttribute("aria-label", "Open eBay sold comps");
 
-    const src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABYklEQVR4nO2a2w3DIAxFnaoLdZ+M130yEv1CQlF42MY4Tu/5K0oq3xMwNCoRAAAAAP6VzbsALfuRUu+a72er5nzNLWc9rXAjhBdApJPwCAH7kZJUQngBuQdIJYQWcG6AEglhBVx1/xyeIyGkgFb42uca4QSMhO+Nl4Q6CHHCjxJmBliEJwoiwCo80UIBI2f20ftmhSdaIKAMsB8pcURYhycyboK9sK0wtXvDCOA86XMojTguJkuAu97LpbFi2pdMF6AJIG2UGqYK6J3PLZ+klGkCRp/83USoBdS2tl7IKxGSX3Na3pqbZzSsfH3+rtWzQzwDJOHP3b78Dq9lIRIgDc8ZXwVbwOp92hqWgKeFJ2IKkL52ujPsJeCxVVkiaoJPCU8U5I2QJSoBrX09ClMPQq3xu4Il4F2ANxDgXYA3EOBdgDcQ4F2ANxDgXYA3EOBdgDdiAdz/5ViPAwAAAAAAAFj8ANgGyt6ZDrg8AAAAAElFTkSuQmCC";
+    const src = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%20%20%3Cpath%20d%3D%22M3%2016.5%20L8.5%2010.8%20L13%2014.1%20L21%205.5%22%20fill%3D%22none%22%20stroke%3D%22%235cf0ff%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%0A%20%20%3Cpath%20d%3D%22M16.2%205.5%20H21%20V10.3%22%20fill%3D%22none%22%20stroke%3D%22%235cf0ff%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%0A%3C/svg%3E";
     if(src){
       const img = document.createElement("img");
       img.alt = "Sold Analytics";
@@ -19129,46 +19128,12 @@ body.skin-dreamtrip .chart-wrap{
 </script>
 
 
-<style id="inventoryItemEbaySoldButtonFinalOverride">
-td .inventory-item-ebay-sold-btn,
-.action-cell .inventory-item-ebay-sold-btn,
-.inventory-item-ebay-sold-btn{
-  all:unset !important;
-  width:16px !important;
-  height:16px !important;
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  margin:0 4px 0 0 !important;
-  vertical-align:middle !important;
-  cursor:pointer !important;
-}
-td .inventory-item-ebay-sold-btn img,
-.action-cell .inventory-item-ebay-sold-btn img,
-.inventory-item-ebay-sold-btn img{
-  width:16px !important;
-  height:16px !important;
-  object-fit:contain !important;
-  border-radius:0 !important;
-  background:transparent !important;
-}
-</style>
 
 
 
-<style id="inventoryInlineLayoutFix">
-.action-cell,
-td:last-child{
-  white-space:nowrap !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:flex-start !important;
-  gap:4px !important;
-}
 
-.inventory-item-ebay-sold-btn{
-  flex:0 0 auto !important;
-  order:-10 !important;
-}
-</style>
+
+
+
+
 
