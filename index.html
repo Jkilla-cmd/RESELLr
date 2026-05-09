@@ -9781,8 +9781,8 @@ button[aria-label*="eBay"] img{
 
 
 
+
 <style id="inventoryActionCellTrueTwoRows">
-/* TRUE 2-row layout: action-cell itself is the grid */
 td.action-cell{
   display:grid !important;
   grid-template-columns: repeat(3, 18px) !important;
@@ -9798,7 +9798,6 @@ td.action-cell{
   padding-right:10px !important;
 }
 
-/* Normalize every icon in the action cell */
 td.action-cell > *{
   display:inline-flex !important;
   align-items:center !important;
@@ -9807,25 +9806,24 @@ td.action-cell > *{
   height:18px !important;
   min-width:18px !important;
   min-height:18px !important;
-  max-width:18px !important;
-  max-height:18px !important;
   margin:0 !important;
   padding:0 !important;
   line-height:1 !important;
 }
 
-/* Top row: arrow then pencil */
-td.action-cell > .ebay-comps-action{
+/* TOP ROW: pencil then comps */
+td.action-cell > .edit{
   grid-column:1 !important;
   grid-row:1 !important;
 }
 
-td.action-cell > .edit{
+td.action-cell > .ebay-comps-action{
   grid-column:2 !important;
   grid-row:1 !important;
+  cursor:pointer !important;
 }
 
-/* Bottom row: sold, holds, delete */
+/* BOTTOM ROW: sold, holds, delete */
 td.action-cell > .soldbtn{
   grid-column:1 !important;
   grid-row:2 !important;
@@ -9842,13 +9840,21 @@ td.action-cell > .trash{
   grid-row:2 !important;
 }
 
+/* make arrow clearly clickable */
+td.action-cell > .ebay-comps-action:hover{
+  transform:translateY(-1px) !important;
+  opacity:1 !important;
+}
+
 td.action-cell > .ebay-comps-action svg{
   width:15px !important;
   height:15px !important;
   stroke:#111 !important;
+  pointer-events:none !important;
   filter:drop-shadow(0 0 1px rgba(255,255,255,.65));
 }
 </style>
+
 
 </head>
 
@@ -12593,8 +12599,8 @@ function renderActive() {
       window.open(`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, "_blank", "noopener,noreferrer");
     };
 
-    action.appendChild(comps);
     action.appendChild(e);
+    action.appendChild(comps);
     action.appendChild(sbtn);
     action.appendChild(hbtn);
     action.appendChild(d);
