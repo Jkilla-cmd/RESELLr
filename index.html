@@ -9734,39 +9734,45 @@ button[aria-label*="eBay"] img{
 
 </style>
 
+
 <style id="inventoryItemEbaySoldButtonPatch">
-/* ===== Per-item inventory eBay sold button ===== */
+/* ===== Per-item inventory eBay sold button (small icon version) ===== */
 .inventory-item-ebay-sold-btn{
-  width:34px !important;
-  height:34px !important;
-  min-width:34px !important;
-  min-height:34px !important;
-  max-width:34px !important;
-  max-height:34px !important;
-  border-radius:11px !important;
+  width:22px !important;
+  height:22px !important;
+  min-width:22px !important;
+  min-height:22px !important;
+  max-width:22px !important;
+  max-height:22px !important;
+  border-radius:7px !important;
   overflow:hidden !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
   padding:0 !important;
-  margin:0 0 0 6px !important;
+  margin:0 0 0 4px !important;
   cursor:pointer !important;
-  border:1px solid rgba(255,255,255,.14) !important;
-  background:rgba(15,18,32,.72) !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  background:rgba(15,18,32,.62) !important;
   vertical-align:middle !important;
+  line-height:0 !important;
+  transition:transform .14s ease, box-shadow .14s ease !important;
 }
+
 .inventory-item-ebay-sold-btn:hover{
-  transform:translateY(-1px) scale(1.04);
-  box-shadow:0 0 14px rgba(0,229,255,.16);
+  transform:translateY(-1px);
+  box-shadow:0 0 8px rgba(0,229,255,.12);
 }
+
 .inventory-item-ebay-sold-btn img{
   width:100% !important;
   height:100% !important;
   object-fit:cover !important;
-  border-radius:11px !important;
+  border-radius:7px !important;
   display:block !important;
 }
 </style>
+
 
 </head>
 
@@ -18547,10 +18553,10 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     btn.title = query ? ("Open eBay sold comps for: " + query) : "Open eBay sold comps";
     btn.setAttribute("aria-label", "Open eBay sold comps");
 
-    const src = getTopbarEbayImgSrc();
+    const src = "data:image/png;base64,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";
     if(src){
       const img = document.createElement("img");
-      img.alt = "eBay Sold";
+      img.alt = "Sold Analytics";
       img.src = src;
       btn.appendChild(img);
     }else{
