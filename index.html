@@ -9757,82 +9757,95 @@ button[aria-label*="eBay"] img{
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 <style id="nativeEbaySoldCompsIconPatch">
-/* Native inventory action icon: sits beside pencil, does not change table layout */
-.ebay-comps-action{
+/* Compact inventory action cluster */
+td.action-cell{
+  text-align:right !important;
+  width:74px !important;
+  min-width:74px !important;
+  white-space:nowrap !important;
+}
+
+td.action-cell .action{
+  display:grid !important;
+  grid-template-columns: repeat(3, 16px) !important;
+  grid-auto-rows:16px !important;
+  gap:4px 5px !important;
+  align-items:center !important;
+  justify-content:end !important;
+  justify-items:center !important;
+  width:68px !important;
+  min-width:68px !important;
+  overflow:visible !important;
+}
+
+td.action-cell .action > *{
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
-  width:20px !important;
-  height:20px !important;
-  margin-right:8px !important;
-  cursor:pointer !important;
-  vertical-align:middle !important;
+  width:16px !important;
+  height:16px !important;
+  min-width:16px !important;
+  min-height:16px !important;
+  max-width:16px !important;
+  max-height:16px !important;
   line-height:1 !important;
-  opacity:.95 !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:visible !important;
 }
+
+.ebay-comps-action{
+  cursor:pointer !important;
+  opacity:.95 !important;
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+
 .ebay-comps-action:hover{
   opacity:1 !important;
   transform:translateY(-1px) !important;
 }
+
 .ebay-comps-action svg{
-  width:18px !important;
-  height:18px !important;
-  display:block !important;
+  width:15px !important;
+  height:15px !important;
   stroke:#111 !important;
-  filter:drop-shadow(0 0 1px rgba(255,255,255,.75));
-}
-</style>
-
-
-<style id="nativeEbaySoldCompsInlineFix">
-.action{
-  display:flex !important;
-  flex-direction:row !important;
-  align-items:center !important;
-  gap:6px !important;
-  flex-wrap:nowrap !important;
+  filter:drop-shadow(0 0 1px rgba(255,255,255,.65));
 }
 
-.ebay-comps-action{
-  order:-1 !important;
-  margin:0 !important;
-  position:relative !important;
-  top:0 !important;
-}
-</style>
-
-
-
-
-
-<style id="inventoryCompsMicroFix">
-/* keep original inventory action layout untouched */
-.ebay-comps-action{
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  width:14px !important;
-  height:14px !important;
-  margin-right:4px !important;
-  vertical-align:middle !important;
-  position:relative !important;
-  top:-1px !important;
-  opacity:.92 !important;
+td.action-cell .edit{
+  grid-column:2 !important;
+  grid-row:1 !important;
 }
 
-.ebay-comps-action svg{
-  width:14px !important;
-  height:14px !important;
-  display:block !important;
-  stroke:#222 !important;
+td.action-cell .soldbtn{
+  grid-column:3 !important;
+  grid-row:1 !important;
 }
 
-/* undo previous action row overrides */
-.action{
-  display:block !important;
-  width:auto !important;
-  gap:0 !important;
+td.action-cell .holdbtn,
+td.action-cell .hold,
+td.action-cell .blue{
+  grid-column:2 !important;
+  grid-row:2 !important;
+}
+
+td.action-cell .trash{
+  grid-column:3 !important;
+  grid-row:2 !important;
 }
 </style>
 
@@ -12578,11 +12591,6 @@ function renderActive() {
       const q = encodeURIComponent(r.item || "");
       window.open(`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, "_blank", "noopener,noreferrer");
     };
-
-    action.style.display = "flex";
-    action.style.alignItems = "center";
-    action.style.gap = "6px";
-    action.style.flexWrap = "nowrap";
 
     action.appendChild(comps);
     action.appendChild(e);
