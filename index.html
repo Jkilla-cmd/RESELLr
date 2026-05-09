@@ -9856,6 +9856,77 @@ td.action-cell > .ebay-comps-action svg{
 </style>
 
 
+
+<style id="inventoryFinalExactOrderFix">
+/* Exact inventory action order:
+   Top: Pencil, Comps
+   Bottom: Sold, Holds, Delete */
+td.action-cell{
+  display:grid !important;
+  grid-template-columns: repeat(3, 18px) !important;
+  grid-template-rows: repeat(2, 18px) !important;
+  column-gap:12px !important;
+  row-gap:7px !important;
+  justify-content:end !important;
+  align-items:center !important;
+  justify-items:center !important;
+  width:122px !important;
+  min-width:122px !important;
+  padding-right:10px !important;
+  white-space:nowrap !important;
+}
+
+td.action-cell > *{
+  width:18px !important;
+  height:18px !important;
+  min-width:18px !important;
+  min-height:18px !important;
+  max-width:18px !important;
+  max-height:18px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin:0 !important;
+  padding:0 !important;
+  line-height:1 !important;
+}
+
+/* actual DOM order is: edit, comps, sold, hold, delete */
+td.action-cell > *:nth-child(1){
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+
+td.action-cell > *:nth-child(2){
+  grid-column:2 !important;
+  grid-row:1 !important;
+  cursor:pointer !important;
+}
+
+td.action-cell > *:nth-child(3){
+  grid-column:1 !important;
+  grid-row:2 !important;
+}
+
+td.action-cell > *:nth-child(4){
+  grid-column:2 !important;
+  grid-row:2 !important;
+}
+
+td.action-cell > *:nth-child(5){
+  grid-column:3 !important;
+  grid-row:2 !important;
+}
+
+td.action-cell .ebay-comps-action svg{
+  width:15px !important;
+  height:15px !important;
+  stroke:#111 !important;
+  pointer-events:none !important;
+  filter:drop-shadow(0 0 1px rgba(255,255,255,.65));
+}
+</style>
+
 </head>
 
 <body>
