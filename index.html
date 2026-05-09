@@ -9745,58 +9745,58 @@ button[aria-label*="eBay"] img{
 
 
 
+
+
 <style id="inventoryItemEbaySoldButtonPatch">
-/* ===== Inventory sold-comps action icon: same scale as edit/sold/delete icons ===== */
+/* ===== Inventory sold-comps action icon ===== */
 td .inventory-item-ebay-sold-btn,
 .action-cell .inventory-item-ebay-sold-btn,
 .inventory-item-ebay-sold-btn{
-  all: unset !important;
-  width:16px !important;
-  height:16px !important;
-  min-width:16px !important;
-  min-height:16px !important;
-  max-width:16px !important;
-  max-height:16px !important;
+  all:unset !important;
+  width:20px !important;
+  height:20px !important;
+  min-width:20px !important;
+  min-height:20px !important;
+  max-width:20px !important;
+  max-height:20px !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
   vertical-align:middle !important;
   cursor:pointer !important;
-  margin:0 4px 0 0 !important;
+  margin:0 6px 0 0 !important;
   padding:0 !important;
   background:transparent !important;
   border:none !important;
   box-shadow:none !important;
   border-radius:0 !important;
   line-height:1 !important;
-  opacity:.92 !important;
+  opacity:1 !important;
+  position:relative !important;
+  top:-1px !important;
 }
 
-td .inventory-item-ebay-sold-btn:hover,
-.action-cell .inventory-item-ebay-sold-btn:hover,
 .inventory-item-ebay-sold-btn:hover{
-  opacity:1 !important;
-  transform:translateY(-1px) !important;
-  background:transparent !important;
-  box-shadow:none !important;
+  transform:translateY(-1px) scale(1.06) !important;
 }
 
 td .inventory-item-ebay-sold-btn img,
 .action-cell .inventory-item-ebay-sold-btn img,
 .inventory-item-ebay-sold-btn img{
-  width:16px !important;
-  height:16px !important;
-  min-width:16px !important;
-  min-height:16px !important;
-  max-width:16px !important;
-  max-height:16px !important;
+  width:20px !important;
+  height:20px !important;
+  min-width:20px !important;
+  min-height:20px !important;
+  max-width:20px !important;
+  max-height:20px !important;
   object-fit:contain !important;
   display:block !important;
   border-radius:0 !important;
   background:transparent !important;
-  box-shadow:none !important;
 }
 </style>
+
+
 
 </head>
 
@@ -18631,7 +18631,13 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       if(!targetCell) return;
       
       const ebayBtn = makeButton(query);
-      const editIcon = targetCell.querySelector(".edit, [title*='Edit' i], [aria-label*='Edit' i]");
+      const editIcon =
+      targetCell.querySelector(".edit") ||
+      targetCell.querySelector(".fa-pencil") ||
+      targetCell.querySelector(".bi-pencil") ||
+      targetCell.querySelector("[title*='Edit' i]") ||
+      targetCell.querySelector("[aria-label*='Edit' i]") ||
+      targetCell.querySelector("button, span, i, svg");
       if(editIcon){
         targetCell.insertBefore(ebayBtn, editIcon);
       }else{
@@ -19147,3 +19153,22 @@ td .inventory-item-ebay-sold-btn img,
   background:transparent !important;
 }
 </style>
+
+
+
+<style id="inventoryInlineLayoutFix">
+.action-cell,
+td:last-child{
+  white-space:nowrap !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:4px !important;
+}
+
+.inventory-item-ebay-sold-btn{
+  flex:0 0 auto !important;
+  order:-10 !important;
+}
+</style>
+
