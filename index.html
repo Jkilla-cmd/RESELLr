@@ -9753,36 +9753,36 @@ button[aria-label*="eBay"] img{
 
 
 
-<style id="inventoryItemEbaySoldButtonPatch">
-.inventory-item-ebay-sold-btn{
-  all:unset !important;
-  width:14px !important;
-  height:14px !important;
-  min-width:14px !important;
-  min-height:14px !important;
-  max-width:14px !important;
-  max-height:14px !important;
+
+
+
+
+<style id="nativeEbaySoldCompsIconPatch">
+/* Native inventory action icon: sits beside pencil, does not change table layout */
+.ebay-comps-action{
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
-  vertical-align:middle !important;
-  margin-right:6px !important;
+  width:20px !important;
+  height:20px !important;
+  margin-right:8px !important;
   cursor:pointer !important;
+  vertical-align:middle !important;
   line-height:1 !important;
+  opacity:.95 !important;
 }
-
-.inventory-item-ebay-sold-btn img{
-  width:14px !important;
-  height:14px !important;
-  object-fit:contain !important;
-  display:block !important;
-}
-
-.inventory-item-ebay-sold-btn:hover{
+.ebay-comps-action:hover{
+  opacity:1 !important;
   transform:translateY(-1px) !important;
 }
+.ebay-comps-action svg{
+  width:18px !important;
+  height:18px !important;
+  display:block !important;
+  stroke:#111 !important;
+  filter:drop-shadow(0 0 1px rgba(255,255,255,.75));
+}
 </style>
-
 
 </head>
 
@@ -12517,7 +12517,17 @@ function renderActive() {
     d.style.marginLeft = "8px";
     d.onclick = () => deleteActiveById(r._id);
 
-    action.appendChild(e); action.appendChild(sbtn); action.appendChild(hbtn); action.appendChild(d);
+    
+    const comps = document.createElement("span");
+    comps.className = "ebay-comps-action";
+    comps.title = "Search eBay sold comps";
+    comps.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><path d="M3 16.5 L8.5 10.8 L13 14.1 L21 5.5" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.2 5.5 H21 V10.3" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    comps.onclick = () => {
+      const q = encodeURIComponent(r.item || "");
+      window.open(`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, "_blank", "noopener,noreferrer");
+    };
+
+    action.appendChild(comps); action.appendChild(e); action.appendChild(sbtn); action.appendChild(hbtn); action.appendChild(d);
     tr.appendChild(action);
 
     tbody.appendChild(tr);
@@ -18508,166 +18518,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 
-<script id="inventoryItemEbaySoldButtonRuntime">
-/* Adds an eBay sold-comps button to each inventory item/row. */
-(function(){
-  function getTopbarEbayImgSrc(){
-    const img =
-      document.querySelector("#ebayPriceTopButton img") ||
-      document.querySelector("img[src*='ebay']") ||
-      document.querySelector("img[src*='pngwing']");
-    return img ? img.src : "";
-  }
 
-  function cleanItemQuery(txt){
-    return String(txt || "")
-      .replace(/[✎🗑✅💰$]/g, " ")
-      .replace(/\b(edit|delete|sold|move|hold|inventory|cost|list|price|profit|platform|type|date)\b/gi, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  function rowQuery(row){
-    const cells = Array.from(row.querySelectorAll("td"));
-    if(cells.length){
-      // Prefer the first few descriptive cells, avoiding action/number-heavy cells.
-      const preferred = cells
-        .slice(0, 4)
-        .map(td => cleanItemQuery(td.innerText))
-        .filter(Boolean)
-        .sort((a,b) => b.length - a.length)[0];
-      if(preferred) return preferred;
-    }
-
-    const nameLike =
-      row.querySelector("[data-name], [data-title], .item-name, .inventory-name, .title, .name") ||
-      row.querySelector("strong") ||
-      row.querySelector("td");
-
-    if(nameLike) return cleanItemQuery(nameLike.innerText || nameLike.value);
-
-    return cleanItemQuery(row.innerText);
-  }
-
-  function openSoldSearch(query){
-    const url = "https://www.ebay.com/sch/i.html?_nkw=" +
-      encodeURIComponent(query || "") +
-      "&LH_Sold=1&LH_Complete=1";
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
-
-  function makeButton(query){
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "inventory-item-ebay-sold-btn";
-    btn.title = query ? ("Open eBay sold comps for: " + query) : "Open eBay sold comps";
-    btn.setAttribute("aria-label", "Open eBay sold comps");
-
-    const src = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%3Cpath%20d%3D%22M3%2016.5%20L8.5%2010.8%20L13%2014.1%20L21%205.5%22%20fill%3D%22none%22%20stroke%3D%22%232f3136%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M16.2%205.5%20H21%20V10.3%22%20fill%3D%22none%22%20stroke%3D%22%232f3136%22%20stroke-width%3D%222.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%0A%3C/svg%3E";
-    if(src){
-      const img = document.createElement("img");
-      img.alt = "Sold Analytics";
-      img.src = src;
-      btn.appendChild(img);
-    }else{
-      btn.textContent = "e";
-      btn.style.fontWeight = "800";
-    }
-
-    btn.addEventListener("click", function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      const liveRow = btn.closest("tr, .inventory-row, .item-row, .card, .panel");
-      const liveQuery = liveRow ? rowQuery(liveRow) : query;
-      openSoldSearch(liveQuery || query || "");
-    });
-
-    return btn;
-  }
-
-  function isInventoryVisible(){
-    const active = document.querySelector(".section.active, [id*='Inventory'].active, [id*='inventory'].active");
-    if(active && /inventory/i.test(active.id + " " + active.textContent)) return true;
-    return /inventory/i.test(document.body.innerText || "");
-  }
-
-  function patchInventoryRows(){
-    if(!isInventoryVisible()) return;
-
-    const inventorySection =
-      document.querySelector("#secInventory") ||
-      document.querySelector("#inventorySection") ||
-      document.querySelector("[id*='Inventory']") ||
-      document.querySelector("[id*='inventory']") ||
-      document;
-
-    // Table rows are the most likely inventory list format.
-    const rows = Array.from(inventorySection.querySelectorAll("tbody tr"))
-      .filter(row => row.offsetParent !== null && !row.querySelector(".inventory-item-ebay-sold-btn"));
-
-    rows.forEach(row => {
-      const query = rowQuery(row);
-      if(!query) return;
-
-      let targetCell =
-        row.querySelector(".action-cell") ||
-        Array.from(row.children).find(td => /✎|🗑|sold|edit|delete/i.test(td.innerText || "")) ||
-        row.lastElementChild;
-
-      if(!targetCell) return;
-      
-      const ebayBtn = makeButton(query);
-      const editIcon =
-        targetCell.querySelector(".fa-pencil") ||
-        targetCell.querySelector(".edit") ||
-        targetCell.querySelector("[title*='Edit' i]") ||
-        targetCell.querySelector("button") ||
-        targetCell.firstChild;
-
-      targetCell.insertBefore(ebayBtn, editIcon);
-      }
-    
-    });
-
-    // Card/list fallback.
-    const cards = Array.from(inventorySection.querySelectorAll(".inventory-card, .inventory-item, .item-card, .card"))
-      .filter(card => card.offsetParent !== null && !card.querySelector(".inventory-item-ebay-sold-btn"));
-
-    cards.forEach(card => {
-      const query = rowQuery(card);
-      if(!query) return;
-      const actionArea =
-        card.querySelector(".actions, .btnRow, .button-row, .card-actions") ||
-        card;
-      actionArea.appendChild(makeButton(query));
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", function(){
-    setTimeout(patchInventoryRows, 500);
-    setTimeout(patchInventoryRows, 1200);
-  });
-
-  window.addEventListener("load", patchInventoryRows);
-
-  document.addEventListener("click", function(){
-    setTimeout(patchInventoryRows, 250);
-  }, true);
-
-  document.addEventListener("input", function(){
-    setTimeout(patchInventoryRows, 250);
-  }, true);
-
-  const obs = new MutationObserver(function(){
-    clearTimeout(window.__resellrEbayRowPatchTimer);
-    window.__resellrEbayRowPatchTimer = setTimeout(patchInventoryRows, 250);
-  });
-
-  document.addEventListener("DOMContentLoaded", function(){
-    obs.observe(document.body, {childList:true, subtree:true});
-  });
-})();
-</script>
 
 </body>
 </html>
@@ -19123,25 +18974,6 @@ body.skin-dreamtrip .chart-wrap{
 
 
 
-<style id="inventoryArrowVisibilityFix">
-.inventory-item-ebay-sold-btn{
-  all:unset !important;
-  width:16px !important;
-  height:16px !important;
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  vertical-align:middle !important;
-  margin-right:6px !important;
-  cursor:pointer !important;
-  opacity:1 !important;
-}
 
-.inventory-item-ebay-sold-btn img{
-  width:16px !important;
-  height:16px !important;
-  display:block !important;
-  object-fit:contain !important;
-  filter:none !important;
-}
-</style>
+
+
