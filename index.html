@@ -9784,6 +9784,24 @@ button[aria-label*="eBay"] img{
 }
 </style>
 
+
+<style id="nativeEbaySoldCompsInlineFix">
+.action{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  gap:6px !important;
+  flex-wrap:nowrap !important;
+}
+
+.ebay-comps-action{
+  order:-1 !important;
+  margin:0 !important;
+  position:relative !important;
+  top:0 !important;
+}
+</style>
+
 </head>
 
 <body>
@@ -12527,7 +12545,16 @@ function renderActive() {
       window.open(`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, "_blank", "noopener,noreferrer");
     };
 
-    action.appendChild(comps); action.appendChild(e); action.appendChild(sbtn); action.appendChild(hbtn); action.appendChild(d);
+    action.style.display = "flex";
+    action.style.alignItems = "center";
+    action.style.gap = "6px";
+    action.style.flexWrap = "nowrap";
+
+    action.appendChild(comps);
+    action.appendChild(e);
+    action.appendChild(sbtn);
+    action.appendChild(hbtn);
+    action.appendChild(d);
     tr.appendChild(action);
 
     tbody.appendChild(tr);
