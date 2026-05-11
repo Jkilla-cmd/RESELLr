@@ -10000,8 +10000,12 @@ td.action-cell .ebay-comps-action svg{
 </style>
 
 
-<style id="moneyFatalityEasterEggPatch">
-.money-fatality-layer{
+
+
+
+<style id="resellrFatalityCheatCodesPatch">
+/* ===== RESELLr Fatality Cheat Codes ===== */
+.resellr-fatality-layer{
   position:fixed;
   inset:0;
   z-index:120000;
@@ -10011,22 +10015,29 @@ td.action-cell .ebay-comps-action svg{
   align-items:center;
   justify-content:center;
   background:rgba(0,0,0,.18);
-  animation:moneyFatalityFade 2.9s ease forwards;
+  animation:rfFade 3s ease forwards;
 }
-.money-fatality-title{
+
+.resellr-fatality-title{
   position:absolute;
   top:28%;
   left:50%;
-  transform:translateX(-50%) scale(.9);
-  font-size:clamp(34px, 7vw, 88px);
+  transform:translateX(-50%);
+  font-size:clamp(32px, 7vw, 88px);
   font-weight:900;
   letter-spacing:.08em;
-  color:#7CFF7C;
-  text-shadow:0 0 8px rgba(124,255,124,.75),0 0 22px rgba(34,197,94,.65),4px 4px 0 rgba(0,0,0,.78);
-  animation:moneyFatalityPop 1.05s cubic-bezier(.2,1.35,.25,1) forwards;
+  color:var(--rf-color,#7CFF7C);
+  text-shadow:
+    0 0 8px var(--rf-glow,rgba(124,255,124,.75)),
+    0 0 24px var(--rf-glow2,rgba(34,197,94,.55)),
+    4px 4px 0 rgba(0,0,0,.78);
+  animation:rfPop 1.05s cubic-bezier(.2,1.35,.25,1) forwards;
   user-select:none;
+  text-align:center;
+  white-space:nowrap;
 }
-.money-fatality-sub{
+
+.resellr-fatality-sub{
   position:absolute;
   top:calc(28% + 86px);
   left:50%;
@@ -10037,10 +10048,12 @@ td.action-cell .ebay-comps-action svg{
   color:#faffd8;
   text-shadow:0 0 12px rgba(255,255,255,.35);
   opacity:0;
-  animation:moneyFatalitySub 2.25s ease .35s forwards;
+  animation:rfSub 2.25s ease .35s forwards;
   user-select:none;
+  text-align:center;
 }
-.money-fatality-bill{
+
+.rf-money-bill{
   position:absolute;
   top:-70px;
   width:48px;
@@ -10056,26 +10069,154 @@ td.action-cell .ebay-comps-action svg{
   font-weight:900;
   font-size:13px;
   opacity:.98;
-  animation:moneyFatalityRain var(--dur,2.4s) linear forwards;
+  animation:rfRain var(--dur,2.4s) linear forwards;
 }
-.money-fatality-bill::before{ content:"$"; }
-@keyframes moneyFatalityFade{0%{opacity:0}10%{opacity:1}82%{opacity:1}100%{opacity:0}}
-@keyframes moneyFatalityPop{
+.rf-money-bill::before{ content:"$"; }
+
+.rf-receipt{
+  position:absolute;
+  top:-100px;
+  width:52px;
+  height:70px;
+  background:linear-gradient(180deg,#fff,#d8fff0);
+  border-radius:5px;
+  box-shadow:0 8px 18px rgba(0,0,0,.24);
+  animation:rfRain var(--dur,2.3s) linear forwards;
+}
+.rf-receipt::before{
+  content:"SOLD";
+  position:absolute;
+  top:10px;
+  left:7px;
+  right:7px;
+  color:#0f5132;
+  font-size:10px;
+  font-weight:900;
+  text-align:center;
+  border-bottom:2px dashed rgba(0,0,0,.18);
+  padding-bottom:6px;
+}
+.rf-receipt::after{
+  content:"$$$";
+  position:absolute;
+  top:34px;
+  left:0;
+  right:0;
+  color:#0f5132;
+  font-size:12px;
+  font-weight:900;
+  text-align:center;
+}
+
+.rf-pixel{
+  position:absolute;
+  width:10px;
+  height:10px;
+  background:var(--px,#00ffff);
+  box-shadow:0 0 12px var(--px,#00ffff);
+  animation:rfBurst var(--dur,1.5s) ease-out forwards;
+}
+
+.rf-comic{
+  position:absolute;
+  padding:14px 22px;
+  border-radius:20px;
+  background:#fff36b;
+  border:4px solid #111;
+  color:#111;
+  font-weight:900;
+  font-size:clamp(28px,5vw,66px);
+  transform:rotate(-6deg) scale(.2);
+  text-shadow:2px 2px 0 #fff;
+  box-shadow:12px 12px 0 rgba(0,0,0,.35);
+  animation:rfComic 1.8s cubic-bezier(.2,1.35,.25,1) forwards;
+}
+
+.rf-crt{
+  position:fixed;
+  inset:0;
+  z-index:119999;
+  pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.08) 0 1px, transparent 1px 4px),
+    radial-gradient(circle at center, transparent 0 50%, rgba(0,0,0,.35) 100%);
+  mix-blend-mode:overlay;
+  animation:rfCrt 2.6s ease forwards;
+}
+
+.rf-dream-pulse{
+  position:fixed;
+  inset:-20%;
+  z-index:119999;
+  pointer-events:none;
+  background:conic-gradient(from 0deg, rgba(0,255,255,.28), rgba(255,0,200,.25), rgba(255,230,0,.18), rgba(0,255,255,.28));
+  filter:blur(55px) saturate(1.8);
+  mix-blend-mode:screen;
+  animation:rfDreamSpin 3.1s linear forwards;
+}
+
+.rf-lofi-orb{
+  position:absolute;
+  width:140px;
+  height:140px;
+  border-radius:999px;
+  background:radial-gradient(circle, rgba(255,120,190,.55), rgba(125,160,255,.25), transparent 70%);
+  filter:blur(2px);
+  animation:rfLofiFloat 2.8s ease forwards;
+}
+
+@keyframes rfFade{0%{opacity:0}10%{opacity:1}82%{opacity:1}100%{opacity:0}}
+@keyframes rfPop{
   0%{opacity:0;transform:translateX(-50%) scale(.35) rotate(-8deg)}
   45%{opacity:1;transform:translateX(-50%) scale(1.18) rotate(3deg)}
   70%{transform:translateX(-50%) scale(.98) rotate(-1deg)}
   100%{opacity:1;transform:translateX(-50%) scale(1) rotate(0)}
 }
-@keyframes moneyFatalitySub{
+@keyframes rfSub{
   0%{opacity:0;transform:translateX(-50%) translateY(12px)}
   20%{opacity:1;transform:translateX(-50%) translateY(0)}
   82%{opacity:1}
   100%{opacity:0;transform:translateX(-50%) translateY(-8px)}
 }
-@keyframes moneyFatalityRain{
+@keyframes rfRain{
   0%{transform:translate3d(0,-80px,0) rotate(0deg);opacity:0}
   10%{opacity:.98}
   100%{transform:translate3d(var(--drift,0px), calc(100vh + 120px), 0) rotate(var(--spin,360deg));opacity:.08}
+}
+@keyframes rfBurst{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
+  20%{opacity:1}
+  100%{opacity:0;transform:translate(var(--x), var(--y)) scale(1.3) rotate(var(--r))}
+}
+@keyframes rfComic{
+  0%{opacity:0;transform:rotate(-12deg) scale(.15)}
+  35%{opacity:1;transform:rotate(-6deg) scale(1.15)}
+  65%{transform:rotate(4deg) scale(.96)}
+  100%{opacity:0;transform:rotate(0deg) scale(1.05) translateY(-30px)}
+}
+@keyframes rfCrt{
+  0%{opacity:0;transform:scale(1.02)}
+  20%{opacity:.9}
+  80%{opacity:.9}
+  100%{opacity:0;transform:scale(1)}
+}
+@keyframes rfDreamSpin{
+  0%{opacity:0;transform:rotate(0deg) scale(.9)}
+  15%{opacity:.85}
+  100%{opacity:0;transform:rotate(360deg) scale(1.15)}
+}
+@keyframes rfLofiFloat{
+  0%{opacity:0;transform:translateY(40px) scale(.7)}
+  20%{opacity:1}
+  100%{opacity:0;transform:translateY(-90px) scale(1.15)}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .resellr-fatality-layer,
+  .rf-crt,
+  .rf-dream-pulse{
+    animation:rfFade 1.6s ease forwards !important;
+  }
 }
 </style>
 
@@ -18820,42 +18961,64 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 
-<script id="moneyFatalityEasterEggRuntime">
+
+
+
+<script id="resellrFatalityCheatCodesRuntime">
 (function(){
-  const CODE = "money";
+  const MAX_GAP_MS = 1300;
+  const codes = {
+    money: { title:"MONEY!", sub:"FATALITY BONUS", color:"#7CFF7C", type:"money" },
+    sold:  { title:"SOLD!", sub:"KA-CHING COMBO", color:"#8DFF9B", type:"sold" },
+    retro: { title:"RETRO!", sub:"CRT MODE", color:"#00F5FF", type:"retro" },
+    "8bit":{ title:"8-BIT!", sub:"PIXEL BURST", color:"#FF4DFF", type:"pixel" },
+    lofi:  { title:"LO-FI", sub:"CHILL MODE", color:"#FF8ACB", type:"lofi" },
+    boom:  { title:"BOOM!", sub:"BIG SALE ENERGY", color:"#FFF36B", type:"boom" },
+    dream: { title:"DREAM!", sub:"COLOR PULSE", color:"#9DC4FF", type:"dream" },
+    combo: { title:"COMBO!", sub:"STREAK ACTIVATED", color:"#FFE66D", type:"combo" }
+  };
+
   let buffer = "";
   let lastKeyAt = 0;
-  const MAX_GAP_MS = 1300;
+  const maxCodeLen = Math.max(...Object.keys(codes).map(k=>k.length));
 
   function onDashboard(){
     const active = document.querySelector(".section.active");
     if(active && /dashboard/i.test(active.id || "")) return true;
     const title = document.querySelector("#topbarTitle, .topbar .title");
     if(title && /dashboard/i.test(title.textContent || "")) return true;
-    return false;
+    return true; // allow everywhere so codes feel responsive
   }
 
-  function triggerMoneyFatality(){
-    const old = document.querySelector(".money-fatality-layer");
+  function layerBase(cfg){
+    const old = document.querySelector(".resellr-fatality-layer");
     if(old) old.remove();
 
     const layer = document.createElement("div");
-    layer.className = "money-fatality-layer";
+    layer.className = "resellr-fatality-layer";
+    layer.style.setProperty("--rf-color", cfg.color);
+    layer.style.setProperty("--rf-glow", cfg.color + "cc");
+    layer.style.setProperty("--rf-glow2", cfg.color + "88");
 
     const title = document.createElement("div");
-    title.className = "money-fatality-title";
-    title.textContent = "MONEY!";
+    title.className = "resellr-fatality-title";
+    title.textContent = cfg.title;
 
     const sub = document.createElement("div");
-    sub.className = "money-fatality-sub";
-    sub.textContent = "FATALITY BONUS";
+    sub.className = "resellr-fatality-sub";
+    sub.textContent = cfg.sub;
 
     layer.appendChild(title);
     layer.appendChild(sub);
+    document.body.appendChild(layer);
+    setTimeout(()=>layer.remove(), 3300);
+    return layer;
+  }
 
-    for(let i=0;i<46;i++){
+  function addMoney(layer, count=46){
+    for(let i=0;i<count;i++){
       const bill = document.createElement("div");
-      bill.className = "money-fatality-bill";
+      bill.className = "rf-money-bill";
       bill.style.left = Math.random() * 100 + "vw";
       bill.style.animationDelay = (Math.random() * .75) + "s";
       bill.style.setProperty("--dur", (1.8 + Math.random() * 1.35) + "s");
@@ -18863,27 +19026,111 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       bill.style.setProperty("--spin", ((Math.random() * 900) - 450) + "deg");
       layer.appendChild(bill);
     }
+  }
 
-    document.body.appendChild(layer);
-    setTimeout(()=>layer.remove(), 3100);
+  function addReceipts(layer){
+    for(let i=0;i<28;i++){
+      const r = document.createElement("div");
+      r.className = "rf-receipt";
+      r.style.left = Math.random() * 100 + "vw";
+      r.style.animationDelay = (Math.random() * .7) + "s";
+      r.style.setProperty("--dur", (1.7 + Math.random() * 1.2) + "s");
+      r.style.setProperty("--drift", ((Math.random() * 220) - 110) + "px");
+      r.style.setProperty("--spin", ((Math.random() * 720) - 360) + "deg");
+      layer.appendChild(r);
+    }
+  }
+
+  function addPixels(layer, count=80){
+    const colors = ["#00ffff","#ff00cc","#fff36b","#7cff7c","#9d7cff"];
+    for(let i=0;i<count;i++){
+      const p = document.createElement("div");
+      p.className = "rf-pixel";
+      p.style.left = "50%";
+      p.style.top = "45%";
+      p.style.setProperty("--px", colors[i % colors.length]);
+      p.style.setProperty("--dur", (1.0 + Math.random()*1.0) + "s");
+      p.style.setProperty("--x", ((Math.random()*900)-450) + "px");
+      p.style.setProperty("--y", ((Math.random()*600)-300) + "px");
+      p.style.setProperty("--r", ((Math.random()*720)-360) + "deg");
+      p.style.animationDelay = (Math.random()*.22) + "s";
+      layer.appendChild(p);
+    }
+  }
+
+  function addComic(text){
+    const c = document.createElement("div");
+    c.className = "rf-comic";
+    c.textContent = text;
+    c.style.left = "50%";
+    c.style.top = "48%";
+    c.style.transform = "translate(-50%,-50%)";
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(), 1900);
+  }
+
+  function addCrt(){
+    const c = document.createElement("div");
+    c.className = "rf-crt";
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(), 2700);
+  }
+
+  function addDream(){
+    const d = document.createElement("div");
+    d.className = "rf-dream-pulse";
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(), 3200);
+  }
+
+  function addLofi(layer){
+    for(let i=0;i<7;i++){
+      const orb = document.createElement("div");
+      orb.className = "rf-lofi-orb";
+      orb.style.left = (10 + Math.random()*80) + "vw";
+      orb.style.top = (55 + Math.random()*35) + "vh";
+      orb.style.animationDelay = (Math.random()*.5) + "s";
+      layer.appendChild(orb);
+    }
+  }
+
+  function trigger(code){
+    if(!onDashboard()) return;
+    const cfg = codes[code];
+    const layer = layerBase(cfg);
+
+    if(cfg.type === "money"){ addMoney(layer); }
+    if(cfg.type === "sold"){ addReceipts(layer); addMoney(layer,18); }
+    if(cfg.type === "retro"){ addCrt(); addPixels(layer,35); }
+    if(cfg.type === "pixel"){ addPixels(layer,90); }
+    if(cfg.type === "lofi"){ addLofi(layer); }
+    if(cfg.type === "boom"){ addComic("BOOM!"); addPixels(layer,55); }
+    if(cfg.type === "dream"){ addDream(); addPixels(layer,40); }
+    if(cfg.type === "combo"){ addMoney(layer,24); addReceipts(layer); addComic("COMBO x2"); }
+
+    try{ if(typeof showToast === "function") showToast(code.toUpperCase() + " cheat code activated."); }catch(e){}
   }
 
   document.addEventListener("keydown", function(e){
     const tag = (e.target && e.target.tagName || "").toLowerCase();
     if(tag === "input" || tag === "textarea" || tag === "select" || e.metaKey || e.ctrlKey || e.altKey) return;
 
-    const key = String(e.key || "").toLowerCase();
-    if(!/^[a-z]$/.test(key)) return;
+    let key = String(e.key || "").toLowerCase();
+    if(key === " ") return;
+    if(!/^[a-z0-9]$/.test(key)) return;
 
     const now = Date.now();
     if(now - lastKeyAt > MAX_GAP_MS) buffer = "";
     lastKeyAt = now;
 
-    buffer = (buffer + key).slice(-CODE.length);
+    buffer = (buffer + key).slice(-maxCodeLen);
 
-    if(buffer === CODE && onDashboard()){
-      buffer = "";
-      triggerMoneyFatality();
+    for(const code of Object.keys(codes)){
+      if(buffer.endsWith(code)){
+        buffer = "";
+        trigger(code);
+        break;
+      }
     }
   }, true);
 })();
