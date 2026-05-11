@@ -19156,7 +19156,21 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   }
 
 
+
+  function playToastyHoldSound(){
+    const sound = document.getElementById("holdSound");
+    if(sound){
+      try{
+        sound.pause();
+        sound.currentTime = 0;
+        const p = sound.play();
+        if(p && typeof p.catch === "function") p.catch(()=>{});
+      }catch(e){}
+    }
+  }
+
   function addToasty(){
+    try{ playToastyHoldSound(); }catch(e){}
     const old = document.querySelector(".toasty-side-pop");
     if(old) old.remove();
 
