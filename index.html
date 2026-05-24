@@ -22218,6 +22218,310 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== v55: lock-box background + reliable lofi/style + sidebar hamburger + locked dock guard ===== -->
+<style id="rs-v55-lockbox-lofi-style-sidebar-css">
+  /* Keep the removed topbar gone, but make the left menu feel complete at the top. */
+  .topbar{ display:none !important; }
+  #secDashboard .rs15-title{ display:none !important; }
+  .sidebar{
+    top:0 !important;
+    height:100vh !important;
+    border-radius:0 18px 18px 0 !important;
+  }
+  .brand{
+    gap:10px !important;
+    align-items:center !important;
+  }
+  .rs-v55-side-hamburger{
+    width:42px !important;
+    min-width:42px !important;
+    height:42px !important;
+    padding:0 !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:14px !important;
+    font-size:21px !important;
+    line-height:1 !important;
+    background:color-mix(in srgb, var(--panel) 88%, transparent) !important;
+    border:1px solid var(--border) !important;
+    color:var(--text) !important;
+  }
+
+  /* v55 supplies the only usable avatar dock. Hide older attempts completely. */
+  #rsFloatingDock,
+  #rsDockV30,#rsDockV31,#rsDockV32,#rsDockV33,#rsDockV34,#rsDockV35,#rsDockV36,#rsDockV37,#rsDockV38,#rsDockV39,#rsDockV40,#rsDockV41,#rsDockV42,#rsDockV53,#rsV54Dock,
+  #rsFinalDock,#rsCleanDock,#resellrCommandDock,#dockPopover,#dockMainButton,
+  .topbar-right.resellr-command-dock,
+  .rs-command-dock,.rs-floating-dock,.rs-v39-dock,.rs-v40-dock,.rs-v41-dock,.rs-v42-dock-wrap{
+    display:none !important;
+    pointer-events:none !important;
+    visibility:hidden !important;
+  }
+
+  #rsV55Dock{
+    position:fixed !important;
+    top:14px !important;
+    right:14px !important;
+    z-index:2147483000 !important;
+    width:48px !important;
+    height:48px !important;
+    display:block !important;
+    pointer-events:auto !important;
+  }
+  #rsV55DockBtn{
+    width:48px !important;
+    height:48px !important;
+    min-width:48px !important;
+    min-height:48px !important;
+    padding:0 !important;
+    border-radius:16px !important;
+    overflow:hidden !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    background:color-mix(in srgb, var(--panel, #151a21) 88%, transparent) !important;
+    border:1px solid color-mix(in srgb, var(--accent, #38bdf8) 35%, transparent) !important;
+    color:var(--accent, #38bdf8) !important;
+    box-shadow:0 10px 30px rgba(0,0,0,.28) !important;
+    cursor:pointer !important;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+  #rsV55DockBtn:hover{ transform:translateY(-1px) !important; }
+  #rsV55DockBtn img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:cover !important;
+    display:none;
+    border-radius:16px !important;
+  }
+  #rsV55DockBtn.has-avatar img{ display:block !important; }
+  #rsV55DockBtn.has-avatar .rs-v55-fallback{ display:none !important; }
+  #rsV55DockBtn .rs-v55-fallback{ font-size:22px; line-height:1; font-weight:800; }
+  #rsV55Menu{
+    position:absolute !important;
+    top:58px !important;
+    right:0 !important;
+    width:196px !important;
+    display:none !important;
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+    padding:10px !important;
+    border-radius:18px !important;
+    background:color-mix(in srgb, var(--panel, #151a21) 94%, transparent) !important;
+    border:1px solid var(--border, rgba(255,255,255,.12)) !important;
+    box-shadow:0 18px 50px rgba(0,0,0,.38) !important;
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+  }
+  #rsV55Dock.open #rsV55Menu{ display:grid !important; }
+  #rsV55Menu button{
+    width:100% !important;
+    min-height:36px !important;
+    padding:8px 10px !important;
+    border-radius:12px !important;
+    text-align:left !important;
+    font-size:12px !important;
+    background:rgba(255,255,255,.035) !important;
+    color:var(--text,#e5e7eb) !important;
+    border:1px solid var(--border, rgba(255,255,255,.12)) !important;
+    cursor:pointer !important;
+  }
+  #rsV55Menu button:hover{ background:color-mix(in srgb, var(--accent,#38bdf8) 12%, transparent) !important; }
+  #rsV55Menu .rs-v55-icons{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  #rsV55Menu .rs-v55-icons button{ text-align:center !important; font-size:15px !important; }
+  body.rs-app-locked #rsV55Dock{
+    display:none !important;
+    pointer-events:none !important;
+    visibility:hidden !important;
+  }
+
+  /* Put the uploaded Command View background on the password lock BOX, not the whole overlay. */
+  html.rs-has-command-bg #lockScreen .lockBox{
+    position:relative !important;
+    overflow:hidden !important;
+    isolation:isolate !important;
+    background:color-mix(in srgb, var(--panel, #151a21) 70%, transparent) !important;
+    backdrop-filter:blur(14px) !important;
+    -webkit-backdrop-filter:blur(14px) !important;
+  }
+  html.rs-has-command-bg #lockScreen .lockBox::before{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    background-image:var(--rs-shared-bg, var(--rs15-command-bg, none)) !important;
+    background-size:cover !important;
+    background-position:right center !important;
+    background-repeat:no-repeat !important;
+    opacity:.42 !important;
+    z-index:0 !important;
+    pointer-events:none !important;
+  }
+  html.rs-has-command-bg #lockScreen .lockBox::after{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    background:linear-gradient(90deg,
+      color-mix(in srgb, var(--panel, #151a21) 96%, #000 4%) 0%,
+      color-mix(in srgb, var(--panel, #151a21) 82%, transparent) 46%,
+      color-mix(in srgb, var(--panel, #151a21) 32%, transparent) 100%) !important;
+    z-index:1 !important;
+    pointer-events:none !important;
+  }
+  html.rs-has-command-bg #lockScreen .lockBox > *{
+    position:relative !important;
+    z-index:2 !important;
+  }
+</style>
+<script id="rs-v55-lockbox-lofi-style-sidebar-js">
+(function(){
+  const AVATAR_KEY='resellr_dock_avatar_image';
+  const THEMES=['hackercyan','cyberred','monochrome','glass','arcade','vault','lofi','dreamtrip'];
+  const $=(id)=>document.getElementById(id);
+
+  function isLocked(){
+    const lock=$('lockScreen');
+    if(!lock) return false;
+    const cs=getComputedStyle(lock);
+    return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
+  }
+  function syncLocked(){
+    document.body.classList.toggle('rs-app-locked', isLocked());
+    const dock=$('rsV55Dock');
+    if(isLocked() && dock) dock.classList.remove('open');
+  }
+  function hideOlder(){
+    document.querySelectorAll('#rsFloatingDock,#rsDockV30,#rsDockV31,#rsDockV32,#rsDockV33,#rsDockV34,#rsDockV35,#rsDockV36,#rsDockV37,#rsDockV38,#rsDockV39,#rsDockV40,#rsDockV41,#rsDockV42,#rsDockV53,#rsV54Dock,#rsFinalDock,#rsCleanDock,#resellrCommandDock,#dockPopover,#dockMainButton,.topbar-right.resellr-command-dock,.rs-command-dock,.rs-floating-dock,.rs-v39-dock,.rs-v40-dock,.rs-v41-dock,.rs-v42-dock-wrap').forEach(el=>{
+      if(el && el.id !== 'rsV55Dock'){
+        el.style.setProperty('display','none','important');
+        el.style.setProperty('pointer-events','none','important');
+        el.style.setProperty('visibility','hidden','important');
+      }
+    });
+  }
+  function ensureSidebarHamburger(){
+    const sidebar=$('sidebar');
+    if(!sidebar) return;
+    const brand=sidebar.querySelector('.brand');
+    if(!brand) return;
+    let btn=$('rsV55SideHamburger');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='rsV55SideHamburger';
+      btn.className='rs-v55-side-hamburger';
+      btn.type='button';
+      btn.textContent='☰';
+      btn.title='Toggle menu';
+      btn.setAttribute('aria-label','Toggle menu');
+      brand.insertBefore(btn, brand.firstChild);
+    }
+    btn.onclick=function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      try{ if(typeof window.toggleSidebar==='function') window.toggleSidebar(); else sidebar.classList.toggle('open'); }catch(e){ sidebar.classList.toggle('open'); }
+    };
+    const oldClose=brand.querySelector('button.small:not(#rsV55SideHamburger)');
+    if(oldClose){ oldClose.textContent='✕'; }
+  }
+  function ensureDock(){
+    hideOlder();
+    let dock=$('rsV55Dock');
+    if(!dock){
+      dock=document.createElement('div');
+      dock.id='rsV55Dock';
+      dock.innerHTML=`
+        <button id="rsV55DockBtn" type="button" aria-label="Open RESELLr quick controls" title="Quick controls"><span class="rs-v55-fallback">☰</span><img id="rsV55AvatarImg" alt="Avatar"></button>
+        <div id="rsV55Menu" aria-label="Quick controls">
+          <button type="button" data-rs55="lofi">♫ Lo-Fi</button>
+          <button type="button" data-rs55="ebay">eBay Comps</button>
+          <button type="button" data-rs55="style">◐ Style</button>
+          <button type="button" data-rs55="avatar">Upload Avatar</button>
+          <div class="rs-v55-icons"><button type="button" data-rs55="lock" title="Lock">🔒</button><button type="button" data-rs55="reset" title="Reset Layout">↺</button></div>
+          <input id="rsV55AvatarInput" type="file" accept="image/*" hidden>
+        </div>`;
+      document.body.appendChild(dock);
+    }
+    applyAvatar(); syncLocked(); return dock;
+  }
+  function applyAvatar(){
+    const btn=$('rsV55DockBtn'), img=$('rsV55AvatarImg');
+    if(!btn || !img) return;
+    let saved=''; try{saved=localStorage.getItem(AVATAR_KEY)||'';}catch(e){}
+    if(saved){ img.src=saved; btn.classList.add('has-avatar'); }
+    else{ img.removeAttribute('src'); btn.classList.remove('has-avatar'); }
+  }
+  function doLofi(){
+    try{ if(typeof window.playPauseLofi==='function'){ window.playPauseLofi(); return; } }catch(e){}
+    try{ if(typeof window.toggleLofiMusic==='function'){ window.toggleLofiMusic(); return; } }catch(e){}
+    let audio=$('lofiAudio');
+    if(!audio){ audio=document.createElement('audio'); audio.id='lofiAudio'; audio.preload='auto'; audio.style.display='none'; document.body.appendChild(audio); }
+    if(!audio.src) audio.src='assets/audio/watermello.mp3';
+    if(audio.paused){ audio.play().catch(()=>alert('Browser blocked playback. Tap Lo-Fi again.')); } else audio.pause();
+  }
+  function doStyle(){
+    const html=document.documentElement;
+    const current=html.getAttribute('data-theme') || localStorage.getItem('ots_theme') || localStorage.getItem('theme') || 'hackercyan';
+    const next=THEMES[(Math.max(0, THEMES.indexOf(current)) + 1) % THEMES.length];
+    try{ if(typeof window.setTheme==='function') window.setTheme(next); else if(typeof window.applyTheme==='function') window.applyTheme(next); }catch(e){}
+    html.setAttribute('data-theme', next);
+    try{ localStorage.setItem('ots_theme', next); localStorage.setItem('theme', next); }catch(e){}
+    const sel=$('themeSelect'); if(sel) sel.value=next;
+    try{ if(typeof window.showToast==='function') window.showToast('Style: '+next); }catch(e){}
+  }
+  function doEbay(){
+    try{ if(typeof window.openEbayComps==='function'){ window.openEbayComps(); return; } }catch(e){}
+    const btn=$('ebayPriceTopButton') || $('ebayCompsBtn') || $('openEbayOverlay');
+    if(btn){ try{ btn.click(); return; }catch(e){} }
+    window.open('https://www.ebay.com/sch/i.html?_nkw=comic&_sacat=0&LH_Sold=1&LH_Complete=1','_blank');
+  }
+  function doLock(){
+    try{ if(typeof window.lockNow==='function'){ window.lockNow(); syncLocked(); return; } }catch(e){}
+    const lock=$('lockScreen'); if(lock){ lock.style.display='flex'; syncLocked(); }
+  }
+  function doReset(){
+    try{ if(typeof window.resetDashboardLayout==='function'){ window.resetDashboardLayout(); return; } }catch(e){}
+    const btn=$('dockResetButton') || $('resetLayoutBtn'); if(btn) btn.click();
+  }
+  function action(a){
+    if(a!=='lock' && isLocked()) return;
+    if(a==='lofi') doLofi();
+    else if(a==='style') doStyle();
+    else if(a==='ebay') doEbay();
+    else if(a==='avatar'){ $('rsV55AvatarInput')?.click(); return; }
+    else if(a==='lock') doLock();
+    else if(a==='reset') doReset();
+    $('rsV55Dock')?.classList.remove('open');
+  }
+  document.addEventListener('click',function(ev){
+    ensureDock();
+    const dock=$('rsV55Dock');
+    const main=ev.target.closest && ev.target.closest('#rsV55DockBtn');
+    const act=ev.target.closest && ev.target.closest('[data-rs55]');
+    if(main){ ev.preventDefault(); ev.stopPropagation(); if(isLocked()) return; dock.classList.toggle('open'); return; }
+    if(act){ ev.preventDefault(); ev.stopPropagation(); action(act.getAttribute('data-rs55')); return; }
+    if(dock && !dock.contains(ev.target)) dock.classList.remove('open');
+  },true);
+  document.addEventListener('change',function(ev){
+    if(ev.target && ev.target.id==='rsV55AvatarInput'){
+      const file=ev.target.files && ev.target.files[0]; if(!file) return;
+      const reader=new FileReader();
+      reader.onload=function(){ try{ localStorage.setItem(AVATAR_KEY, String(reader.result||'')); }catch(e){} applyAvatar(); };
+      reader.readAsDataURL(file);
+    }
+  },true);
+  function boot(){
+    document.querySelectorAll('.topbar').forEach(el=>el.style.setProperty('display','none','important'));
+    ensureSidebarHamburger(); ensureDock(); syncLocked();
+    const lock=$('lockScreen'); if(lock){ try{ new MutationObserver(syncLocked).observe(lock,{attributes:true,attributeFilter:['style','class']}); }catch(e){} }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+  window.addEventListener('load',()=>setTimeout(boot,100));
+  setInterval(function(){ hideOlder(); ensureSidebarHamburger(); syncLocked(); },1200);
+})();
+</script>
+
 </body>
 </html>
 
