@@ -21979,3 +21979,166 @@ body.skin-dreamtrip .chart-wrap{
   setTimeout(render,600); setTimeout(render,2200); setTimeout(render,5200);
 })();
 </script>
+
+<!-- ===== RESELLr v14 data/chart accuracy patch ===== -->
+<style id="resellr-v14-accuracy-css">
+  #secDashboard.resellr-v13-dashboard .v13-chart{overflow:visible!important;}
+  #secDashboard.resellr-v13-dashboard .v13-chart canvas{background:transparent!important;}
+  #soldProfitChart,#soldItemsChart{background:transparent!important;}
+</style>
+<script id="resellr-v14-accuracy-js">
+(function(){
+  'use strict';
+  const fmtMoney = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtInt = new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
+  const $ = id => document.getElementById(id);
+  const css = (v,f)=>getComputedStyle(document.documentElement).getPropertyValue(v).trim()||f;
+  function num(v){
+    if(v==null || v==='') return 0;
+    if(typeof v==='number') return Number.isFinite(v)?v:0;
+    let s=String(v).trim();
+    const neg=/^\s*\(/.test(s)||/^\s*-/.test(s);
+    s=s.replace(/\((.*)\)/,'$1').replace(/[^0-9.\-]/g,'');
+    const n=Number(s);
+    if(!Number.isFinite(n)) return 0;
+    return neg?-Math.abs(n):n;
+  }
+  function money(v){return fmtMoney.format(num(v));}
+  function whole(v){return fmtInt.format(Math.round(num(v)));}
+  function getRows(key){try{const v=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
+  function soldRows(){try{if(typeof window.readSold==='function'){const r=window.readSold(); if(Array.isArray(r)) return r;}}catch(e){} return getRows('soldInventory');}
+  function activeRows(){try{if(typeof window.readInventory==='function'){const r=window.readInventory(); if(Array.isArray(r)) return r;}}catch(e){} return getRows('activeInventory');}
+  function parseDate(v){
+    if(!v) return null;
+    if(v instanceof Date && !isNaN(v)) return v;
+    let s=String(v).trim();
+    let d=new Date(s);
+    if(!isNaN(d)) return d;
+    let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if(m){let y=+m[3]; if(y<100)y+=2000; d=new Date(y,+m[1]-1,+m[2]); if(!isNaN(d)) return d;}
+    return null;
+  }
+  function dOf(r){return parseDate(r && (r.date ?? r.soldDate ?? r.saleDate ?? r['Sold Date'] ?? r.Date));}
+  function dateKey(d){return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:'';}
+  function monthKey(d){return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`:'';}
+
+  // Important: use RESELLr's native sold schema first. Do NOT use list/price/value as income on sold rows.
+  function sale(r){
+    const primary = num(r && r.sale);
+    if(primary) return primary;
+    return num(r && (r.salePrice ?? r.soldPrice ?? r['Sale Price'] ?? r['Sold Price'] ?? r.revenue ?? r.income ?? r.amount));
+  }
+  function cost(r){return num(r && (r.cost ?? r.Cost ?? r.itemCost ?? r.cogs ?? r.costOfSold ?? r['Cost of Sold']));}
+  function fees(r){return num(r && (r.fees ?? r.fee ?? r.Fees ?? r.platformFees ?? r.sellingFees));}
+  function ship(r){return num(r && (r.ship ?? r.shipping ?? r.Shipping ?? r.shippingCost ?? r.postage));}
+  function profit(r){
+    const p=num(r && r.profit);
+    if(p) return p;
+    return sale(r)-cost(r)-fees(r)-ship(r);
+  }
+  function platform(r){return String(r && (r.platform ?? r.Platform ?? r.marketplace ?? r.source ?? '')).toLowerCase();}
+  function set(id,val){const el=$(id); if(el) el.textContent=val;}
+  function destroyChart(id){
+    if(!window.Chart) return null;
+    const c=$(id); if(!c) return null;
+    const old=Chart.getChart(c); if(old) old.destroy();
+    return c;
+  }
+  function chartBase(){
+    if(!window.Chart) return;
+    Chart.defaults.color=css('--text','#e5e7eb');
+    Chart.defaults.font.family=getComputedStyle(document.body).fontFamily;
+    Chart.defaults.font.size=10;
+  }
+  function dailyCumulative(rows, start){
+    const map=new Map();
+    rows.forEach(r=>{
+      const d=dOf(r); if(!d || (start && d<start)) return;
+      const k=dateKey(d);
+      if(!map.has(k)) map.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0});
+      const b=map.get(k); b.income+=sale(r); b.profit+=profit(r);
+    });
+    const days=[...map.values()].sort((a,b)=>a.date-b.date);
+    let ci=0, cp=0;
+    return days.map(b=>{ci+=b.income; cp+=b.profit; return {date:b.date,income:+ci.toFixed(2),profit:+cp.toFixed(2)};});
+  }
+  function renderDashboardCharts(){
+    const sold=soldRows();
+    const totalIncome=sold.reduce((s,r)=>s+sale(r),0);
+    const totalProfit=sold.reduce((s,r)=>s+profit(r),0);
+    set('v13GrowthIncome', money(totalIncome));
+    set('v13GrowthProfit', money(totalProfit));
+    const range=localStorage.getItem('v13Range')||'ALL';
+    const now=new Date();
+    let start=null;
+    if(range==='YTD') start=new Date(now.getFullYear(),0,1);
+    if(range==='3M') start=new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
+    if(range==='1M') start=new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
+    document.querySelectorAll('[data-v13-range]').forEach(b=>b.classList.toggle('active',b.dataset.v13Range===range));
+    const c=destroyChart('v13GrowthChart');
+    if(c && window.Chart){
+      chartBase();
+      const rows=dailyCumulative(sold,start);
+      const labels=rows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'}));
+      new Chart(c,{type:'line',data:{labels,datasets:[
+        {label:'Total Income',data:rows.map(x=>x.income),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false},
+        {label:'Total Profit',data:rows.map(x=>x.profit),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false}
+      ]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:8,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{ticks:{maxTicksLimit:9},grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'12%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}});
+    }
+    renderMonthlyDashboard();
+    renderPlatformCards();
+  }
+  function renderMonthlyDashboard(){
+    const map=new Map();
+    soldRows().forEach(r=>{const d=dOf(r); if(!d)return; const k=monthKey(d); if(!map.has(k)) map.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const b=map.get(k); b.income+=sale(r); b.cost+=cost(r); b.profit+=profit(r);});
+    const rows=[...map.values()].sort((a,b)=>a.date-b.date).slice(-12);
+    const now=new Date();
+    const cur=rows.find(x=>x.date.getFullYear()===now.getFullYear()&&x.date.getMonth()===now.getMonth())||{income:0,cost:0,profit:0};
+    set('v13MonthIncome',money(cur.income)); set('v13MonthCost',money(cur.cost)); set('v13MonthProfit',money(cur.profit));
+    const c=destroyChart('v13MonthlyChart');
+    if(c && window.Chart){
+      chartBase();
+      new Chart(c,{type:'line',data:{labels:rows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'})),datasets:[
+        {label:'Total Income',data:rows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},
+        {label:'Cost of Sold',data:rows.map(x=>+x.cost.toFixed(2)),borderColor:css('--red','#ef4444'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},
+        {label:'Profit',data:rows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},
+        {label:'$300 Goal',data:rows.map(()=>300),borderColor:css('--yellow','#fbbf24'),backgroundColor:'transparent',borderWidth:2,borderDash:[6,5],pointRadius:0,tension:0,fill:false}
+      ]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:8,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'14%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}});
+    }
+  }
+  function renderPlatformCards(){
+    const year=new Date().getFullYear();
+    const ytd=soldRows().filter(r=>{const d=dOf(r);return d&&d.getFullYear()===year;});
+    function bucket(kind){const rows=ytd.filter(r=>{const p=platform(r); if(kind==='m') return p.includes('mercari'); if(kind==='e') return p.includes('ebay')||p.includes('e-bay')||p.includes('e bay'); return p.includes('private')||p.includes('cash')||p.includes('local')||p.includes('direct')||p.includes('manual')||p.includes('offline');}); return {income:rows.reduce((s,r)=>s+sale(r),0),count:rows.length};}
+    const m=bucket('m'), e=bucket('e'), p=bucket('p');
+    set('v13MercariIncome',money(m.income)); set('v13MercariCount',whole(m.count)+' sales');
+    set('v13EbayIncome',money(e.income)); set('v13EbayCount',whole(e.count)+' sales');
+    set('v13PrivateIncome',money(p.income)); set('v13PrivateCount',whole(p.count)+' sales');
+  }
+  function patchSoldCharts(){
+    const data=(typeof window.readSold==='function'?window.readSold():soldRows())||[];
+    const yr=$('soldYearFilter')?.value||'ALL', mo=$('soldMonthFilter')?.value||'ALL', plat=$('soldPlatformFilter')?.value||'ALL', typ=$('soldTypeFilter')?.value||'ALL';
+    const filtered=data.filter(r=>{
+      const d=dOf(r); const y=d?String(d.getFullYear()):''; const mk=d?monthKey(d):'';
+      return (yr==='ALL'||y===yr) && (mo==='ALL'||mk===mo) && (plat==='ALL'||String(r.platform||'')===plat) && (typ==='ALL'||String(r.type||'')===typ) && (typeof window.matchesSoldSearch==='function'?window.matchesSoldSearch(r):true);
+    });
+    const buckets={};
+    filtered.forEach(r=>{const d=dOf(r); if(!d)return; const k=monthKey(d); if(!buckets[k]) buckets[k]={profit:0,items:0}; buckets[k].profit+=profit(r); buckets[k].items+=1;});
+    const labels=Object.keys(buckets).sort();
+    const c1=destroyChart('soldProfitChart');
+    const c2=destroyChart('soldItemsChart');
+    if(!window.Chart) return;
+    chartBase();
+    if(c1) window._otsSoldProfitChart=new Chart(c1,{type:'bar',data:{labels,datasets:[{label:'Profit',data:labels.map(k=>+buckets[k].profit.toFixed(2)),backgroundColor:css('--green','#22c55e'),borderColor:css('--green','#22c55e'),borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:x=>'Profit: '+money(x.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}});
+    if(c2) window._otsSoldItemsChart=new Chart(c2,{type:'bar',data:{labels,datasets:[{label:'Items Sold',data:labels.map(k=>buckets[k].items),backgroundColor:css('--accent','#38bdf8'),borderColor:css('--accent','#38bdf8'),borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,ticks:{precision:0},grid:{color:'rgba(255,255,255,.12)'}}}}});
+  }
+  const oldSoldUpdate=window.updateSoldSummaryAndCharts||window.otsUpdateSoldSummaryAndCharts;
+  window.updateSoldSummaryAndCharts=function(){try{ if(typeof oldSoldUpdate==='function') oldSoldUpdate(); }catch(e){} setTimeout(patchSoldCharts,40);};
+  window.otsUpdateSoldSummaryAndCharts=window.updateSoldSummaryAndCharts;
+  function run(){setTimeout(()=>{try{renderDashboardCharts(); patchSoldCharts();}catch(e){console.warn('v14 patch',e)}},60);}
+  document.addEventListener('DOMContentLoaded',()=>{run(); setTimeout(run,1200); setTimeout(run,5600);});
+  window.addEventListener('load',()=>{run(); setTimeout(run,1600); setTimeout(run,6200);});
+  ['click','change','input'].forEach(evt=>document.addEventListener(evt,e=>{ if(e.target && (e.target.closest('#secDashboard') || e.target.closest('#secSold'))){ clearTimeout(window.__resellrV14Timer); window.__resellrV14Timer=setTimeout(run,180); }},true));
+  setTimeout(run,900); setTimeout(run,3000); setTimeout(run,7000);
+})();
+</script>
