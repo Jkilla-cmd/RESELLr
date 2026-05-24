@@ -21314,3 +21314,106 @@ body.skin-dreamtrip .chart-wrap{
   setTimeout(()=>{const dash=document.getElementById(DASH_ID); if(dash&&dash.parentNode) obs.observe(dash.parentNode,{childList:true,subtree:false}); renderAll();},800);
 })();
 </script>
+
+<!-- ===== RESELLr Atlas v8: final small typography + single platform panel + income fallback ===== -->
+<style id="rs8CleanCss">
+  #secDashboard.resellr-stable-dashboard{font-size:13px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-shell{grid-template-columns:minmax(0,2.25fr) minmax(280px,.75fr)!important;gap:14px!important;max-width:1480px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-main,#secDashboard.resellr-stable-dashboard .rs7-rail{gap:14px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-panel{padding:16px!important;border-radius:18px!important;overflow:hidden!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-head{margin-bottom:12px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-head h3{font-size:18px!important;line-height:1.15!important;margin:0!important;letter-spacing:-.02em!important;text-transform:none!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-sub{font-size:12px!important;line-height:1.35!important;margin-top:7px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-top-metrics{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;margin-bottom:12px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-kpi{padding:12px!important;border-radius:15px!important;min-width:0!important;overflow:hidden!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-label{font-size:10px!important;letter-spacing:.08em!important;line-height:1.25!important;white-space:normal!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-value{font-size:21px!important;line-height:1.08!important;letter-spacing:-.03em!important;word-break:break-word!important;overflow-wrap:anywhere!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-count{font-size:12px!important;line-height:1.25!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-chart{height:300px!important;min-height:300px!important;max-height:300px!important;padding:0!important;overflow:hidden!important;position:relative!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-chart canvas{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-inv-chart{height:210px!important;min-height:210px!important;max-height:210px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-platforms{gap:10px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-platform{grid-template-columns:42px minmax(0,1fr)!important;gap:10px!important;padding:11px!important;border-radius:15px!important;overflow:hidden!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-logo{width:42px!important;height:42px!important;border-radius:13px!important;font-size:17px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-logo.e{font-size:13px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-platform .rs7-value{font-size:22px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-pill{font-size:12px!important;padding:8px 10px!important;border-radius:12px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-actions button{font-size:12px!important;padding:10px!important;}
+  #secDashboard .market-grid,#secDashboard .atlas-market-grid,#secDashboard #atlasPlatformPanel,#secDashboard #resellrPlatformPanel,#secDashboard .market-card{max-width:100%!important;}
+  #secDashboard .market-card .market-value{font-size:18px!important;}
+  @media(max-width:1100px){#secDashboard.resellr-stable-dashboard .rs7-shell{grid-template-columns:1fr!important;}#secDashboard.resellr-stable-dashboard .rs7-chart{height:270px!important;}}
+</style>
+<script id="rs8CleanScript">
+(function(){
+  const DASH='secDashboard', GOAL=300;
+  const nf=new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const intf=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
+  const money=v=>'$'+nf.format(num(v));
+  const whole=v=>intf.format(num(v));
+  function num(v){ if(v==null||v==='')return 0; if(typeof v==='number')return Number.isFinite(v)?v:0; let s=String(v).trim(); let neg=/^\s*\(/.test(s)||/^\s*-/.test(s); s=s.replace(/\((.*)\)/,'$1').replace(/[^0-9.\-]/g,''); if((s.match(/\./g)||[]).length>1){let p=s.split('.'); s=p.shift()+'.'+p.join('');} let n=Number(s); if(!Number.isFinite(n))n=0; return neg?-Math.abs(n):n; }
+  function readKey(k){try{const raw=localStorage.getItem(k); const parsed=JSON.parse(raw||'[]'); return Array.isArray(parsed)?parsed:[];}catch(e){return[];}}
+  function rowsSold(){ let a=[]; try{ if(typeof window.readSold==='function') a=window.readSold()||[]; }catch(e){} if(!Array.isArray(a)||!a.length) a=readKey('soldInventory'); return Array.isArray(a)?a:[]; }
+  function rowsActive(){ let a=[]; try{ if(typeof window.readActive==='function') a=window.readActive()||[]; }catch(e){} if(!Array.isArray(a)||!a.length) a=readKey('activeInventory'); return Array.isArray(a)?a:[]; }
+  function dOf(r){ for(const c of [r?.date,r?.soldDate,r?.saleDate,r?.orderDate,r?.createdAt,r?.completedAt]){ if(!c)continue; let d=new Date(c); if(!isNaN(d))return d; const m=String(c).match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if(m){let y=+m[3]; if(y<100)y+=2000; d=new Date(y,+m[1]-1,+m[2]); if(!isNaN(d))return d;} } return null; }
+  function valOf(r,keys){ for(const k of keys){ if(r&&r[k]!==undefined&&r[k]!==null&&String(r[k]).trim()!==''){ const x=num(r[k]); if(x!==0) return x; } } return 0; }
+  function saleOf(r){ return valOf(r,['sale','salePrice','sold','soldPrice','gross','grossSale','revenue','totalIncome','income','amount','price','value','soldFor','finalPrice']); }
+  function itemCost(r){ return valOf(r,['cost','itemCost','buyCost','purchase','purchasePrice','cogs']); }
+  function fees(r){ return Math.abs(valOf(r,['fees','fee','platformFees','sellingFees'])); }
+  function ship(r){ return Math.abs(valOf(r,['ship','shipping','shippingCost','shipCost'])); }
+  function costOf(r){ return itemCost(r)+fees(r)+ship(r); }
+  function profitOf(r){ const p=valOf(r,['profit','netProfit','net']); return p!==0?p:saleOf(r)-costOf(r); }
+  function listOf(r){ return valOf(r,['list','listPrice','price','value','asking','salePrice']) || itemCost(r); }
+  function platformOf(r){ return String(r?.platform ?? r?.source ?? r?.marketplace ?? r?.site ?? '').trim().toLowerCase(); }
+  function set(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
+  function destroy(id){ const old=document.getElementById(id); if(!old)return null; try{const c=Chart.getChart(old); if(c)c.destroy();}catch(e){} const n=old.cloneNode(false); old.parentNode.replaceChild(n,old); return n; }
+  function cleanAllLegacyPanels(){
+    const dash=document.getElementById(DASH); if(!dash)return;
+    // Ensure only our rs7 rebuilt shell exists; remove floating old platform blocks/cards that earlier patches injected.
+    dash.querySelectorAll('.panel, .rs7-panel, section').forEach(p=>{
+      if(p.closest('.rs7-shell') && p.id==='rs7PlatformPanel') return;
+      if(p.closest('.rs7-shell') && p.id!=='rs7PlatformPanel') return;
+      const h=(p.querySelector('h3')?.textContent||'').trim().toLowerCase();
+      if(h==='platform sales' || p.id==='atlasPlatformPanel' || p.id==='resellrPlatformPanel' || p.querySelector('#mercariIncomeStat,#ebayIncomeStat,#privateIncomeStat')) p.remove();
+    });
+    const panels=[...dash.querySelectorAll('#rs7PlatformPanel')];
+    panels.forEach((p,i)=>{if(i>0)p.remove();});
+  }
+  function build(){
+    const dash=document.getElementById(DASH); if(!dash)return false;
+    dash.classList.add('resellr-stable-dashboard');
+    dash.innerHTML=`<div class="rs7-shell"><main class="rs7-main">
+      <section class="rs7-panel"><div class="rs7-head"><div><h3>Business Growth</h3><p class="rs7-sub">Total income and profit over time.</p></div><div class="rs7-range"><button class="rs7-pill" data-range="ALL">ALL</button><button class="rs7-pill" data-range="YTD">YTD</button><button class="rs7-pill" data-range="3M">3M</button><button class="rs7-pill" data-range="1M">1M</button></div></div><div class="rs7-top-metrics"><div class="rs7-kpi"><div class="rs7-label">Total Income</div><div class="rs7-value" id="rs7GrowthIncome">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Total Profit</div><div class="rs7-value" id="rs7GrowthProfit">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Items Sold</div><div class="rs7-value" id="rs7GrowthItems">0</div></div></div><div class="rs7-chart"><canvas id="rs7GrowthChart"></canvas></div></section>
+      <section class="rs7-panel"><div class="rs7-head"><div><h3>Monthly Profit View</h3><p class="rs7-sub">Monthly total income, cost of sold, and profit with a dotted $300.00 profit goal line.</p></div></div><div class="rs7-top-metrics"><div class="rs7-kpi"><div class="rs7-label">This Month Income</div><div class="rs7-value" id="rs7MonthIncome">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">This Month Profit</div><div class="rs7-value" id="rs7MonthProfit">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">This Month Cost</div><div class="rs7-value" id="rs7MonthCost">$0.00</div></div></div><div class="rs7-chart"><canvas id="rs7MonthlyChart"></canvas></div></section>
+      <section class="rs7-panel"><div class="rs7-head"><div><h3>Inventory Health</h3><p class="rs7-sub">Cost, list value, and profit spread.</p></div></div><div class="rs7-mini-grid"><div class="rs7-kpi"><div class="rs7-label">Inventory Cost</div><div class="rs7-value" id="rs7InvCost">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Inventory Value</div><div class="rs7-value" id="rs7InvValue">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Unrealized Gain</div><div class="rs7-value" id="rs7Unrealized">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Realized Profit</div><div class="rs7-value" id="rs7Realized">$0.00</div></div></div><div class="rs7-chart rs7-inv-chart"><canvas id="rs7InventoryChart"></canvas></div></section>
+    </main><aside class="rs7-rail"><section class="rs7-panel"><div class="rs7-head"><div><h3>Sold Snapshot</h3><p class="rs7-sub" id="rs7SnapYear"></p></div></div><div class="rs7-mini-grid"><div class="rs7-kpi"><div class="rs7-label">Total Income</div><div class="rs7-value" id="rs7YtdIncome">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Cost of Sold</div><div class="rs7-value" id="rs7YtdCost">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Profit</div><div class="rs7-value" id="rs7YtdProfit">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Items</div><div class="rs7-value" id="rs7YtdItems">0</div></div></div></section>
+      <section class="rs7-panel" id="rs7PlatformPanel"><div class="rs7-head"><div><h3>Platform Sales</h3><p class="rs7-sub">YTD income by marketplace.</p></div></div><div class="rs7-platforms"><div class="rs7-platform"><div class="rs7-logo m">M</div><div><div class="rs7-label">Mercari</div><div class="rs7-value" id="rs7MercariIncome">$0.00</div><div class="rs7-count" id="rs7MercariCount">0 sales</div></div></div><div class="rs7-platform"><div class="rs7-logo e">eBay</div><div><div class="rs7-label">eBay</div><div class="rs7-value" id="rs7EbayIncome">$0.00</div><div class="rs7-count" id="rs7EbayCount">0 sales</div></div></div><div class="rs7-platform"><div class="rs7-logo p">P</div><div><div class="rs7-label">Private Sale</div><div class="rs7-value" id="rs7PrivateIncome">$0.00</div><div class="rs7-count" id="rs7PrivateCount">0 sales</div></div></div></div></section>
+      <section class="rs7-panel"><div class="rs7-head"><div><h3>Fast Moves</h3><p class="rs7-sub">Quick shortcuts.</p></div></div><div class="rs7-actions"><button onclick="rs7Go('secInventory')">Add / Manage Inventory</button><button onclick="rs7Go('secSold')">View Sold</button><button onclick="rs7Go('secHolds')">Review Holds</button><button onclick="rs7Go('secImportExport')">Backup Data</button></div></section>
+      <section class="rs7-panel"><div class="rs7-head"><div><h3>Business Net Worth</h3><p class="rs7-sub">Inventory Value + Realized Profit</p></div></div><div class="rs7-kpi"><div class="rs7-label">Estimated Business Value</div><div class="rs7-value" id="rs7NetWorth">$0.00</div></div></section></aside></div>`;
+    dash.querySelectorAll('[data-range]').forEach(b=>b.addEventListener('click',()=>{localStorage.setItem('rs8Range',b.dataset.range); render();}));
+    return true;
+  }
+  function stats(){
+    const sold=rowsSold(), active=rowsActive(), year=new Date().getFullYear();
+    const ytd=sold.filter(r=>{const d=dOf(r); return d&&d.getFullYear()===year;});
+    const allIncome=sold.reduce((s,r)=>s+saleOf(r),0), allProfit=sold.reduce((s,r)=>s+profitOf(r),0);
+    const yIncome=ytd.reduce((s,r)=>s+saleOf(r),0), yCost=ytd.reduce((s,r)=>s+costOf(r),0), yProfit=ytd.reduce((s,r)=>s+profitOf(r),0);
+    const invCost=active.reduce((s,r)=>s+itemCost(r)*(num(r.qty)||1),0), invValue=active.reduce((s,r)=>s+listOf(r)*(num(r.qty)||1),0);
+    set('rs7GrowthIncome',money(allIncome)); set('rs7GrowthProfit',money(allProfit)); set('rs7GrowthItems',whole(sold.length));
+    set('rs7YtdIncome',money(yIncome)); set('rs7YtdCost',money(yCost)); set('rs7YtdProfit',money(yProfit)); set('rs7YtdItems',whole(ytd.length)); set('rs7SnapYear',String(year));
+    set('rs7InvCost',money(invCost)); set('rs7InvValue',money(invValue)); set('rs7Unrealized',money(invValue-invCost)); set('rs7Realized',money(allProfit)); set('rs7NetWorth',money(invValue+allProfit));
+    function bucket(kind){ const rs=ytd.filter(r=>{const p=platformOf(r); if(kind==='m')return p.includes('mercari'); if(kind==='e')return p.includes('ebay')||p.includes('e-bay')||p.includes('e bay'); return p.includes('private')||p.includes('cash')||p.includes('local')||p.includes('direct')||p.includes('manual');}); return {income:rs.reduce((s,r)=>s+saleOf(r),0),count:rs.length};}
+    const m=bucket('m'), e=bucket('e'), p=bucket('p'); set('rs7MercariIncome',money(m.income)); set('rs7MercariCount',whole(m.count)+' sales'); set('rs7EbayIncome',money(e.income)); set('rs7EbayCount',whole(e.count)+' sales'); set('rs7PrivateIncome',money(p.income)); set('rs7PrivateCount',whole(p.count)+' sales');
+  }
+  function chartDefaults(){ if(!window.Chart)return; Chart.defaults.color='#e5e7eb'; Chart.defaults.font.size=11; Chart.defaults.plugins.legend.labels.boxWidth=10; }
+  function renderGrowth(){ const c=destroy('rs7GrowthChart'); if(!c||!window.Chart)return; chartDefaults(); const range=localStorage.getItem('rs8Range')||'ALL'; document.querySelectorAll('[data-range]').forEach(b=>b.classList.toggle('active',b.dataset.range===range)); const now=new Date(); let start=null; if(range==='YTD')start=new Date(now.getFullYear(),0,1); if(range==='3M')start=new Date(now.getFullYear(),now.getMonth()-3,now.getDate()); if(range==='1M')start=new Date(now.getFullYear(),now.getMonth()-1,now.getDate()); const rs=rowsSold().map(r=>({r,d:dOf(r)})).filter(x=>x.d&&(!start||x.d>=start)).sort((a,b)=>a.d-b.d); let inc=0,prof=0; const labels=[],income=[],profit=[]; rs.forEach(x=>{inc+=saleOf(x.r); prof+=profitOf(x.r); labels.push(x.d.toLocaleDateString('en-US',{month:'short',day:'numeric'})); income.push(+inc.toFixed(2)); profit.push(+prof.toFixed(2));}); new Chart(c,{type:'line',data:{labels,datasets:[{label:'Total Income',data:income,borderColor:'#22d3ee',backgroundColor:'rgba(34,211,238,.14)',borderWidth:3,pointRadius:0,tension:.22,fill:false},{label:'Total Profit',data:profit,borderColor:'#fb426b',backgroundColor:'rgba(251,66,107,.14)',borderWidth:3,pointRadius:0,tension:.22,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:10,bottom:8,left:4}},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{ticks:{maxTicksLimit:9},grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'10%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
+  function monthRows(){ const map=new Map(); rowsSold().forEach(r=>{const d=dOf(r); if(!d)return; const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); if(!map.has(k))map.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const b=map.get(k); b.income+=saleOf(r); b.cost+=costOf(r); b.profit+=profitOf(r);}); return [...map.values()].sort((a,b)=>a.date-b.date).slice(-12); }
+  function renderMonthly(){ const c=destroy('rs7MonthlyChart'); if(!c||!window.Chart)return; chartDefaults(); const rs=monthRows(); const now=new Date(); const cur=rs.find(b=>b.date.getFullYear()===now.getFullYear()&&b.date.getMonth()===now.getMonth())||{income:0,cost:0,profit:0}; set('rs7MonthIncome',money(cur.income)); set('rs7MonthCost',money(cur.cost)); set('rs7MonthProfit',money(cur.profit)); const labels=rs.map(b=>b.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'})); new Chart(c,{type:'line',data:{labels,datasets:[{label:'Total Income',data:rs.map(b=>+b.income.toFixed(2)),borderColor:'#22d3ee',borderWidth:3,pointRadius:2,tension:.25,fill:false},{label:'Cost of Sold',data:rs.map(b=>+b.cost.toFixed(2)),borderColor:'#fb426b',borderWidth:3,pointRadius:2,tension:.25,fill:false},{label:'Profit',data:rs.map(b=>+b.profit.toFixed(2)),borderColor:'#f59e0b',borderWidth:3,pointRadius:2,tension:.25,fill:false},{label:'$300 Goal',data:rs.map(()=>GOAL),borderColor:'#fde047',borderWidth:2,borderDash:[7,6],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:10,bottom:8,left:4}},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{ticks:{maxTicksLimit:12},grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'14%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
+  function renderInventory(){ const c=destroy('rs7InventoryChart'); if(!c||!window.Chart)return; chartDefaults(); const active=rowsActive(); const invCost=active.reduce((s,r)=>s+itemCost(r)*(num(r.qty)||1),0), invValue=active.reduce((s,r)=>s+listOf(r)*(num(r.qty)||1),0), realized=rowsSold().reduce((s,r)=>s+profitOf(r),0); new Chart(c,{type:'doughnut',data:{labels:['Inventory Cost','Unrealized Gain','Realized Profit'],datasets:[{data:[Math.max(invCost,0),Math.max(invValue-invCost,0),Math.max(realized,0)],backgroundColor:['#22d3ee','#fb426b','#f59e0b'],borderColor:'rgba(255,255,255,.85)',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,animation:false,cutout:'62%',plugins:{legend:{position:'bottom'}}}}); }
+  function render(){ build(); cleanAllLegacyPanels(); stats(); renderGrowth(); renderMonthly(); renderInventory(); }
+  window.rs8DashboardRender=render; window.rs7RefreshDashboard=render;
+  document.addEventListener('DOMContentLoaded',()=>{setTimeout(render,100);setTimeout(render,1200);setTimeout(render,3200);setTimeout(render,5200);});
+  window.addEventListener('load',()=>{setTimeout(render,150);setTimeout(render,1800);setTimeout(render,4200);});
+  setTimeout(render,600); setTimeout(render,2600); setTimeout(render,6000);
+})();
+</script>
