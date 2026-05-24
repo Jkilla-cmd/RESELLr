@@ -21891,6 +21891,333 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== v54: one working avatar dock + lo-fi/style actions + lock background ===== -->
+<style id="rs-v54-single-dock-lock-bg-css">
+  /* Keep every older top-right dock hidden; v54 supplies the only active one. */
+  #rsFloatingDock,
+  #rsDockV41,
+  #rsDockV42,
+  #rsDockV30,
+  #rsDockV31,
+  #rsDockV32,
+  #rsDockV33,
+  #rsDockV34,
+  #rsDockV35,
+  #rsDockV36,
+  #rsDockV37,
+  #rsDockV38,
+  #rsDockV39,
+  #rsDockV40,
+  #rsFinalDock,
+  #rsCleanDock,
+  #resellrCommandDock,
+  #dockPopover,
+  #dockMainButton,
+  .topbar-right.resellr-command-dock,
+  .rs-v42-dock-wrap:not(#rsV54Dock){
+    display:none !important;
+    pointer-events:none !important;
+    visibility:hidden !important;
+  }
+
+  #rsV54Dock{
+    position:fixed !important;
+    top:14px !important;
+    right:14px !important;
+    z-index:10080 !important;
+    width:48px !important;
+    height:48px !important;
+    pointer-events:auto !important;
+  }
+  #rsV54DockBtn{
+    width:48px !important;
+    height:48px !important;
+    min-width:48px !important;
+    min-height:48px !important;
+    padding:0 !important;
+    border-radius:16px !important;
+    overflow:hidden !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    background: color-mix(in srgb, var(--panel, #151a21) 88%, transparent) !important;
+    border:1px solid color-mix(in srgb, var(--accent, #38bdf8) 35%, transparent) !important;
+    color:var(--accent, #38bdf8) !important;
+    box-shadow:0 10px 30px rgba(0,0,0,.28) !important;
+    cursor:pointer !important;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+  #rsV54DockBtn:hover{ transform:translateY(-1px) !important; }
+  #rsV54DockBtn img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:cover !important;
+    display:none;
+    border-radius:16px !important;
+  }
+  #rsV54DockBtn.has-avatar img{ display:block !important; }
+  #rsV54DockBtn.has-avatar .rs-v54-fallback{ display:none !important; }
+  #rsV54DockBtn .rs-v54-fallback{ font-size:22px; line-height:1; font-weight:800; }
+
+  #rsV54Menu{
+    position:absolute !important;
+    top:58px !important;
+    right:0 !important;
+    width:190px !important;
+    display:none !important;
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+    padding:10px !important;
+    border-radius:18px !important;
+    background: color-mix(in srgb, var(--panel, #151a21) 92%, transparent) !important;
+    border:1px solid var(--border, rgba(255,255,255,.12)) !important;
+    box-shadow:0 18px 50px rgba(0,0,0,.38) !important;
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+  }
+  #rsV54Dock.open #rsV54Menu{ display:grid !important; }
+  #rsV54Menu button{
+    width:100% !important;
+    min-height:36px !important;
+    padding:8px 10px !important;
+    border-radius:12px !important;
+    text-align:left !important;
+    font-size:12px !important;
+    background:rgba(255,255,255,.035) !important;
+    color:var(--text,#e5e7eb) !important;
+    border:1px solid var(--border, rgba(255,255,255,.12)) !important;
+    cursor:pointer !important;
+  }
+  #rsV54Menu button:hover{ background:color-mix(in srgb, var(--accent,#38bdf8) 12%, transparent) !important; }
+  #rsV54Menu .rs-v54-icons{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  #rsV54Menu .rs-v54-icons button{ text-align:center !important; font-size:15px !important; }
+
+  body.rs-app-locked #rsV54Dock{
+    opacity:0 !important;
+    pointer-events:none !important;
+    visibility:hidden !important;
+  }
+
+  /* Use the uploaded Command View background on the lock overlay too. */
+  html.rs-has-command-bg #lockScreen{
+    background:rgba(0,0,0,.60) !important;
+    overflow:hidden !important;
+  }
+  html.rs-has-command-bg #lockScreen::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:var(--rs-shared-bg, var(--rs15-command-bg, none));
+    background-size:cover;
+    background-position:center center;
+    background-repeat:no-repeat;
+    opacity:.62;
+    filter:saturate(1.05) contrast(1.02);
+    z-index:0;
+    pointer-events:none;
+  }
+  html.rs-has-command-bg #lockScreen::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      linear-gradient(90deg, rgba(2,6,12,.82), rgba(2,6,12,.46), rgba(2,6,12,.72)),
+      radial-gradient(circle at 65% 20%, rgba(56,189,248,.10), transparent 34%);
+    z-index:1;
+    pointer-events:none;
+  }
+  #lockScreen .lockBox,
+  #lockScreen > *{
+    position:relative !important;
+    z-index:2 !important;
+  }
+</style>
+
+<script id="rs-v54-single-dock-lofi-style-lock-bg-js">
+(function(){
+  const AVATAR_KEY = 'resellr_dock_avatar_image';
+  const THEMES = ['hackercyan','cyberred','monochrome','lofi','glass','arcade','vault'];
+  const $ = (id)=>document.getElementById(id);
+
+  function isLocked(){
+    const lock = $('lockScreen');
+    if(!lock) return false;
+    const cs = window.getComputedStyle(lock);
+    return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
+  }
+
+  function syncLockedState(){
+    document.body.classList.toggle('rs-app-locked', isLocked());
+    const dock = $('rsV54Dock');
+    if(isLocked() && dock) dock.classList.remove('open');
+  }
+
+  function hideOldDocks(){
+    document.querySelectorAll('#rsFloatingDock,#rsDockV41,#rsDockV42,#rsDockV30,#rsDockV31,#rsDockV32,#rsDockV33,#rsDockV34,#rsDockV35,#rsDockV36,#rsDockV37,#rsDockV38,#rsDockV39,#rsDockV40,#rsFinalDock,#rsCleanDock,#resellrCommandDock,#dockPopover,#dockMainButton,.topbar-right.resellr-command-dock,.rs-v42-dock-wrap').forEach(el=>{
+      if(el.id !== 'rsV54Dock'){
+        el.style.setProperty('display','none','important');
+        el.style.setProperty('pointer-events','none','important');
+        el.style.setProperty('visibility','hidden','important');
+      }
+    });
+  }
+
+  function ensureDock(){
+    hideOldDocks();
+    let dock = $('rsV54Dock');
+    if(!dock){
+      dock = document.createElement('div');
+      dock.id = 'rsV54Dock';
+      dock.innerHTML = `
+        <button id="rsV54DockBtn" type="button" aria-label="Open RESELLr quick controls" title="Quick controls">
+          <span class="rs-v54-fallback">☰</span><img id="rsV54AvatarImg" alt="Avatar">
+        </button>
+        <div id="rsV54Menu" aria-label="Quick controls">
+          <button type="button" data-rs54="lofi">♫ Lo-Fi</button>
+          <button type="button" data-rs54="ebay">eBay Comps</button>
+          <button type="button" data-rs54="style">◐ Style</button>
+          <button type="button" data-rs54="avatar">Upload Avatar</button>
+          <div class="rs-v54-icons">
+            <button type="button" data-rs54="lock" title="Lock">🔒</button>
+            <button type="button" data-rs54="reset" title="Reset Layout">↺</button>
+          </div>
+          <input id="rsV54AvatarInput" type="file" accept="image/*" hidden>
+        </div>`;
+      document.body.appendChild(dock);
+    }
+    applyAvatar();
+    syncLockedState();
+    return dock;
+  }
+
+  function applyAvatar(){
+    const btn = $('rsV54DockBtn');
+    const img = $('rsV54AvatarImg');
+    if(!btn || !img) return;
+    let saved = '';
+    try{ saved = localStorage.getItem(AVATAR_KEY) || ''; }catch(e){}
+    if(saved){ img.src = saved; btn.classList.add('has-avatar'); }
+    else{ img.removeAttribute('src'); btn.classList.remove('has-avatar'); }
+  }
+
+  function clickAny(ids){
+    for(const id of ids){
+      const el = $(id);
+      if(el){ try{ el.click(); return true; }catch(e){} }
+    }
+    return false;
+  }
+
+  function doLofi(){
+    try{
+      if(typeof window.toggleLofiMusic === 'function'){
+        window.toggleLofiMusic();
+        return;
+      }
+    }catch(e){}
+    if(clickAny(['lofiMusicToggle','lofiAvatarTrigger','lofiAvatarBtn','lofiBtn','lofiToggle'])) return;
+    const audio = $('lofiAudio') || (function(){ const a=document.createElement('audio'); a.id='lofiAudio'; a.preload='auto'; a.style.display='none'; document.body.appendChild(a); return a; })();
+    if(!audio.src) audio.src = 'assets/audio/watermello.mp3';
+    if(audio.paused){ audio.play().catch(()=>alert('Browser blocked playback. Tap Lo-Fi again.')); }
+    else audio.pause();
+  }
+
+  function doStyle(){
+    try{
+      if(typeof window.cycleResellrStyle === 'function'){
+        window.cycleResellrStyle();
+        return;
+      }
+    }catch(e){}
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme') || localStorage.getItem('ots_theme') || 'hackercyan';
+    const idx = THEMES.indexOf(current);
+    const next = THEMES[(idx + 1 + THEMES.length) % THEMES.length];
+    try{
+      if(typeof window.setTheme === 'function') window.setTheme(next);
+      else html.setAttribute('data-theme', next);
+      localStorage.setItem('ots_theme', next);
+      localStorage.setItem('theme', next);
+      const sel = $('themeSelect');
+      if(sel) sel.value = next;
+    }catch(e){ html.setAttribute('data-theme', next); }
+  }
+
+  function doEbay(){
+    if(clickAny(['ebayCompsBtn','ebayCompBtn','openEbayComps','ebayOverlayBtn'])) return;
+    try{ window.open('https://www.ebay.com/sch/i.html?_nkw=comic&_sacat=0&LH_Sold=1&LH_Complete=1', '_blank'); }catch(e){}
+  }
+
+  function doReset(){
+    try{ if(typeof window.resetDashboardLayout === 'function'){ window.resetDashboardLayout(); return; } }catch(e){}
+    clickAny(['resetLayoutBtn','dockResetButton','btnResetLayout']);
+  }
+
+  function doLock(){
+    try{ if(typeof window.lockNow === 'function'){ window.lockNow(); syncLockedState(); return; } }catch(e){}
+    const lock = $('lockScreen');
+    if(lock){ lock.style.display='flex'; syncLockedState(); }
+  }
+
+  function handleAction(action){
+    if(action !== 'lock' && isLocked()) return;
+    if(action === 'lofi') doLofi();
+    else if(action === 'ebay') doEbay();
+    else if(action === 'style') doStyle();
+    else if(action === 'avatar') $('rsV54AvatarInput')?.click();
+    else if(action === 'lock') doLock();
+    else if(action === 'reset') doReset();
+    if(action !== 'avatar') $('rsV54Dock')?.classList.remove('open');
+  }
+
+  document.addEventListener('click', function(ev){
+    ensureDock();
+    const dock = $('rsV54Dock');
+    const main = ev.target.closest && ev.target.closest('#rsV54DockBtn');
+    const action = ev.target.closest && ev.target.closest('[data-rs54]');
+    if(main){
+      ev.preventDefault(); ev.stopPropagation();
+      if(isLocked()) return;
+      dock.classList.toggle('open');
+      return;
+    }
+    if(action){
+      ev.preventDefault(); ev.stopPropagation();
+      handleAction(action.getAttribute('data-rs54'));
+      return;
+    }
+    if(dock && !dock.contains(ev.target)) dock.classList.remove('open');
+  }, true);
+
+  document.addEventListener('change', function(ev){
+    if(ev.target && ev.target.id === 'rsV54AvatarInput'){
+      const file = ev.target.files && ev.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(){
+        try{ localStorage.setItem(AVATAR_KEY, reader.result); }catch(e){}
+        applyAvatar();
+      };
+      reader.readAsDataURL(file);
+    }
+  }, true);
+
+  function boot(){
+    ensureDock();
+    syncLockedState();
+    const lock = $('lockScreen');
+    if(lock){
+      new MutationObserver(syncLockedState).observe(lock, {attributes:true, attributeFilter:['style','class']});
+    }
+    setInterval(function(){ hideOldDocks(); syncLockedState(); }, 900);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+</script>
+
 </body>
 </html>
 
