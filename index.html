@@ -21804,3 +21804,252 @@ body.skin-dreamtrip .chart-wrap{
     }
   }
 </style>
+
+<!-- ===== v38: Real topbar avatar dock click fix ===== -->
+<style id="rs-v38-avatar-dock-realclick-css">
+  /* Use the newer floating/avatar dock as the single visible topbar command button. */
+  #resellrCommandDock{ display:none !important; }
+
+  .topbar, .topbar-content{
+    overflow:visible !important;
+  }
+  .topbar-content{
+    position:relative !important;
+  }
+
+  #rsFloatingDock{
+    position:relative !important;
+    top:auto !important;
+    right:auto !important;
+    left:auto !important;
+    bottom:auto !important;
+    z-index:2147483646 !important;
+    width:54px !important;
+    height:54px !important;
+    min-width:54px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    margin-left:auto !important;
+    pointer-events:auto !important;
+    overflow:visible !important;
+  }
+
+  #rsFloatingDockMain,
+  #rsFloatingDock .rs-dock-main{
+    width:54px !important;
+    height:54px !important;
+    min-width:54px !important;
+    min-height:54px !important;
+    max-width:54px !important;
+    max-height:54px !important;
+    border-radius:17px !important;
+    padding:0 !important;
+    margin:0 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    overflow:hidden !important;
+    cursor:pointer !important;
+    pointer-events:auto !important;
+    position:relative !important;
+    z-index:2147483647 !important;
+    background:var(--panel, rgba(15,23,42,.88)) !important;
+    border:1px solid color-mix(in srgb, var(--accent, #38bdf8) 55%, var(--border, #334155)) !important;
+    box-shadow:0 6px 18px rgba(0,0,0,.25) !important;
+  }
+
+  #rsFloatingDockAvatarImg,
+  #rsFloatingDock .rs-dock-avatar,
+  #rsFloatingDock .rs-dock-main img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:cover !important;
+    object-position:center !important;
+    display:block !important;
+    border-radius:16px !important;
+  }
+
+  #rsFloatingDockMain:not(.has-avatar) #rsFloatingDockAvatarImg{ display:none !important; }
+  #rsFloatingDockMain.has-avatar .rs-dock-fallback{ display:none !important; }
+  #rsFloatingDockMain:not(.has-avatar) .rs-dock-fallback{ display:block !important; }
+
+  #rsFloatingDockMenu,
+  #rsFloatingDock .rs-dock-menu{
+    position:absolute !important;
+    top:calc(100% + 10px) !important;
+    right:0 !important;
+    min-width:240px !important;
+    padding:10px !important;
+    border-radius:18px !important;
+    background:var(--panel, rgba(15,23,42,.96)) !important;
+    border:1px solid var(--border, rgba(148,163,184,.22)) !important;
+    box-shadow:0 18px 40px rgba(0,0,0,.45) !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+    opacity:0 !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+    transform:translateY(-6px) scale(.98) !important;
+    transition:opacity .16s ease, transform .16s ease, visibility .16s ease !important;
+    z-index:2147483647 !important;
+  }
+
+  #rsFloatingDock.open #rsFloatingDockMenu,
+  #rsFloatingDock.rs-open #rsFloatingDockMenu,
+  #rsFloatingDock.rs-force-open #rsFloatingDockMenu,
+  #rsFloatingDock[aria-expanded="true"] #rsFloatingDockMenu{
+    opacity:1 !important;
+    visibility:visible !important;
+    pointer-events:auto !important;
+    transform:translateY(0) scale(1) !important;
+  }
+
+  #rsFloatingDock .rs-dock-action{
+    min-height:40px !important;
+    width:100% !important;
+    font-size:12px !important;
+    line-height:1.1 !important;
+    border-radius:12px !important;
+    padding:9px 10px !important;
+    text-align:center !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:6px !important;
+  }
+</style>
+<script id="rs-v38-avatar-dock-realclick-js">
+(function(){
+  const AVATAR_KEY='resellr_dock_avatar_image';
+
+  function $(id){ return document.getElementById(id); }
+  function toast(msg){ try{ if(typeof showToast==='function') showToast(msg); }catch(e){} }
+
+  function ensureDock(){
+    let dock=$('rsFloatingDock');
+    if(!dock){
+      dock=document.createElement('div');
+      dock.id='rsFloatingDock';
+      dock.innerHTML=`
+        <input type="file" id="rsFloatingDockAvatarInput" accept="image/*" style="display:none" />
+        <button type="button" class="rs-dock-main" id="rsFloatingDockMain" aria-label="Open RESELLr quick controls" title="RESELLr quick controls">
+          <img id="rsFloatingDockAvatarImg" alt="" />
+          <span class="rs-dock-fallback">☰</span>
+        </button>
+        <div class="rs-dock-menu" id="rsFloatingDockMenu" aria-label="RESELLr quick controls">
+          <button type="button" class="rs-dock-action" data-rs-action="lofi">♪ Lo-Fi</button>
+          <button type="button" class="rs-dock-action" data-rs-action="ebay">eBay Comps</button>
+          <button type="button" class="rs-dock-action" data-rs-action="style">◐ Style</button>
+          <button type="button" class="rs-dock-action" data-rs-action="avatar">🖼 Avatar</button>
+          <button type="button" class="rs-dock-action" data-rs-action="lock">🔒</button>
+          <button type="button" class="rs-dock-action rs-danger" data-rs-action="reset">↻</button>
+        </div>`;
+    }
+    const topbarContent=document.querySelector('.topbar .topbar-content') || document.querySelector('.topbar') || document.body;
+    if(dock.parentElement!==topbarContent) topbarContent.appendChild(dock);
+    return dock;
+  }
+
+  function applyAvatar(){
+    const dock=ensureDock(), btn=$('rsFloatingDockMain'), img=$('rsFloatingDockAvatarImg');
+    if(!btn || !img) return;
+    let saved='';
+    try{ saved=localStorage.getItem(AVATAR_KEY)||''; }catch(e){}
+    if(saved){ img.src=saved; btn.classList.add('has-avatar'); }
+    else{ img.removeAttribute('src'); btn.classList.remove('has-avatar'); }
+  }
+
+  function setOpen(open){
+    const dock=ensureDock(), btn=$('rsFloatingDockMain');
+    dock.classList.toggle('open', !!open);
+    dock.classList.toggle('rs-open', !!open);
+    dock.classList.toggle('rs-force-open', !!open);
+    dock.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if(btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  function toggleOpen(){
+    const dock=ensureDock();
+    setOpen(!(dock.classList.contains('open') || dock.classList.contains('rs-open') || dock.classList.contains('rs-force-open')));
+  }
+
+  function openEbayComps(){
+    try{
+      for(const name of ['openEbayPriceSearch','openEbaySearch','showEbayOverlay','toggleEbayPriceSearch']){
+        if(typeof window[name]==='function'){ window[name](); return; }
+      }
+      const old=document.querySelector('#ebayPriceTopButton, .ebay-top-logo-button, [data-ebay-comps], #ebayOverlayButton');
+      if(old && !old.closest('#rsFloatingDock')){ old.click(); return; }
+    }catch(e){}
+    window.open('https://www.ebay.com/sch/i.html?_nkw=comic&_sacat=0&LH_Sold=1&LH_Complete=1','_blank');
+  }
+
+  function action(name){
+    if(name==='lofi'){
+      try{ if(typeof toggleLofiMusic==='function') toggleLofiMusic(); else $('lofiAvatarTrigger')?.click(); }catch(e){}
+    }else if(name==='ebay'){
+      openEbayComps();
+    }else if(name==='style'){
+      try{ if(typeof cycleResellrStyle==='function') cycleResellrStyle(); else $('styleModeToggle')?.click(); }catch(e){}
+    }else if(name==='lock'){
+      try{ if(typeof lockNow==='function') lockNow(); else $('lockButton')?.click(); }catch(e){}
+    }else if(name==='reset'){
+      try{ if(typeof factoryReset==='function') factoryReset(); else $('dockResetButton')?.click(); }catch(e){}
+    }else if(name==='avatar'){
+      $('rsFloatingDockAvatarInput')?.click();
+      return;
+    }
+    setOpen(false);
+  }
+
+  function wire(){
+    const dock=ensureDock();
+    applyAvatar();
+    // direct event on visible button
+    const btn=$('rsFloatingDockMain');
+    if(btn && !btn.dataset.rsV38Direct){
+      btn.dataset.rsV38Direct='1';
+      const handler=function(ev){ ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); toggleOpen(); return false; };
+      btn.addEventListener('pointerup', handler, true);
+      btn.addEventListener('click', handler, true);
+      btn.onclick=handler;
+    }
+    // delegated high-priority fallback, in case another script replaces nodes
+    if(!document.documentElement.dataset.rsV38Delegated){
+      document.documentElement.dataset.rsV38Delegated='1';
+      document.addEventListener('click', function(ev){
+        const main=ev.target.closest && ev.target.closest('#rsFloatingDockMain');
+        const act=ev.target.closest && ev.target.closest('#rsFloatingDock [data-rs-action]');
+        if(main){ ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); toggleOpen(); return false; }
+        if(act){ ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); action(act.getAttribute('data-rs-action')); return false; }
+        const d=$('rsFloatingDock');
+        if(d && !d.contains(ev.target)) setOpen(false);
+      }, true);
+    }
+    const input=$('rsFloatingDockAvatarInput');
+    if(input && !input.dataset.rsV38Input){
+      input.dataset.rsV38Input='1';
+      input.addEventListener('change', function(){
+        const file=input.files && input.files[0];
+        if(!file) return;
+        const reader=new FileReader();
+        reader.onload=function(){
+          try{ localStorage.setItem(AVATAR_KEY, String(reader.result||'')); }catch(e){}
+          input.value='';
+          applyAvatar();
+          setOpen(false);
+          toast('Avatar updated');
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', wire); else wire();
+  setTimeout(wire,100); setTimeout(wire,500); setTimeout(wire,1200); setTimeout(wire,2500);
+  window.openResellrFloatingDock=function(){ wire(); setOpen(true); };
+  window.closeResellrFloatingDock=function(){ setOpen(false); };
+})();
+</script>
+
