@@ -19699,6 +19699,75 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== v22 Command View background controls: top-left fade hover ===== -->
+<style id="rs15-command-bg-fade-hover-v22">
+  /* Keep the background tools off the image until you hover the top-left of Command View */
+  #secDashboard .rs15-command{
+    position: relative !important;
+  }
+
+  #secDashboard .rs15-command-title{
+    position: relative !important;
+  }
+
+  #secDashboard .rs15-bg-tools{
+    position: absolute !important;
+    top: 12px !important;
+    left: 12px !important;
+    right: auto !important;
+    z-index: 6 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    border-radius: 14px !important;
+    background: color-mix(in srgb, var(--panel) 84%, transparent) !important;
+    border: 1px solid color-mix(in srgb, var(--border) 90%, transparent) !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.22) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    opacity: 0 !important;
+    transform: translateY(-4px) !important;
+    transition: opacity .22s ease, transform .22s ease, border-color .22s ease !important;
+    pointer-events: auto !important;
+  }
+
+  /* Invisible hover target lives in the top-left corner; controls fade in when touched */
+  #secDashboard .rs15-bg-tools:hover,
+  #secDashboard .rs15-bg-tools:focus-within{
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border)) !important;
+  }
+
+  #secDashboard .rs15-bg-tools button{
+    width: auto !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    padding: 8px 10px !important;
+    border-radius: 11px !important;
+    margin: 0 !important;
+  }
+
+  #secDashboard .rs15-bg-tools::before{
+    content: "";
+    position: absolute;
+    inset: -10px;
+    border-radius: 18px;
+  }
+
+  @media (hover: none){
+    #secDashboard .rs15-bg-tools{
+      opacity: .78 !important;
+      transform: none !important;
+    }
+  }
+</style>
+
 </body>
 </html>
 
