@@ -10566,9 +10566,7 @@ td.action-cell .ebay-comps-action svg{
 <div class="topbar">
 <div class="topbar-content">
     <div class="topbar-left">
-      <button class="rs-logo-topbar-button" id="rsLogoTopbarButton" type="button" onclick="toggleSidebar()" title="Toggle menu" aria-label="Toggle menu">
-        <img src="assets/logos/resellr-logo.png" alt="RESELLr" class="rs-logo-topbar-img" />
-      </button>
+      <button class="hamburger" id="rsFinalHamburger" type="button" onclick="toggleSidebar()" title="Toggle menu" aria-label="Toggle menu">☰</button>
       <div class="topbar-inline-viz">
         <div class="music-visualizer" id="musicVisualizer" title="Click: change visual • Double-click: color • Long press: expand">
           <canvas id="vizCanvas"></canvas>
@@ -21399,6 +21397,297 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   setTimeout(init,1000);
 })();
 </script>
+
+
+<!-- ===== v46: one checkbox dock + hamburger restore + shared command background ===== -->
+<style id="rs-v46-final-ui-fix-css">
+  /* remove duplicate/old top-right dock buttons */
+  #resellrCommandDock,
+  #rsFloatingDock,
+  #rsDockV30,#rsDockV31,#rsDockV32,#rsDockV33,#rsDockV34,#rsDockV35,#rsDockV36,#rsDockV37,#rsDockV38,#rsDockV39,#rsDockV40,#rsDockV41,#rsDockV45,
+  .rs-v42-dock-wrap,
+  .rs-command-dock,.rs-floating-dock,.rs-v39-dock,.rs-v40-dock,.rs-v41-dock,.topbar-right.resellr-command-dock{
+    display:none !important;
+    pointer-events:none !important;
+  }
+
+  /* restore a clean hamburger in the top left */
+  #rsFinalHamburger,
+  .topbar-left .hamburger{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:44px !important;
+    height:44px !important;
+    min-width:44px !important;
+    padding:0 !important;
+    margin:0 !important;
+    border-radius:14px !important;
+    font-size:22px !important;
+    line-height:1 !important;
+    border:1px solid var(--border) !important;
+    color:var(--text) !important;
+    background:color-mix(in srgb, var(--panel) 88%, transparent) !important;
+  }
+  .rs-logo-topbar-button,.rs-logo-topbar-img{display:none !important;}
+
+  /* remove extra dashboard title label */
+  #secDashboard .rs15-title{display:none !important;}
+
+  /* one working top-right command dock; checkbox label means it opens even if old JS is cranky */
+  #rsV46Dock{
+    position:relative !important;
+    margin-left:auto !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    z-index:99999 !important;
+    pointer-events:auto !important;
+  }
+  #rsV46DockToggle{position:absolute !important;opacity:0 !important;pointer-events:none !important;}
+  #rsV46DockBtn{
+    width:48px !important;
+    height:48px !important;
+    min-width:48px !important;
+    border-radius:16px !important;
+    border:1px solid var(--border) !important;
+    background:color-mix(in srgb, var(--panel) 88%, transparent) !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    overflow:hidden !important;
+    cursor:pointer !important;
+    box-shadow:0 10px 28px rgba(0,0,0,.22) !important;
+    user-select:none !important;
+  }
+  #rsV46DockBtn:hover{border-color:var(--accent) !important;}
+  #rsV46DockBtn img{width:100% !important;height:100% !important;object-fit:cover !important;border-radius:inherit !important;display:none !important;background:transparent !important;}
+  #rsV46DockBtn.has-avatar img{display:block !important;}
+  #rsV46DockBtn.has-avatar span{display:none !important;}
+  #rsV46DockBtn span{font-size:22px !important;font-weight:900 !important;color:var(--text) !important;}
+  #rsV46DockMenu{
+    position:absolute !important;
+    right:0 !important;
+    top:calc(100% + 10px) !important;
+    min-width:190px !important;
+    display:none !important;
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+    padding:10px !important;
+    border-radius:18px !important;
+    border:1px solid var(--border) !important;
+    background:color-mix(in srgb, var(--panel-solid, var(--panel)) 94%, black 6%) !important;
+    box-shadow:0 18px 42px rgba(0,0,0,.42) !important;
+    z-index:100000 !important;
+  }
+  #rsV46DockToggle:checked ~ #rsV46DockMenu{display:grid !important;}
+  #rsV46DockMenu button{
+    width:100% !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    gap:8px !important;
+    padding:9px 10px !important;
+    font-size:12px !important;
+    border-radius:12px !important;
+    border:1px solid var(--border) !important;
+    color:var(--text) !important;
+    background:rgba(255,255,255,.035) !important;
+    cursor:pointer !important;
+  }
+  #rsV46DockMenu button:hover{border-color:var(--accent) !important;color:var(--accent) !important;}
+  #rsV46DockMenu .rs-v46-icons{display:grid !important;grid-template-columns:1fr 1fr !important;gap:8px !important;}
+  #rsV46DockMenu .rs-v46-icons button{justify-content:center !important;font-size:15px !important;}
+  #rsV46DockMenu .danger{color:var(--red) !important;}
+
+  /* command background shared to other workspace areas */
+  html.rs-has-command-bg .sidebar,
+  html.rs-has-command-bg #secInventory,
+  html.rs-has-command-bg #secHolds,
+  html.rs-has-command-bg #secSold,
+  html.rs-has-command-bg #secImportExport,
+  html.rs-has-command-bg #secTools,
+  html.rs-has-command-bg #secSettings{
+    position:relative !important;
+    overflow:hidden !important;
+  }
+  html.rs-has-command-bg .sidebar::before,
+  html.rs-has-command-bg #secInventory::before,
+  html.rs-has-command-bg #secHolds::before,
+  html.rs-has-command-bg #secSold::before,
+  html.rs-has-command-bg #secImportExport::before,
+  html.rs-has-command-bg #secTools::before,
+  html.rs-has-command-bg #secSettings::before{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    background-image:var(--rs-shared-bg) !important;
+    background-size:cover !important;
+    background-position:right center !important;
+    background-repeat:no-repeat !important;
+    opacity:.18 !important;
+    pointer-events:none !important;
+    z-index:0 !important;
+  }
+  html.rs-has-command-bg .sidebar::after,
+  html.rs-has-command-bg #secInventory::after,
+  html.rs-has-command-bg #secHolds::after,
+  html.rs-has-command-bg #secSold::after,
+  html.rs-has-command-bg #secImportExport::after,
+  html.rs-has-command-bg #secTools::after,
+  html.rs-has-command-bg #secSettings::after{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    background:linear-gradient(90deg, color-mix(in srgb, var(--panel) 92%, transparent) 0%, color-mix(in srgb, var(--panel) 78%, transparent) 48%, transparent 100%) !important;
+    pointer-events:none !important;
+    z-index:1 !important;
+  }
+  html.rs-has-command-bg .sidebar > *,
+  html.rs-has-command-bg #secInventory > *,
+  html.rs-has-command-bg #secHolds > *,
+  html.rs-has-command-bg #secSold > *,
+  html.rs-has-command-bg #secImportExport > *,
+  html.rs-has-command-bg #secTools > *,
+  html.rs-has-command-bg #secSettings > *{
+    position:relative !important;
+    z-index:2 !important;
+  }
+</style>
+
+<script id="rs-v46-final-ui-fix-js">
+(function(){
+  const AVATAR_KEY='resellr_dock_avatar_image';
+  const BG_KEY='rs15CommandBg';
+  const $=(id)=>document.getElementById(id);
+
+  function safeClick(ids){
+    for(const id of ids){ const el=$(id); if(el){ try{ el.click(); return true; }catch(e){} } }
+    return false;
+  }
+  function action(name){
+    if(name==='lofi'){
+      if(typeof toggleLofiMusic==='function') toggleLofiMusic(); else safeClick(['lofiMusicToggle','lofiBtn']);
+    }else if(name==='ebay'){
+      safeClick(['ebayPriceTopButton','ebayPriceButton','openEbayComps']);
+    }else if(name==='style'){
+      if(typeof cycleResellrStyle==='function') cycleResellrStyle(); else safeClick(['styleModeToggle','themeCycleBtn']);
+    }else if(name==='lock'){
+      if(typeof lockNow==='function') lockNow(); else safeClick(['lockButton']);
+    }else if(name==='reset'){
+      if(typeof resetDashboardLayout==='function') resetDashboardLayout(); else safeClick(['dockResetButton','resetLayoutBtn']);
+    }else if(name==='avatar'){
+      $('rsV46AvatarInput')?.click();
+      return;
+    }
+    const t=$('rsV46DockToggle'); if(t) t.checked=false;
+  }
+
+  function applySharedBackground(){
+    let bg='';
+    try{ bg=localStorage.getItem(BG_KEY)||''; }catch(e){}
+    if(bg){
+      document.documentElement.classList.add('rs-has-command-bg');
+      document.documentElement.style.setProperty('--rs-shared-bg','url("'+String(bg).replace(/"/g,'%22')+'")');
+    }else{
+      document.documentElement.classList.remove('rs-has-command-bg');
+      document.documentElement.style.removeProperty('--rs-shared-bg');
+    }
+  }
+
+  function ensureHamburger(){
+    const left=document.querySelector('.topbar-left') || document.querySelector('.topbar-content') || document.querySelector('.topbar');
+    if(!left) return;
+    document.querySelectorAll('.rs-logo-topbar-button,.rs-logo-topbar-img').forEach(el=>{el.style.display='none';});
+    let btn=$('rsFinalHamburger') || document.querySelector('.topbar-left .hamburger');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='rsFinalHamburger';
+      btn.className='hamburger';
+      btn.type='button';
+      btn.textContent='☰';
+      btn.title='Toggle menu';
+      btn.setAttribute('aria-label','Toggle menu');
+      left.insertBefore(btn,left.firstChild);
+    }
+    btn.onclick=function(ev){ ev.preventDefault(); ev.stopPropagation(); if(typeof toggleSidebar==='function') toggleSidebar(); };
+  }
+
+  function removeOldDocks(){
+    document.querySelectorAll('#resellrCommandDock,#rsFloatingDock,#rsDockV30,#rsDockV31,#rsDockV32,#rsDockV33,#rsDockV34,#rsDockV35,#rsDockV36,#rsDockV37,#rsDockV38,#rsDockV39,#rsDockV40,#rsDockV41,#rsDockV45,.rs-v42-dock-wrap,.rs-command-dock,.rs-floating-dock,.rs-v39-dock,.rs-v40-dock,.rs-v41-dock,.topbar-right.resellr-command-dock').forEach(el=>{
+      if(el.id!=='rsV46Dock') el.remove();
+    });
+  }
+
+  function ensureDock(){
+    removeOldDocks();
+    const host=document.querySelector('.topbar-content') || document.querySelector('.topbar') || document.body;
+    let dock=$('rsV46Dock');
+    if(!dock){
+      dock=document.createElement('div');
+      dock.id='rsV46Dock';
+      dock.innerHTML=`
+        <input id="rsV46DockToggle" type="checkbox" autocomplete="off">
+        <label id="rsV46DockBtn" for="rsV46DockToggle" aria-label="Open quick controls" title="Quick controls"><span>☰</span><img id="rsV46DockImg" alt="Avatar"></label>
+        <div id="rsV46DockMenu">
+          <button type="button" data-rs46="lofi">♪ Lo-Fi</button>
+          <button type="button" data-rs46="ebay">eBay Comps</button>
+          <button type="button" data-rs46="style">◐ Style</button>
+          <button type="button" data-rs46="avatar">🖼 Avatar</button>
+          <div class="rs-v46-icons"><button type="button" data-rs46="lock" title="Lock">🔒</button><button type="button" class="danger" data-rs46="reset" title="Reset">↻</button></div>
+          <input id="rsV46AvatarInput" type="file" accept="image/*" style="display:none">
+        </div>`;
+      host.appendChild(dock);
+    }else if(dock.parentElement!==host){ host.appendChild(dock); }
+
+    const img=$('rsV46DockImg'), label=$('rsV46DockBtn');
+    let saved=''; try{ saved=localStorage.getItem(AVATAR_KEY)||''; }catch(e){}
+    if(img && label){
+      if(saved){ img.src=saved; label.classList.add('has-avatar'); }
+      else{ img.removeAttribute('src'); label.classList.remove('has-avatar'); }
+    }
+
+    const menu=$('rsV46DockMenu');
+    if(menu && !menu.dataset.rs46){
+      menu.dataset.rs46='1';
+      menu.addEventListener('click',function(ev){
+        const b=ev.target.closest('[data-rs46]');
+        if(!b) return;
+        ev.preventDefault(); ev.stopPropagation();
+        action(b.getAttribute('data-rs46'));
+      });
+    }
+    const input=$('rsV46AvatarInput');
+    if(input && !input.dataset.rs46){
+      input.dataset.rs46='1';
+      input.addEventListener('change',function(){
+        const f=this.files && this.files[0]; if(!f) return;
+        const r=new FileReader();
+        r.onload=function(){
+          try{ localStorage.setItem(AVATAR_KEY,String(r.result||'')); }catch(e){}
+          const img=$('rsV46DockImg'), label=$('rsV46DockBtn');
+          if(img) img.src=String(r.result||'');
+          if(label) label.classList.add('has-avatar');
+          const t=$('rsV46DockToggle'); if(t) t.checked=false;
+        };
+        r.readAsDataURL(f);
+      });
+    }
+  }
+
+  function init(){
+    ensureHamburger();
+    ensureDock();
+    applySharedBackground();
+    setTimeout(()=>{ensureHamburger(); ensureDock(); applySharedBackground();}, 250);
+    setTimeout(()=>{ensureHamburger(); ensureDock(); applySharedBackground();}, 1200);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+  window.addEventListener('storage',applySharedBackground);
+  setInterval(applySharedBackground, 2000);
+})();
+</script>
+
 </body>
 </html>
 
