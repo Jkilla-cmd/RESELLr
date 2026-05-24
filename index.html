@@ -20439,6 +20439,177 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   setTimeout(mountDockInTopbar, 1500);
 })();
 </script>
+
+
+<!-- ===== v37: Fix avatar dock click + remove duplicate dashboard heading ===== -->
+<style id="rs-v37-avatar-click-dashboard-label-fix-css">
+  /* The stable dashboard already has one page title from the app shell. Hide the extra injected dashboard title. */
+  #secDashboard .rs15-title{
+    display:none !important;
+  }
+
+  /* Keep the avatar dock integrated with the top bar and make the menu impossible to clip. */
+  #rsFloatingDock{
+    pointer-events:auto !important;
+    overflow:visible !important;
+  }
+  #rsFloatingDockMain{
+    pointer-events:auto !important;
+    cursor:pointer !important;
+    position:relative !important;
+    z-index:2147483647 !important;
+  }
+  #rsFloatingDockMenu{
+    z-index:2147483647 !important;
+  }
+  #rsFloatingDock.open #rsFloatingDockMenu,
+  #rsFloatingDock.rs-force-open #rsFloatingDockMenu{
+    opacity:1 !important;
+    visibility:visible !important;
+    pointer-events:auto !important;
+    transform:translateY(0) scale(1) !important;
+    display:grid !important;
+  }
+</style>
+<script id="rs-v37-avatar-click-dashboard-label-fix-js">
+(function(){
+  const AVATAR_KEY = 'resellr_dock_avatar_image';
+
+  function toast(msg){ try{ if(typeof showToast === 'function') showToast(msg); }catch(e){} }
+  function dock(){ return document.getElementById('rsFloatingDock'); }
+  function main(){ return document.getElementById('rsFloatingDockMain'); }
+  function menu(){ return document.getElementById('rsFloatingDockMenu'); }
+  function input(){ return document.getElementById('rsFloatingDockAvatarInput'); }
+
+  function setOpen(open){
+    const d=dock(), m=menu();
+    if(!d) return;
+    d.classList.toggle('open', !!open);
+    d.classList.toggle('rs-force-open', !!open);
+    const b=main();
+    if(b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if(m){
+      m.style.opacity = open ? '1' : '';
+      m.style.visibility = open ? 'visible' : '';
+      m.style.pointerEvents = open ? 'auto' : '';
+      m.style.transform = open ? 'translateY(0) scale(1)' : '';
+      m.style.display = open ? 'grid' : '';
+    }
+  }
+  function toggle(){
+    const d=dock();
+    setOpen(!(d && (d.classList.contains('open') || d.classList.contains('rs-force-open'))));
+  }
+
+  function applyAvatar(){
+    const img=document.getElementById('rsFloatingDockAvatarImg');
+    const btn=main();
+    if(!img || !btn) return;
+    let saved='';
+    try{ saved=localStorage.getItem(AVATAR_KEY)||''; }catch(e){}
+    if(saved){ img.src=saved; btn.classList.add('has-avatar'); }
+    else{ img.removeAttribute('src'); btn.classList.remove('has-avatar'); }
+  }
+
+  function openEbayComps(){
+    try{
+      const names=['openEbayPriceSearch','openEbaySearch','showEbayOverlay','toggleEbayPriceSearch'];
+      for(const n of names){ if(typeof window[n] === 'function'){ window[n](); return; } }
+      const old=document.querySelector('.ebay-top-logo-button, #ebayPriceTopButton, [data-ebay-comps], #ebayOverlayButton');
+      if(old && old.id !== 'rsFloatingDockMain'){ old.click(); return; }
+    }catch(e){}
+    window.open('https://www.ebay.com/sch/i.html?_nkw=comic&_sacat=0&LH_Sold=1&LH_Complete=1','_blank');
+  }
+
+  function doAction(action){
+    if(action==='lofi'){
+      try{ if(typeof toggleLofiMusic==='function') toggleLofiMusic(); else document.getElementById('lofiAvatarTrigger')?.click(); }catch(e){}
+    }else if(action==='ebay'){
+      openEbayComps();
+    }else if(action==='style'){
+      try{ if(typeof cycleResellrStyle==='function') cycleResellrStyle(); else document.getElementById('styleModeToggle')?.click(); }catch(e){}
+    }else if(action==='lock'){
+      try{ if(typeof lockNow==='function') lockNow(); else document.getElementById('lockButton')?.click(); }catch(e){}
+    }else if(action==='reset'){
+      try{ if(typeof factoryReset==='function') factoryReset(); else document.getElementById('dockResetButton')?.click(); }catch(e){}
+    }else if(action==='avatar'){
+      const i=input(); if(i) i.click(); return;
+    }
+    setOpen(false);
+  }
+
+  function wire(){
+    const d=dock(), b=main(), m=menu(), i=input();
+    if(!d || !b) return;
+
+    /* Ensure it lives in the top bar after all older scripts finish moving it. */
+    const topbarContent=document.querySelector('.topbar .topbar-content');
+    if(topbarContent && d.parentElement !== topbarContent) topbarContent.appendChild(d);
+
+    b.type='button';
+    b.setAttribute('aria-haspopup','true');
+    b.setAttribute('aria-expanded','false');
+
+    /* Clear older inline onclick if any and use one direct handler. */
+    b.onclick=function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      ev.stopImmediatePropagation && ev.stopImmediatePropagation();
+      toggle();
+      return false;
+    };
+
+    if(m && !m.dataset.rsV37Wired){
+      m.dataset.rsV37Wired='1';
+      m.addEventListener('click', function(ev){
+        const btn=ev.target.closest('[data-rs-action]');
+        if(!btn) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.stopImmediatePropagation && ev.stopImmediatePropagation();
+        doAction(btn.getAttribute('data-rs-action'));
+      }, true);
+    }
+
+    if(i && !i.dataset.rsV37Wired){
+      i.dataset.rsV37Wired='1';
+      i.addEventListener('change', function(){
+        const file=i.files && i.files[0];
+        if(!file) return;
+        const reader=new FileReader();
+        reader.onload=function(){
+          try{ localStorage.setItem(AVATAR_KEY, String(reader.result||'')); }catch(e){}
+          i.value='';
+          applyAvatar();
+          setOpen(false);
+          toast('Avatar updated');
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if(!document.body.dataset.rsV37DockOutsideClose){
+      document.body.dataset.rsV37DockOutsideClose='1';
+      document.addEventListener('pointerdown', function(ev){
+        const d2=dock();
+        if(d2 && !d2.contains(ev.target)) setOpen(false);
+      }, true);
+      document.addEventListener('keydown', function(ev){ if(ev.key==='Escape') setOpen(false); });
+    }
+
+    applyAvatar();
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
+  setTimeout(wire,100);
+  setTimeout(wire,500);
+  setTimeout(wire,1500);
+  window.openResellrFloatingDock=function(){ wire(); setOpen(true); };
+  window.closeResellrFloatingDock=function(){ setOpen(false); };
+})();
+</script>
+
 </body>
 </html>
 
