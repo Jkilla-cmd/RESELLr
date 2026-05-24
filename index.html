@@ -19404,6 +19404,126 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<script id="resellr-v17-move-sold-modal-fix">
+/* ===== v17: reliable Move to Sold modal close =====
+   Fixes the stuck overlay after clicking "Move to Sold" by replacing the old
+   confirm handler with a guarded version that closes the modal in all success paths
+   and refreshes dashboard/chart views without letting celebration/chart errors block UI. */
+(function(){
+  if (window.__resellrMoveSoldModalFixV17) return;
+  window.__resellrMoveSoldModalFixV17 = true;
+
+  function $(id){ return document.getElementById(id); }
+  function safeCall(fn){ try{ if (typeof fn === 'function') return fn(); }catch(e){ console.warn('[RESELLr v17]', e); } }
+  function toNum(v){
+    const n = Number(String(v ?? '').replace(/[$,]/g,'').trim());
+    return Number.isFinite(n) ? n : 0;
+  }
+  function expense(v){
+    if (typeof window.normExpense === 'function') return window.normExpense(v);
+    return Math.abs(toNum(v));
+  }
+  function makeId(){
+    if (typeof window.genId === 'function') return window.genId();
+    return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+  }
+  function hardCloseMarkSoldModal(){
+    const modal = $('markSoldModal');
+    if (modal){
+      modal.style.display = 'none';
+      modal.classList.remove('show','active','open','is-open');
+      modal.setAttribute('aria-hidden','true');
+    }
+    document.body.classList.remove('modal-open','has-modal','overlay-open');
+    try{ window.markSoldActiveId = null; }catch(e){}
+  }
+
+  window.closeMarkSoldModal = function(){
+    hardCloseMarkSoldModal();
+    ['msDate','msSale','msPlatform','msFees','msShip','msItem'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
+    const t=$('msType'); if(t) t.value='';
+  };
+
+  window.confirmMarkSold = function(){
+    const btn = document.activeElement && document.activeElement.tagName === 'BUTTON' ? document.activeElement : null;
+    if (btn){ btn.disabled = true; btn.dataset.originalText = btn.textContent || ''; btn.textContent = 'Moving...'; }
+
+    let sale = 0;
+    try{
+      const activeId = window.markSoldActiveId || (typeof markSoldActiveId !== 'undefined' ? markSoldActiveId : null);
+      if (!activeId){ hardCloseMarkSoldModal(); return; }
+
+      const soldDate = ($('msDate')?.value || '').trim();
+      const item = ($('msItem')?.value || '').trim();
+      const type = ($('msType')?.value || '').trim();
+      const platform = ($('msPlatform')?.value || '').trim() || 'Unknown';
+      sale = toNum($('msSale')?.value);
+      const fees = expense($('msFees')?.value);
+      const ship = expense($('msShip')?.value);
+
+      if (!soldDate || !item || !sale){
+        safeCall(()=>window.showToast && window.showToast('Add sold date, item, and sale amount.'));
+        return;
+      }
+
+      const invArr = (typeof window.readActive === 'function') ? window.readActive() : [];
+      const invIdx = invArr.findIndex(x => x && x._id === activeId);
+      if (invIdx < 0){
+        hardCloseMarkSoldModal();
+        safeCall(()=>window.showToast && window.showToast('Item was already moved or removed.'));
+        return;
+      }
+
+      const inv = invArr[invIdx] || {};
+      const cost = expense(inv.cost);
+      const profit = sale - cost - fees - ship;
+      const soldArr = (typeof window.readSold === 'function') ? window.readSold() : [];
+      soldArr.push({ _id: makeId(), date: soldDate, item, type, platform, sale, cost, fees, ship, profit });
+
+      if (typeof window.writeSold === 'function') window.writeSold(soldArr);
+      invArr.splice(invIdx, 1);
+      if (typeof window.writeActive === 'function') window.writeActive(invArr);
+
+      /* Close first so any chart/render issue cannot leave the overlay stuck. */
+      hardCloseMarkSoldModal();
+
+      safeCall(()=>window.renderActive && window.renderActive());
+      safeCall(()=>window.renderSold && window.renderSold());
+      if ($('msSyncIncome')?.checked) safeCall(()=>window.rebuildMonthlyIncomeFromSold && window.rebuildMonthlyIncomeFromSold());
+      safeCall(()=>window.updateDashboardMonthMatch && window.updateDashboardMonthMatch());
+      safeCall(()=>window.resellrFinalRehydrate && window.resellrFinalRehydrate());
+      safeCall(()=>window.showToast && window.showToast('Moved to Sold'));
+
+      setTimeout(()=>{
+        if (sale > 100) safeCall(()=>window.triggerComicKaChing && window.triggerComicKaChing(sale));
+        else if (sale > 0) safeCall(()=>window.triggerMoneyRain && window.triggerMoneyRain());
+      }, 40);
+    }catch(e){
+      console.error('[RESELLr v17] Move to Sold failed', e);
+      safeCall(()=>window.showToast && window.showToast('Could not move item to Sold. Check required fields.'));
+    }finally{
+      if (btn){ btn.disabled = false; btn.textContent = btn.dataset.originalText || 'Move to Sold'; }
+    }
+  };
+
+  /* Catch any older inline handlers that may leave the modal visible after a successful click. */
+  document.addEventListener('click', function(e){
+    const btn = e.target && e.target.closest ? e.target.closest('button') : null;
+    if (!btn) return;
+    if ((btn.textContent || '').trim().toLowerCase() === 'move to sold'){
+      setTimeout(function(){
+        const modal = $('markSoldModal');
+        const stillVisible = modal && getComputedStyle(modal).display !== 'none';
+        const activeId = window.markSoldActiveId || (typeof markSoldActiveId !== 'undefined' ? markSoldActiveId : null);
+        if (stillVisible && !activeId) hardCloseMarkSoldModal();
+      }, 250);
+    }
+  }, true);
+})();
+</script>
+
 </body>
 </html>
 
