@@ -19526,17 +19526,18 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 
-<script id="resellr-v18-chart-toggle-shortcuts-fix">
-/* ===== v18: persistent chart toggles + Fast Moves overlay shortcuts =====
-   - Chart legend toggles on Business Growth / Monthly Profit View / Inventory Health now stay off instead of reappearing.
-   - Fast Moves > Inventory opens the same overlay as Ctrl+I.
-   - Fast Moves > Holds opens the same overlay as Ctrl+H. */
+<script id="resellr-v20-safe-chart-toggle-shortcuts">
+/* ===== v20: safe chart legend toggles + Fast Moves overlay shortcuts =====
+   Built from stable v17 base to avoid old dashboard patches fighting.
+   - Legend clicks persist across dashboard redraws without beforeUpdate loops.
+   - Prevents Business Growth from becoming a permanently blank chart.
+   - Fast Moves buttons open the same overlays as Ctrl+I and Ctrl+H. */
 (function(){
-  if(window.__resellrV18ChartToggleShortcuts) return;
-  window.__resellrV18ChartToggleShortcuts = true;
+  if(window.__resellrV20SafeChartToggleShortcuts) return;
+  window.__resellrV20SafeChartToggleShortcuts = true;
 
-  const STORE_KEY = 'resellrChartHiddenDatasetsV18';
-  const CHART_IDS = new Set(['rs15GrowthChart','rs15MonthlyChart','rs15InventoryChart','incomeChart','profitChart']);
+  const STORE_KEY = 'resellrChartHiddenDatasetsV20';
+  const CHART_IDS = new Set(['rs15GrowthChart','rs15MonthlyChart','rs15InventoryChart','incomeChart','profitChart','soldProfitChart','soldItemsChart']);
 
   function readStore(){
     try{ return JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {}; }
@@ -19546,72 +19547,96 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     try{ localStorage.setItem(STORE_KEY, JSON.stringify(data || {})); }catch(e){}
   }
   function chartId(chart){
-    try{ return chart && chart.canvas && chart.canvas.id; }catch(e){ return ''; }
+    try{ return chart && chart.canvas && chart.canvas.id ? chart.canvas.id : ''; }catch(e){ return ''; }
   }
-  function saveHiddenState(chart){
+  function labelOf(ds, i){ return String((ds && ds.label) || ('Dataset ' + i)); }
+
+  function saveState(chart){
     const id = chartId(chart);
-    if(!id || !CHART_IDS.has(id)) return;
-    const data = readStore();
-    data[id] = {};
-    try{
-      chart.data.datasets.forEach((ds, i)=>{
-        const label = String(ds.label || ('Dataset ' + i));
-        data[id][label] = !chart.isDatasetVisible(i);
-      });
-    }catch(e){}
-    writeStore(data);
+    if(!id || !CHART_IDS.has(id) || !chart.data || !Array.isArray(chart.data.datasets)) return;
+    const store = readStore();
+    store[id] = {};
+    chart.data.datasets.forEach(function(ds, i){
+      store[id][labelOf(ds, i)] = !chart.isDatasetVisible(i);
+    });
+    writeStore(store);
   }
-  function applyHiddenState(chart){
+
+  function applyState(chart){
     const id = chartId(chart);
-    if(!id || !CHART_IDS.has(id)) return;
+    if(!id || !CHART_IDS.has(id) || !chart.data || !Array.isArray(chart.data.datasets)) return;
     const saved = readStore()[id];
     if(!saved) return;
-    try{
-      chart.data.datasets.forEach((ds, i)=>{
-        const label = String(ds.label || ('Dataset ' + i));
-        if(saved[label] === true) chart.setDatasetVisibility(i, false);
-        if(saved[label] === false) chart.setDatasetVisibility(i, true);
-      });
-    }catch(e){}
-  }
 
-  function installChartPersistence(){
-    if(!window.Chart || window.__resellrV18ChartPersistenceInstalled) return;
-    window.__resellrV18ChartPersistenceInstalled = true;
-
-    const originalLegendClick = Chart.defaults.plugins.legend.onClick;
-    Chart.defaults.plugins.legend.onClick = function(e, legendItem, legend){
-      if(typeof originalLegendClick === 'function'){
-        originalLegendClick.call(this, e, legendItem, legend);
-      }else if(legend && legend.chart && legendItem){
-        const chart = legend.chart;
-        const index = legendItem.datasetIndex;
-        chart.setDatasetVisibility(index, !chart.isDatasetVisible(index));
-        chart.update();
+    let visibleCount = 0;
+    chart.data.datasets.forEach(function(ds, i){
+      const label = labelOf(ds, i);
+      if(Object.prototype.hasOwnProperty.call(saved, label)){
+        chart.setDatasetVisibility(i, saved[label] !== true);
       }
-      setTimeout(()=>saveHiddenState(legend && legend.chart), 0);
-    };
-
-    Chart.register({
-      id: 'resellrPersistentLegendStateV18',
-      afterInit(chart){ applyHiddenState(chart); },
-      beforeUpdate(chart){ applyHiddenState(chart); },
-      afterUpdate(chart){ saveHiddenState(chart); }
+      if(chart.isDatasetVisible(i)) visibleCount++;
     });
 
-    // Apply to any charts that already exist before this script loaded.
-    setTimeout(()=>{
-      try{
-        document.querySelectorAll('canvas').forEach(c=>{
-          const ch = Chart.getChart(c);
-          if(ch){ applyHiddenState(ch); ch.update('none'); }
-        });
-      }catch(e){}
-    }, 100);
+    // A fully hidden chart looks broken. Keep at least one line visible.
+    if(visibleCount === 0 && chart.data.datasets.length){
+      chart.setDatasetVisibility(0, true);
+      saveState(chart);
+    }
   }
 
-  if(window.Chart) installChartPersistence();
-  else window.addEventListener('load', installChartPersistence, {once:true});
+  function hardLegendClick(e, legendItem, legend){
+    const chart = legend && legend.chart;
+    const index = legendItem && typeof legendItem.datasetIndex === 'number' ? legendItem.datasetIndex : null;
+    if(!chart || index === null) return;
+
+    chart.setDatasetVisibility(index, !chart.isDatasetVisible(index));
+
+    // Do not allow the last visible dataset to disappear; it makes the card look empty.
+    let visibleCount = 0;
+    chart.data.datasets.forEach(function(ds, i){ if(chart.isDatasetVisible(i)) visibleCount++; });
+    if(visibleCount === 0) chart.setDatasetVisibility(index, true);
+
+    saveState(chart);
+    chart.update('none');
+  }
+
+  function installChartToggle(){
+    if(!window.Chart) return false;
+
+    Chart.defaults.plugins.legend.onClick = hardLegendClick;
+
+    if(!window.__resellrV20LegendPluginRegistered){
+      window.__resellrV20LegendPluginRegistered = true;
+      Chart.register({
+        id: 'resellrSafeLegendStateV20',
+        afterInit: function(chart){ applyState(chart); },
+        afterRender: function(chart){
+          // Re-apply once after first paint only. No beforeUpdate loop.
+          if(chart && !chart.__resellrV20Applied){
+            chart.__resellrV20Applied = true;
+            applyState(chart);
+          }
+        }
+      });
+    }
+
+    try{
+      document.querySelectorAll('canvas').forEach(function(canvas){
+        const ch = Chart.getChart(canvas);
+        if(!ch) return;
+        ch.options.plugins = ch.options.plugins || {};
+        ch.options.plugins.legend = ch.options.plugins.legend || {};
+        ch.options.plugins.legend.onClick = hardLegendClick;
+        applyState(ch);
+        ch.update('none');
+      });
+    }catch(e){}
+    return true;
+  }
+
+  if(!installChartToggle()) window.addEventListener('load', function(){ installChartToggle(); setTimeout(installChartToggle, 300); }, {once:true});
+  setTimeout(installChartToggle, 250);
+  setTimeout(installChartToggle, 1200);
 
   function openInventoryOverlay(){
     if(typeof window.openAddInventoryOverlay === 'function') return window.openAddInventoryOverlay();
@@ -19622,118 +19647,20 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     try{ document.dispatchEvent(new KeyboardEvent('keydown',{key:'h',code:'KeyH',ctrlKey:true,bubbles:true})); }catch(e){}
   }
 
-  // Capture before inline onclick="showSection(...)" runs.
   document.addEventListener('click', function(e){
     const btn = e.target && e.target.closest && e.target.closest('#secDashboard .rs15-actions button');
     if(!btn) return;
     const label = (btn.textContent || '').trim().toLowerCase();
-    if(label === 'inventory'){
+    if(label === 'inventory' || label === 'add / manage inventory' || label.includes('inventory')){
       e.preventDefault();
       e.stopImmediatePropagation();
       openInventoryOverlay();
-    }else if(label === 'holds'){
+    }else if(label === 'holds' || label.includes('hold')){
       e.preventDefault();
       e.stopImmediatePropagation();
       openHoldOverlay();
     }
   }, true);
-})();
-</script>
-
-
-
-<script id="resellr-v19-graph-toggle-hardfix">
-/* ===== v19: hard fix for Chart.js legend toggles =====
-   v18 was saving the hidden state after Chart.js updated, so the dashboard's
-   redraw plugin could re-apply the old state and make the line pop back on.
-   This handler saves the new hidden state BEFORE updating the chart. */
-(function(){
-  if(window.__resellrV19GraphToggleHardFix) return;
-  window.__resellrV19GraphToggleHardFix = true;
-
-  const STORE_KEY = 'resellrChartHiddenDatasetsV18';
-  const CHART_IDS = new Set(['rs15GrowthChart','rs15MonthlyChart','rs15InventoryChart','incomeChart','profitChart','soldProfitChart','soldItemsChart']);
-
-  function readStore(){
-    try{ return JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {}; }
-    catch(e){ return {}; }
-  }
-  function writeStore(data){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(data || {})); }catch(e){}
-  }
-  function chartKey(chart){
-    try{ return chart && chart.canvas && chart.canvas.id ? chart.canvas.id : ''; }catch(e){ return ''; }
-  }
-  function labelOf(ds, i){ return String((ds && ds.label) || ('Dataset ' + i)); }
-
-  function saveChartState(chart){
-    const id = chartKey(chart);
-    if(!id || !CHART_IDS.has(id) || !chart.data || !Array.isArray(chart.data.datasets)) return;
-    const store = readStore();
-    store[id] = store[id] || {};
-    chart.data.datasets.forEach(function(ds, i){
-      store[id][labelOf(ds, i)] = !chart.isDatasetVisible(i);
-    });
-    writeStore(store);
-  }
-
-  function applyChartState(chart){
-    const id = chartKey(chart);
-    if(!id || !CHART_IDS.has(id) || !chart.data || !Array.isArray(chart.data.datasets)) return;
-    const saved = readStore()[id];
-    if(!saved) return;
-    chart.data.datasets.forEach(function(ds, i){
-      const label = labelOf(ds, i);
-      if(Object.prototype.hasOwnProperty.call(saved, label)){
-        chart.setDatasetVisibility(i, saved[label] !== true);
-      }
-    });
-  }
-
-  function hardLegendClick(e, legendItem, legend){
-    const chart = legend && legend.chart;
-    const index = legendItem && typeof legendItem.datasetIndex === 'number' ? legendItem.datasetIndex : null;
-    if(!chart || index === null) return;
-
-    chart.setDatasetVisibility(index, !chart.isDatasetVisible(index));
-    saveChartState(chart); // save first so redraw plugins cannot restore old state
-    chart.update();
-  }
-
-  function install(){
-    if(!window.Chart) return false;
-
-    // Override global default legend click.
-    Chart.defaults.plugins.legend.onClick = hardLegendClick;
-
-    // Register a later plugin so newly created charts inherit saved states.
-    if(!window.__resellrV19LegendPluginRegistered){
-      window.__resellrV19LegendPluginRegistered = true;
-      Chart.register({
-        id: 'resellrPersistentLegendStateV19',
-        afterInit: function(chart){ applyChartState(chart); },
-        beforeUpdate: function(chart){ applyChartState(chart); }
-      });
-    }
-
-    // Patch any already existing charts too.
-    try{
-      document.querySelectorAll('canvas').forEach(function(canvas){
-        const chart = Chart.getChart(canvas);
-        if(!chart) return;
-        chart.options.plugins = chart.options.plugins || {};
-        chart.options.plugins.legend = chart.options.plugins.legend || {};
-        chart.options.plugins.legend.onClick = hardLegendClick;
-        applyChartState(chart);
-        chart.update('none');
-      });
-    }catch(e){}
-    return true;
-  }
-
-  if(!install()) window.addEventListener('load', function(){ install(); setTimeout(install, 250); }, {once:true});
-  setTimeout(install, 250);
-  setTimeout(install, 1200);
 })();
 </script>
 
