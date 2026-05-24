@@ -23724,3 +23724,74 @@ body.skin-dreamtrip .chart-wrap{
   setTimeout(applyMatchedCommandBg, 600);
 })();
 </script>
+
+<!-- ===== v51: Continuous shared command background across panels (no repeated image per card) ===== -->
+<style id="rs-v51-continuous-command-bg">
+  /* Make the uploaded Command View image behave like one continuous wallpaper behind the UI. */
+  html.rs-has-command-bg .sidebar::before,
+  html.rs-has-command-bg #secInventory::before,
+  html.rs-has-command-bg #secHolds::before,
+  html.rs-has-command-bg #secSold::before,
+  html.rs-has-command-bg #secImportExport::before,
+  html.rs-has-command-bg #secTools::before,
+  html.rs-has-command-bg #secSettings::before,
+  html.rs-has-command-bg #secInventory .panel::before,
+  html.rs-has-command-bg #secHolds .panel::before,
+  html.rs-has-command-bg #secSold .panel::before,
+  html.rs-has-command-bg #secImportExport .panel::before,
+  html.rs-has-command-bg #secTools .panel::before,
+  html.rs-has-command-bg #secSettings .panel::before,
+  html.rs-has-command-bg #secInventory .table-wrap::before,
+  html.rs-has-command-bg #secHolds .table-wrap::before,
+  html.rs-has-command-bg #secSold .table-wrap::before{
+    background-image:var(--rs-shared-bg, var(--rs15-command-bg, none)) !important;
+    background-size:cover !important;
+    background-position:center center !important;
+    background-repeat:no-repeat !important;
+    background-attachment:fixed !important;
+    opacity:.38 !important;
+  }
+
+  /* Keep Command View's hero image on the right like before, while the rest of the app shares one fixed canvas. */
+  #secDashboard .rs15-command::before{
+    background-attachment:scroll !important;
+    background-position:right center !important;
+  }
+
+  /* Prevent any inner card from looking like it restarted the same image. */
+  html.rs-has-command-bg #secInventory .panel,
+  html.rs-has-command-bg #secHolds .panel,
+  html.rs-has-command-bg #secSold .panel,
+  html.rs-has-command-bg #secImportExport .panel,
+  html.rs-has-command-bg #secTools .panel,
+  html.rs-has-command-bg #secSettings .panel,
+  html.rs-has-command-bg #secInventory .table-wrap,
+  html.rs-has-command-bg #secHolds .table-wrap,
+  html.rs-has-command-bg #secSold .table-wrap{
+    background:color-mix(in srgb, var(--panel) 76%, transparent) !important;
+    backdrop-filter:blur(8px) !important;
+    -webkit-backdrop-filter:blur(8px) !important;
+  }
+
+  @media (max-width: 900px){
+    html.rs-has-command-bg .sidebar::before,
+    html.rs-has-command-bg #secInventory::before,
+    html.rs-has-command-bg #secHolds::before,
+    html.rs-has-command-bg #secSold::before,
+    html.rs-has-command-bg #secImportExport::before,
+    html.rs-has-command-bg #secTools::before,
+    html.rs-has-command-bg #secSettings::before,
+    html.rs-has-command-bg #secInventory .panel::before,
+    html.rs-has-command-bg #secHolds .panel::before,
+    html.rs-has-command-bg #secSold .panel::before,
+    html.rs-has-command-bg #secImportExport .panel::before,
+    html.rs-has-command-bg #secTools .panel::before,
+    html.rs-has-command-bg #secSettings .panel::before,
+    html.rs-has-command-bg #secInventory .table-wrap::before,
+    html.rs-has-command-bg #secHolds .table-wrap::before,
+    html.rs-has-command-bg #secSold .table-wrap::before{
+      background-attachment:scroll !important;
+      background-position:right center !important;
+    }
+  }
+</style>
