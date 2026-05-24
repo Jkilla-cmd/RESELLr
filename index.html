@@ -21130,3 +21130,261 @@ body.skin-dreamtrip .chart-wrap{
   setInterval(wire,1500);
 })();
 </script>
+
+
+<!-- ===== v33: Independent floating command dock FINAL FIX ===== -->
+<style id="rs-v33-floating-command-dock-css">
+  /* Hide the older dock that was being blocked by the topbar stack */
+  #resellrCommandDock{ display:none !important; }
+
+  #rsFloatingDock{
+    position: fixed !important;
+    top: 14px !important;
+    right: 14px !important;
+    z-index: 2147483647 !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-end !important;
+    pointer-events: auto !important;
+    font-family: inherit !important;
+  }
+
+  #rsFloatingDock .rs-dock-main{
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+    min-height: 54px !important;
+    padding: 0 !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: var(--accent) !important;
+    background: color-mix(in srgb, var(--panel, #151a21) 92%, black 8%) !important;
+    border: 1px solid color-mix(in srgb, var(--accent, #38bdf8) 45%, var(--border, #232a36)) !important;
+    box-shadow: 0 14px 34px rgba(0,0,0,.38) !important;
+    pointer-events: auto !important;
+    user-select: none !important;
+  }
+
+  #rsFloatingDock .rs-dock-main:hover{
+    transform: translateY(-1px) scale(1.02) !important;
+    border-color: color-mix(in srgb, var(--accent, #38bdf8) 70%, white 6%) !important;
+  }
+
+  #rsFloatingDock .rs-dock-main img{
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    display: none;
+    pointer-events: none !important;
+  }
+
+  #rsFloatingDock .rs-dock-main.has-avatar img{ display: block !important; }
+  #rsFloatingDock .rs-dock-main.has-avatar .rs-dock-fallback{ display: none !important; }
+  #rsFloatingDock .rs-dock-fallback{ font-size: 22px !important; line-height: 1 !important; pointer-events:none !important; }
+
+  #rsFloatingDock .rs-dock-menu{
+    position: absolute !important;
+    right: 0 !important;
+    top: 64px !important;
+    min-width: 250px !important;
+    padding: 10px !important;
+    border-radius: 20px !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    background: color-mix(in srgb, var(--panel, #151a21) 94%, black 6%) !important;
+    border: 1px solid color-mix(in srgb, var(--border, #232a36) 72%, var(--accent, #38bdf8) 28%) !important;
+    box-shadow: 0 22px 60px rgba(0,0,0,.48) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    opacity: 0 !important;
+    transform: translateY(-8px) scale(.98) !important;
+    pointer-events: none !important;
+    transition: opacity .18s ease, transform .18s ease !important;
+  }
+
+  #rsFloatingDock.open .rs-dock-menu{
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+    pointer-events: auto !important;
+  }
+
+  #rsFloatingDock .rs-dock-action{
+    width: 100% !important;
+    min-height: 42px !important;
+    padding: 10px 11px !important;
+    border-radius: 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: var(--text, #e5e7eb) !important;
+    background: color-mix(in srgb, var(--panel-solid, var(--panel, #151a21)) 84%, transparent) !important;
+    border: 1px solid color-mix(in srgb, var(--border, #232a36) 76%, var(--accent, #38bdf8) 24%) !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    pointer-events: auto !important;
+  }
+
+  #rsFloatingDock .rs-dock-action:hover{
+    background: color-mix(in srgb, var(--accent, #38bdf8) 16%, var(--panel, #151a21)) !important;
+    border-color: color-mix(in srgb, var(--accent, #38bdf8) 58%, var(--border, #232a36)) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  #rsFloatingDock .rs-icon-only{ font-size: 16px !important; }
+  #rsFloatingDock .rs-danger{ color: var(--red, #ef4444) !important; }
+  #rsFloatingDock .rs-span-2{ grid-column: 1 / -1 !important; }
+
+  @media (max-width: 700px){
+    #rsFloatingDock{ top: 10px !important; right: 10px !important; }
+    #rsFloatingDock .rs-dock-menu{ min-width: 220px !important; grid-template-columns: 1fr !important; }
+    #rsFloatingDock .rs-span-2{ grid-column: auto !important; }
+  }
+</style>
+<script id="rs-v33-floating-command-dock-js">
+(function(){
+  const AVATAR_KEY = 'resellr_dock_avatar_image';
+
+  function toast(msg){ try{ if(typeof showToast === 'function') showToast(msg); }catch(e){} }
+
+  function ensureDock(){
+    let dock = document.getElementById('rsFloatingDock');
+    if(dock) return dock;
+    dock = document.createElement('div');
+    dock.id = 'rsFloatingDock';
+    dock.innerHTML = `
+      <input type="file" id="rsFloatingDockAvatarInput" accept="image/*" style="display:none" />
+      <button type="button" class="rs-dock-main" id="rsFloatingDockMain" aria-label="Open RESELLr quick controls" title="RESELLr quick controls">
+        <img id="rsFloatingDockAvatarImg" alt="" />
+        <span class="rs-dock-fallback">☰</span>
+      </button>
+      <div class="rs-dock-menu" id="rsFloatingDockMenu" aria-label="RESELLr quick controls">
+        <button type="button" class="rs-dock-action" data-rs-action="lofi">♪ Lo-Fi</button>
+        <button type="button" class="rs-dock-action" data-rs-action="ebay">eBay Comps</button>
+        <button type="button" class="rs-dock-action" data-rs-action="style">◐ Style</button>
+        <button type="button" class="rs-dock-action" data-rs-action="avatar">🖼 Avatar</button>
+        <button type="button" class="rs-dock-action rs-icon-only" data-rs-action="lock" title="Lock">🔒</button>
+        <button type="button" class="rs-dock-action rs-icon-only rs-danger" data-rs-action="reset" title="Reset">↻</button>
+      </div>`;
+    document.body.appendChild(dock);
+    return dock;
+  }
+
+  function applyAvatar(){
+    const dock = ensureDock();
+    const btn = dock.querySelector('#rsFloatingDockMain');
+    const img = dock.querySelector('#rsFloatingDockAvatarImg');
+    let saved = '';
+    try{ saved = localStorage.getItem(AVATAR_KEY) || ''; }catch(e){}
+    if(saved){
+      img.src = saved;
+      btn.classList.add('has-avatar');
+    }else{
+      img.removeAttribute('src');
+      btn.classList.remove('has-avatar');
+    }
+  }
+
+  function openEbayComps(){
+    try{
+      const candidates = ['openEbayPriceSearch','openEbaySearch','showEbayOverlay','toggleEbayPriceSearch'];
+      for(const name of candidates){
+        if(typeof window[name] === 'function'){
+          window[name]();
+          return;
+        }
+      }
+      const old = document.querySelector('.ebay-top-logo-button, #ebayPriceTopButton, [data-ebay-comps], #ebayOverlayButton');
+      if(old && old.id !== 'rsFloatingDockMain'){ old.click(); return; }
+    }catch(e){}
+    window.open('https://www.ebay.com/sch/i.html?_nkw=comic&_sacat=0&LH_Sold=1&LH_Complete=1', '_blank');
+  }
+
+  function doAction(action){
+    const dock = ensureDock();
+    if(action === 'lofi'){
+      try{ if(typeof toggleLofiMusic === 'function') toggleLofiMusic(); else document.getElementById('lofiAvatarTrigger')?.click(); }catch(e){}
+      return;
+    }
+    if(action === 'ebay'){ openEbayComps(); return; }
+    if(action === 'style'){
+      try{ if(typeof cycleResellrStyle === 'function') cycleResellrStyle(); else document.getElementById('styleModeToggle')?.click(); }catch(e){}
+      return;
+    }
+    if(action === 'lock'){
+      try{ if(typeof lockNow === 'function') lockNow(); else document.getElementById('lockButton')?.click(); }catch(e){}
+      return;
+    }
+    if(action === 'reset'){
+      try{ if(typeof factoryReset === 'function') factoryReset(); else document.getElementById('dockResetButton')?.click(); }catch(e){}
+      return;
+    }
+    if(action === 'avatar'){
+      const input = dock.querySelector('#rsFloatingDockAvatarInput');
+      if(input) input.click();
+      return;
+    }
+  }
+
+  function wire(){
+    const dock = ensureDock();
+    applyAvatar();
+    if(dock.dataset.rsWired === '1') return;
+    dock.dataset.rsWired = '1';
+
+    dock.addEventListener('click', function(e){
+      const main = e.target.closest('#rsFloatingDockMain');
+      const actionBtn = e.target.closest('[data-rs-action]');
+      if(main){
+        e.preventDefault();
+        e.stopPropagation();
+        dock.classList.toggle('open');
+        return;
+      }
+      if(actionBtn){
+        e.preventDefault();
+        e.stopPropagation();
+        doAction(actionBtn.getAttribute('data-rs-action'));
+        if(actionBtn.getAttribute('data-rs-action') !== 'avatar') dock.classList.remove('open');
+      }
+    }, true);
+
+    document.addEventListener('click', function(e){
+      if(!dock.contains(e.target)) dock.classList.remove('open');
+    }, true);
+
+    const input = dock.querySelector('#rsFloatingDockAvatarInput');
+    input.addEventListener('change', function(){
+      const file = input.files && input.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(){
+        try{ localStorage.setItem(AVATAR_KEY, String(reader.result || '')); }catch(e){}
+        input.value = '';
+        applyAvatar();
+        dock.classList.remove('open');
+        toast('Avatar updated');
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  window.openResellrFloatingDock = function(){ ensureDock().classList.add('open'); };
+  window.closeResellrFloatingDock = function(){ ensureDock().classList.remove('open'); };
+  window.applyResellrDockAvatar = applyAvatar;
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
+  setTimeout(wire, 250);
+  setTimeout(wire, 1000);
+})();
+</script>
