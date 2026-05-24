@@ -20402,3 +20402,186 @@ body.skin-dreamtrip .chart-wrap{
 
 
 
+
+<!-- ===== v24: Restore Business Growth chart without touching Command View background ===== -->
+<style id="resellr-v24-growth-chart-guard-css">
+  #secDashboard .rs15-chart,
+  #secDashboard .rs15-chart canvas{
+    min-height: 300px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  #secDashboard #rs15GrowthChart{
+    width: 100% !important;
+    height: 100% !important;
+  }
+</style>
+<script id="resellr-v24-business-growth-restore">
+(function(){
+  if(window.__resellrV24BusinessGrowthRestore) return;
+  window.__resellrV24BusinessGrowthRestore = true;
+
+  const HIDDEN_STORE_KEY = 'resellrChartHiddenDatasetsV20';
+
+  function money(v){ return '$' + (Number(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function num(v){
+    if(v == null || v === '') return 0;
+    const n = Number(String(v).replace(/[^0-9.-]/g,''));
+    return Number.isFinite(n) ? n : 0;
+  }
+  function css(name, fallback){
+    try{ return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback; }
+    catch(e){ return fallback; }
+  }
+  function parseRows(key){
+    try{ const v = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(v) ? v : []; }
+    catch(e){ return []; }
+  }
+  function soldRows(){
+    try{ return typeof window.readSold === 'function' ? window.readSold() : parseRows('soldInventory'); }
+    catch(e){ return parseRows('soldInventory'); }
+  }
+  function dateOf(r){
+    const raw = r && (r.date || r.soldDate || r.Date || r['Sold Date'] || r.saleDate || r.completedDate);
+    if(!raw) return null;
+    const d = new Date(raw);
+    return isNaN(d) ? null : d;
+  }
+  function saleOf(r){ return num(r && (r.sale ?? r.price ?? r.salePrice ?? r.soldPrice ?? r.revenue ?? r.income ?? r.amount ?? r.totalIncome)); }
+  function costOf(r){ return num(r && (r.cost ?? r.Cost ?? r.itemCost ?? r.cogs ?? r.costOfSold ?? r['Cost of Sold'])); }
+  function feeOf(r){ return num(r && (r.fees ?? r.fee ?? r.Fees ?? r.platformFees ?? r.sellingFees)); }
+  function shipOf(r){ return num(r && (r.ship ?? r.shipping ?? r.Shipping ?? r.shippingCost ?? r.postage)); }
+  function profitOf(r){
+    const rawProfit = r && (r.profit ?? r.netProfit ?? r.totalProfit);
+    if(rawProfit !== undefined && rawProfit !== null && String(rawProfit).trim() !== '') return num(rawProfit);
+    return saleOf(r) - costOf(r) - feeOf(r) - shipOf(r);
+  }
+  function dayKey(d){ return d ? d.toISOString().slice(0,10) : ''; }
+
+  function clearGrowthHiddenState(){
+    try{
+      const store = JSON.parse(localStorage.getItem(HIDDEN_STORE_KEY) || '{}') || {};
+      if(store.rs15GrowthChart){
+        delete store.rs15GrowthChart;
+        localStorage.setItem(HIDDEN_STORE_KEY, JSON.stringify(store));
+      }
+    }catch(e){}
+  }
+
+  function currentRange(){
+    return localStorage.getItem('rs15Range') || 'ALL';
+  }
+
+  function rangeStart(range){
+    const now = new Date();
+    if(range === 'YTD') return new Date(now.getFullYear(),0,1);
+    if(range === '3M') return new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
+    if(range === '1M') return new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
+    return null;
+  }
+
+  function buildRows(){
+    const range = currentRange();
+    const start = rangeStart(range);
+    const daily = new Map();
+    soldRows().forEach(function(r){
+      const d = dateOf(r);
+      if(!d || (start && d < start)) return;
+      const cleanDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const k = dayKey(cleanDate);
+      if(!daily.has(k)) daily.set(k, {date: cleanDate, income: 0, profit: 0});
+      const b = daily.get(k);
+      b.income += saleOf(r);
+      b.profit += profitOf(r);
+    });
+    let income = 0, profit = 0;
+    return Array.from(daily.values()).sort(function(a,b){ return a.date - b.date; }).map(function(x){
+      income += x.income;
+      profit += x.profit;
+      return {date: x.date, income: income, profit: profit};
+    });
+  }
+
+  function updateKpis(rows){
+    const incomeEl = document.getElementById('rs15GrowthIncome');
+    const profitEl = document.getElementById('rs15GrowthProfit');
+    const itemsEl = document.getElementById('rs15GrowthItems');
+    const sold = soldRows();
+    const totalIncome = sold.reduce(function(s,r){ return s + saleOf(r); }, 0);
+    const totalProfit = sold.reduce(function(s,r){ return s + profitOf(r); }, 0);
+    if(incomeEl) incomeEl.textContent = money(totalIncome);
+    if(profitEl) profitEl.textContent = money(totalProfit);
+    if(itemsEl) itemsEl.textContent = sold.length.toLocaleString('en-US');
+  }
+
+  function restoreBusinessGrowth(){
+    if(!window.Chart) return false;
+    const canvas = document.getElementById('rs15GrowthChart');
+    if(!canvas) return false;
+
+    clearGrowthHiddenState();
+
+    const rows = buildRows();
+    updateKpis(rows);
+
+    try{
+      const old = Chart.getChart(canvas);
+      if(old) old.destroy();
+    }catch(e){}
+
+    const labels = rows.map(function(x){ return x.date.toLocaleDateString('en-US', {month:'short', day:'numeric'}); });
+    const income = rows.map(function(x){ return +x.income.toFixed(2); });
+    const profit = rows.map(function(x){ return +x.profit.toFixed(2); });
+
+    new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {label:'Total Income', data: income, borderColor: css('--accent','#38bdf8'), backgroundColor:'transparent', borderWidth:2.5, pointRadius:0, pointHitRadius:14, tension:.25, fill:false},
+          {label:'Total Profit', data: profit, borderColor: css('--green','#22c55e'), backgroundColor:'transparent', borderWidth:2.5, pointRadius:0, pointHitRadius:14, tension:.25, fill:false}
+        ]
+      },
+      options: {
+        responsive:true,
+        maintainAspectRatio:false,
+        animation:false,
+        layout:{padding:{top:8,right:14,bottom:8,left:4}},
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{position:'top'},
+          tooltip:{callbacks:{label:function(ctx){ return ' ' + ctx.dataset.label + ': ' + money(ctx.parsed.y); }}}
+        },
+        scales:{
+          x:{ticks:{maxTicksLimit:8}, grid:{color:'rgba(255,255,255,.10)'}},
+          y:{beginAtZero:true, grace:'12%', ticks:{callback:function(v){ return money(v); }}, grid:{color:'rgba(255,255,255,.12)'}}
+        }
+      }
+    });
+    return true;
+  }
+
+  window.restoreBusinessGrowthChartV24 = restoreBusinessGrowth;
+
+  function scheduleRestore(delay){ setTimeout(function(){ try{ restoreBusinessGrowth(); }catch(e){ console.warn('RESELLr growth chart restore failed', e); } }, delay || 0); }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ scheduleRestore(350); scheduleRestore(1400); });
+  else { scheduleRestore(250); scheduleRestore(1200); }
+
+  window.addEventListener('load', function(){ scheduleRestore(450); scheduleRestore(1600); });
+
+  document.addEventListener('click', function(e){
+    const rangeBtn = e.target && e.target.closest && e.target.closest('[data-rs15-range]');
+    if(rangeBtn){ scheduleRestore(120); scheduleRestore(420); }
+  }, true);
+
+  ['change','input'].forEach(function(evt){
+    document.addEventListener(evt, function(e){
+      if(e.target && (e.target.closest('#secSold') || e.target.closest('#secInventory') || e.target.closest('#secDashboard'))){
+        scheduleRestore(250);
+      }
+    }, true);
+  });
+})();
+</script>
