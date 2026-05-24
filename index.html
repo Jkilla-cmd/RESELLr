@@ -19380,7 +19380,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       </div>`;
     dash.querySelectorAll('[data-rs15-range]').forEach(b=>b.addEventListener('click',()=>{localStorage.setItem('rs15Range',b.dataset.rs15Range); renderV15();}));
     const reinv=$('rs15Reinvest'), mode=$('rs15BudgetMode');
-    if(reinv){reinv.value=localStorage.getItem('resellr_reinvest_pct')||'50'; reinv.addEventListener('input',()=>{localStorage.setItem('resellr_reinvest_pct',reinv.value); renderV15();});}
+    if(reinv){reinv.value=localStorage.getItem('resellr_reinvest_pct')||'50'; reinv.addEventListener('input',()=>{localStorage.setItem('resellr_reinvest_pct',reinv.value); if(window.__rs29UpdateBudgetOnly){ window.__rs29UpdateBudgetOnly(); } else { renderV15(); }});}
     if(mode) mode.addEventListener('change',renderV15);
     wireCommandBg();
     return true;
@@ -20567,11 +20567,63 @@ body.skin-dreamtrip .chart-wrap{
     if(m){const v=vis(M_VIS,{income:true,cost:true,profit:true,goal:true}); const k=m.getAttribute('data-rs28-monthly'); v[k]=!v[k]; if(!v.income&&!v.cost&&!v.profit&&!v.goal)v[k]=true; setVis(M_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
     if(e.target.closest&&e.target.closest('[data-rs15-range]')) schedule(120);
   },true);
-  ['change','input'].forEach(evt=>document.addEventListener(evt,()=>schedule(180),true));
+  // v29: do not redraw charts on every input/slider move; it caused flicker.
+  document.addEventListener('change',function(e){
+    const t=e.target;
+    if(t && (t.id==='rs15Reinvest' || t.id==='rs15BudgetMode')) return;
+    schedule(180);
+  },true);
   window.addEventListener('resize',()=>schedule(180));
   window.addEventListener('load',()=>schedule(250));
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>schedule(250)); else schedule(250);
   // One delayed pass in case dashboard is rebuilt after startup, but no redraw on normal graph clicks.
   setTimeout(render,1200);
+})();
+</script>
+
+
+<!-- ===== v29: Stop graph flicker when moving reinvest slider ===== -->
+<script id="resellr-v29-budget-slider-no-chart-flicker">
+(function(){
+  if(window.__resellrV29BudgetSliderNoFlicker) return;
+  window.__resellrV29BudgetSliderNoFlicker = true;
+  function $(id){return document.getElementById(id);}
+  function num(v){var n=Number(String(v==null?'':v).replace(/[^0-9.-]/g,'')); return Number.isFinite(n)?n:0;}
+  function money(v){return '$'+(Number(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function readArray(key){try{var a=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(a)?a:[];}catch(e){return []}}
+  function soldRows(){try{return typeof window.readSold==='function'?window.readSold():readArray('soldInventory');}catch(e){return readArray('soldInventory');}}
+  function dateOf(r){var raw=r&&(r.date||r.soldDate||r.Date||r['Sold Date']||r.saleDate||r.completedDate||r.createdAt); var d=raw?new Date(raw):null; return d&&!isNaN(d)?d:null;}
+  function saleOf(r){return num(r&&(r.sale??r.sales??r.price??r.salePrice??r.soldPrice??r.revenue??r.income??r.amount??r.totalIncome??r.total));}
+  function costOf(r){return num(r&&(r.cost??r.Cost??r.itemCost??r.cogs??r.costOfSold??r['Cost of Sold']));}
+  function feeOf(r){return num(r&&(r.fees??r.fee??r.Fees??r.platformFees??r.sellingFees));}
+  function shipOf(r){return num(r&&(r.ship??r.shipping??r.Shipping??r.shippingCost??r.postage));}
+  function profitOf(r){var p=r&&(r.profit??r.netProfit??r.totalProfit); return (p!==undefined&&p!==null&&String(p).trim()!=='')?num(p):saleOf(r)-costOf(r)-feeOf(r)-shipOf(r);}
+  window.__rs29UpdateBudgetOnly = function(){
+    var now=new Date(), y=now.getFullYear(), m=now.getMonth();
+    var mtdSales=0, mtdProfit=0;
+    soldRows().forEach(function(r){var d=dateOf(r); if(!d||d.getFullYear()!==y||d.getMonth()!==m) return; mtdSales+=saleOf(r); mtdProfit+=profitOf(r);});
+    var daysInMonth=new Date(y,m+1,0).getDate(), day=now.getDate();
+    var projected=day?mtdSales/day*daysInMonth:mtdSales;
+    var reinv=$('rs15Reinvest'), pct=Number(reinv?reinv.value:(localStorage.getItem('resellr_reinvest_pct')||50));
+    if(!Number.isFinite(pct)) pct=50;
+    try{localStorage.setItem('resellr_reinvest_pct',String(pct));}catch(e){}
+    var modeEl=$('rs15BudgetMode'), mode=modeEl?modeEl.value:'projected';
+    var budgetBase=mode==='mtd'?mtdSales:projected;
+    var nextBudget=budgetBase*pct/100;
+    var pairs={rs15MtdSales:money(mtdSales),rs15MtdProfit:money(mtdProfit),rs15ProjectedSales:money(projected),rs15NextBudget:money(nextBudget),rs15ReinvestVal:pct+'%',rs15BudgetNote:(day+' / '+daysInMonth+' days ('+Math.round(day/daysInMonth*100)+'%) • Mode: '+(mode==='mtd'?'actual MTD':'projected pace'))};
+    Object.keys(pairs).forEach(function(id){var el=$(id); if(el) el.textContent=pairs[id];});
+    var prog=$('rs15MonthProgress'); if(prog) prog.style.width=Math.min(100,day/daysInMonth*100)+'%';
+  };
+  function intercept(e){
+    var t=e.target;
+    if(!t || (t.id!=='rs15Reinvest' && t.id!=='rs15BudgetMode')) return;
+    if(t.id==='rs15Reinvest') try{localStorage.setItem('resellr_reinvest_pct',String(t.value));}catch(err){}
+    window.__rs29UpdateBudgetOnly();
+    // Stop older dashboard input listeners from rebuilding/redrawing the charts.
+    e.stopImmediatePropagation();
+  }
+  document.addEventListener('input',intercept,true);
+  document.addEventListener('change',intercept,true);
+  window.addEventListener('load',function(){setTimeout(window.__rs29UpdateBudgetOnly,400);});
 })();
 </script>
