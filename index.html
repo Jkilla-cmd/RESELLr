@@ -21688,6 +21688,148 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== PATCH v47: Darker shared background + apply to inner boxes/panels ===== -->
+<style id="rs-v47-dark-bg-panel-boxes">
+  /* Darken the uploaded Command View background everywhere it is reused */
+  html.rs-has-command-bg .sidebar::before,
+  html.rs-has-command-bg #secInventory::before,
+  html.rs-has-command-bg #secHolds::before,
+  html.rs-has-command-bg #secSold::before,
+  html.rs-has-command-bg #secImportExport::before,
+  html.rs-has-command-bg #secTools::before,
+  html.rs-has-command-bg #secSettings::before{
+    opacity:.12 !important;
+    filter: saturate(.9) brightness(.55) contrast(1.08) !important;
+  }
+
+  html.rs-has-command-bg .sidebar::after,
+  html.rs-has-command-bg #secInventory::after,
+  html.rs-has-command-bg #secHolds::after,
+  html.rs-has-command-bg #secSold::after,
+  html.rs-has-command-bg #secImportExport::after,
+  html.rs-has-command-bg #secTools::after,
+  html.rs-has-command-bg #secSettings::after{
+    background:
+      linear-gradient(90deg,
+        rgba(0,0,0,.78) 0%,
+        rgba(0,0,0,.64) 38%,
+        rgba(0,0,0,.50) 68%,
+        rgba(0,0,0,.38) 100%),
+      linear-gradient(180deg, rgba(0,0,0,.38), rgba(0,0,0,.70)) !important;
+  }
+
+  /* Command View itself: keep the uploaded art visible, but muted/readable */
+  #secDashboard .rs15-command::before{
+    width:100% !important;
+    opacity:.22 !important;
+    filter:saturate(.92) brightness(.62) contrast(1.08) !important;
+    background-position:center center !important;
+  }
+  #secDashboard .rs15-command::after{
+    background:
+      linear-gradient(90deg,
+        color-mix(in srgb, var(--panel) 96%, transparent) 0%,
+        color-mix(in srgb, var(--panel) 86%, transparent) 45%,
+        rgba(0,0,0,.42) 100%),
+      linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.55)) !important;
+  }
+
+  /* Apply the same uploaded background inside the main boxes/cards on these pages */
+  html.rs-has-command-bg #secInventory .panel,
+  html.rs-has-command-bg #secInventory .table-wrap,
+  html.rs-has-command-bg #secHolds .panel,
+  html.rs-has-command-bg #secHolds .table-wrap,
+  html.rs-has-command-bg #secSold .panel,
+  html.rs-has-command-bg #secSold .table-wrap,
+  html.rs-has-command-bg #secImportExport .panel,
+  html.rs-has-command-bg #secImportExport .table-wrap,
+  html.rs-has-command-bg #secTools .panel,
+  html.rs-has-command-bg #secTools .table-wrap,
+  html.rs-has-command-bg #secSettings .panel,
+  html.rs-has-command-bg #secSettings .table-wrap{
+    position:relative !important;
+    overflow:hidden !important;
+    isolation:isolate !important;
+    background: color-mix(in srgb, var(--panel) 88%, rgba(0,0,0,.50)) !important;
+  }
+
+  html.rs-has-command-bg #secInventory .panel::before,
+  html.rs-has-command-bg #secInventory .table-wrap::before,
+  html.rs-has-command-bg #secHolds .panel::before,
+  html.rs-has-command-bg #secHolds .table-wrap::before,
+  html.rs-has-command-bg #secSold .panel::before,
+  html.rs-has-command-bg #secSold .table-wrap::before,
+  html.rs-has-command-bg #secImportExport .panel::before,
+  html.rs-has-command-bg #secImportExport .table-wrap::before,
+  html.rs-has-command-bg #secTools .panel::before,
+  html.rs-has-command-bg #secTools .table-wrap::before,
+  html.rs-has-command-bg #secSettings .panel::before,
+  html.rs-has-command-bg #secSettings .table-wrap::before{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    background-image:var(--rs-shared-bg) !important;
+    background-size:cover !important;
+    background-position:right center !important;
+    background-repeat:no-repeat !important;
+    opacity:.10 !important;
+    filter:saturate(.9) brightness(.50) contrast(1.05) !important;
+    z-index:-2 !important;
+    pointer-events:none !important;
+  }
+
+  html.rs-has-command-bg #secInventory .panel::after,
+  html.rs-has-command-bg #secInventory .table-wrap::after,
+  html.rs-has-command-bg #secHolds .panel::after,
+  html.rs-has-command-bg #secHolds .table-wrap::after,
+  html.rs-has-command-bg #secSold .panel::after,
+  html.rs-has-command-bg #secSold .table-wrap::after,
+  html.rs-has-command-bg #secImportExport .panel::after,
+  html.rs-has-command-bg #secImportExport .table-wrap::after,
+  html.rs-has-command-bg #secTools .panel::after,
+  html.rs-has-command-bg #secTools .table-wrap::after,
+  html.rs-has-command-bg #secSettings .panel::after,
+  html.rs-has-command-bg #secSettings .table-wrap::after{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    background:
+      linear-gradient(90deg,
+        color-mix(in srgb, var(--panel) 96%, rgba(0,0,0,.62)) 0%,
+        color-mix(in srgb, var(--panel) 88%, rgba(0,0,0,.55)) 55%,
+        rgba(0,0,0,.44) 100%),
+      linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,.44)) !important;
+    z-index:-1 !important;
+    pointer-events:none !important;
+  }
+
+  /* Make sure content stays above the background overlays inside the boxes */
+  html.rs-has-command-bg #secInventory .panel > *,
+  html.rs-has-command-bg #secInventory .table-wrap > *,
+  html.rs-has-command-bg #secHolds .panel > *,
+  html.rs-has-command-bg #secHolds .table-wrap > *,
+  html.rs-has-command-bg #secSold .panel > *,
+  html.rs-has-command-bg #secSold .table-wrap > *,
+  html.rs-has-command-bg #secImportExport .panel > *,
+  html.rs-has-command-bg #secImportExport .table-wrap > *,
+  html.rs-has-command-bg #secTools .panel > *,
+  html.rs-has-command-bg #secTools .table-wrap > *,
+  html.rs-has-command-bg #secSettings .panel > *,
+  html.rs-has-command-bg #secSettings .table-wrap > *{
+    position:relative !important;
+    z-index:1 !important;
+  }
+
+  /* Keep the side menu readable with a stronger left-to-right dark fade */
+  html.rs-has-command-bg .sidebar{
+    background: color-mix(in srgb, var(--panel) 78%, rgba(0,0,0,.58)) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+</style>
+
 </body>
 </html>
 
