@@ -19256,6 +19256,8 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   #secDashboard .rs15-controls{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
   #secDashboard .rs15-pill{width:auto!important;padding:6px 9px!important;border-radius:10px!important;font-size:11px!important;border:1px solid var(--border)!important;background:color-mix(in srgb,var(--panel) 82%,var(--bg))!important;color:var(--text)!important;}
   #secDashboard .rs15-pill.active{border-color:var(--accent)!important;color:var(--accent)!important;background:color-mix(in srgb,var(--accent) 14%,var(--panel))!important;}
+  #secDashboard .rs15-year-select{width:auto!important;min-width:128px;margin:0!important;padding:7px 10px!important;border-radius:12px!important;font-size:11px!important;background:color-mix(in srgb,var(--panel) 82%,var(--bg))!important;color:var(--text)!important;border:1px solid var(--border)!important;}
+  #secDashboard .rs15-year-select:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)!important;}
   #secDashboard .rs15-platforms{display:grid;gap:8px;}
   #secDashboard .rs15-platform{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:center;border:1px solid var(--border);background:color-mix(in srgb,var(--panel) 88%,var(--bg));border-radius:14px;padding:10px;min-width:0;overflow:hidden;}
   #secDashboard .rs15-logo{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;overflow:hidden;}
@@ -19297,6 +19299,17 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   function monthKey(d){return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`:'';}
   function dayKey(d){return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:'';}
   function set(id,val){const el=$(id); if(el) el.textContent=val;}
+  function syncSnapshotYearOptions(sold, currentYear){
+    const sel=$('rs15SnapshotYear'); if(!sel) return 'CURRENT';
+    const years=[...new Set(sold.map(r=>{const d=dateOf(r);return d?d.getFullYear():null;}).filter(Boolean))].sort((a,b)=>b-a);
+    const saved=localStorage.getItem('rs15SnapshotYear')||'CURRENT';
+    const current=sel.value||saved;
+    const opts=[['CURRENT','Current Year'],['ALL','All Years'],...years.map(y=>[String(y),String(y)])];
+    const html=opts.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+    if(sel.innerHTML!==html) sel.innerHTML=html;
+    sel.value=opts.some(([v])=>v===current)?current:(opts.some(([v])=>v===saved)?saved:'CURRENT');
+    return sel.value;
+  }
   function destroy(canvasId){ if(!window.Chart) return null; const c=$(canvasId); if(!c) return null; const old=Chart.getChart(c); if(old) old.destroy(); return c; }
   function chartDefaults(){ if(!window.Chart) return; Chart.defaults.color=css('--text','#e5e7eb'); Chart.defaults.font.family=getComputedStyle(document.body).fontFamily; Chart.defaults.font.size=10; }
 
@@ -19324,7 +19337,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
             <section class="rs15-panel"><div class="rs15-head"><div><h3>Inventory Health</h3><p class="rs15-sub">Cost, listed value, and profit spread.</p></div></div><div class="rs15-kpis four"><div class="rs15-kpi"><div class="rs15-label">Inventory Cost</div><div class="rs15-value" id="rs15InvCost">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Inventory Value</div><div class="rs15-value" id="rs15InvValue">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Unrealized Gain</div><div class="rs15-value" id="rs15Unrealized">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Realized Profit</div><div class="rs15-value" id="rs15Realized">$0.00</div></div></div><div class="rs15-chart rs15-donut"><canvas id="rs15InventoryChart"></canvas></div></section>
           </main>
           <aside class="rs15-side">
-            <section class="rs15-panel"><div class="rs15-head"><div><h3>Sold Snapshot</h3><p class="rs15-sub" id="rs15SnapYear">Current year</p></div></div><div class="rs15-kpis" style="grid-template-columns:1fr 1fr;"><div class="rs15-kpi"><div class="rs15-label">Total Income</div><div class="rs15-value" id="rs15YtdIncome">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Cost of Sold</div><div class="rs15-value" id="rs15YtdCost">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Profit</div><div class="rs15-value" id="rs15YtdProfit">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Items</div><div class="rs15-value" id="rs15YtdItems">0</div></div></div></section>
+            <section class="rs15-panel"><div class="rs15-head"><div><h3>Sold Snapshot</h3><p class="rs15-sub" id="rs15SnapYear">Current year</p></div><select id="rs15SnapshotYear" class="rs15-year-select" aria-label="Sold Snapshot Year"><option value="CURRENT">Current Year</option><option value="ALL">All Years</option></select></div><div class="rs15-kpis" style="grid-template-columns:1fr 1fr;"><div class="rs15-kpi"><div class="rs15-label">Total Income</div><div class="rs15-value" id="rs15YtdIncome">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Cost of Sold</div><div class="rs15-value" id="rs15YtdCost">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Profit</div><div class="rs15-value" id="rs15YtdProfit">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Items</div><div class="rs15-value" id="rs15YtdItems">0</div></div></div></section>
             <section class="rs15-panel"><div class="rs15-head"><div><h3>Platform Sales</h3><p class="rs15-sub">YTD income by marketplace.</p></div></div><div class="rs15-platforms"><div class="rs15-platform"><div class="rs15-logo m">M</div><div><div class="rs15-label">Mercari</div><div class="rs15-value" id="rs15MercariIncome">$0.00</div><div class="rs15-note" id="rs15MercariCount">0 sales</div></div></div><div class="rs15-platform"><div class="rs15-logo e">eBay</div><div><div class="rs15-label">eBay</div><div class="rs15-value" id="rs15EbayIncome">$0.00</div><div class="rs15-note" id="rs15EbayCount">0 sales</div></div></div><div class="rs15-platform"><div class="rs15-logo p">P</div><div><div class="rs15-label">Private Sale</div><div class="rs15-value" id="rs15PrivateIncome">$0.00</div><div class="rs15-note" id="rs15PrivateCount">0 sales</div></div></div></div></section>
             <section class="rs15-panel"><div class="rs15-head"><div><h3>Fast Moves</h3><p class="rs15-sub">Quick shortcuts.</p></div></div><div class="rs15-actions"><button onclick="showSection('secInventory')">Inventory</button><button onclick="showSection('secSold')">Sold</button><button onclick="showSection('secHolds')">Holds</button><button onclick="showSection('secImportExport')">Backup</button></div></section>
             <section class="rs15-panel"><div class="rs15-head"><div><h3>Business Net Worth</h3><p class="rs15-sub">Inventory value + realized profit.</p></div></div><div class="rs15-kpi"><div class="rs15-label">Estimated Business Value</div><div class="rs15-value" id="rs15NetWorth">$0.00</div></div></section>
@@ -19342,7 +19355,9 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     const sold=soldRows(), active=activeRows(), holds=holdsRows();
     const now=new Date(), year=now.getFullYear();
     const today=dayKey(now); const sevenStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()-6);
-    const ytd=sold.filter(r=>{const d=dateOf(r); return d&&d.getFullYear()===year;});
+    const snapshotChoice=syncSnapshotYearOptions(sold, year);
+    const ytd=sold.filter(r=>{const d=dateOf(r); if(!d) return false; if(snapshotChoice==='ALL') return true; if(snapshotChoice==='CURRENT') return d.getFullYear()===year; return d.getFullYear()===Number(snapshotChoice);});
+    const snapshotLabel=snapshotChoice==='ALL'?'All Years':(snapshotChoice==='CURRENT'?String(year):snapshotChoice);
     const todayRows=sold.filter(r=>dayKey(dateOf(r))===today);
     const sevenRows=sold.filter(r=>{const d=dateOf(r); return d&&d>=sevenStart;});
     const allIncome=sold.reduce((s,r)=>s+saleOf(r),0), allProfit=sold.reduce((s,r)=>s+profitOf(r),0), allCost=sold.reduce((s,r)=>s+costOf(r),0);
@@ -19354,7 +19369,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     set('rs15ActiveListings',whole(active.reduce((s,r)=>s+qtyOf(r),0))); set('rs15InventoryValueNote',`${money(invValue)} listed value`);
     set('rs15AvgProfit',money(avgProfit)); set('rs15AvgMargin',`${margin.toFixed(1)}% margin`); set('rs15SellThrough',`${sellThrough.toFixed(1)}%`);
     set('rs15GrowthIncome',money(allIncome)); set('rs15GrowthProfit',money(allProfit)); set('rs15GrowthItems',whole(sold.length));
-    set('rs15YtdIncome',money(yIncome)); set('rs15YtdCost',money(yCost)); set('rs15YtdProfit',money(yProfit)); set('rs15YtdItems',whole(ytd.length)); set('rs15SnapYear',String(year));
+    set('rs15YtdIncome',money(yIncome)); set('rs15YtdCost',money(yCost)); set('rs15YtdProfit',money(yProfit)); set('rs15YtdItems',whole(ytd.length)); set('rs15SnapYear',snapshotLabel);
     set('rs15InvCost',money(invCost)); set('rs15InvValue',money(invValue)); set('rs15Unrealized',money(invValue-invCost)); set('rs15Realized',money(allProfit)); set('rs15NetWorth',money(invValue+allProfit));
     const curMonthKey=monthKey(now); const curRows=sold.filter(r=>monthKey(dateOf(r))===curMonthKey);
     const mtdSales=curRows.reduce((s,r)=>s+saleOf(r),0), mtdProfit=curRows.reduce((s,r)=>s+profitOf(r),0), mtdCost=curRows.reduce((s,r)=>s+costOf(r),0);
@@ -19384,6 +19399,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   function start(){ buildDashboard(); renderV15(); setTimeout(renderV15,250); setTimeout(renderV15,1200); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
   window.addEventListener('load',()=>setTimeout(renderV15,300));
+  document.addEventListener('change',e=>{ if(e.target&&e.target.id==='rs15SnapshotYear'){ localStorage.setItem('rs15SnapshotYear',e.target.value); clearTimeout(window.__rs15T); window.__rs15T=setTimeout(renderV15,80); }},true);
   ['click','change','input'].forEach(evt=>document.addEventListener(evt,e=>{ if(e.target && (e.target.closest('#secDashboard')||e.target.closest('#secSold')||e.target.closest('#secInventory'))){ clearTimeout(window.__rs15T); window.__rs15T=setTimeout(renderV15,160); }},true));
 })();
 </script>
