@@ -51,7 +51,8 @@
     "theme",
     "resellr_nw_show",
     "resellr_nw_conservative",
-    "resellr_reinvest_pct"
+    "resellr_reinvest_pct",
+    "rs15CommandBg"
   ]);
 
   const nativeGetItem = Storage.prototype.getItem;
@@ -19235,7 +19236,15 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   #secDashboard.active{display:block!important;}
   #secDashboard .rs15-wrap{max-width:1380px;margin:0 auto;padding:0 0 28px;color:var(--text);font-family:inherit;}
   #secDashboard .rs15-title{font-size:22px;line-height:1.1;margin:0 0 14px;color:var(--text);}
-  #secDashboard .rs15-command{border:1px solid var(--border);background:var(--panel);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 14px 35px rgba(0,0,0,.20);}
+  #secDashboard .rs15-command{border:1px solid var(--border);background:var(--panel);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 14px 35px rgba(0,0,0,.20);position:relative;overflow:hidden;isolation:isolate;}
+  #secDashboard .rs15-command::before{content:"";position:absolute;inset:0 0 0 auto;width:min(58%,720px);background-image:var(--rs15-command-bg, none);background-size:cover;background-position:right center;background-repeat:no-repeat;opacity:.38;z-index:0;pointer-events:none;}
+  #secDashboard .rs15-command::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--panel) 0%,color-mix(in srgb,var(--panel) 88%,transparent) 38%,color-mix(in srgb,var(--panel) 35%,transparent) 67%,transparent 100%);z-index:1;pointer-events:none;}
+  #secDashboard .rs15-command > *{position:relative;z-index:2;}
+  #secDashboard .rs15-command.no-bg::before,#secDashboard .rs15-command.no-bg::after{display:none;}
+  #secDashboard .rs15-command-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  #secDashboard .rs15-bg-tools{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;}
+  #secDashboard .rs15-bg-tools button{width:auto!important;padding:6px 9px!important;border-radius:10px!important;font-size:10px!important;white-space:nowrap;}
+  #rs15CommandBgInput{display:none!important;}
   #secDashboard .rs15-command h2{font-size:18px;margin:0 0 4px;color:var(--text);}
   #secDashboard .rs15-sub{font-size:11px;color:var(--muted);margin:0 0 12px;line-height:1.35;}
   #secDashboard .rs15-topgrid{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;}
@@ -19270,7 +19279,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   #secDashboard .rs15-progress{height:9px;border-radius:999px;background:color-mix(in srgb,var(--panel) 60%,var(--bg));overflow:hidden;border:1px solid var(--border);}
   #secDashboard .rs15-progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--yellow),var(--green));}
   @media(max-width:1100px){#secDashboard .rs15-layout{grid-template-columns:1fr;}#secDashboard .rs15-topgrid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-  @media(max-width:720px){#secDashboard .rs15-topgrid,#secDashboard .rs15-kpis,#secDashboard .rs15-kpis.four{grid-template-columns:1fr;}#secDashboard .rs15-value{font-size:18px;}#secDashboard .rs15-chart{height:280px;}}
+  @media(max-width:720px){#secDashboard .rs15-topgrid,#secDashboard .rs15-kpis,#secDashboard .rs15-kpis.four{grid-template-columns:1fr;}#secDashboard .rs15-value{font-size:18px;}#secDashboard .rs15-chart{height:280px;}#secDashboard .rs15-command::before{width:100%;opacity:.20;}#secDashboard .rs15-command-title{display:block;}#secDashboard .rs15-bg-tools{justify-content:flex-start;margin:8px 0 4px;}}
 </style>
 <script id="resellrV15StableDashboardJs">
 (function(){
@@ -19312,6 +19321,31 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   }
   function destroy(canvasId){ if(!window.Chart) return null; const c=$(canvasId); if(!c) return null; const old=Chart.getChart(c); if(old) old.destroy(); return c; }
   function chartDefaults(){ if(!window.Chart) return; Chart.defaults.color=css('--text','#e5e7eb'); Chart.defaults.font.family=getComputedStyle(document.body).fontFamily; Chart.defaults.font.size=10; }
+  function applyCommandBg(){
+    const box=$('rs15CommandView'); if(!box) return;
+    const img=localStorage.getItem('rs15CommandBg')||'';
+    if(img){ box.classList.remove('no-bg'); box.style.setProperty('--rs15-command-bg', `url("${img}")`); }
+    else{ box.classList.add('no-bg'); box.style.removeProperty('--rs15-command-bg'); }
+  }
+  function wireCommandBg(){
+    const input=$('rs15CommandBgInput'), btn=$('rs15CommandBgBtn'), clear=$('rs15CommandBgClear');
+    if(btn && input && !btn.dataset.wired){
+      btn.dataset.wired='1';
+      btn.addEventListener('click',()=>input.click());
+      input.addEventListener('change',()=>{
+        const file=input.files && input.files[0]; if(!file) return;
+        if(!file.type || !file.type.startsWith('image/')){ try{showToast('Choose an image file');}catch(e){} return; }
+        const reader=new FileReader();
+        reader.onload=()=>{ try{ localStorage.setItem('rs15CommandBg', String(reader.result||'')); applyCommandBg(); try{showToast('Command view background saved');}catch(e){} }catch(err){ try{showToast('Image is too large to save');}catch(e){} } };
+        reader.readAsDataURL(file);
+      });
+    }
+    if(clear && !clear.dataset.wired){
+      clear.dataset.wired='1';
+      clear.addEventListener('click',()=>{localStorage.removeItem('rs15CommandBg'); applyCommandBg(); try{showToast('Command view background cleared');}catch(e){};});
+    }
+    applyCommandBg();
+  }
 
   function buildDashboard(){
     const dash=$('secDashboard'); if(!dash) return false;
@@ -19319,8 +19353,8 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     dash.innerHTML = `
       <div class="rs15-wrap">
         <h1 class="rs15-title">Dashboard</h1>
-        <section class="rs15-command">
-          <h2>RESELLr Command View</h2><p class="rs15-sub">Fast read on sales momentum, inventory pressure, and daily progress.</p>
+        <section class="rs15-command no-bg" id="rs15CommandView">
+          <div class="rs15-command-title"><div><h2>RESELLr Command View</h2><p class="rs15-sub">Fast read on sales momentum, inventory pressure, and daily progress.</p></div><div class="rs15-bg-tools"><input id="rs15CommandBgInput" type="file" accept="image/*"><button type="button" id="rs15CommandBgBtn">Upload BG</button><button type="button" id="rs15CommandBgClear">Clear</button></div></div>
           <div class="rs15-topgrid">
             <div class="rs15-kpi"><div class="rs15-label">Today</div><div class="rs15-value" id="rs15TodaySales">$0.00</div><div class="rs15-note" id="rs15TodayCount">0 sold today</div></div>
             <div class="rs15-kpi"><div class="rs15-label">7-Day Sales</div><div class="rs15-value" id="rs15SevenSales">$0.00</div><div class="rs15-note" id="rs15SevenCount">0 sold</div></div>
@@ -19348,6 +19382,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     const reinv=$('rs15Reinvest'), mode=$('rs15BudgetMode');
     if(reinv){reinv.value=localStorage.getItem('resellr_reinvest_pct')||'50'; reinv.addEventListener('input',()=>{localStorage.setItem('resellr_reinvest_pct',reinv.value); renderV15();});}
     if(mode) mode.addEventListener('change',renderV15);
+    wireCommandBg();
     return true;
   }
 
