@@ -20357,6 +20357,88 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   setTimeout(wireDock, 1000);
 })();
 </script>
+
+
+<!-- ===== v36: Avatar dock flush inside topbar ===== -->
+<style id="rs-v36-avatar-flush-topbar-css">
+  /* Place the working floating dock inside the real topbar so there is no awkward gap. */
+  .topbar{
+    overflow: visible !important;
+  }
+  .topbar-content{
+    overflow: visible !important;
+  }
+  .topbar-content #rsFloatingDock{
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    width: 52px !important;
+    height: 52px !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    flex: 0 0 52px !important;
+    align-self: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 50 !important;
+  }
+  .topbar-content #rsFloatingDock .rs-dock-main{
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    min-height: 52px !important;
+    max-width: 52px !important;
+    max-height: 52px !important;
+    border-radius: 16px !important;
+    margin: 0 !important;
+  }
+  .topbar-content #rsFloatingDock .rs-dock-main img,
+  .topbar-content #rsFloatingDock .rs-dock-avatar{
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    border-radius: 15px !important;
+    transform: scale(1.10) !important;
+  }
+  .topbar-content #rsFloatingDock .rs-dock-menu{
+    position: absolute !important;
+    top: calc(100% + 10px) !important;
+    right: 0 !important;
+  }
+  @media (max-width: 700px){
+    .topbar-content #rsFloatingDock{
+      width: 48px !important;
+      height: 48px !important;
+      flex-basis: 48px !important;
+    }
+    .topbar-content #rsFloatingDock .rs-dock-main{
+      width: 48px !important;
+      height: 48px !important;
+      min-width: 48px !important;
+      min-height: 48px !important;
+      border-radius: 15px !important;
+    }
+  }
+</style>
+<script id="rs-v36-avatar-flush-topbar-js">
+(function(){
+  function mountDockInTopbar(){
+    const dock = document.getElementById('rsFloatingDock');
+    const topbarContent = document.querySelector('.topbar .topbar-content');
+    if(!dock || !topbarContent) return;
+    if(dock.parentElement !== topbarContent){
+      topbarContent.appendChild(dock);
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountDockInTopbar);
+  else mountDockInTopbar();
+  setTimeout(mountDockInTopbar, 100);
+  setTimeout(mountDockInTopbar, 500);
+  setTimeout(mountDockInTopbar, 1500);
+})();
+</script>
 </body>
 </html>
 
