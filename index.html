@@ -20586,6 +20586,103 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== RESELLr v10: dashboard routing + theme match hard fix ===== -->
+<style id="resellr-v10-nav-theme-fix">
+  /* Route sections like normal pages. This overrides older dashboard patches that forced display:block. */
+  body .section{display:none!important;visibility:hidden!important;opacity:0!important;position:static!important;z-index:auto!important;}
+  body .section.active{display:block!important;visibility:visible!important;opacity:1!important;}
+  body #secDashboard.resellr-stable-dashboard:not(.active),
+  body #secDashboard:not(.active){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+  body #secDashboard.resellr-stable-dashboard.active{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;}
+
+  /* Make the rebuilt dashboard inherit the current theme instead of using its own lighter color. */
+  #secDashboard.resellr-stable-dashboard .rs7-shell{background:transparent!important;color:var(--text)!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-panel,
+  #secDashboard.resellr-stable-dashboard .rs7-kpi,
+  #secDashboard.resellr-stable-dashboard .rs7-platform,
+  #secDashboard.resellr-stable-dashboard .rs7-actions button{
+    background:var(--panel)!important;
+    border-color:var(--border)!important;
+    color:var(--text)!important;
+    box-shadow:0 14px 34px rgba(0,0,0,.18)!important;
+  }
+  #secDashboard.resellr-stable-dashboard .rs7-kpi,
+  #secDashboard.resellr-stable-dashboard .rs7-platform{background:color-mix(in srgb, var(--panel) 86%, var(--text) 4%)!important;}
+  #secDashboard.resellr-stable-dashboard h2,
+  #secDashboard.resellr-stable-dashboard h3,
+  #secDashboard.resellr-stable-dashboard .rs7-value{color:var(--text)!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-sub,
+  #secDashboard.resellr-stable-dashboard .rs7-label,
+  #secDashboard.resellr-stable-dashboard .rs7-count{color:var(--muted)!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-pill{background:color-mix(in srgb, var(--panel) 88%, var(--text) 5%)!important;border:1px solid var(--border)!important;color:var(--text)!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-pill.active{background:var(--accent)!important;color:var(--bg)!important;border-color:var(--accent)!important;}
+</style>
+<script id="resellr-v10-nav-theme-fix-script">
+(function(){
+  'use strict';
+  const $all=(s,r=document)=>Array.from(r.querySelectorAll(s));
+
+  function setDisplay(sectionId){
+    $all('.section').forEach(sec=>{
+      const on=sec.id===sectionId;
+      sec.classList.toggle('active',on);
+      sec.style.setProperty('display', on ? 'block' : 'none', 'important');
+      sec.style.setProperty('visibility', on ? 'visible' : 'hidden', 'important');
+      sec.style.setProperty('opacity', on ? '1' : '0', 'important');
+      sec.style.setProperty('pointer-events', on ? 'auto' : 'none', 'important');
+    });
+    $all('#nav button[data-target], .nav button[data-target]').forEach(btn=>{
+      btn.classList.toggle('active', btn.getAttribute('data-target')===sectionId);
+    });
+    const names={secDashboard:'Dashboard',secInventory:'Inventory',secHolds:'Inventory Holds',secSold:'Sold',secTools:'Tools',secSettings:'Settings',secImportExport:'Import / Export'};
+    const title=document.getElementById('topbarTitle');
+    if(title) title.textContent=names[sectionId]||'RESELLr';
+    try{window.scrollTo(0,0);}catch(e){}
+    if(sectionId==='secDashboard'){
+      setTimeout(()=>{try{window.rs8DashboardRender?.();}catch(e){} try{window.rs7RefreshDashboard?.();}catch(e){}},80);
+    }
+  }
+
+  function removeExtraPlatformSections(){
+    const dash=document.getElementById('secDashboard'); if(!dash) return;
+    const shells=$all('.rs7-shell',dash);
+    // keep the last rebuilt dashboard shell, delete older full dashboard shells if an old timer re-added one
+    shells.slice(0,-1).forEach(s=>s.remove());
+    const keep=dash.querySelector('.rs7-shell #rs7PlatformPanel') || document.getElementById('rs7PlatformPanel');
+    $all('#rs7PlatformPanel',dash).forEach((p,i)=>{ if(p!==keep) p.remove(); });
+    $all('.panel,.card,.rs7-panel,section',dash).forEach(el=>{
+      if(el===keep || (keep && keep.contains(el)) || el.closest('.rs7-shell')) return;
+      const txt=(el.textContent||'').toLowerCase();
+      const heading=(el.querySelector('h3,h2')?.textContent||'').trim().toLowerCase();
+      if(heading==='platform sales' || (txt.includes('mercari')&&txt.includes('ebay')&&txt.includes('private'))) el.remove();
+    });
+  }
+
+  function installRouter(){
+    window.showSection=function(sectionId){setDisplay(sectionId); return false;};
+    $all('#nav button[data-target], .nav button[data-target]').forEach(btn=>{
+      btn.addEventListener('click',function(ev){ev.preventDefault(); ev.stopImmediatePropagation(); setDisplay(btn.getAttribute('data-target')); return false;},true);
+      btn.onclick=function(ev){ if(ev){ev.preventDefault(); ev.stopPropagation();} setDisplay(btn.getAttribute('data-target')); return false; };
+    });
+  }
+
+  function boot(){
+    installRouter();
+    removeExtraPlatformSections();
+    const current=document.querySelector('.section.active')?.id || 'secDashboard';
+    setDisplay(current);
+    const dash=document.getElementById('secDashboard');
+    if(dash){
+      new MutationObserver(()=>{removeExtraPlatformSections(); if(!dash.classList.contains('active')) setDisplay(document.querySelector('.section.active')?.id || 'secDashboard');}).observe(dash,{childList:true,subtree:true});
+    }
+    let n=0; const t=setInterval(()=>{installRouter(); removeExtraPlatformSections(); const active=document.querySelector('.section.active')?.id || 'secDashboard'; setDisplay(active); if(++n>16) clearInterval(t);},500);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
+</script>
+
 </body>
 </html>
 
