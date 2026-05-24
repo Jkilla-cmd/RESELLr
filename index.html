@@ -19561,8 +19561,8 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   function start(){ buildDashboard(); renderV15(); setTimeout(renderV15,250); setTimeout(renderV15,1200); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
   window.addEventListener('load',()=>setTimeout(renderV15,300));
-  document.addEventListener('change',e=>{ if(e.target&&e.target.id==='rs15SnapshotYear'){ localStorage.setItem('rs15SnapshotYear',e.target.value); clearTimeout(window.__rs15T); window.__rs15T=setTimeout(renderV15,80); }},true);
-  ['click','change','input'].forEach(evt=>document.addEventListener(evt,e=>{ if(e.target && (e.target.closest('#secDashboard')||e.target.closest('#secSold')||e.target.closest('#secInventory'))){ clearTimeout(window.__rs15T); window.__rs15T=setTimeout(renderV15,160); }},true));
+  document.addEventListener('change',e=>{ if(e.target&&e.target.id==='rs15SnapshotYear'){ localStorage.setItem('rs15SnapshotYear',e.target.value); clearTimeout(window.__rs15T); window.__rs15T=setTimeout(()=>{ try{ compute(); }catch(err){} },80); }},true);
+  ['click','change','input'].forEach(evt=>document.addEventListener(evt,e=>{ const t=e.target; if(!t) return; if(t.id==='rs15SnapshotYear'){ return; } if(t.id==='rs15Reinvest' || t.id==='rs15BudgetMode'){ clearTimeout(window.__rs15T); window.__rs15T=setTimeout(()=>{ try{ compute(); }catch(err){} },120); return; } if(t.matches && t.matches('[data-rs15-range]')){ clearTimeout(window.__rs15T); window.__rs15T=setTimeout(renderV15,160); return; } if(t.closest && (t.closest('#secSold')||t.closest('#secInventory'))){ clearTimeout(window.__rs15T); window.__rs15T=setTimeout(renderV15,180); }},true));
 })();
 </script>
 
@@ -21685,6 +21685,209 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
   window.addEventListener('storage',applySharedBackground);
   setInterval(applySharedBackground, 2000);
+})();
+</script>
+
+
+
+<!-- ===== v53: no topbar + single working floating avatar dock + snapshot year stability ===== -->
+<style id="rs-v53-no-topbar-single-dock-css">
+  /* Remove the whole top bar and dashboard label per request */
+  .topbar{ display:none !important; }
+  #secDashboard .rs15-title{ display:none !important; }
+  .canvas{ padding-top:0 !important; }
+
+  /* Hide every older avatar / hamburger dock attempt so only v53 remains */
+  #rsFloatingDock,
+  #rsDockV30,#rsDockV31,#rsDockV32,#rsDockV33,#rsDockV34,#rsDockV35,#rsDockV36,#rsDockV37,#rsDockV38,#rsDockV39,#rsDockV40,#rsDockV41,
+  .rs-v42-dock-wrap,
+  #rsFinalDock,#rsCleanDock,#resellrCommandDock,#dockPopover,#dockMainButton,
+  .topbar-right.resellr-command-dock,
+  .rs-command-dock,
+  .rs-floating-dock,
+  .rs-v39-dock,
+  .rs-v40-dock,
+  .rs-v41-dock{
+    display:none !important;
+    pointer-events:none !important;
+  }
+
+  #rsDockV53{
+    position:fixed !important;
+    top:14px !important;
+    right:14px !important;
+    z-index:2147483000 !important;
+    display:block !important;
+    pointer-events:auto !important;
+    font-family:inherit;
+  }
+  #rsDockV53Btn{
+    width:48px !important;
+    height:48px !important;
+    min-width:48px !important;
+    min-height:48px !important;
+    padding:0 !important;
+    border-radius:999px !important;
+    overflow:hidden !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    background:var(--panel, rgba(12,16,24,.88)) !important;
+    border:1px solid var(--border, rgba(255,255,255,.16)) !important;
+    color:var(--text,#fff) !important;
+    box-shadow:0 12px 34px rgba(0,0,0,.28) !important;
+    cursor:pointer !important;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+  #rsDockV53Btn:hover{ transform:translateY(-1px) !important; }
+  #rsDockV53Btn img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:cover !important;
+    display:none;
+  }
+  #rsDockV53Btn.has-avatar img{ display:block !important; }
+  #rsDockV53Btn.has-avatar .rs53-fallback{ display:none !important; }
+  #rsDockV53Btn .rs53-fallback{ font-size:20px; line-height:1; }
+  #rsDockV53Menu{
+    position:absolute !important;
+    top:58px !important;
+    right:0 !important;
+    width:190px !important;
+    display:none !important;
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+    padding:10px !important;
+    border-radius:18px !important;
+    background:var(--panel, rgba(12,16,24,.94)) !important;
+    border:1px solid var(--border, rgba(255,255,255,.16)) !important;
+    box-shadow:0 18px 50px rgba(0,0,0,.38) !important;
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+  }
+  #rsDockV53.open #rsDockV53Menu{ display:grid !important; }
+  #rsDockV53Menu button,
+  #rsDockV53Menu select{
+    width:100% !important;
+    margin:0 !important;
+    font-size:12px !important;
+    padding:9px 10px !important;
+    border-radius:12px !important;
+    text-align:left !important;
+    background:rgba(255,255,255,.045) !important;
+    border:1px solid var(--border, rgba(255,255,255,.12)) !important;
+    color:var(--text,#fff) !important;
+  }
+  #rsDockV53Menu .rs53-icons{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  #rsDockV53Menu .rs53-icons button{ text-align:center !important; font-size:15px !important; }
+  #rsDockV53AvatarInput{ display:none !important; }
+  @media (max-width:900px){ #rsDockV53{ top:10px !important; right:10px !important; } }
+</style>
+<script id="rs-v53-no-topbar-single-dock-js">
+(function(){
+  if(window.__rsV53SingleDock) return;
+  window.__rsV53SingleDock=true;
+  const AVATAR_KEY='resellr_dock_avatar_image';
+  const $=id=>document.getElementById(id);
+
+  function hideOldDocks(){
+    document.querySelectorAll('#rsFloatingDock,#rsDockV30,#rsDockV31,#rsDockV32,#rsDockV33,#rsDockV34,#rsDockV35,#rsDockV36,#rsDockV37,#rsDockV38,#rsDockV39,#rsDockV40,#rsDockV41,.rs-v42-dock-wrap,#rsFinalDock,#rsCleanDock,#resellrCommandDock,#dockPopover,#dockMainButton,.topbar-right.resellr-command-dock,.rs-command-dock,.rs-floating-dock,.rs-v39-dock,.rs-v40-dock,.rs-v41-dock').forEach(el=>{
+      if(el && el.id!=='rsDockV53'){
+        el.style.setProperty('display','none','important');
+        el.style.setProperty('pointer-events','none','important');
+      }
+    });
+  }
+
+  function buildDock(){
+    hideOldDocks();
+    let dock=$('rsDockV53');
+    if(!dock){
+      dock=document.createElement('div');
+      dock.id='rsDockV53';
+      dock.innerHTML=`
+        <button id="rsDockV53Btn" type="button" aria-label="Open quick controls" title="Quick controls"><span class="rs53-fallback">☰</span><img id="rsDockV53Img" alt="Avatar"></button>
+        <div id="rsDockV53Menu" role="menu">
+          <button type="button" data-rs53="lofi">♪ Lo-Fi</button>
+          <button type="button" data-rs53="ebay">eBay Comps</button>
+          <button type="button" data-rs53="style">◐ Style</button>
+          <button type="button" data-rs53="avatar">Upload Avatar</button>
+          <div class="rs53-icons"><button type="button" data-rs53="lock" title="Lock">🔒</button><button type="button" data-rs53="reset" title="Reset">↻</button></div>
+          <input id="rsDockV53AvatarInput" type="file" accept="image/*">
+        </div>`;
+      document.body.appendChild(dock);
+    }else if(dock.parentElement!==document.body){
+      document.body.appendChild(dock);
+    }
+    const img=$('rsDockV53Img'), btn=$('rsDockV53Btn');
+    const saved=localStorage.getItem(AVATAR_KEY)||'';
+    if(saved && img && btn){ img.src=saved; btn.classList.add('has-avatar'); }
+    return dock;
+  }
+
+  function toggleDock(force){
+    const dock=buildDock();
+    const next = typeof force==='boolean' ? force : !dock.classList.contains('open');
+    dock.classList.toggle('open', next);
+  }
+
+  function doAction(a){
+    if(a==='lofi'){
+      const el=$('lofiAvatarBtn') || $('lofiToggle') || document.querySelector('[data-action="lofi"], .lofi-avatar-trigger');
+      if(el) el.click();
+    }else if(a==='ebay'){
+      try{ if(typeof openEbayComps==='function') openEbayComps(); else window.open('https://www.ebay.com/sch/i.html?_nkw=comic&_sacat=0&LH_Sold=1&LH_Complete=1','_blank'); }catch(e){}
+    }else if(a==='style'){
+      const el=$('themeSelect') || $('styleSelect') || document.querySelector('select[id*="theme" i], select[id*="style" i]');
+      if(el){ el.focus(); el.click(); }
+    }else if(a==='lock'){
+      try{ if(typeof lockApp==='function') lockApp(); else if(typeof showLock==='function') showLock(); else $('lockScreen')&&( $('lockScreen').style.display='flex' ); }catch(e){}
+    }else if(a==='reset'){
+      try{ if(confirm('Reset RESELLr data/layout?')){ if(typeof factoryReset==='function') factoryReset(); else if(typeof resetDashboardLayout==='function') resetDashboardLayout(); } }catch(e){}
+    }else if(a==='avatar'){
+      $('rsDockV53AvatarInput')?.click();
+      return false;
+    }
+    return true;
+  }
+
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest && e.target.closest('#rsDockV53Btn');
+    if(btn){ e.preventDefault(); e.stopPropagation(); toggleDock(); return; }
+    const act=e.target.closest && e.target.closest('[data-rs53]');
+    if(act){ e.preventDefault(); e.stopPropagation(); const close=doAction(act.dataset.rs53); if(close!==false) toggleDock(false); return; }
+    const dock=$('rsDockV53');
+    if(dock && !dock.contains(e.target)) toggleDock(false);
+  },true);
+
+  document.addEventListener('change',function(e){
+    if(e.target && e.target.id==='rsDockV53AvatarInput'){
+      const file=e.target.files && e.target.files[0]; if(!file) return;
+      const reader=new FileReader();
+      reader.onload=function(){ try{ localStorage.setItem(AVATAR_KEY, String(reader.result||'')); }catch(err){} const img=$('rsDockV53Img'), btn=$('rsDockV53Btn'); if(img&&btn){ img.src=String(reader.result||''); btn.classList.add('has-avatar'); } };
+      reader.readAsDataURL(file);
+    }
+  },true);
+
+  // Keep snapshot year from reverting after other dashboard refreshes.
+  document.addEventListener('change',function(e){
+    if(e.target && e.target.id==='rs15SnapshotYear'){
+      const val=e.target.value;
+      localStorage.setItem('rs15SnapshotYear', val);
+      setTimeout(()=>{ const sel=$('rs15SnapshotYear'); if(sel && sel.value!==val){ sel.value=val; sel.dispatchEvent(new Event('input',{bubbles:false})); } try{ if(typeof window.renderV15Dashboard==='function'){ /* avoid calling; older listeners may call it, selection is restored below */ } }catch(err){} },220);
+      setTimeout(()=>{ const sel=$('rs15SnapshotYear'); if(sel) sel.value=localStorage.getItem('rs15SnapshotYear')||val; },700);
+    }
+  },true);
+
+  function init(){
+    document.querySelectorAll('.topbar').forEach(el=>el.style.setProperty('display','none','important'));
+    document.querySelectorAll('#secDashboard .rs15-title').forEach(el=>el.style.setProperty('display','none','important'));
+    buildDock();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+  window.addEventListener('load',()=>setTimeout(init,100));
+  setInterval(hideOldDocks,1500);
 })();
 </script>
 
