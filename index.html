@@ -20124,6 +20124,191 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== RESELLr FINAL DASHBOARD REALFIX v5 ===== -->
+<style id="resellrFinalRealFixCss">
+  /* Clean, stable dashboard layout */
+  #secDashboard.atlas-dashboard{max-width:1500px!important;margin:0 auto!important;padding-bottom:40px!important;overflow:visible!important;}
+  #secDashboard .atlas-layout{display:grid!important;grid-template-columns:minmax(0,1fr) 360px!important;gap:18px!important;align-items:start!important;overflow:visible!important;}
+  #secDashboard .atlas-main-col,#secDashboard .atlas-side-col{min-width:0!important;display:flex!important;flex-direction:column!important;gap:18px!important;overflow:visible!important;}
+  #secDashboard .panel{min-width:0!important;overflow:visible!important;height:auto!important;max-height:none!important;}
+  #businessGrowthPanel,#resellrFinalMonthlyPanel,#inventoryHealthPanel,#ytdSummaryPanel,#resellrPlatformPanel{overflow:visible!important;}
+  #businessGrowthPanel .chart-wrap,#resellrFinalMonthlyPanel .chart-wrap{height:310px!important;min-height:310px!important;max-height:310px!important;width:100%!important;position:relative!important;overflow:visible!important;padding:0 8px 10px 8px!important;}
+  #businessGrowthPanel canvas,#resellrFinalMonthlyPanel canvas{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;}
+  .atlas-small-chart{height:260px!important;min-height:260px!important;max-height:260px!important;overflow:visible!important;}
+  .atlas-small-chart canvas{height:100%!important;max-height:100%!important;}
+
+  /* Remove old clutter and old duplicate charts/cards */
+  #ccRecentSold,#ccNewestInventory,#atlasActionQueue{display:none!important;}
+  #secDashboard .panel:has(#ccRecentSold),#secDashboard .panel:has(#ccNewestInventory),#secDashboard .panel:has(#atlasActionQueue){display:none!important;}
+  #secDashboard .atlas-quick-actions{display:none!important;}
+  #secDashboard #incomeChart,#secDashboard #profitChart,#secDashboard #ccIncomeChart{display:none!important;}
+  #secDashboard .profit-full,#secDashboard .income-full{display:none!important;}
+
+  /* Stat cards: prevent bleeding */
+  #secDashboard .atlas-kpi strong,#secDashboard .atlas-mini-stats b,#secDashboard .atlas-snapshot-stack b,#secDashboard .market-value,#secDashboard .atlas-health-grid b,#resellrFinalMonthlyPanel b{font-variant-numeric:tabular-nums!important;white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.08!important;font-size:clamp(20px,1.7vw,28px)!important;}
+  #secDashboard .atlas-mini-stats,#resellrFinalMonthlyPanel .profit-goal-headline{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;margin:14px 0!important;}
+  #resellrFinalMonthlyPanel .profit-goal-headline{grid-template-columns:repeat(4,minmax(0,1fr))!important;}
+  #secDashboard .atlas-mini-stats>div,#resellrFinalMonthlyPanel .profit-goal-headline>div,#secDashboard .atlas-snapshot-stack>div,#secDashboard .atlas-health-grid>div{min-width:0!important;padding:14px!important;border:1px solid rgba(255,255,255,.18)!important;border-radius:16px!important;background:rgba(255,255,255,.035)!important;}
+  #ytdSummaryPanel .atlas-snapshot-stack{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;}
+  #ytdSummaryPanel .atlas-snapshot-stack b{font-size:clamp(19px,1.45vw,25px)!important;}
+
+  /* Platform cards */
+  #resellrPlatformPanel .atlas-market-grid{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;margin-top:12px!important;}
+  #resellrPlatformPanel .market-card{display:flex!important;align-items:center!important;gap:12px!important;min-height:86px!important;padding:14px!important;border-radius:16px!important;overflow:hidden!important;}
+  #resellrPlatformPanel .market-logo{width:46px!important;height:46px!important;flex:0 0 46px!important;border-radius:14px!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:14px!important;font-weight:900!important;}
+  #resellrPlatformPanel .market-logo.private{background:#111827!important;color:#fff!important;border:1px solid rgba(255,255,255,.2)!important;}
+  #resellrPlatformPanel .market-meta{min-width:0!important;}
+  #resellrPlatformPanel .market-value{font-size:clamp(22px,1.8vw,30px)!important;}
+  #resellrPlatformPanel .market-sub{font-size:12px!important;color:var(--muted)!important;}
+
+  @media(max-width:1100px){
+    #secDashboard .atlas-layout{grid-template-columns:1fr!important;}
+    #businessGrowthPanel .chart-wrap,#resellrFinalMonthlyPanel .chart-wrap{height:280px!important;min-height:280px!important;max-height:280px!important;}
+    #resellrFinalMonthlyPanel .profit-goal-headline,#secDashboard .atlas-mini-stats{grid-template-columns:1fr 1fr!important;}
+  }
+</style>
+<script id="resellrFinalRealFixScript">
+(function(){
+  const GOAL = 300;
+  let bgChart=null, monthlyChart=null;
+  const $ = id => document.getElementById(id);
+  const n = v => { const x = Number(String(v ?? '').replace(/[^0-9.-]/g,'')); return Number.isFinite(x) ? x : 0; };
+  const money = v => (n(v)<0?'-':'') + '$' + Math.abs(n(v)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  const whole = v => n(v).toLocaleString(undefined,{maximumFractionDigits:0});
+  const norm = s => String(s||'').trim().toLowerCase();
+  const set = (id,val) => { const el=$(id); if(el) el.textContent=val; };
+  function arr(key){ try{ const raw=localStorage.getItem(key); const a=JSON.parse(raw||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function dateOf(r){ const d=new Date(r.date || r.soldDate || r.acquiredDate || r.createdAt || ''); return isNaN(d) ? null : d; }
+  function saleOf(r){ return n(r.sale ?? r.sold ?? r.soldPrice ?? r.price ?? r.value ?? r.income ?? r.total); }
+  function costOf(r){ return n(r.cost); }
+  function profitOf(r){ const p=n(r.profit); if(p) return p; return saleOf(r)-costOf(r)-n(r.fees)-n(r.ship)-n(r.shipping); }
+  function platformOf(r){ return norm(r.platform || r.marketplace || r.site || r.source); }
+  function currentYear(){ return new Date().getFullYear(); }
+  function monthKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+  function monthLabel(k){ const [y,m]=k.split('-').map(Number); return new Date(y,m-1,1).toLocaleDateString(undefined,{month:'short',year:'2-digit'}); }
+  function ensureDashboardIds(){
+    const bgCanvas=$('businessGrowthChart');
+    if(bgCanvas){ const p=bgCanvas.closest('.panel'); if(p) p.id='businessGrowthPanel'; }
+    const invCanvas=$('atlasInventoryChart'); if(invCanvas){ const p=invCanvas.closest('.panel'); if(p) p.id='inventoryHealthPanel'; }
+  }
+  function removeOldPanels(){
+    ['ccRecentSold','ccNewestInventory','atlasActionQueue'].forEach(id=>{ const el=$(id); const p=el&&el.closest('.panel'); if(p) p.remove(); });
+    document.querySelectorAll('#secDashboard .atlas-quick-actions,#secDashboard .profit-full,#secDashboard .income-full').forEach(e=>e.remove());
+    document.querySelectorAll('#secDashboard .panel').forEach(p=>{
+      const t=(p.textContent||'').trim();
+      if(p.id==='resellrFinalMonthlyPanel') return;
+      if(p.id==='resellrMonthlyProfitPanel' || (/Monthly Profit View/i.test(t) && p.querySelector('canvas'))) p.remove();
+      if(/Recently Sold/i.test(t) || /Newest Inventory/i.test(t) || /Action Queue/i.test(t)) p.remove();
+    });
+  }
+  function ensureMonthlyPanel(){
+    removeOldPanels();
+    let panel=$('resellrFinalMonthlyPanel');
+    const bg=$('businessGrowthPanel');
+    if(!panel){
+      panel=document.createElement('div'); panel.id='resellrFinalMonthlyPanel'; panel.className='panel atlas-chart-panel';
+      if(bg) bg.insertAdjacentElement('afterend',panel); else document.querySelector('#secDashboard .atlas-main-col')?.prepend(panel);
+    }
+    panel.innerHTML=`<div class="atlas-panel-head"><div><h3>Monthly Profit View</h3><p>Monthly total income, cost of sold, and profit with a dotted ${money(GOAL)} profit goal line.</p></div></div>
+      <div class="profit-goal-headline">
+        <div><span>This Month Income</span><b id="monthIncomeNow">${money(0)}</b></div>
+        <div><span>This Month Profit</span><b id="monthProfitNow">${money(0)}</b></div>
+        <div><span>This Month Cost</span><b id="monthCostNow">${money(0)}</b></div>
+        <div><span>Goal</span><b>${money(GOAL)}</b></div>
+      </div>
+      <div class="chart-wrap"><canvas id="resellrFinalMonthlyChart"></canvas></div>`;
+    return panel;
+  }
+  function ensurePlatformPanel(){
+    let panel=$('resellrPlatformPanel');
+    const side=document.querySelector('#secDashboard .atlas-side-col') || $('secDashboard');
+    if(!panel){ panel=document.createElement('div'); panel.id='resellrPlatformPanel'; panel.className='panel'; }
+    panel.innerHTML=`<div class="atlas-panel-head compact"><div><h3>Platform Sales</h3><p>All-time income by marketplace.</p></div></div>
+      <div class="market-grid atlas-market-grid">
+        <div class="market-card"><div class="market-logo mercari">M</div><div class="market-meta"><div class="market-label">Mercari</div><div class="market-value" id="mercariIncomeStat">${money(0)}</div><div class="market-sub" id="mercariCountStat">0 sales</div></div></div>
+        <div class="market-card"><div class="market-logo ebay">eBay</div><div class="market-meta"><div class="market-label">eBay</div><div class="market-value" id="ebayIncomeStat">${money(0)}</div><div class="market-sub" id="ebayCountStat">0 sales</div></div></div>
+        <div class="market-card"><div class="market-logo private">P</div><div class="market-meta"><div class="market-label">Private Sale</div><div class="market-value" id="privateIncomeStat">${money(0)}</div><div class="market-sub" id="privateCountStat">0 sales</div></div></div>
+      </div>`;
+    const ytd=$('ytdSummaryPanel');
+    if(ytd && ytd.parentElement) ytd.insertAdjacentElement('afterend',panel); else side.appendChild(panel);
+    return panel;
+  }
+  function syncYtdSelect(sold){
+    const sel=$('ytdYearSelect'); if(!sel) return currentYear();
+    const yrs=[...new Set(sold.map(dateOf).filter(Boolean).map(d=>d.getFullYear()))].sort((a,b)=>b-a);
+    if(!yrs.includes(currentYear())) yrs.unshift(currentYear());
+    const old=sel.value||'CURRENT';
+    sel.innerHTML='<option value="CURRENT">Current Year</option>'+yrs.map(y=>`<option value="${y}">${y}</option>`).join('')+'<option value="ALL">All</option>';
+    sel.value=[...sel.options].some(o=>o.value===old)?old:'CURRENT';
+    return sel.value==='CURRENT'?currentYear():(sel.value==='ALL'?'ALL':Number(sel.value));
+  }
+  function renderBusinessGrowth(sold){
+    const canvas=$('businessGrowthChart'); if(!canvas || typeof Chart==='undefined') return;
+    const range=[...document.querySelectorAll('.growth-range-btn')].find(b=>b.classList.contains('active'))?.dataset.growthRange || 'ALL';
+    const now=new Date(); let start=null;
+    if(range==='YTD') start=new Date(now.getFullYear(),0,1);
+    if(range==='3M') start=new Date(now.getFullYear(),now.getMonth()-2,1);
+    if(range==='1M') start=new Date(now.getFullYear(),now.getMonth(),1);
+    const rows=sold.map(r=>({d:dateOf(r), sale:saleOf(r), profit:profitOf(r)})).filter(x=>x.d && (!start || x.d>=start)).sort((a,b)=>a.d-b.d);
+    let inc=0, prof=0;
+    const labels=[], income=[], profit=[];
+    rows.forEach(x=>{ inc+=x.sale; prof+=x.profit; labels.push(x.d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:range==='ALL'?'2-digit':undefined})); income.push(+inc.toFixed(2)); profit.push(+prof.toFixed(2)); });
+    set('growthIncomeStat',money(inc)); set('growthProfitStat',money(prof)); set('growthItemsStat',whole(rows.length));
+    document.querySelectorAll('.growth-range-btn').forEach(b=>b.onclick=function(){document.querySelectorAll('.growth-range-btn').forEach(x=>x.classList.remove('active')); this.classList.add('active'); refresh();});
+    try{ if(bgChart) bgChart.destroy(); }catch(e){}
+    bgChart=new Chart(canvas.getContext('2d'),{type:'line',data:{labels,datasets:[{label:'Total Income',data:income,tension:.28,pointRadius:0,borderWidth:3},{label:'Total Profit',data:profit,tension:.28,pointRadius:0,borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,resizeDelay:0,animation:false,layout:{padding:{top:12,right:26,bottom:18,left:8}},plugins:{legend:{display:true,labels:{boxWidth:14}},tooltip:{callbacks:{label:(c)=>`${c.dataset.label}: ${money(c.raw)}`}}},scales:{x:{ticks:{maxTicksLimit:8}},y:{beginAtZero:false,grace:'12%',ticks:{callback:v=>money(v)}}}}});
+    setTimeout(()=>{try{bgChart.resize(); bgChart.update('none');}catch(e){}},80);
+  }
+  function renderMonthly(sold){
+    ensureMonthlyPanel();
+    const canvas=$('resellrFinalMonthlyChart'); if(!canvas || typeof Chart==='undefined') return;
+    const buckets={};
+    sold.forEach(r=>{ const d=dateOf(r); if(!d) return; const k=monthKey(d); if(!buckets[k]) buckets[k]={income:0,cost:0,profit:0}; buckets[k].income+=saleOf(r); buckets[k].cost+=costOf(r); buckets[k].profit+=profitOf(r); });
+    const keys=Object.keys(buckets).sort();
+    const labels=keys.map(monthLabel), income=keys.map(k=>+buckets[k].income.toFixed(2)), cost=keys.map(k=>+buckets[k].cost.toFixed(2)), profit=keys.map(k=>+buckets[k].profit.toFixed(2)), goal=keys.map(_=>GOAL);
+    const nowKey=monthKey(new Date()), now=buckets[nowKey]||{income:0,cost:0,profit:0};
+    set('monthIncomeNow',money(now.income)); set('monthProfitNow',money(now.profit)); set('monthCostNow',money(now.cost));
+    try{ if(monthlyChart) monthlyChart.destroy(); }catch(e){}
+    monthlyChart=new Chart(canvas.getContext('2d'),{type:'line',data:{labels,datasets:[{label:'Total Income',data:income,tension:.28,pointRadius:3,borderWidth:3},{label:'Cost of Sold',data:cost,tension:.28,pointRadius:3,borderWidth:3},{label:'Profit',data:profit,tension:.28,pointRadius:3,borderWidth:3},{label:'$300 Goal',data:goal,tension:0,pointRadius:0,borderWidth:3,borderDash:[8,6]}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:12,right:26,bottom:18,left:8}},plugins:{legend:{display:true,labels:{boxWidth:14}},tooltip:{callbacks:{label:(c)=>`${c.dataset.label}: ${money(c.raw)}`}}},scales:{x:{ticks:{maxTicksLimit:8}},y:{beginAtZero:true,grace:'18%',ticks:{callback:v=>money(v)}}}}});
+    setTimeout(()=>{try{monthlyChart.resize(); monthlyChart.update('none');}catch(e){}},80);
+  }
+  function renderStats(sold, active){
+    const totalIncome=sold.reduce((s,r)=>s+saleOf(r),0), totalProfit=sold.reduce((s,r)=>s+profitOf(r),0), totalCost=sold.reduce((s,r)=>s+costOf(r),0);
+    const invCost=active.reduce((s,r)=>s+n(r.cost)*Math.max(1,n(r.qty)||1),0), invValue=active.reduce((s,r)=>s+n(r.list ?? r.value)*Math.max(1,n(r.qty)||1),0);
+    set('ccTodaySales',money(sold.filter(r=>{const d=dateOf(r),t=new Date(); return d&&d.toDateString()===t.toDateString();}).reduce((s,r)=>s+saleOf(r),0)));
+    set('ccActiveCount',whole(active.reduce((s,r)=>s+(n(r.qty)||1),0))); set('atlasActiveSub',money(invValue)+' listed value');
+    set('ccAvgProfit',money(sold.length?totalProfit/sold.length:0)); set('atlasProfitMargin', totalIncome?((totalProfit/totalIncome*100).toFixed(1)+'% margin'):'0% margin');
+    set('ccSellThrough', ((sold.length/(sold.length+active.length||1))*100).toFixed(1)+'%');
+    set('nwInvCost',money(invCost)); set('nwInvValue',money(invValue)); set('nwUnrealized',money(invValue-invCost)); set('nwRealized',money(totalProfit)); set('nwTotal',money(invValue+totalProfit));
+    const yr=syncYtdSelect(sold); const yRows=(yr==='ALL')?sold:sold.filter(r=>{const d=dateOf(r); return d&&d.getFullYear()===yr;});
+    set('ytdIncomeStat',money(yRows.reduce((s,r)=>s+saleOf(r),0))); set('ytdCostSoldStat',money(yRows.reduce((s,r)=>s+costOf(r),0))); set('ytdProfitStat',money(yRows.reduce((s,r)=>s+profitOf(r),0))); set('ytdItemsStat',whole(yRows.length)); set('ytdYearPill',yr==='ALL'?'All years':String(yr));
+    ensurePlatformPanel();
+    const platRows=sold; // all-time, so values do not disappear just because the year filter changes
+    const bucket={mercari:{income:0,count:0}, ebay:{income:0,count:0}, private:{income:0,count:0}};
+    platRows.forEach(r=>{ const p=platformOf(r); let k=null; if(p.includes('mercari')) k='mercari'; else if(p.includes('ebay')||p.includes('e bay')) k='ebay'; else if(p.includes('private')||p.includes('cash')||p.includes('local')) k='private'; if(k){bucket[k].income+=saleOf(r); bucket[k].count++;} });
+    set('mercariIncomeStat',money(bucket.mercari.income)); set('mercariCountStat',whole(bucket.mercari.count)+' sales');
+    set('ebayIncomeStat',money(bucket.ebay.income)); set('ebayCountStat',whole(bucket.ebay.count)+' sales');
+    set('privateIncomeStat',money(bucket.private.income)); set('privateCountStat',whole(bucket.private.count)+' sales');
+    // Budget cards with commas
+    set('mtdSalesStat',money(sold.filter(r=>{const d=dateOf(r),now=new Date();return d&&d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).reduce((s,r)=>s+saleOf(r),0)));
+    set('mtdProfitStat',money(sold.filter(r=>{const d=dateOf(r),now=new Date();return d&&d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).reduce((s,r)=>s+profitOf(r),0)));
+  }
+  function refresh(){
+    ensureDashboardIds(); removeOldPanels(); ensureMonthlyPanel(); ensurePlatformPanel();
+    const sold=arr('soldInventory'), active=arr('activeInventory');
+    renderStats(sold,active); renderBusinessGrowth(sold); renderMonthly(sold);
+  }
+  window.resellrFinalRealFixRefresh=refresh;
+  window.setBusinessGrowthRange=function(range){ document.querySelectorAll('.growth-range-btn').forEach(b=>b.classList.toggle('active',b.dataset.growthRange===range)); refresh(); };
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,700));
+  window.addEventListener('load',()=>setTimeout(refresh,900));
+  ['click','change','input'].forEach(evt=>document.addEventListener(evt,()=>{clearTimeout(window.__resellrFinalTimer); window.__resellrFinalTimer=setTimeout(refresh,300);},true));
+  setTimeout(refresh,1200); setTimeout(refresh,2500);
+})();
+</script>
+
 </body>
 </html>
 
