@@ -21037,3 +21037,96 @@ body.skin-dreamtrip .chart-wrap{
   window.addEventListener('load',function(){setTimeout(window.__rs29UpdateBudgetOnly,400);});
 })();
 </script>
+
+<style id="rs32-command-dock-hardclick-css">
+/* ===== v32 Command Dock hard click + avatar button fix ===== */
+#resellrCommandDock{
+  position:relative !important;
+  z-index:99999 !important;
+  pointer-events:auto !important;
+}
+#dockMainButton{
+  pointer-events:auto !important;
+  cursor:pointer !important;
+  position:relative !important;
+  z-index:100001 !important;
+}
+#dockPopover{
+  z-index:100000 !important;
+  pointer-events:none !important;
+}
+#resellrCommandDock.is-open #dockPopover,
+#resellrCommandDock.rs-dock-open #dockPopover,
+#resellrCommandDock:hover #dockPopover,
+#resellrCommandDock:focus-within #dockPopover{
+  opacity:1 !important;
+  transform:translateY(0) scale(1) !important;
+  pointer-events:auto !important;
+  visibility:visible !important;
+}
+#dockMainButton.has-avatar{
+  background:transparent !important;
+  border-color:color-mix(in srgb, var(--accent) 65%, var(--border)) !important;
+}
+#dockMainButton.has-avatar #dockAvatarImg{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+}
+#dockMainButton.has-avatar .dock-avatar-fallback{display:none !important;}
+</style>
+<script id="rs32-command-dock-hardclick-js">
+(function(){
+  const AVATAR_KEY='resellr_dock_avatar_image';
+  function byId(id){return document.getElementById(id)}
+  function dock(){return byId('resellrCommandDock')}
+  function main(){return byId('dockMainButton')}
+  function input(){return byId('dockAvatarInput')}
+  function applyAvatar(){
+    const img=byId('dockAvatarImg'), btn=main();
+    if(!img||!btn) return;
+    let saved='';
+    try{saved=localStorage.getItem(AVATAR_KEY)||'';}catch(e){}
+    if(saved){ img.src=saved; btn.classList.add('has-avatar'); }
+    else{ img.removeAttribute('src'); btn.classList.remove('has-avatar'); }
+  }
+  function openDock(){ const d=dock(); if(d){ d.classList.add('is-open','rs-dock-open'); } }
+  function closeDock(){ const d=dock(); if(d){ d.classList.remove('is-open','rs-dock-open'); } }
+  function toggleDock(){ const d=dock(); if(!d) return; d.classList.toggle('is-open'); d.classList.toggle('rs-dock-open', d.classList.contains('is-open')); }
+  function chooseAvatar(){ const i=input(); if(i) i.click(); }
+  function readAvatarFile(){
+    const i=input(); if(!i||!i.files||!i.files[0]) return;
+    const file=i.files[0];
+    const reader=new FileReader();
+    reader.onload=function(){
+      try{localStorage.setItem(AVATAR_KEY,String(reader.result||''));}catch(e){}
+      applyAvatar();
+      openDock();
+      i.value='';
+    };
+    reader.readAsDataURL(file);
+  }
+  function wire(){
+    applyAvatar();
+    const i=input();
+    if(i && !i.dataset.rs32Wired){ i.dataset.rs32Wired='1'; i.addEventListener('change', readAvatarFile); }
+  }
+  document.addEventListener('click',function(e){
+    const target=e.target;
+    const mainHit=target && target.closest && target.closest('#dockMainButton');
+    const uploadHit=target && target.closest && target.closest('#dockAvatarUploadButton');
+    const d=dock();
+    if(mainHit){ e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); toggleDock(); return; }
+    if(uploadHit){ e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); chooseAvatar(); return; }
+    if(d && target && !d.contains(target)) closeDock();
+  }, true);
+  document.addEventListener('pointerdown',function(e){
+    const target=e.target;
+    if(target && target.closest && target.closest('#dockMainButton')){ e.stopPropagation(); }
+  }, true);
+  document.addEventListener('DOMContentLoaded',wire);
+  window.addEventListener('load',function(){setTimeout(wire,50); setTimeout(wire,400);});
+  setInterval(wire,1500);
+})();
+</script>
