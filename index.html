@@ -21467,3 +21467,87 @@ body.skin-dreamtrip .chart-wrap{
     }
   }
 </style>
+
+<!-- ===== v35: Avatar dock no-gap fit polish ===== -->
+<style id="rs-v35-avatar-no-gap-fit-css">
+  /* Bigger top-right avatar button, aligned into the top bar without inner gaps */
+  #rsFloatingDock{
+    top: 8px !important;
+    right: 14px !important;
+    height: 56px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 100020 !important;
+  }
+  #rsFloatingDock .rs-dock-main{
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    min-height: 52px !important;
+    max-width: 52px !important;
+    max-height: 52px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 17px !important;
+    overflow: hidden !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 0 !important;
+    background: color-mix(in srgb, var(--panel, #151a21) 92%, black 8%) !important;
+    border: 1px solid color-mix(in srgb, var(--accent, #38bdf8) 55%, var(--border, #232a36)) !important;
+    box-shadow: 0 10px 24px rgba(0,0,0,.30), 0 0 0 1px rgba(255,255,255,.035) inset !important;
+  }
+  #rsFloatingDock .rs-dock-main img,
+  #rsFloatingDock .rs-dock-avatar{
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+    border-radius: 16px !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    transform: scale(1.16) !important; /* hides transparent padding inside uploaded avatars */
+    transform-origin: center center !important;
+    pointer-events: none !important;
+  }
+  #rsFloatingDock .rs-dock-fallback{
+    width: 100% !important;
+    height: 100% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+  }
+  #rsFloatingDock .rs-dock-menu{
+    top: 62px !important;
+    right: 0 !important;
+  }
+  @media (max-width: 700px){
+    #rsFloatingDock{
+      top: 7px !important;
+      right: 10px !important;
+      height: 52px !important;
+    }
+    #rsFloatingDock .rs-dock-main{
+      width: 48px !important;
+      height: 48px !important;
+      min-width: 48px !important;
+      min-height: 48px !important;
+      border-radius: 16px !important;
+    }
+    #rsFloatingDock .rs-dock-main img,
+    #rsFloatingDock .rs-dock-avatar{
+      border-radius: 15px !important;
+      transform: scale(1.16) !important;
+    }
+    #rsFloatingDock .rs-dock-menu{
+      top: 58px !important;
+    }
+  }
+</style>
