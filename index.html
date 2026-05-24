@@ -21184,6 +21184,221 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== v45: final safe hamburger + single native details dock ===== -->
+<style id="rs-v45-hamburger-one-dock-css">
+  /* kill every older duplicate top-right dock/button without touching dashboard */
+  #resellrCommandDock,
+  #rsFloatingDock,
+  #rsDockV41,
+  #rsDockV42,
+  #rsFinalDock,
+  #rsCleanDock,
+  #dockPopover,
+  #dockMainButton,
+  .rs-v42-dock-wrap,
+  .rs-command-dock,
+  .rs-floating-dock,
+  .rs-v39-dock,
+  .rs-v40-dock,
+  .rs-v41-dock,
+  .topbar-right.resellr-command-dock{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+
+  .topbar-content{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:12px !important;position:relative !important;}
+  .topbar-left{display:flex !important;align-items:center !important;gap:10px !important;min-width:0 !important;}
+  #rsLogoTopbarButton{display:none !important;}
+
+  #rsV45Hamburger{
+    display:inline-flex !important;align-items:center !important;justify-content:center !important;
+    width:44px !important;height:44px !important;min-width:44px !important;
+    padding:0 !important;margin:0 !important;border-radius:14px !important;
+    border:1px solid var(--border, rgba(255,255,255,.14)) !important;
+    background:var(--panel, rgba(255,255,255,.06)) !important;
+    color:var(--text, #fff) !important;font-size:24px !important;font-weight:800 !important;
+    line-height:1 !important;cursor:pointer !important;pointer-events:auto !important;
+    box-shadow:none !important;z-index:99990 !important;
+  }
+  #rsV45Hamburger:hover{border-color:var(--accent, #38bdf8) !important;color:var(--accent, #38bdf8) !important;transform:none !important;}
+
+  #rsV45Dock{
+    display:block !important;visibility:visible !important;pointer-events:auto !important;
+    position:relative !important;margin-left:auto !important;z-index:100000 !important;
+  }
+  #rsV45Dock summary{
+    list-style:none !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;
+    width:48px !important;height:48px !important;min-width:48px !important;
+    padding:0 !important;margin:0 !important;border-radius:16px !important;overflow:hidden !important;
+    border:1px solid var(--border, rgba(255,255,255,.16)) !important;
+    background:var(--panel, rgba(255,255,255,.06)) !important;
+    color:var(--text, #fff) !important;cursor:pointer !important;
+    box-shadow:0 10px 24px rgba(0,0,0,.20) !important;
+  }
+  #rsV45Dock summary::-webkit-details-marker{display:none !important;}
+  #rsV45Dock summary:hover{border-color:var(--accent, #38bdf8) !important;}
+  #rsV45DockBtnImg{display:none;width:100% !important;height:100% !important;object-fit:cover !important;border-radius:inherit !important;background:transparent !important;}
+  #rsV45Dock.has-avatar #rsV45DockBtnImg{display:block !important;}
+  #rsV45Dock.has-avatar #rsV45DockFallback{display:none !important;}
+  #rsV45DockFallback{font-size:22px !important;font-weight:900 !important;line-height:1 !important;}
+
+  #rsV45DockMenu{
+    position:absolute !important;right:0 !important;top:calc(100% + 10px) !important;
+    width:210px !important;display:grid !important;gap:8px !important;
+    padding:10px !important;border-radius:16px !important;
+    border:1px solid var(--border, rgba(255,255,255,.16)) !important;
+    background:var(--panel, rgba(8,12,18,.96)) !important;
+    backdrop-filter:blur(12px) !important;-webkit-backdrop-filter:blur(12px) !important;
+    box-shadow:0 20px 50px rgba(0,0,0,.38) !important;z-index:100001 !important;
+  }
+  #rsV45DockMenu button{
+    width:100% !important;min-height:38px !important;padding:9px 10px !important;
+    border-radius:12px !important;border:1px solid var(--border, rgba(255,255,255,.14)) !important;
+    background:rgba(255,255,255,.04) !important;color:var(--text,#fff) !important;
+    display:flex !important;align-items:center !important;justify-content:flex-start !important;gap:8px !important;
+    font-size:12px !important;font-weight:700 !important;cursor:pointer !important;box-shadow:none !important;transform:none !important;
+  }
+  #rsV45DockMenu button:hover{border-color:var(--accent,#38bdf8) !important;color:var(--accent,#38bdf8) !important;background:rgba(255,255,255,.07) !important;}
+  #rsV45DockMenu .rs-v45-row{display:grid !important;grid-template-columns:1fr 1fr !important;gap:8px !important;}
+  #rsV45DockMenu .icononly{justify-content:center !important;font-size:15px !important;}
+  #rsV45DockMenu .danger{color:var(--red,#ef4444) !important;}
+</style>
+<script id="rs-v45-hamburger-one-dock-js">
+(function(){
+  const AVATAR_KEY='resellr_dock_avatar_image';
+  const $=(id)=>document.getElementById(id);
+
+  function clickFirst(selectors){
+    for(const sel of selectors){
+      const el = sel[0]==='#' || sel[0]==='.' ? document.querySelector(sel) : document.getElementById(sel);
+      if(el && typeof el.click==='function'){ el.click(); return true; }
+    }
+    return false;
+  }
+  function runStyle(){
+    try{ if(typeof cycleResellrStyle==='function'){ cycleResellrStyle(); return; } }catch(e){}
+    clickFirst(['styleModeToggle','themeToggle','styleToggle']);
+  }
+  function runLofi(){
+    try{ if(typeof toggleLofiMusic==='function'){ toggleLofiMusic(); return; } }catch(e){}
+    clickFirst(['lofiMusicToggle','lofiBtn','lofiToggle','lofiAvatarBtn','lofiAvatarTrigger']);
+  }
+  function runEbay(){
+    clickFirst(['ebayPriceTopButton','ebayCompsBtn','openEbayOverlay','btnEbayComps']);
+  }
+  function runLock(){
+    try{ if(typeof lockNow==='function'){ lockNow(); return; } }catch(e){}
+    clickFirst(['lockButton','lockBtn','btnLock','logoutBtn']);
+  }
+  function runReset(){
+    try{ if(typeof resetDashboardLayout==='function'){ resetDashboardLayout(); return; } }catch(e){}
+    try{ if(typeof factoryReset==='function' && confirm('Reset RESELLr data/layout?')){ factoryReset(); return; } }catch(e){}
+    clickFirst(['resetLayoutBtn','dashResetLayout']);
+  }
+
+  function removeOldDocks(){
+    document.querySelectorAll('#resellrCommandDock,#rsFloatingDock,#rsDockV41,.rs-v42-dock-wrap,#rsFinalDock,#rsCleanDock,#dockPopover,#dockMainButton,.rs-command-dock,.rs-floating-dock,.rs-v39-dock,.rs-v40-dock,.rs-v41-dock,.topbar-right.resellr-command-dock').forEach(el=>{
+      if(el && el.id!=='rsV45Dock') el.remove();
+    });
+  }
+
+  function ensureHamburger(){
+    const left = document.querySelector('.topbar-left') || document.querySelector('.topbar-content') || document.querySelector('.topbar');
+    if(!left) return;
+    const oldLogo=$('rsLogoTopbarButton'); if(oldLogo) oldLogo.style.display='none';
+    let btn=$('rsV45Hamburger');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='rsV45Hamburger';
+      btn.type='button';
+      btn.setAttribute('aria-label','Toggle menu');
+      btn.title='Toggle menu';
+      btn.textContent='☰';
+      left.insertBefore(btn, left.firstChild);
+    }
+    btn.onclick=function(e){
+      e.preventDefault(); e.stopPropagation();
+      try{ if(typeof toggleSidebar==='function'){ toggleSidebar(); return false; } }catch(err){}
+      const app=document.querySelector('.app');
+      const sidebar=document.querySelector('.sidebar');
+      if(window.matchMedia && window.matchMedia('(max-width: 900px)').matches){ sidebar?.classList.toggle('open'); document.querySelector('.drawer-scrim')?.classList.toggle('show'); }
+      else app?.classList.toggle('sidebar-closed');
+      return false;
+    };
+  }
+
+  function ensureDock(){
+    const topbar = document.querySelector('.topbar-content') || document.querySelector('.topbar');
+    if(!topbar) return;
+    let dock=$('rsV45Dock');
+    if(!dock){
+      dock=document.createElement('details');
+      dock.id='rsV45Dock';
+      dock.innerHTML=`
+        <summary id="rsV45DockSummary" aria-label="Open quick controls" title="Quick controls">
+          <span id="rsV45DockFallback">☰</span><img id="rsV45DockBtnImg" alt="Avatar">
+        </summary>
+        <div id="rsV45DockMenu">
+          <button type="button" data-rs45="lofi">♪ Lo-Fi</button>
+          <button type="button" data-rs45="ebay">⌕ eBay Comps</button>
+          <button type="button" data-rs45="style">◐ Style</button>
+          <button type="button" data-rs45="avatar">🖼 Upload Avatar</button>
+          <div class="rs-v45-row"><button class="icononly" type="button" data-rs45="lock" title="Lock">🔒</button><button class="icononly danger" type="button" data-rs45="reset" title="Reset">↻</button></div>
+          <input id="rsV45AvatarInput" type="file" accept="image/*" style="display:none">
+        </div>`;
+      topbar.appendChild(dock);
+    }
+    const img=$('rsV45DockBtnImg');
+    const saved=localStorage.getItem(AVATAR_KEY);
+    if(saved && img){ img.src=saved; dock.classList.add('has-avatar'); }
+    else dock.classList.remove('has-avatar');
+    return dock;
+  }
+
+  function wireDock(){
+    const dock=ensureDock(); if(!dock) return;
+    const menu=$('rsV45DockMenu');
+    const input=$('rsV45AvatarInput');
+    if(menu && !menu.dataset.rs45Wired){
+      menu.dataset.rs45Wired='1';
+      menu.addEventListener('click', function(e){
+        const b=e.target.closest('button[data-rs45]'); if(!b) return;
+        e.preventDefault(); e.stopPropagation();
+        const a=b.getAttribute('data-rs45');
+        if(a==='lofi') runLofi();
+        else if(a==='ebay') runEbay();
+        else if(a==='style') runStyle();
+        else if(a==='lock') runLock();
+        else if(a==='reset') runReset();
+        else if(a==='avatar'){ input?.click(); return; }
+        dock.removeAttribute('open');
+      }, true);
+    }
+    if(input && !input.dataset.rs45Wired){
+      input.dataset.rs45Wired='1';
+      input.addEventListener('change', function(){
+        const file=this.files && this.files[0]; if(!file) return;
+        const reader=new FileReader();
+        reader.onload=function(){
+          localStorage.setItem(AVATAR_KEY, reader.result);
+          const img=$('rsV45DockBtnImg'); if(img) img.src=reader.result;
+          dock.classList.add('has-avatar');
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    document.addEventListener('click', function(e){ if(dock && !dock.contains(e.target)) dock.removeAttribute('open'); }, true);
+  }
+
+  function init(){ removeOldDocks(); ensureHamburger(); ensureDock(); wireDock(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
+  setTimeout(init,250);
+  setTimeout(init,1000);
+})();
+</script>
 </body>
 </html>
 
