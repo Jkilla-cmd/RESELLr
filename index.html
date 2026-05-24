@@ -23795,3 +23795,42 @@ body.skin-dreamtrip .chart-wrap{
     }
   }
 </style>
+
+<!-- ===== v52 ACTUAL: lock sidebar shared background so it does not visually shift ===== -->
+<style id="rs-v52-sidebar-bg-lock-actual">
+  html.rs-has-command-bg .sidebar{
+    isolation:isolate !important;
+    overflow:hidden !important;
+  }
+  html.rs-has-command-bg .sidebar::before{
+    /* Use the viewport as the anchor instead of the sidebar box. This keeps the image aligned with the rest of the app. */
+    position:fixed !important;
+    inset:0 !important;
+    width:100vw !important;
+    height:100vh !important;
+    transform:none !important;
+    background-image:var(--rs-shared-bg, var(--rs15-command-bg, none)) !important;
+    background-size:cover !important;
+    background-position:center center !important;
+    background-repeat:no-repeat !important;
+    background-attachment:scroll !important;
+    opacity:.38 !important;
+    pointer-events:none !important;
+    z-index:-1 !important;
+  }
+  html.rs-has-command-bg .sidebar::after{
+    position:absolute !important;
+    inset:0 !important;
+    z-index:0 !important;
+    pointer-events:none !important;
+  }
+  html.rs-has-command-bg .sidebar > *{
+    position:relative !important;
+    z-index:2 !important;
+  }
+  @media (max-width:900px){
+    html.rs-has-command-bg .sidebar::before{
+      background-position:center center !important;
+    }
+  }
+</style>
