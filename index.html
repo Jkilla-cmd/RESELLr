@@ -20166,6 +20166,197 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== v31: Command Dock click + avatar-as-button hardfix ===== -->
+<style id="rs-v31-command-dock-hardfix-css">
+  .topbar-right.resellr-command-dock,
+  #resellrCommandDock{
+    position: relative !important;
+    z-index: 99999 !important;
+    overflow: visible !important;
+  }
+  #dockMainButton.dock-main-button{
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+    min-height: 54px !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+    overflow: hidden !important;
+    isolation: isolate !important;
+    pointer-events: auto !important;
+  }
+  #dockMainButton .dock-avatar-img,
+  #dockAvatarImg{
+    width: 100% !important;
+    height: 100% !important;
+    display: none;
+    object-fit: cover !important;
+    object-position: center !important;
+    pointer-events: none !important;
+  }
+  #dockMainButton.has-avatar #dockAvatarImg{
+    display: block !important;
+  }
+  #dockMainButton.has-avatar .dock-avatar-fallback{
+    display: none !important;
+  }
+  #dockMainButton:not(.has-avatar) .dock-avatar-fallback{
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  #dockPopover.dock-popover{
+    z-index: 100000 !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    transform: translateY(-6px) scale(.98) !important;
+    transition: opacity .18s ease, transform .18s ease !important;
+  }
+  #resellrCommandDock.is-open #dockPopover,
+  #resellrCommandDock:hover #dockPopover,
+  #resellrCommandDock:focus-within #dockPopover{
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+  }
+  #dockPopover .dock-action{
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+</style>
+<script id="rs-v31-command-dock-hardfix-js">
+(function(){
+  const AVATAR_KEY = 'resellr_dock_avatar_image';
+
+  function qs(id){ return document.getElementById(id); }
+
+  function applyAvatar(){
+    const btn = qs('dockMainButton');
+    const img = qs('dockAvatarImg');
+    if(!btn || !img) return;
+    let saved = '';
+    try{ saved = localStorage.getItem(AVATAR_KEY) || ''; }catch(e){}
+    if(saved){
+      img.src = saved;
+      btn.classList.add('has-avatar');
+    }else{
+      img.removeAttribute('src');
+      btn.classList.remove('has-avatar');
+    }
+  }
+
+  function openDock(){ const dock = qs('resellrCommandDock'); if(dock) dock.classList.add('is-open'); }
+  function closeDock(){ const dock = qs('resellrCommandDock'); if(dock) dock.classList.remove('is-open'); }
+  function toggleDock(){ const dock = qs('resellrCommandDock'); if(dock) dock.classList.toggle('is-open'); }
+
+  function triggerAvatarUpload(){
+    let input = qs('dockAvatarInput');
+    const dock = qs('resellrCommandDock');
+    if(!input){
+      input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.id = 'dockAvatarInput';
+      input.style.display = 'none';
+      (dock || document.body).appendChild(input);
+    }
+    input.click();
+  }
+
+  function wireFileInput(){
+    const input = qs('dockAvatarInput');
+    if(!input || input.dataset.v31Wired) return;
+    input.dataset.v31Wired = '1';
+    input.addEventListener('change', function(){
+      const file = input.files && input.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(){
+        try{ localStorage.setItem(AVATAR_KEY, String(reader.result || '')); }catch(e){}
+        applyAvatar();
+        closeDock();
+        input.value = '';
+        try{ if(typeof showToast === 'function') showToast('Avatar updated'); }catch(e){}
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function openEbayComps(){
+    try{
+      const candidates = ['openEbayPriceSearch','openEbaySearch','showEbayOverlay','toggleEbayPriceSearch'];
+      for(const name of candidates){
+        if(typeof window[name] === 'function'){
+          window[name]();
+          return;
+        }
+      }
+      const old = document.querySelector('.ebay-top-logo-button:not(#ebayPriceTopButton), [data-ebay-comps], #ebayOverlayButton');
+      if(old){ old.click(); return; }
+    }catch(e){}
+    window.open('https://www.ebay.com/sch/i.html?_nkw=comic&_sacat=0&LH_Sold=1&LH_Complete=1', '_blank');
+  }
+
+  function wireDock(){
+    const dock = qs('resellrCommandDock');
+    const main = qs('dockMainButton');
+    const avatarBtn = qs('dockAvatarUploadButton');
+    const ebayBtn = qs('ebayPriceTopButton');
+    if(!dock || !main) return;
+
+    applyAvatar();
+    wireFileInput();
+
+    // Replace the old non-working click behavior with one reliable delegated behavior.
+    if(!window.__rsV31DockDelegated){
+      window.__rsV31DockDelegated = true;
+      document.addEventListener('click', function(e){
+        const mainBtn = e.target.closest && e.target.closest('#dockMainButton');
+        const upload = e.target.closest && e.target.closest('#dockAvatarUploadButton');
+        const ebay = e.target.closest && e.target.closest('#ebayPriceTopButton');
+        const dockNow = qs('resellrCommandDock');
+
+        if(mainBtn){
+          e.preventDefault();
+          e.stopPropagation();
+          toggleDock();
+          return;
+        }
+        if(upload){
+          e.preventDefault();
+          e.stopPropagation();
+          triggerAvatarUpload();
+          return;
+        }
+        if(ebay){
+          e.preventDefault();
+          e.stopPropagation();
+          openEbayComps();
+          return;
+        }
+        if(dockNow && !dockNow.contains(e.target)) closeDock();
+      }, true);
+    }
+
+    // Make sure menu button does not submit or get blocked by older onclicks.
+    main.setAttribute('type','button');
+    if(avatarBtn) avatarBtn.setAttribute('type','button');
+    if(ebayBtn) ebayBtn.setAttribute('type','button');
+  }
+
+  window.applyResellrDockAvatar = applyAvatar;
+  window.openResellrCommandDock = openDock;
+  window.closeResellrCommandDock = closeDock;
+  window.toggleResellrCommandDock = toggleDock;
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireDock);
+  else wireDock();
+  setTimeout(wireDock, 250);
+  setTimeout(wireDock, 1000);
+})();
+</script>
 </body>
 </html>
 
