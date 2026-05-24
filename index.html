@@ -24668,3 +24668,93 @@ body.skin-dreamtrip .chart-wrap{
     }
   }
 </style>
+
+<!-- ===== v56: remove dashboard label, close sidebar top gap, restore lock overlay background ===== -->
+<style id="rs-v56-gap-label-lockbg-css">
+  /* Remove the extra Dashboard label above Command View. */
+  #secDashboard > h1,
+  #secDashboard .rs15-title,
+  #secDashboard .dashboard-title,
+  #secDashboard .section-title,
+  #secDashboard .page-title,
+  #secDashboard .title:not(.rs15-command .title){
+    display:none !important;
+    visibility:hidden !important;
+    height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+  }
+
+  /* Since the top bar is removed, let the left side panel start at the very top. */
+  body{
+    padding:0 !important;
+  }
+  .app{
+    max-width:none !important;
+    margin:0 !important;
+    gap:0 !important;
+    min-height:100vh !important;
+  }
+  .canvas{
+    padding:16px !important;
+    min-width:0 !important;
+  }
+  .sidebar{
+    top:0 !important;
+    height:100vh !important;
+    min-height:100vh !important;
+    border-radius:0 18px 18px 0 !important;
+    margin:0 !important;
+    align-self:stretch !important;
+  }
+  .sidebar .brand{
+    margin-top:0 !important;
+    padding-top:0 !important;
+  }
+  #rsV55SideHamburger{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+
+  /* Keep the uploaded image on the password box, but restore the main locked overlay to the original dark look. */
+  html.rs-has-command-bg #lockScreen{
+    background:rgba(10,14,20,0.96) !important;
+  }
+  html.rs-has-command-bg #lockScreen::before,
+  html.rs-has-command-bg #lockScreen::after{
+    content:none !important;
+    display:none !important;
+    background:none !important;
+  }
+
+  @media (max-width:900px){
+    body{ padding:0 !important; }
+    .canvas{ padding:12px !important; }
+    .sidebar{
+      top:0 !important;
+      height:100vh !important;
+      min-height:100vh !important;
+      border-radius:0 18px 18px 0 !important;
+    }
+  }
+</style>
+<script id="rs-v56-gap-label-lockbg-js">
+(function(){
+  function cleanup(){
+    document.querySelectorAll('#secDashboard > h1, #secDashboard .rs15-title, #secDashboard .dashboard-title, #secDashboard .section-title, #secDashboard .page-title').forEach(function(el){
+      el.style.setProperty('display','none','important');
+      el.style.setProperty('visibility','hidden','important');
+      el.style.setProperty('height','0','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('padding','0','important');
+      el.style.setProperty('overflow','hidden','important');
+    });
+    var lock=document.getElementById('lockScreen');
+    if(lock) lock.style.setProperty('background','rgba(10,14,20,0.96)','important');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', cleanup); else cleanup();
+  window.addEventListener('load', function(){ setTimeout(cleanup,100); setTimeout(cleanup,700); });
+})();
+</script>
