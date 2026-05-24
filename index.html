@@ -23592,3 +23592,135 @@ body.skin-dreamtrip .chart-wrap{
   setTimeout(init,250); setTimeout(init,1000);
 })();
 </script>
+
+<!-- ===== v50: Match Command View background treatment across sidebar + workspace boxes ===== -->
+<style id="rs-v50-command-bg-match-panels">
+  /* Use the exact Command View style: image fills the right/full surface, with a left-to-right panel fade. */
+  html.rs-has-command-bg .sidebar,
+  html.rs-has-command-bg #secInventory,
+  html.rs-has-command-bg #secHolds,
+  html.rs-has-command-bg #secSold,
+  html.rs-has-command-bg #secImportExport,
+  html.rs-has-command-bg #secTools,
+  html.rs-has-command-bg #secSettings,
+  html.rs-has-command-bg #secInventory .panel,
+  html.rs-has-command-bg #secHolds .panel,
+  html.rs-has-command-bg #secSold .panel,
+  html.rs-has-command-bg #secImportExport .panel,
+  html.rs-has-command-bg #secTools .panel,
+  html.rs-has-command-bg #secSettings .panel,
+  html.rs-has-command-bg #secInventory .table-wrap,
+  html.rs-has-command-bg #secHolds .table-wrap,
+  html.rs-has-command-bg #secSold .table-wrap{
+    position:relative !important;
+    overflow:hidden !important;
+    isolation:isolate !important;
+  }
+
+  html.rs-has-command-bg .sidebar::before,
+  html.rs-has-command-bg #secInventory::before,
+  html.rs-has-command-bg #secHolds::before,
+  html.rs-has-command-bg #secSold::before,
+  html.rs-has-command-bg #secImportExport::before,
+  html.rs-has-command-bg #secTools::before,
+  html.rs-has-command-bg #secSettings::before,
+  html.rs-has-command-bg #secInventory .panel::before,
+  html.rs-has-command-bg #secHolds .panel::before,
+  html.rs-has-command-bg #secSold .panel::before,
+  html.rs-has-command-bg #secImportExport .panel::before,
+  html.rs-has-command-bg #secTools .panel::before,
+  html.rs-has-command-bg #secSettings .panel::before,
+  html.rs-has-command-bg #secInventory .table-wrap::before,
+  html.rs-has-command-bg #secHolds .table-wrap::before,
+  html.rs-has-command-bg #secSold .table-wrap::before{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    background-image:var(--rs-shared-bg, var(--rs15-command-bg, none)) !important;
+    background-size:cover !important;
+    background-position:right center !important;
+    background-repeat:no-repeat !important;
+    opacity:.38 !important;
+    pointer-events:none !important;
+    z-index:0 !important;
+  }
+
+  html.rs-has-command-bg .sidebar::after,
+  html.rs-has-command-bg #secInventory::after,
+  html.rs-has-command-bg #secHolds::after,
+  html.rs-has-command-bg #secSold::after,
+  html.rs-has-command-bg #secImportExport::after,
+  html.rs-has-command-bg #secTools::after,
+  html.rs-has-command-bg #secSettings::after,
+  html.rs-has-command-bg #secInventory .panel::after,
+  html.rs-has-command-bg #secHolds .panel::after,
+  html.rs-has-command-bg #secSold .panel::after,
+  html.rs-has-command-bg #secImportExport .panel::after,
+  html.rs-has-command-bg #secTools .panel::after,
+  html.rs-has-command-bg #secSettings .panel::after,
+  html.rs-has-command-bg #secInventory .table-wrap::after,
+  html.rs-has-command-bg #secHolds .table-wrap::after,
+  html.rs-has-command-bg #secSold .table-wrap::after{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    background:linear-gradient(90deg,
+      var(--panel) 0%,
+      color-mix(in srgb, var(--panel) 88%, transparent) 38%,
+      color-mix(in srgb, var(--panel) 35%, transparent) 67%,
+      transparent 100%) !important;
+    pointer-events:none !important;
+    z-index:1 !important;
+  }
+
+  html.rs-has-command-bg .sidebar > *,
+  html.rs-has-command-bg #secInventory > *,
+  html.rs-has-command-bg #secHolds > *,
+  html.rs-has-command-bg #secSold > *,
+  html.rs-has-command-bg #secImportExport > *,
+  html.rs-has-command-bg #secTools > *,
+  html.rs-has-command-bg #secSettings > *,
+  html.rs-has-command-bg #secInventory .panel > *,
+  html.rs-has-command-bg #secHolds .panel > *,
+  html.rs-has-command-bg #secSold .panel > *,
+  html.rs-has-command-bg #secImportExport .panel > *,
+  html.rs-has-command-bg #secTools .panel > *,
+  html.rs-has-command-bg #secSettings .panel > *,
+  html.rs-has-command-bg #secInventory .table-wrap > *,
+  html.rs-has-command-bg #secHolds .table-wrap > *,
+  html.rs-has-command-bg #secSold .table-wrap > *{
+    position:relative !important;
+    z-index:2 !important;
+  }
+
+  /* Keep table text readable when the image is behind the table card. */
+  html.rs-has-command-bg #secInventory table,
+  html.rs-has-command-bg #secHolds table,
+  html.rs-has-command-bg #secSold table{
+    background:transparent !important;
+  }
+</style>
+<script id="rs-v50-command-bg-match-panels-js">
+(function(){
+  const BG_KEY = 'rs15CommandBg';
+  function applyMatchedCommandBg(){
+    let bg = '';
+    try{ bg = localStorage.getItem(BG_KEY) || ''; }catch(e){}
+    if(bg){
+      document.documentElement.classList.add('rs-has-command-bg');
+      const safe = String(bg).replace(/"/g,'%22');
+      document.documentElement.style.setProperty('--rs-shared-bg','url("' + safe + '")');
+      document.documentElement.style.setProperty('--rs15-command-bg','url("' + safe + '")');
+    }else{
+      document.documentElement.classList.remove('rs-has-command-bg');
+      document.documentElement.style.removeProperty('--rs-shared-bg');
+      document.documentElement.style.removeProperty('--rs15-command-bg');
+    }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyMatchedCommandBg); else applyMatchedCommandBg();
+  window.addEventListener('storage', applyMatchedCommandBg);
+  document.addEventListener('change', function(e){ if(e.target && e.target.id === 'rs15CommandBgInput') setTimeout(applyMatchedCommandBg, 250); });
+  document.addEventListener('click', function(e){ if(e.target && e.target.closest && e.target.closest('#rs15CommandBgClear')) setTimeout(applyMatchedCommandBg, 100); });
+  setTimeout(applyMatchedCommandBg, 600);
+})();
+</script>
