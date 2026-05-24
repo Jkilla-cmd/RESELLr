@@ -19440,6 +19440,240 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== RESELLr Atlas Fix Patch: charts, snapshots, compact cards, profit goal ===== -->
+<style id="resellrAtlasFixPatchCss">
+  #secDashboard.atlas-dashboard{ max-width: 1480px; margin: 0 auto; }
+  #secDashboard .atlas-layout{ grid-template-columns: minmax(0, 1fr) 330px !important; }
+  #secDashboard .atlas-main-col, #secDashboard .atlas-side-col, #secDashboard .panel{ min-width:0 !important; }
+  #secDashboard .atlas-chart-panel{ overflow:hidden !important; }
+  #secDashboard .chart-wrap{ position:relative !important; width:100% !important; overflow:hidden !important; }
+  #businessGrowthPanel .chart-wrap, #secDashboard .atlas-big-chart{ height: 330px !important; min-height: 300px !important; max-height: 360px !important; }
+  #resellrProfitGoalPanel .chart-wrap{ height: 260px !important; min-height: 240px !important; }
+  #secDashboard canvas{ max-width:100% !important; display:block !important; }
+
+  #secDashboard .atlas-kpi-grid{ grid-template-columns: repeat(5, minmax(145px, 1fr)) !important; }
+  #secDashboard .atlas-kpi{ min-height: 104px !important; padding: 14px !important; overflow:hidden !important; }
+  #secDashboard .atlas-kpi strong{ font-size: clamp(20px, 1.65vw, 28px) !important; line-height: 1.05 !important; word-break: break-word; }
+  #secDashboard .atlas-kpi small{ font-size: 11px !important; line-height: 1.25 !important; }
+
+  #ytdSummaryPanel .atlas-snapshot-stack{ grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+  #ytdSummaryPanel .atlas-snapshot-stack div{ padding: 10px !important; min-width:0 !important; overflow:hidden !important; }
+  #ytdSummaryPanel .atlas-snapshot-stack span{ font-size: 9.5px !important; letter-spacing:.06em !important; white-space:nowrap !important; }
+  #ytdSummaryPanel .atlas-snapshot-stack b{ font-size: clamp(14px, 1.1vw, 17px) !important; line-height:1.1 !important; word-break: break-word !important; overflow-wrap:anywhere !important; }
+  #ytdSummaryPanel .market-value{ font-size: 17px !important; overflow-wrap:anywhere !important; }
+  #ytdSummaryPanel select{ max-width: 155px !important; }
+
+  #secDashboard .snapshot-list{ min-height: 64px; }
+  #secDashboard .snapshot-item{ overflow:hidden; }
+  #secDashboard .snapshot-item .name{ font-size:12px !important; line-height:1.25 !important; }
+  #secDashboard .snapshot-item .meta{ font-size:11px !important; min-width:0; }
+  #secDashboard .snapshot-item .meta span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  #resellrProfitGoalPanel .profit-goal-headline{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:12px; }
+  #resellrProfitGoalPanel .profit-goal-headline div{ border:1px solid var(--atlas-line, rgba(255,255,255,.08)); border-radius:16px; padding:12px; background:rgba(255,255,255,.03); min-width:0; }
+  #resellrProfitGoalPanel .profit-goal-headline span{ color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-size:10px; }
+  #resellrProfitGoalPanel .profit-goal-headline b{ display:block; margin-top:6px; font-size:18px; overflow-wrap:anywhere; }
+
+  @media (max-width: 1220px){
+    #secDashboard .atlas-layout{ grid-template-columns: 1fr !important; }
+    #secDashboard .atlas-side-col{ display:grid !important; grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  }
+  @media (max-width: 900px){
+    #secDashboard .atlas-kpi-grid, #secDashboard .atlas-side-col, #resellrProfitGoalPanel .profit-goal-headline{ grid-template-columns:1fr !important; }
+    #businessGrowthPanel .chart-wrap, #secDashboard .atlas-big-chart{ height: 280px !important; }
+  }
+</style>
+<script id="resellrAtlasFixPatchJs">
+(function(){
+  const PROFIT_GOAL = 300;
+  let growthChart = null;
+  let profitGoalChart = null;
+  let range = localStorage.getItem('resellr_growth_range') || 'ALL';
+
+  function n(v){
+    if(typeof v === 'number') return Number.isFinite(v) ? v : 0;
+    const x = Number(String(v ?? '').replace(/[^0-9.-]/g,''));
+    return Number.isFinite(x) ? x : 0;
+  }
+  function money(v){
+    if(typeof formatDollars === 'function') return formatDollars(n(v));
+    return '$' + n(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  function parse(raw){
+    if(!raw) return null;
+    if(raw instanceof Date && Number.isFinite(raw.getTime())) return raw;
+    const s = String(raw).trim();
+    let d = null;
+    if(/^\d{4}-\d{2}-\d{2}/.test(s)) d = new Date(s.slice(0,10) + 'T12:00:00');
+    else d = new Date(s);
+    return Number.isFinite(d.getTime()) ? d : null;
+  }
+  function readKey(key){
+    try{ const raw = localStorage.getItem(key); return raw ? (JSON.parse(raw)||[]) : []; }catch(e){ return []; }
+  }
+  function soldRows(){
+    try{ if(typeof readSold === 'function') return readSold() || []; }catch(e){}
+    return readKey('soldInventory');
+  }
+  function activeRows(){
+    try{ if(typeof readActive === 'function') return readActive() || []; }catch(e){}
+    return readKey('activeInventory');
+  }
+  function rowName(r){ return r?.item || r?.title || r?.name || r?.comic || r?.description || 'Untitled'; }
+  function sale(r){ return n(r?.sale ?? r?.salePrice ?? r?.soldPrice ?? r?.price ?? r?.amount ?? r?.total); }
+  function cost(r){ return n(r?.cost ?? r?.buyCost ?? r?.purchasePrice ?? r?.paid ?? r?.totalCost); }
+  function fees(r){ return n(r?.fees ?? r?.fee ?? r?.platformFee); }
+  function ship(r){ return n(r?.ship ?? r?.shipping ?? r?.shippingCost); }
+  function profit(r){
+    const p = n(r?.profit ?? r?.netProfit);
+    if(p) return p;
+    return sale(r) - cost(r) - fees(r) - ship(r);
+  }
+  function listValue(r){
+    const qty = Math.max(1, n(r?.qty ?? r?.quantity ?? 1));
+    const direct = n(r?.list ?? r?.listPrice ?? r?.value ?? r?.listValue ?? r?.price ?? r?.marketValue ?? r?.amount);
+    return direct * qty;
+  }
+  function soldDate(r){ return parse(r?.date ?? r?.soldDate ?? r?.sold_at ?? r?.createdAt); }
+  function activeDate(r){ return parse(r?.acquiredDate ?? r?.date ?? r?.listedDate ?? r?.createdAt ?? r?.updatedAt); }
+  function rangeStart(){
+    const now = new Date();
+    if(range === '1M') return new Date(now.getFullYear(), now.getMonth()-1, now.getDate());
+    if(range === '3M') return new Date(now.getFullYear(), now.getMonth()-3, now.getDate());
+    if(range === 'YTD') return new Date(now.getFullYear(), 0, 1);
+    return null;
+  }
+  function set(id, txt){ const el=document.getElementById(id); if(el) el.textContent=txt; }
+
+  function buildRows(){
+    const start = rangeStart();
+    return soldRows().map(r=>{
+      const d = soldDate(r);
+      if(!d) return null;
+      return { raw:r, d, label:d.toLocaleDateString(undefined,{month:'short', day:'numeric'}), income:sale(r), profit:profit(r) };
+    }).filter(Boolean).filter(x=>!start || x.d >= start).sort((a,b)=>a.d-b.d);
+  }
+
+  function ensureProfitGoalPanel(){
+    if(document.getElementById('resellrProfitGoalPanel')) return;
+    const business = document.querySelector('#businessGrowthChart')?.closest('.panel');
+    if(!business) return;
+    const panel = document.createElement('div');
+    panel.className = 'panel atlas-chart-panel';
+    panel.id = 'resellrProfitGoalPanel';
+    panel.innerHTML = `
+      <div class="atlas-panel-head">
+        <div><h3>Profit Goal</h3><p>Cumulative profit vs your $300 goal.</p></div>
+      </div>
+      <div class="profit-goal-headline">
+        <div><span>Profit</span><b id="profitGoalTotal">$0.00</b></div>
+        <div><span>Goal</span><b>$300.00</b></div>
+        <div><span>Status</span><b id="profitGoalStatus">$300.00 left</b></div>
+      </div>
+      <div class="chart-wrap"><canvas id="resellrProfitGoalChart"></canvas></div>`;
+    business.insertAdjacentElement('afterend', panel);
+  }
+
+  function updateButtons(){
+    document.querySelectorAll('.growth-range-btn').forEach(btn=>{
+      btn.classList.toggle('active', btn.getAttribute('data-growth-range') === range);
+    });
+  }
+
+  function renderBusinessGrowth(){
+    const canvas = document.getElementById('businessGrowthChart');
+    if(!canvas || typeof Chart === 'undefined') return;
+    updateButtons();
+    const rows = buildRows();
+    let ri=0, rp=0;
+    const labels=[], income=[], prof=[];
+    rows.forEach(r=>{ ri += r.income; rp += r.profit; labels.push(r.label); income.push(+ri.toFixed(2)); prof.push(+rp.toFixed(2)); });
+    set('growthIncomeStat', money(ri));
+    set('growthProfitStat', money(rp));
+    set('growthItemsStat', String(rows.length));
+    if(growthChart) try{ growthChart.destroy(); }catch(e){}
+    const allVals = income.concat(prof).filter(v=>Number.isFinite(v));
+    const min = allVals.length ? Math.min(...allVals) : 0;
+    const max = allVals.length ? Math.max(...allVals) : 100;
+    const pad = Math.max(25, (max-min)*0.12);
+    growthChart = new Chart(canvas, {
+      type:'line',
+      data:{ labels, datasets:[
+        {label:'Total Income', data:income, borderWidth:2, tension:.28, pointRadius:0, pointHoverRadius:4},
+        {label:'Total Profit', data:prof, borderWidth:2, tension:.28, pointRadius:0, pointHoverRadius:4}
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false, resizeDelay:100,
+        interaction:{mode:'index', intersect:false},
+        plugins:{ legend:{labels:{color:'#9ca3af', boxWidth:14}}, tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+money(c.parsed.y)}} },
+        scales:{
+          x:{ticks:{color:'#8b93a3', maxTicksLimit:8, autoSkip:true}, grid:{color:'rgba(148,163,184,.10)'}},
+          y:{min: Math.max(0, min-pad), max:max+pad, ticks:{color:'#8b93a3', callback:v=>money(v)}, grid:{color:'rgba(148,163,184,.10)'}}
+        }
+      }
+    });
+  }
+
+  function renderProfitGoal(){
+    ensureProfitGoalPanel();
+    const canvas = document.getElementById('resellrProfitGoalChart');
+    if(!canvas || typeof Chart === 'undefined') return;
+    const rows = buildRows();
+    let rp=0;
+    const labels=[], prof=[], goal=[];
+    rows.forEach(r=>{ rp += r.profit; labels.push(r.label); prof.push(+rp.toFixed(2)); goal.push(PROFIT_GOAL); });
+    set('profitGoalTotal', money(rp));
+    set('profitGoalStatus', rp >= PROFIT_GOAL ? money(rp-PROFIT_GOAL) + ' over' : money(PROFIT_GOAL-rp) + ' left');
+    if(profitGoalChart) try{ profitGoalChart.destroy(); }catch(e){}
+    const max = Math.max(PROFIT_GOAL, ...prof, 100);
+    profitGoalChart = new Chart(canvas, {
+      type:'line',
+      data:{ labels, datasets:[
+        {label:'Profit', data:prof, borderWidth:2, tension:.3, pointRadius:0, pointHoverRadius:4},
+        {label:'$300 Goal', data:goal, borderWidth:2, borderDash:[8,6], pointRadius:0, tension:0}
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false, resizeDelay:100,
+        plugins:{legend:{labels:{color:'#9ca3af'}}, tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+money(c.parsed.y)}}},
+        scales:{ x:{ticks:{color:'#8b93a3', maxTicksLimit:7}, grid:{color:'rgba(148,163,184,.10)'}}, y:{beginAtZero:true, suggestedMax:max*1.12, ticks:{color:'#8b93a3', callback:v=>money(v)}, grid:{color:'rgba(148,163,184,.10)'}} }
+      }
+    });
+  }
+
+  function renderSnapshots(){
+    const soldEl = document.getElementById('ccRecentSold');
+    if(soldEl){
+      const rows = soldRows().map(r=>({r,d:soldDate(r)})).sort((a,b)=>(b.d?.getTime()||0)-(a.d?.getTime()||0)).slice(0,5);
+      soldEl.innerHTML = rows.length ? rows.map(x=>`<div class="snapshot-item"><div class="name">${escapeHtml(rowName(x.r))}</div><div class="meta"><span>${x.d ? x.d.toLocaleDateString() : 'Sold'}</span><span>${money(profit(x.r))}</span></div></div>`).join('') : '<div class="snapshot-item"><div class="name muted">No sold items yet</div></div>';
+    }
+    const activeEl = document.getElementById('ccNewestInventory');
+    if(activeEl){
+      const rows = activeRows().map(r=>({r,d:activeDate(r)})).sort((a,b)=>(b.d?.getTime()||0)-(a.d?.getTime()||0)).slice(0,5);
+      activeEl.innerHTML = rows.length ? rows.map(x=>`<div class="snapshot-item"><div class="name">${escapeHtml(rowName(x.r))}</div><div class="meta"><span>${escapeHtml(String(x.r?.type || x.r?.platform || 'Active'))}</span><span>${money(listValue(x.r) || cost(x.r))}</span></div></div>`).join('') : '<div class="snapshot-item"><div class="name muted">No active inventory yet</div></div>';
+    }
+  }
+  function escapeHtml(s){ return String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+
+  function refreshAll(){
+    try{ renderBusinessGrowth(); }catch(e){ console.warn('Business growth chart fix failed', e); }
+    try{ renderProfitGoal(); }catch(e){ console.warn('Profit goal chart failed', e); }
+    try{ renderSnapshots(); }catch(e){ console.warn('Snapshot render failed', e); }
+  }
+
+  window.setBusinessGrowthRange = function(next){
+    range = next || 'ALL';
+    try{ localStorage.setItem('resellr_growth_range', range); }catch(e){}
+    refreshAll();
+  };
+  window.updateBusinessGrowthChart = refreshAll;
+
+  document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(refreshAll, 150); setTimeout(refreshAll, 800); setTimeout(refreshAll, 1600); });
+  window.addEventListener('load', ()=>setTimeout(refreshAll, 300));
+  ['click','change','input'].forEach(evt=>document.addEventListener(evt,()=>{ clearTimeout(window.__atlasFixTimer); window.__atlasFixTimer=setTimeout(refreshAll, 250); }));
+})();
+</script>
 </body>
 </html>
 
