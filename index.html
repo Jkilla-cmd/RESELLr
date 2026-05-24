@@ -19945,6 +19945,8 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+<!-- ===== v27: clearer Business Growth date labels ===== -->
 </body>
 </html>
 
@@ -20876,8 +20878,24 @@ body.skin-dreamtrip .chart-wrap{
     let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">';
     const step=Math.max(100, Math.ceil(maxY/5/100)*100);
     for(let yv=0; yv<=maxY+1; yv+=step){ const y=H-pad.b-(yv/maxY)*(H-pad.t-pad.b); svg+='<line x1="'+pad.l+'" y1="'+y+'" x2="'+(W-pad.r)+'" y2="'+y+'" stroke="rgba(255,255,255,.14)"/><text x="'+(pad.l-10)+'" y="'+(y+4)+'" text-anchor="end" fill="'+esc(muted)+'" font-size="13">'+esc(money(yv))+'</text>'; }
-    const labelCount=Math.min(7, rows.length);
-    for(let i=0;i<labelCount;i++){ const idx=Math.round(i*(rows.length-1)/Math.max(1,labelCount-1)); const r=rows[idx]; const minT=rows[0].date.getTime(), maxT=rows[rows.length-1].date.getTime(); const x=pad.l+((r.date.getTime()-minT)/Math.max(1,maxT-minT))*(W-pad.l-pad.r); svg+='<line x1="'+x+'" y1="'+pad.t+'" x2="'+x+'" y2="'+(H-pad.b)+'" stroke="rgba(255,255,255,.10)"/><text x="'+x+'" y="'+(H-16)+'" text-anchor="middle" fill="'+esc(text)+'" font-size="13">'+esc(r.date.toLocaleDateString('en-US',{month:'short',day:'numeric'}))+'</text>'; }
+    const labelCount=Math.min(5, rows.length);
+    const rangeName=getRange();
+    const fmtMain=(d)=> rangeName==='ALL' ? d.toLocaleDateString('en-US',{month:'short'}) : d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    const fmtSub=(d)=> rangeName==='ALL' ? String(d.getFullYear()) : String(d.getFullYear());
+    const used=new Set();
+    for(let i=0;i<labelCount;i++){
+      let idx=Math.round(i*(rows.length-1)/Math.max(1,labelCount-1));
+      // avoid showing the exact same label twice when many sales share nearby dates
+      let guard=0;
+      while(used.has(idx) && idx<rows.length-1 && guard++<6) idx++;
+      used.add(idx);
+      const r=rows[idx];
+      const minT=rows[0].date.getTime(), maxT=rows[rows.length-1].date.getTime();
+      const x=pad.l+((r.date.getTime()-minT)/Math.max(1,maxT-minT))*(W-pad.l-pad.r);
+      svg+='<line x1="'+x+'" y1="'+pad.t+'" x2="'+x+'" y2="'+(H-pad.b)+'" stroke="rgba(255,255,255,.10)"/>'+
+        '<text x="'+x+'" y="'+(H-28)+'" text-anchor="middle" fill="'+esc(text)+'" font-size="14" font-weight="700">'+esc(fmtMain(r.date))+'</text>'+
+        '<text x="'+x+'" y="'+(H-10)+'" text-anchor="middle" fill="'+esc(muted)+'" font-size="12">'+esc(fmtSub(r.date))+'</text>';
+    }
     if(v.income) svg+='<path d="'+svgPath(rows,'income',W,H,pad,maxY)+'" fill="none" stroke="'+esc(accent)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
     if(v.profit) svg+='<path d="'+svgPath(rows,'profit',W,H,pad,maxY)+'" fill="none" stroke="'+esc(green)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
     svg+='</svg>';
