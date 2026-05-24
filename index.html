@@ -9732,6 +9732,14 @@ button[aria-label*="eBay"] img{
 
 
 
+
+/* Business Growth Chart controls */
+.growth-range-btn.active{
+  background: color-mix(in srgb, var(--accent) 28%, transparent) !important;
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent) !important;
+  color: var(--text) !important;
+}
+#businessGrowthPanel .chart-wrap{ min-height: 320px; }
 </style>
 
 
@@ -10542,6 +10550,26 @@ td.action-cell .ebay-comps-action svg{
           <div class="panel income-full">
             <div class="command-section-title"><h3>Performance Hub</h3><span class="pill muted">Income vs Profit</span></div>
             <div class="chart-wrap"><canvas id="ccIncomeChart"></canvas></div>
+          </div>
+          <div class="panel income-full" id="businessGrowthPanel">
+            <div class="command-section-title" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div>
+                <h3 style="margin:0;">Business Growth</h3>
+                <div class="muted" style="font-size:12px;margin-top:4px;">Fidelity-style cumulative income and profit over time</div>
+              </div>
+              <div class="growth-range-tabs" style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="small growth-range-btn active" data-growth-range="ALL" onclick="setBusinessGrowthRange('ALL')">ALL</button>
+                <button class="small growth-range-btn" data-growth-range="YTD" onclick="setBusinessGrowthRange('YTD')">YTD</button>
+                <button class="small growth-range-btn" data-growth-range="3M" onclick="setBusinessGrowthRange('3M')">3M</button>
+                <button class="small growth-range-btn" data-growth-range="1M" onclick="setBusinessGrowthRange('1M')">1M</button>
+              </div>
+            </div>
+            <div class="grid2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:10px 0 12px;">
+              <div class="stat blue" id="growthIncomeStat">TOTAL INCOME: $0.00</div>
+              <div class="stat green" id="growthProfitStat">TOTAL PROFIT: $0.00</div>
+              <div class="stat muted" id="growthItemsStat">ITEMS SOLD: 0</div>
+            </div>
+            <div class="chart-wrap"><canvas id="businessGrowthChart"></canvas></div>
           </div>
           <div class="flip-zone panel"><h3>Flip Zone</h3><div class="flip-grid" id="ccFlipZone"></div></div>
         </div>
@@ -19227,6 +19255,162 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<script>
+/* ===== Fidelity-style Business Growth Chart ===== */
+(function(){
+  let businessGrowthChartObj = null;
+  let businessGrowthRange = localStorage.getItem("resellr_growth_range") || "ALL";
+
+  function money(v){
+    if(typeof formatDollars === "function") return formatDollars(v || 0);
+    return "$" + (Number(v || 0)).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  function parseSoldDate(row){
+    const raw = row && (row.date || row.soldDate || row.sold || "");
+    if(typeof _parseDateSafe === "function") return _parseDateSafe(raw);
+    const d = new Date(raw);
+    return Number.isFinite(d.getTime()) ? d : null;
+  }
+
+  function expense(v){
+    if(typeof normExpense === "function") return normExpense(v || 0);
+    const n = Math.abs(Number(v || 0));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function readSoldSafe(){
+    try{ if(typeof readSold === "function") return readSold() || []; }catch(e){}
+    try{ return JSON.parse(localStorage.getItem("soldInventory") || "[]") || []; }catch(e){ return []; }
+  }
+
+  function rangeStart(range, now){
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if(range === "1M") return new Date(d.getFullYear(), d.getMonth()-1, d.getDate());
+    if(range === "3M") return new Date(d.getFullYear(), d.getMonth()-3, d.getDate());
+    if(range === "YTD") return new Date(d.getFullYear(), 0, 1);
+    return null;
+  }
+
+  function buildGrowthRows(){
+    const now = new Date();
+    const start = rangeStart(businessGrowthRange, now);
+    return readSoldSafe()
+      .map(row => {
+        const d = parseSoldDate(row);
+        if(!d) return null;
+        const sale = Number(row.sale || 0) || 0;
+        const cost = expense(row.cost || 0);
+        const fees = expense(row.fees || row.fee || 0);
+        const ship = expense(row.ship || row.shipping || 0);
+        return {
+          date: d,
+          label: d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"2-digit"}),
+          income: sale,
+          profit: sale - cost - fees - ship
+        };
+      })
+      .filter(Boolean)
+      .filter(r => !start || r.date >= start)
+      .sort((a,b) => a.date - b.date);
+  }
+
+  window.setBusinessGrowthRange = function(range){
+    businessGrowthRange = range || "ALL";
+    try{ localStorage.setItem("resellr_growth_range", businessGrowthRange); }catch(e){}
+    updateBusinessGrowthChart();
+  };
+
+  function updateBusinessGrowthButtons(){
+    document.querySelectorAll(".growth-range-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.getAttribute("data-growth-range") === businessGrowthRange);
+    });
+  }
+
+  window.updateBusinessGrowthChart = function(){
+    const canvas = document.getElementById("businessGrowthChart");
+    if(!canvas || typeof Chart === "undefined") return;
+
+    updateBusinessGrowthButtons();
+    const rows = buildGrowthRows();
+    let runningIncome = 0;
+    let runningProfit = 0;
+    const labels = [];
+    const income = [];
+    const profit = [];
+
+    rows.forEach(r => {
+      runningIncome += r.income;
+      runningProfit += r.profit;
+      labels.push(r.label);
+      income.push(+runningIncome.toFixed(2));
+      profit.push(+runningProfit.toFixed(2));
+    });
+
+    const incomeEl = document.getElementById("growthIncomeStat");
+    const profitEl = document.getElementById("growthProfitStat");
+    const itemsEl = document.getElementById("growthItemsStat");
+    if(incomeEl) incomeEl.textContent = "TOTAL INCOME: " + money(runningIncome);
+    if(profitEl) profitEl.textContent = "TOTAL PROFIT: " + money(runningProfit);
+    if(itemsEl) itemsEl.textContent = "ITEMS SOLD: " + rows.length;
+
+    if(businessGrowthChartObj) businessGrowthChartObj.destroy();
+    businessGrowthChartObj = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Total Income", data: income, borderWidth: 2, tension: 0.35, pointRadius: 2, pointHoverRadius: 5 },
+          { label: "Total Profit", data: profit, borderWidth: 2, tension: 0.35, pointRadius: 2, pointHoverRadius: 5 }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: true, labels: { color: "#9ca3af" } },
+          tooltip: { callbacks: { label: ctx => " " + (ctx.dataset.label || "") + ": " + money(ctx.parsed.y) } }
+        },
+        scales: {
+          x: { ticks: { color: "#6b7280", maxTicksLimit: 8 }, grid: { color: "rgba(31,41,55,0.45)" } },
+          y: { beginAtZero: true, ticks: { color: "#6b7280", callback: v => money(v) }, grid: { color: "rgba(31,41,55,0.45)" } }
+        }
+      }
+    });
+  };
+
+  function hookRefreshes(){
+    const oldLoadIncome = window.loadIncomeChart;
+    if(typeof oldLoadIncome === "function" && !oldLoadIncome.__growthHooked){
+      window.loadIncomeChart = function(){
+        const out = oldLoadIncome.apply(this, arguments);
+        try{ updateBusinessGrowthChart(); }catch(e){}
+        return out;
+      };
+      window.loadIncomeChart.__growthHooked = true;
+    }
+
+    const oldRenderSold = window.renderSold;
+    if(typeof oldRenderSold === "function" && !oldRenderSold.__growthHooked){
+      window.renderSold = function(){
+        const out = oldRenderSold.apply(this, arguments);
+        try{ updateBusinessGrowthChart(); }catch(e){}
+        return out;
+      };
+      window.renderSold.__growthHooked = true;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    hookRefreshes();
+    setTimeout(updateBusinessGrowthChart, 250);
+    setTimeout(updateBusinessGrowthChart, 1000);
+  });
+  window.addEventListener("load", function(){ hookRefreshes(); setTimeout(updateBusinessGrowthChart, 250); });
+})();
+</script>
 </body>
 </html>
 
