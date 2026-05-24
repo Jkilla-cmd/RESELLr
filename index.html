@@ -19768,6 +19768,183 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   }
 </style>
 
+
+
+<!-- ===== v23 Command View BG controls: top-right hover + reliable upload + cover image ===== -->
+<style id="rs15-command-bg-v23-topright-cover-fix">
+  /* Make the uploaded image fill the whole Command View panel. */
+  #secDashboard .rs15-command::before{
+    inset: 0 !important;
+    width: auto !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    opacity: .34 !important;
+  }
+
+  /* Keep the readable fade: strongest on the left, image visible across the panel. */
+  #secDashboard .rs15-command::after{
+    background: linear-gradient(
+      90deg,
+      var(--panel) 0%,
+      color-mix(in srgb, var(--panel) 94%, transparent) 28%,
+      color-mix(in srgb, var(--panel) 62%, transparent) 58%,
+      color-mix(in srgb, var(--panel) 24%, transparent) 100%
+    ) !important;
+  }
+
+  /* Move controls to top-right and keep them hidden until that corner is hovered. */
+  #secDashboard .rs15-bg-tools{
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    left: auto !important;
+    z-index: 20 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    min-width: 190px !important;
+    min-height: 44px !important;
+    padding: 8px !important;
+    border-radius: 14px !important;
+    background: color-mix(in srgb, var(--panel) 84%, transparent) !important;
+    border: 1px solid color-mix(in srgb, var(--border) 90%, transparent) !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.24) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    opacity: 0 !important;
+    transform: translateY(-4px) !important;
+    transition: opacity .22s ease, transform .22s ease, border-color .22s ease !important;
+    pointer-events: auto !important;
+  }
+
+  #secDashboard .rs15-bg-tools:hover,
+  #secDashboard .rs15-bg-tools:focus-within{
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border)) !important;
+  }
+
+  /* Invisible hover pad: lets the top-right corner activate the hidden buttons. */
+  #secDashboard .rs15-bg-tools::before{
+    content: "" !important;
+    position: absolute !important;
+    inset: -12px !important;
+    border-radius: 18px !important;
+    z-index: -1 !important;
+  }
+
+  #secDashboard .rs15-bg-tools button{
+    width: auto !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    padding: 8px 10px !important;
+    border-radius: 11px !important;
+    margin: 0 !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+
+  /* The native input is no longer used directly; JS opens a fresh file picker. */
+  #rs15CommandBgInput{display:none!important;}
+
+  @media (hover: none){
+    #secDashboard .rs15-bg-tools{
+      opacity: .82 !important;
+      transform: none !important;
+    }
+  }
+</style>
+<script id="rs15-command-bg-v23-click-fix">
+(function(){
+  'use strict';
+  if(window.__RS15_COMMAND_BG_V23__) return;
+  window.__RS15_COMMAND_BG_V23__ = true;
+
+  function commandBox(){ return document.getElementById('rs15CommandView'); }
+
+  function applyCommandBgV23(){
+    const box = commandBox();
+    if(!box) return;
+    const img = localStorage.getItem('rs15CommandBg') || '';
+    if(img){
+      box.classList.remove('no-bg');
+      box.style.setProperty('--rs15-command-bg', 'url("' + img.replace(/"/g, '%22') + '")');
+    }else{
+      box.classList.add('no-bg');
+      box.style.removeProperty('--rs15-command-bg');
+    }
+  }
+
+  function toast(msg){ try{ if(typeof showToast === 'function') showToast(msg); }catch(e){} }
+
+  function chooseCommandBg(){
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    input.style.top = '-9999px';
+    document.body.appendChild(input);
+
+    input.addEventListener('change', function(){
+      const file = input.files && input.files[0];
+      if(!file){ input.remove(); return; }
+      if(!file.type || !file.type.startsWith('image/')){
+        toast('Choose an image file');
+        input.remove();
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(){
+        try{
+          localStorage.setItem('rs15CommandBg', String(reader.result || ''));
+          applyCommandBgV23();
+          toast('Command view background saved');
+        }catch(err){
+          toast('Image is too large to save');
+        }
+        input.remove();
+      };
+      reader.onerror = function(){ toast('Could not read image'); input.remove(); };
+      reader.readAsDataURL(file);
+    }, {once:true});
+
+    input.click();
+  }
+
+  document.addEventListener('click', function(e){
+    const upload = e.target && e.target.closest && e.target.closest('#rs15CommandBgBtn');
+    const clear = e.target && e.target.closest && e.target.closest('#rs15CommandBgClear');
+    if(upload){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      chooseCommandBg();
+      return;
+    }
+    if(clear){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      localStorage.removeItem('rs15CommandBg');
+      applyCommandBgV23();
+      toast('Command view background cleared');
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', applyCommandBgV23);
+  window.addEventListener('load', function(){ setTimeout(applyCommandBgV23, 100); setTimeout(applyCommandBgV23, 750); });
+  document.addEventListener('click', function(e){
+    if(e.target && e.target.closest && e.target.closest('[data-target="secDashboard"], #navDashboard, .nav button')){
+      setTimeout(applyCommandBgV23, 150);
+    }
+  }, true);
+  setInterval(function(){ if(commandBox()) applyCommandBgV23(); }, 2000);
+})();
+</script>
+
 </body>
 </html>
 
