@@ -20478,6 +20478,114 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   setTimeout(finalRefresh,1000);
 })();
 </script>
+
+
+<!-- ===== RESELLr v9: FINAL nav + duplicate platform cleanup guard ===== -->
+<style id="resellr-v9-nav-platform-style">
+  /* Hard-stop dashboard bleeding into other tabs */
+  .section{display:none!important;}
+  .section.active{display:block!important;}
+  #secDashboard:not(.active){display:none!important;}
+
+  /* Smaller, contained dashboard typography */
+  #secDashboard.resellr-stable-dashboard .rs7-panel,
+  #secDashboard.resellr-stable-dashboard .panel{
+    overflow:hidden!important;
+  }
+  #secDashboard.resellr-stable-dashboard .rs7-panel h3{font-size:22px!important;line-height:1.15!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-sub{font-size:13px!important;line-height:1.35!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-value{font-size:24px!important;line-height:1.05!important;word-break:normal!important;overflow-wrap:normal!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-label{font-size:11px!important;letter-spacing:.08em!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-count{font-size:12px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-platforms{display:flex!important;flex-direction:column!important;gap:10px!important;min-width:0!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-platform{display:grid!important;grid-template-columns:38px minmax(0,1fr)!important;gap:10px!important;align-items:center!important;padding:10px!important;border-radius:14px!important;min-width:0!important;overflow:hidden!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-logo{width:38px!important;height:38px!important;min-width:38px!important;font-size:15px!important;border-radius:12px!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+  #rs7PlatformPanel{max-width:100%!important;overflow:hidden!important;}
+</style>
+<script id="resellr-v9-nav-platform-fix">
+(function(){
+  'use strict';
+  const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const titleOf=(el)=>String(el?.querySelector?.('h3')?.textContent||'').trim().toLowerCase();
+
+  function forceOnlyOnePlatformPanel(){
+    const dash=document.getElementById('secDashboard');
+    if(!dash) return;
+
+    // Prefer the newest rs7 platform section. Remove all older injected versions.
+    let keep=document.getElementById('rs7PlatformPanel');
+    const platformLike=$$('.panel, .rs7-panel, section, .card', dash).filter(el=>{
+      if(!el || el===dash) return false;
+      if(el.id==='rs7PlatformPanel') return true;
+      const h=titleOf(el);
+      return h==='platform sales' || !!el.querySelector('#mercariIncomeStat,#ebayIncomeStat,#privateIncomeStat,#atlasPlatformPanel,#resellrPlatformPanel');
+    });
+
+    // If somehow no rs7 panel exists, keep the first platform-like section and normalize its id.
+    if(!keep && platformLike.length){
+      keep=platformLike[0];
+      keep.id='rs7PlatformPanel';
+      keep.classList.add('rs7-panel');
+    }
+
+    platformLike.forEach(el=>{ if(el!==keep) el.remove(); });
+
+    // Remove stray marketplace cards that were injected outside the one panel.
+    $$('.market-card, .atlas-market-card', dash).forEach(card=>{
+      if(keep && keep.contains(card)) return;
+      const label=String(card.textContent||'').toLowerCase();
+      if(label.includes('mercari') || label.includes('ebay') || label.includes('private')) card.remove();
+    });
+  }
+
+  function repairNav(){
+    const old=window.showSection;
+    window.showSection=function(sectionId){
+      $$('.section').forEach(sec=>{
+        const active=sec.id===sectionId;
+        sec.classList.toggle('active', active);
+        sec.style.display=active?'block':'none';
+      });
+      $$('.nav button[data-target], #nav button[data-target]').forEach(btn=>{
+        btn.classList.toggle('active', btn.getAttribute('data-target')===sectionId);
+      });
+      const titleMap={secDashboard:'Dashboard',secInventory:'Inventory',secHolds:'Inventory Holds',secSold:'Sold',secTools:'Tools',secSettings:'Settings',secImportExport:'Import / Export'};
+      const t=document.getElementById('topbarTitle'); if(t) t.textContent=titleMap[sectionId]||'RESELLr';
+      try{window.scrollTo(0,0);}catch(e){}
+      if(sectionId==='secDashboard'){
+        setTimeout(()=>{ try{forceOnlyOnePlatformPanel();}catch(e){}; try{window.renderRs7Dashboard?.();}catch(e){}; try{window.renderAtlasDashboard?.();}catch(e){}; },60);
+      }
+      return false;
+    };
+
+    // Make side buttons use the fixed router even if inline handlers exist.
+    $$('.nav button[data-target], #nav button[data-target]').forEach(btn=>{
+      btn.onclick=function(ev){ if(ev) ev.preventDefault(); window.showSection(btn.getAttribute('data-target')); return false; };
+    });
+  }
+
+  function boot(){
+    repairNav();
+    forceOnlyOnePlatformPanel();
+    // Enforce initial active section state.
+    const active=document.querySelector('.section.active')?.id || 'secDashboard';
+    window.showSection(active);
+
+    const dash=document.getElementById('secDashboard');
+    if(dash){
+      const mo=new MutationObserver(()=>forceOnlyOnePlatformPanel());
+      mo.observe(dash,{childList:true,subtree:true});
+    }
+    // Also catch late timers from older patches.
+    let ticks=0;
+    const int=setInterval(()=>{ forceOnlyOnePlatformPanel(); if(++ticks>20) clearInterval(int); },250);
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
 </body>
 </html>
 
