@@ -21156,3 +21156,161 @@ body.skin-dreamtrip .chart-wrap{
   setTimeout(refresh,1200);
 })();
 </script>
+
+<!-- ===== RESELLr FINAL STABLE DASHBOARD REBUILD v7 ===== -->
+<style id="resellrFinalStableDashboardCss">
+  #secDashboard.resellr-stable-dashboard{display:block!important;}
+  #secDashboard.resellr-stable-dashboard *{box-sizing:border-box;}
+  #secDashboard.resellr-stable-dashboard .rs7-shell{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(330px,.9fr);gap:18px;align-items:start;width:100%;max-width:1500px;margin:0 auto;padding:0 0 32px;}
+  #secDashboard.resellr-stable-dashboard .rs7-main,#secDashboard.resellr-stable-dashboard .rs7-rail{display:flex;flex-direction:column;gap:18px;min-width:0;}
+  #secDashboard.resellr-stable-dashboard .rs7-panel{background:rgba(255,255,255,.055)!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:22px!important;padding:22px!important;box-shadow:0 18px 44px rgba(0,0,0,.22)!important;overflow:hidden!important;min-width:0;}
+  #secDashboard.resellr-stable-dashboard .rs7-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px;}
+  #secDashboard.resellr-stable-dashboard h2,#secDashboard.resellr-stable-dashboard h3{margin:0!important;color:var(--text,#f8fafc)!important;text-transform:none!important;letter-spacing:-.03em!important;font-size:26px!important;line-height:1.1!important;font-weight:850!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-sub{margin:8px 0 0;color:var(--muted,#cbd5e1);font-size:13px;line-height:1.45;}
+  #secDashboard.resellr-stable-dashboard .rs7-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px;}
+  #secDashboard.resellr-stable-dashboard .rs7-kpi{border:1px solid rgba(255,255,255,.18);border-radius:18px;padding:14px 16px;background:rgba(255,255,255,.035);min-width:0;overflow:hidden;}
+  #secDashboard.resellr-stable-dashboard .rs7-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#cbd5e1);font-weight:800;white-space:normal;}
+  #secDashboard.resellr-stable-dashboard .rs7-value{font-size:28px;line-height:1.08;font-weight:900;color:var(--text,#fff);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums;}
+  #secDashboard.resellr-stable-dashboard .rs7-chart{height:390px!important;min-height:390px!important;max-height:390px!important;width:100%!important;position:relative!important;overflow:hidden!important;padding:0!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-chart canvas{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+  #secDashboard.resellr-stable-dashboard .rs7-pill{width:auto!important;border:none!important;background:rgba(15,23,42,.72)!important;color:var(--text,#fff)!important;border-radius:12px!important;padding:10px 13px!important;font-weight:850!important;font-size:12px!important;line-height:1!important;box-shadow:none!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-pill.active{background:var(--accent,#38bdf8)!important;color:#061018!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  #secDashboard.resellr-stable-dashboard .rs7-platforms{display:flex;flex-direction:column;gap:12px;margin-top:8px;}
+  #secDashboard.resellr-stable-dashboard .rs7-platform{display:grid;grid-template-columns:58px minmax(0,1fr);gap:14px;align-items:center;border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:14px;background:rgba(255,255,255,.035);min-width:0;overflow:hidden;}
+  #secDashboard.resellr-stable-dashboard .rs7-logo{width:54px;height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:900;overflow:hidden;}
+  #secDashboard.resellr-stable-dashboard .rs7-logo.m{background:#ff3b3b;color:white;font-size:28px;}
+  #secDashboard.resellr-stable-dashboard .rs7-logo.e{background:#fff7d6;color:#e53238;font-family:Arial,sans-serif;font-size:16px;}
+  #secDashboard.resellr-stable-dashboard .rs7-logo.p{background:#111827;color:#fde68a;font-size:25px;}
+  #secDashboard.resellr-stable-dashboard .rs7-platform .rs7-value{font-size:31px;margin-top:3px;}
+  #secDashboard.resellr-stable-dashboard .rs7-count{font-size:13px;color:var(--muted,#cbd5e1);margin-top:3px;}
+  #secDashboard.resellr-stable-dashboard .rs7-actions{display:grid;grid-template-columns:1fr;gap:10px;}
+  #secDashboard.resellr-stable-dashboard .rs7-actions button{width:100%!important;text-align:center!important;background:rgba(15,23,42,.70)!important;border:1px solid rgba(255,255,255,.12)!important;color:var(--text,#fff)!important;border-radius:14px!important;padding:13px 14px!important;}
+  #secDashboard.resellr-stable-dashboard .rs7-donut{height:270px!important;min-height:270px!important;max-height:270px!important;}
+  @media(max-width:1100px){#secDashboard.resellr-stable-dashboard .rs7-shell{grid-template-columns:1fr;}#secDashboard.resellr-stable-dashboard .rs7-chart{height:340px!important;min-height:340px!important;max-height:340px!important;}#secDashboard.resellr-stable-dashboard .rs7-kpis{grid-template-columns:1fr 1fr;} }
+  @media(max-width:680px){#secDashboard.resellr-stable-dashboard .rs7-panel{padding:16px!important;border-radius:18px!important;}#secDashboard.resellr-stable-dashboard .rs7-kpis,#secDashboard.resellr-stable-dashboard .rs7-grid2{grid-template-columns:1fr;}#secDashboard.resellr-stable-dashboard .rs7-chart{height:300px!important;min-height:300px!important;max-height:300px!important;}#secDashboard.resellr-stable-dashboard .rs7-value{font-size:24px;}#secDashboard.resellr-stable-dashboard h2,#secDashboard.resellr-stable-dashboard h3{font-size:23px!important;}}
+</style>
+<script id="resellrFinalStableDashboardScript">
+(function(){
+  'use strict';
+  const DASH_ID='secDashboard';
+  const GOAL=300;
+  const moneyFmt=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
+  const intFmt=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
+  function parseNum(v){
+    if(v===null||v===undefined) return 0;
+    if(typeof v==='number') return Number.isFinite(v)?v:0;
+    let s=String(v).trim(); if(!s) return 0;
+    let neg=/^\s*\(/.test(s) || /^\s*-/.test(s);
+    s=s.replace(/\((.*)\)/,'$1').replace(/[^0-9.\-]/g,'');
+    if((s.match(/\./g)||[]).length>1){ const parts=s.split('.'); s=parts.shift()+'.'+parts.join(''); }
+    let n=Number(s); if(!Number.isFinite(n)) n=0; return neg?-Math.abs(n):n;
+  }
+  function money(v){return moneyFmt.format(parseNum(v));}
+  function whole(v){return intFmt.format(parseNum(v));}
+  function readKey(key){try{const raw=localStorage.getItem(key); const arr=JSON.parse(raw||'[]'); return Array.isArray(arr)?arr:[];}catch(e){return[];}}
+  function soldRows(){ if(typeof window.readSold==='function'){try{return window.readSold()||[];}catch(e){}} return readKey('soldInventory'); }
+  function activeRows(){ if(typeof window.readActive==='function'){try{return window.readActive()||[];}catch(e){}} return readKey('activeInventory'); }
+  function dateOf(r){ const candidates=[r.date,r.soldDate,r.saleDate,r.orderDate,r.createdAt]; for(const c of candidates){ if(!c) continue; const d=new Date(c); if(!isNaN(d)) return d; const m=String(c).match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); if(m){let y=+m[3]; if(y<100)y+=2000; const d2=new Date(y,+m[1]-1,+m[2]); if(!isNaN(d2)) return d2;} } return null; }
+  function saleOf(r){ for(const k of ['sale','salePrice','sold','soldPrice','gross','revenue','totalIncome','income','amount','price']){ if(r && r[k]!==undefined && r[k]!==null && String(r[k]).trim()!==''){ const n=parseNum(r[k]); if(n!==0) return n; } } return 0; }
+  function costOf(r){return parseNum(r.cost||r.itemCost||r.cogs||r.purchase||r.buyCost||0)+parseNum(r.fees||r.fee||r.platformFees||0)+parseNum(r.ship||r.shipping||r.shipCost||r.shippingCost||0);}
+  function itemCostOf(r){return parseNum(r.cost||r.itemCost||r.cogs||r.purchase||r.buyCost||0);}
+  function profitOf(r){ if(r && r.profit!==undefined && r.profit!==null && String(r.profit).trim()!=='') return parseNum(r.profit); return saleOf(r)-costOf(r); }
+  function platformOf(r){return String((r&&r.platform)||'').trim().toLowerCase();}
+  function listOf(r){return parseNum(r.list||r.listPrice||r.value||r.asking||r.askingPrice||r.price||0);}
+  function set(id,val){const el=document.getElementById(id); if(el) el.textContent=val;}
+  function destroyChart(id){const old=document.getElementById(id); if(!old) return null; try{const c=window.Chart&&Chart.getChart(old); if(c)c.destroy();}catch(e){} const fresh=old.cloneNode(false); old.parentNode.replaceChild(fresh,old); return fresh;}
+  function chartDefaults(){ if(!window.Chart) return; Chart.defaults.color='#dbeafe'; Chart.defaults.font.family='Inter, system-ui, -apple-system, Segoe UI, Arial, sans-serif'; }
+  function go(section){ if(typeof window.showSection==='function') window.showSection(section); }
+  window.rs7Go=go;
+  function buildShell(){
+    const dash=document.getElementById(DASH_ID); if(!dash) return false;
+    dash.classList.add('resellr-stable-dashboard');
+    if(dash.dataset.rs7==='1') return true;
+    dash.dataset.rs7='1';
+    dash.innerHTML=`
+      <div class="rs7-shell">
+        <div class="rs7-main">
+          <section class="rs7-panel" id="rs7GrowthPanel">
+            <div class="rs7-head"><div><h2>Business Growth</h2><p class="rs7-sub">Total income and profit over time.</p></div><div class="rs7-controls"><button class="rs7-pill active" data-range="ALL">ALL</button><button class="rs7-pill" data-range="YTD">YTD</button><button class="rs7-pill" data-range="3M">3M</button><button class="rs7-pill" data-range="1M">1M</button></div></div>
+            <div class="rs7-kpis"><div class="rs7-kpi"><div class="rs7-label">Total Income</div><div class="rs7-value" id="rs7GrowthIncome">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Total Profit</div><div class="rs7-value" id="rs7GrowthProfit">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Items Sold</div><div class="rs7-value" id="rs7GrowthItems">0</div></div></div>
+            <div class="rs7-chart"><canvas id="rs7GrowthChart"></canvas></div>
+          </section>
+          <section class="rs7-panel" id="rs7MonthlyPanel">
+            <div class="rs7-head"><div><h2>Monthly Profit View</h2><p class="rs7-sub">Monthly total income, cost of sold, and profit with a dotted ${money(GOAL)} profit goal line.</p></div></div>
+            <div class="rs7-kpis"><div class="rs7-kpi"><div class="rs7-label">This Month Income</div><div class="rs7-value" id="rs7MonthIncome">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">This Month Profit</div><div class="rs7-value" id="rs7MonthProfit">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">This Month Cost</div><div class="rs7-value" id="rs7MonthCost">$0.00</div></div></div>
+            <div class="rs7-chart"><canvas id="rs7MonthlyChart"></canvas></div>
+          </section>
+          <section class="rs7-panel" id="rs7InventoryPanel">
+            <div class="rs7-head"><div><h2>Inventory Health</h2><p class="rs7-sub">Cost, list value, and profit spread.</p></div></div>
+            <div class="rs7-grid2"><div class="rs7-kpi"><div class="rs7-label">Inventory Cost</div><div class="rs7-value" id="rs7InvCost">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Inventory Value</div><div class="rs7-value" id="rs7InvValue">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Unrealized Gain</div><div class="rs7-value" id="rs7Unrealized">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Realized Profit</div><div class="rs7-value" id="rs7Realized">$0.00</div></div></div>
+            <div class="rs7-chart rs7-donut"><canvas id="rs7InventoryChart"></canvas></div>
+          </section>
+        </div>
+        <aside class="rs7-rail">
+          <section class="rs7-panel" id="rs7SnapshotPanel"><div class="rs7-head"><div><h3>Sold Snapshot</h3><p class="rs7-sub" id="rs7SnapYear">Current year</p></div></div><div class="rs7-grid2"><div class="rs7-kpi"><div class="rs7-label">Total Income</div><div class="rs7-value" id="rs7YtdIncome">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Cost of Sold</div><div class="rs7-value" id="rs7YtdCost">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Profit</div><div class="rs7-value" id="rs7YtdProfit">$0.00</div></div><div class="rs7-kpi"><div class="rs7-label">Items</div><div class="rs7-value" id="rs7YtdItems">0</div></div></div></section>
+          <section class="rs7-panel" id="rs7PlatformPanel"><div class="rs7-head"><div><h3>Platform Sales</h3><p class="rs7-sub">YTD income by marketplace.</p></div></div><div class="rs7-platforms"><div class="rs7-platform"><div class="rs7-logo m">M</div><div><div class="rs7-label">Mercari</div><div class="rs7-value" id="rs7MercariIncome">$0.00</div><div class="rs7-count" id="rs7MercariCount">0 sales</div></div></div><div class="rs7-platform"><div class="rs7-logo e">eBay</div><div><div class="rs7-label">eBay</div><div class="rs7-value" id="rs7EbayIncome">$0.00</div><div class="rs7-count" id="rs7EbayCount">0 sales</div></div></div><div class="rs7-platform"><div class="rs7-logo p">P</div><div><div class="rs7-label">Private Sale</div><div class="rs7-value" id="rs7PrivateIncome">$0.00</div><div class="rs7-count" id="rs7PrivateCount">0 sales</div></div></div></div></section>
+          <section class="rs7-panel"><div class="rs7-head"><div><h3>Fast Moves</h3><p class="rs7-sub">Quick shortcuts.</p></div></div><div class="rs7-actions"><button onclick="rs7Go('secInventory')">Add / Manage Inventory</button><button onclick="rs7Go('secSold')">View Sold</button><button onclick="rs7Go('secHolds')">Review Holds</button><button onclick="rs7Go('secImportExport')">Backup Data</button></div></section>
+          <section class="rs7-panel"><div class="rs7-head"><div><h3>Business Net Worth</h3><p class="rs7-sub">Inventory Value + Realized Profit</p></div></div><div class="rs7-kpi"><div class="rs7-label">Estimated Business Value</div><div class="rs7-value" id="rs7NetWorth">$0.00</div></div></section>
+        </aside>
+      </div>`;
+    dash.querySelectorAll('.rs7-pill[data-range]').forEach(btn=>btn.addEventListener('click',()=>{localStorage.setItem('rs7Range',btn.dataset.range); renderAll();}));
+    return true;
+  }
+  function renderStats(){
+    const sold=soldRows(), active=activeRows();
+    const now=new Date(), year=now.getFullYear();
+    const ytd=sold.filter(r=>{const d=dateOf(r); return d&&d.getFullYear()===year;});
+    const allIncome=sold.reduce((s,r)=>s+saleOf(r),0), allProfit=sold.reduce((s,r)=>s+profitOf(r),0);
+    const yIncome=ytd.reduce((s,r)=>s+saleOf(r),0), yCost=ytd.reduce((s,r)=>s+costOf(r),0), yProfit=ytd.reduce((s,r)=>s+profitOf(r),0);
+    const invCost=active.reduce((s,r)=>s+itemCostOf(r)*(parseNum(r.qty)||1),0);
+    const invValue=active.reduce((s,r)=>s+listOf(r)*(parseNum(r.qty)||1),0);
+    set('rs7GrowthIncome',money(allIncome)); set('rs7GrowthProfit',money(allProfit)); set('rs7GrowthItems',whole(sold.length));
+    set('rs7YtdIncome',money(yIncome)); set('rs7YtdCost',money(yCost)); set('rs7YtdProfit',money(yProfit)); set('rs7YtdItems',whole(ytd.length)); set('rs7SnapYear',String(year));
+    set('rs7InvCost',money(invCost)); set('rs7InvValue',money(invValue)); set('rs7Unrealized',money(invValue-invCost)); set('rs7Realized',money(allProfit)); set('rs7NetWorth',money(invValue+allProfit));
+    function bucket(test){const rows=ytd.filter(r=>test(platformOf(r))); return {income:rows.reduce((s,r)=>s+saleOf(r),0),count:rows.length};}
+    const merc=bucket(p=>p.includes('mercari'));
+    const ebay=bucket(p=>p.includes('ebay')||p.includes('e-bay')||p.includes('e bay'));
+    const priv=bucket(p=>p.includes('private')||p.includes('cash')||p.includes('local')||p.includes('manual')||(!p.includes('mercari')&&!p.includes('ebay')&&p!==''));
+    set('rs7MercariIncome',money(merc.income)); set('rs7MercariCount',whole(merc.count)+' sales');
+    set('rs7EbayIncome',money(ebay.income)); set('rs7EbayCount',whole(ebay.count)+' sales');
+    set('rs7PrivateIncome',money(priv.income)); set('rs7PrivateCount',whole(priv.count)+' sales');
+  }
+  function renderGrowth(){
+    const canvas=destroyChart('rs7GrowthChart'); if(!canvas||!window.Chart)return; chartDefaults();
+    const range=localStorage.getItem('rs7Range')||'ALL'; document.querySelectorAll('.rs7-pill[data-range]').forEach(b=>b.classList.toggle('active',b.dataset.range===range));
+    const now=new Date(); let start=null; if(range==='YTD') start=new Date(now.getFullYear(),0,1); if(range==='3M') start=new Date(now.getFullYear(),now.getMonth()-3,now.getDate()); if(range==='1M') start=new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
+    const rows=soldRows().map(r=>({r,d:dateOf(r)})).filter(x=>x.d&&(!start||x.d>=start)).sort((a,b)=>a.d-b.d);
+    let inc=0, prof=0; const labels=[], income=[], profit=[];
+    rows.forEach(x=>{inc+=saleOf(x.r); prof+=profitOf(x.r); labels.push(x.d.toLocaleDateString('en-US',{month:'short',day:'numeric'})); income.push(+inc.toFixed(2)); profit.push(+prof.toFixed(2));});
+    new Chart(canvas,{type:'line',data:{labels,datasets:[{label:'Total Income',data:income,borderColor:'#22d3ee',backgroundColor:'rgba(34,211,238,.16)',borderWidth:3,pointRadius:0,tension:.22,fill:false},{label:'Total Profit',data:profit,borderColor:'#fb426b',backgroundColor:'rgba(251,66,107,.14)',borderWidth:3,pointRadius:0,tension:.22,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,resizeDelay:0,layout:{padding:{top:10,right:18,bottom:14,left:8}},plugins:{legend:{position:'top',labels:{boxWidth:12,usePointStyle:false}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+money(c.parsed.y)}}},interaction:{mode:'index',intersect:false},scales:{x:{ticks:{maxTicksLimit:10,color:'#e5e7eb'},grid:{color:'rgba(255,255,255,.11)'}},y:{beginAtZero:true,grace:'12%',ticks:{color:'#e5e7eb',callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}});
+  }
+  function monthlyData(){
+    const map=new Map();
+    soldRows().forEach(r=>{const d=dateOf(r); if(!d)return; const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); if(!map.has(k)) map.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const b=map.get(k); b.income+=saleOf(r); b.cost+=costOf(r); b.profit+=profitOf(r);});
+    return [...map.values()].sort((a,b)=>a.date-b.date).slice(-12);
+  }
+  function renderMonthly(){
+    const canvas=destroyChart('rs7MonthlyChart'); if(!canvas||!window.Chart)return; chartDefaults();
+    const rows=monthlyData(); const labels=rows.map(b=>b.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'}));
+    const now=new Date(); const cur=rows.find(b=>b.date.getFullYear()===now.getFullYear()&&b.date.getMonth()===now.getMonth())||{income:0,cost:0,profit:0};
+    set('rs7MonthIncome',money(cur.income)); set('rs7MonthCost',money(cur.cost)); set('rs7MonthProfit',money(cur.profit));
+    new Chart(canvas,{type:'line',data:{labels,datasets:[{label:'Total Income',data:rows.map(b=>+b.income.toFixed(2)),borderColor:'#22d3ee',backgroundColor:'rgba(34,211,238,.16)',borderWidth:3,pointRadius:3,tension:.25,fill:false},{label:'Cost of Sold',data:rows.map(b=>+b.cost.toFixed(2)),borderColor:'#fb426b',backgroundColor:'rgba(251,66,107,.14)',borderWidth:3,pointRadius:3,tension:.25,fill:false},{label:'Profit',data:rows.map(b=>+b.profit.toFixed(2)),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.16)',borderWidth:3,pointRadius:3,tension:.25,fill:false},{label:'$300 Goal',data:rows.map(()=>GOAL),borderColor:'#fde047',backgroundColor:'rgba(253,224,71,.15)',borderWidth:2,borderDash:[7,6],pointRadius:0,tension:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:10,right:18,bottom:14,left:8}},plugins:{legend:{position:'top',labels:{boxWidth:12}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+money(c.parsed.y)}}},interaction:{mode:'index',intersect:false},scales:{x:{ticks:{maxTicksLimit:12,color:'#e5e7eb'},grid:{color:'rgba(255,255,255,.11)'}},y:{beginAtZero:true,grace:'14%',ticks:{color:'#e5e7eb',callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}});
+  }
+  function renderInventoryChart(){
+    const canvas=destroyChart('rs7InventoryChart'); if(!canvas||!window.Chart)return; chartDefaults(); const active=activeRows();
+    const invCost=active.reduce((s,r)=>s+itemCostOf(r)*(parseNum(r.qty)||1),0), invValue=active.reduce((s,r)=>s+listOf(r)*(parseNum(r.qty)||1),0), realized=soldRows().reduce((s,r)=>s+profitOf(r),0);
+    new Chart(canvas,{type:'doughnut',data:{labels:['Inventory Cost','Unrealized Gain','Realized Profit'],datasets:[{data:[Math.max(invCost,0),Math.max(invValue-invCost,0),Math.max(realized,0)],backgroundColor:['#22d3ee','#fb426b','#f59e0b'],borderColor:'rgba(255,255,255,.85)',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,animation:false,cutout:'62%',plugins:{legend:{position:'bottom'}}}});
+  }
+  function renderAll(){ if(!buildShell()) return; renderStats(); renderGrowth(); renderMonthly(); renderInventoryChart(); }
+  let busy=false;
+  function safeRender(){ if(busy) return; busy=true; setTimeout(()=>{try{renderAll();}finally{busy=false;}},50); }
+  window.rs7RefreshDashboard=renderAll;
+  document.addEventListener('DOMContentLoaded',()=>{setTimeout(renderAll,200);setTimeout(renderAll,1200);setTimeout(renderAll,2800);});
+  window.addEventListener('load',()=>{setTimeout(renderAll,300);setTimeout(renderAll,1600);});
+  document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('[data-target="secDashboard"],button[onclick*="secDashboard"]'); if(b) setTimeout(renderAll,120);});
+  const obs=new MutationObserver(()=>{const dash=document.getElementById(DASH_ID); if(dash && dash.dataset.rs7!=='1') safeRender();});
+  setTimeout(()=>{const dash=document.getElementById(DASH_ID); if(dash&&dash.parentNode) obs.observe(dash.parentNode,{childList:true,subtree:false}); renderAll();},800);
+})();
+</script>
