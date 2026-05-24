@@ -20683,6 +20683,144 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== RESELLr v11: dashboard theme match polish ===== -->
+<style id="resellr-v11-theme-match">
+  /* Make the rebuilt Atlas dashboard inherit the app theme instead of using its own palette. */
+  #secDashboard.resellr-stable-dashboard,
+  #secDashboard.resellr-stable-dashboard .rs7-shell{
+    background: transparent !important;
+    color: var(--text) !important;
+  }
+
+  #secDashboard.resellr-stable-dashboard .rs7-panel{
+    background: var(--panel) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    box-shadow: var(--soft-shadow, 0 14px 40px rgba(0,0,0,.26)) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+
+  #secDashboard.resellr-stable-dashboard .rs7-kpi,
+  #secDashboard.resellr-stable-dashboard .rs7-platform{
+    background: color-mix(in srgb, var(--panel) 88%, var(--text) 4%) !important;
+    border: 1px solid color-mix(in srgb, var(--border) 82%, var(--text) 8%) !important;
+    color: var(--text) !important;
+    box-shadow: none !important;
+  }
+
+  #secDashboard.resellr-stable-dashboard .rs7-head h2,
+  #secDashboard.resellr-stable-dashboard .rs7-head h3,
+  #secDashboard.resellr-stable-dashboard h2,
+  #secDashboard.resellr-stable-dashboard h3{
+    color: color-mix(in srgb, var(--text) 82%, var(--accent) 18%) !important;
+  }
+
+  #secDashboard.resellr-stable-dashboard .rs7-sub,
+  #secDashboard.resellr-stable-dashboard .rs7-label,
+  #secDashboard.resellr-stable-dashboard .rs7-count{
+    color: var(--muted) !important;
+  }
+
+  #secDashboard.resellr-stable-dashboard .rs7-value{
+    color: var(--text) !important;
+  }
+
+  #secDashboard.resellr-stable-dashboard .rs7-pill,
+  #secDashboard.resellr-stable-dashboard .rs7-actions button{
+    background: color-mix(in srgb, var(--accent) 10%, transparent) !important;
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)) !important;
+    color: var(--accent) !important;
+    box-shadow: none !important;
+  }
+
+  #secDashboard.resellr-stable-dashboard .rs7-pill.active,
+  #secDashboard.resellr-stable-dashboard .rs7-pill:hover,
+  #secDashboard.resellr-stable-dashboard .rs7-actions button:hover{
+    background: color-mix(in srgb, var(--accent) 18%, transparent) !important;
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border)) !important;
+    color: var(--text) !important;
+  }
+
+  /* Platform logos now follow the theme instead of bright off-theme colors. */
+  #secDashboard.resellr-stable-dashboard .rs7-logo{
+    background: color-mix(in srgb, var(--accent) 22%, var(--panel)) !important;
+    color: var(--text) !important;
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border)) !important;
+  }
+  #secDashboard.resellr-stable-dashboard .rs7-logo.e,
+  #secDashboard.resellr-stable-dashboard .rs7-logo.m,
+  #secDashboard.resellr-stable-dashboard .rs7-logo.p{
+    background: color-mix(in srgb, var(--accent) 22%, var(--panel)) !important;
+    color: var(--text) !important;
+  }
+
+  /* Chart containers should feel like the rest of the app, not a separate dashboard skin. */
+  #secDashboard.resellr-stable-dashboard .rs7-chart{
+    background: color-mix(in srgb, var(--panel) 92%, var(--text) 3%) !important;
+    border: 1px solid color-mix(in srgb, var(--border) 88%, var(--text) 6%) !important;
+    border-radius: 16px !important;
+  }
+
+  html[data-theme="lofi"] #secDashboard.resellr-stable-dashboard .rs7-panel,
+  html[data-theme="lofi"] #secDashboard.resellr-stable-dashboard .rs7-kpi,
+  html[data-theme="lofi"] #secDashboard.resellr-stable-dashboard .rs7-platform,
+  html[data-theme="lofi"] #secDashboard.resellr-stable-dashboard .rs7-chart{
+    background: rgba(7, 10, 18, 0.64) !important;
+    border-color: rgba(255, 160, 190, 0.16) !important;
+  }
+
+  html[data-theme="monochrome"] #secDashboard.resellr-stable-dashboard .rs7-logo,
+  html[data-theme="monochrome"] #secDashboard.resellr-stable-dashboard .rs7-pill{
+    background: rgba(255,255,255,0.06) !important;
+    border-color: rgba(255,255,255,0.18) !important;
+    color: var(--text) !important;
+  }
+</style>
+<script id="resellr-v11-chart-theme-sync">
+(function(){
+  function cssVar(name, fallback){
+    try{ return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback; }catch(e){ return fallback; }
+  }
+  function applyThemeToCharts(){
+    if(!window.Chart) return;
+    const accent = cssVar('--accent', '#38bdf8');
+    const accent2 = cssVar('--accent-2', accent);
+    const text = cssVar('--text', '#e5e7eb');
+    const muted = cssVar('--muted', '#94a3b8');
+    Chart.defaults.color = text;
+    Chart.defaults.borderColor = 'rgba(148,163,184,.18)';
+    ['rs7GrowthChart','rs7MonthlyChart','rs7InventoryChart'].forEach(function(id){
+      const canvas = document.getElementById(id);
+      const chart = canvas && Chart.getChart(canvas);
+      if(!chart) return;
+      if(id === 'rs7GrowthChart'){
+        if(chart.data.datasets[0]) chart.data.datasets[0].borderColor = accent;
+        if(chart.data.datasets[1]) chart.data.datasets[1].borderColor = accent2;
+      }
+      if(id === 'rs7MonthlyChart'){
+        if(chart.data.datasets[0]) chart.data.datasets[0].borderColor = accent;
+        if(chart.data.datasets[1]) chart.data.datasets[1].borderColor = muted;
+        if(chart.data.datasets[2]) chart.data.datasets[2].borderColor = accent2;
+        if(chart.data.datasets[3]) chart.data.datasets[3].borderColor = text;
+      }
+      if(id === 'rs7InventoryChart'){
+        const ds = chart.data.datasets && chart.data.datasets[0];
+        if(ds){ ds.backgroundColor = [accent, accent2, muted]; ds.borderColor = cssVar('--panel', '#111827'); }
+      }
+      chart.update('none');
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyThemeToCharts, 900); setTimeout(applyThemeToCharts, 2500); });
+  window.addEventListener('load', function(){ setTimeout(applyThemeToCharts, 1200); setTimeout(applyThemeToCharts, 3800); });
+  document.addEventListener('change', function(e){ if(e.target && (e.target.id || '').toLowerCase().includes('theme')) setTimeout(applyThemeToCharts, 300); });
+  document.addEventListener('click', function(){ setTimeout(applyThemeToCharts, 500); });
+  window.rs11ApplyDashboardTheme = applyThemeToCharts;
+})();
+</script>
+
 </body>
 </html>
 
