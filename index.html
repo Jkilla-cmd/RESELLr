@@ -19524,6 +19524,122 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<script id="resellr-v18-chart-toggle-shortcuts-fix">
+/* ===== v18: persistent chart toggles + Fast Moves overlay shortcuts =====
+   - Chart legend toggles on Business Growth / Monthly Profit View / Inventory Health now stay off instead of reappearing.
+   - Fast Moves > Inventory opens the same overlay as Ctrl+I.
+   - Fast Moves > Holds opens the same overlay as Ctrl+H. */
+(function(){
+  if(window.__resellrV18ChartToggleShortcuts) return;
+  window.__resellrV18ChartToggleShortcuts = true;
+
+  const STORE_KEY = 'resellrChartHiddenDatasetsV18';
+  const CHART_IDS = new Set(['rs15GrowthChart','rs15MonthlyChart','rs15InventoryChart','incomeChart','profitChart']);
+
+  function readStore(){
+    try{ return JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {}; }
+    catch(e){ return {}; }
+  }
+  function writeStore(data){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(data || {})); }catch(e){}
+  }
+  function chartId(chart){
+    try{ return chart && chart.canvas && chart.canvas.id; }catch(e){ return ''; }
+  }
+  function saveHiddenState(chart){
+    const id = chartId(chart);
+    if(!id || !CHART_IDS.has(id)) return;
+    const data = readStore();
+    data[id] = {};
+    try{
+      chart.data.datasets.forEach((ds, i)=>{
+        const label = String(ds.label || ('Dataset ' + i));
+        data[id][label] = !chart.isDatasetVisible(i);
+      });
+    }catch(e){}
+    writeStore(data);
+  }
+  function applyHiddenState(chart){
+    const id = chartId(chart);
+    if(!id || !CHART_IDS.has(id)) return;
+    const saved = readStore()[id];
+    if(!saved) return;
+    try{
+      chart.data.datasets.forEach((ds, i)=>{
+        const label = String(ds.label || ('Dataset ' + i));
+        if(saved[label] === true) chart.setDatasetVisibility(i, false);
+        if(saved[label] === false) chart.setDatasetVisibility(i, true);
+      });
+    }catch(e){}
+  }
+
+  function installChartPersistence(){
+    if(!window.Chart || window.__resellrV18ChartPersistenceInstalled) return;
+    window.__resellrV18ChartPersistenceInstalled = true;
+
+    const originalLegendClick = Chart.defaults.plugins.legend.onClick;
+    Chart.defaults.plugins.legend.onClick = function(e, legendItem, legend){
+      if(typeof originalLegendClick === 'function'){
+        originalLegendClick.call(this, e, legendItem, legend);
+      }else if(legend && legend.chart && legendItem){
+        const chart = legend.chart;
+        const index = legendItem.datasetIndex;
+        chart.setDatasetVisibility(index, !chart.isDatasetVisible(index));
+        chart.update();
+      }
+      setTimeout(()=>saveHiddenState(legend && legend.chart), 0);
+    };
+
+    Chart.register({
+      id: 'resellrPersistentLegendStateV18',
+      afterInit(chart){ applyHiddenState(chart); },
+      beforeUpdate(chart){ applyHiddenState(chart); },
+      afterUpdate(chart){ saveHiddenState(chart); }
+    });
+
+    // Apply to any charts that already exist before this script loaded.
+    setTimeout(()=>{
+      try{
+        document.querySelectorAll('canvas').forEach(c=>{
+          const ch = Chart.getChart(c);
+          if(ch){ applyHiddenState(ch); ch.update('none'); }
+        });
+      }catch(e){}
+    }, 100);
+  }
+
+  if(window.Chart) installChartPersistence();
+  else window.addEventListener('load', installChartPersistence, {once:true});
+
+  function openInventoryOverlay(){
+    if(typeof window.openAddInventoryOverlay === 'function') return window.openAddInventoryOverlay();
+    try{ document.dispatchEvent(new KeyboardEvent('keydown',{key:'i',code:'KeyI',ctrlKey:true,bubbles:true})); }catch(e){}
+  }
+  function openHoldOverlay(){
+    if(typeof window.openAddHoldOverlay === 'function') return window.openAddHoldOverlay();
+    try{ document.dispatchEvent(new KeyboardEvent('keydown',{key:'h',code:'KeyH',ctrlKey:true,bubbles:true})); }catch(e){}
+  }
+
+  // Capture before inline onclick="showSection(...)" runs.
+  document.addEventListener('click', function(e){
+    const btn = e.target && e.target.closest && e.target.closest('#secDashboard .rs15-actions button');
+    if(!btn) return;
+    const label = (btn.textContent || '').trim().toLowerCase();
+    if(label === 'inventory'){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      openInventoryOverlay();
+    }else if(label === 'holds'){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      openHoldOverlay();
+    }
+  }, true);
+})();
+</script>
+
 </body>
 </html>
 
