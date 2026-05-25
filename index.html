@@ -24758,3 +24758,164 @@ body.skin-dreamtrip .chart-wrap{
   window.addEventListener('load', function(){ setTimeout(cleanup,100); setTimeout(cleanup,700); });
 })();
 </script>
+
+<!-- ===== v57: final sidebar gap + lock overlay background fix ===== -->
+<style id="rs-v57-sidebar-gap-lock-bg-fix">
+  /* Remove any remaining reserved top-bar space so the side panel reaches the true top. */
+  .topbar,
+  .topbar-content,
+  #topbar,
+  #topbarSpacer,
+  .topbar-spacer{
+    display:none !important;
+    visibility:hidden !important;
+    height:0 !important;
+    min-height:0 !important;
+    max-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    pointer-events:none !important;
+  }
+
+  body{
+    padding:0 !important;
+    margin:0 !important;
+  }
+
+  .app,
+  .app.sidebar-closed{
+    max-width:none !important;
+    width:100% !important;
+    min-height:100vh !important;
+    margin:0 !important;
+    padding:0 !important;
+    gap:0 !important;
+    display:grid !important;
+    grid-template-columns:86px minmax(0,1fr) !important;
+  }
+
+  .app:not(.sidebar-closed),
+  .app.sidebar-open{
+    grid-template-columns:290px minmax(0,1fr) !important;
+  }
+
+  #sidebar,
+  .sidebar{
+    position:fixed !important;
+    top:0 !important;
+    left:0 !important;
+    bottom:0 !important;
+    height:100vh !important;
+    min-height:100vh !important;
+    width:86px !important;
+    margin:0 !important;
+    border-radius:0 18px 18px 0 !important;
+    transform:none !important;
+    z-index:8000 !important;
+    padding-top:12px !important;
+  }
+
+  .app:not(.sidebar-closed) #sidebar,
+  .app:not(.sidebar-closed) .sidebar,
+  .app.sidebar-open #sidebar,
+  .app.sidebar-open .sidebar{
+    width:290px !important;
+  }
+
+  .canvas{
+    grid-column:2 !important;
+    margin-top:0 !important;
+    min-height:100vh !important;
+    padding-top:32px !important;
+  }
+
+  /* Keep the uploaded image on the lock BOX only. The rest of the locked overlay stays clean/dark. */
+  html.rs-has-command-bg #lockScreen,
+  body.rs-app-locked #lockScreen,
+  #lockScreen{
+    background:rgba(10,14,20,0.96) !important;
+    background-image:none !important;
+  }
+
+  html.rs-has-command-bg #lockScreen::before,
+  html.rs-has-command-bg #lockScreen::after,
+  body.rs-app-locked #lockScreen::before,
+  body.rs-app-locked #lockScreen::after,
+  #lockScreen::before,
+  #lockScreen::after{
+    content:none !important;
+    display:none !important;
+    background:none !important;
+    background-image:none !important;
+  }
+
+  body.rs-app-locked::before,
+  body.rs-app-locked::after{
+    display:none !important;
+    content:none !important;
+  }
+
+  /* Keep Command View uploaded image on the password entry box. */
+  html.rs-has-command-bg #lockScreen .lockBox::before{
+    content:"" !important;
+    display:block !important;
+    background-image:var(--rs-shared-bg, var(--rs15-command-bg, none)) !important;
+    background-size:cover !important;
+    background-position:right center !important;
+    background-repeat:no-repeat !important;
+  }
+
+  html.rs-has-command-bg #lockScreen .lockBox::after{
+    content:"" !important;
+    display:block !important;
+  }
+
+  /* Keep the floating avatar hidden when locked. */
+  body.rs-app-locked #rsV55Dock{
+    display:none !important;
+    pointer-events:none !important;
+    visibility:hidden !important;
+  }
+</style>
+<script id="rs-v57-lock-cleanup-js">
+(function(){
+  function isVisible(el){
+    if(!el) return false;
+    var cs=getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
+  }
+  function sync(){
+    var lock=document.getElementById('lockScreen');
+    var locked=isVisible(lock);
+    document.body.classList.toggle('rs-app-locked', locked);
+    if(lock){
+      lock.style.setProperty('background','rgba(10,14,20,0.96)','important');
+      lock.style.setProperty('background-image','none','important');
+    }
+    var dock=document.getElementById('rsV55Dock');
+    if(locked && dock) dock.classList.remove('open');
+  }
+  function forceLayout(){
+    document.querySelectorAll('.topbar,.topbar-content,#topbar,#topbarSpacer,.topbar-spacer').forEach(function(el){
+      el.style.setProperty('display','none','important');
+      el.style.setProperty('height','0','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('padding','0','important');
+    });
+    document.querySelectorAll('#sidebar,.sidebar').forEach(function(el){
+      el.style.setProperty('top','0','important');
+      el.style.setProperty('height','100vh','important');
+      el.style.setProperty('min-height','100vh','important');
+      el.style.setProperty('margin','0','important');
+    });
+    var canvas=document.querySelector('.canvas');
+    if(canvas){ canvas.style.setProperty('margin-top','0','important'); }
+    sync();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', forceLayout); else forceLayout();
+  window.addEventListener('load', function(){ setTimeout(forceLayout,80); setTimeout(forceLayout,600); });
+  var lock=document.getElementById('lockScreen');
+  if(lock){ try{ new MutationObserver(sync).observe(lock,{attributes:true,attributeFilter:['style','class']}); }catch(e){} }
+})();
+</script>
