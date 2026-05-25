@@ -22522,6 +22522,77 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== v58: Sold Snapshot isolated from dashboard graph redraws ===== -->
+<script id="rs-v58-snapshot-no-graph-redraw">
+(function(){
+  if(window.__rsV58SnapshotNoGraphRedraw) return;
+  window.__rsV58SnapshotNoGraphRedraw = true;
+  function $(id){ return document.getElementById(id); }
+  function num(v){ const n = Number(String(v == null ? '' : v).replace(/[^0-9.-]/g,'')); return Number.isFinite(n) ? n : 0; }
+  function money(v){ return '$' + (Number(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function whole(v){ return (Number(v)||0).toLocaleString('en-US'); }
+  function readArray(key){ try{ const a = JSON.parse(localStorage.getItem(key)||'[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+  function soldRows(){ try{ return typeof window.readSold === 'function' ? window.readSold() : readArray('soldInventory'); }catch(e){ return readArray('soldInventory'); } }
+  function dateOf(r){ const raw = r && (r.date || r.soldDate || r.Date || r['Sold Date'] || r.saleDate || r.completedDate || r.createdAt); const d = raw ? new Date(raw) : null; return d && !isNaN(d) ? d : null; }
+  function saleOf(r){ return num(r && (r.sale ?? r.sales ?? r.price ?? r.salePrice ?? r.soldPrice ?? r.revenue ?? r.income ?? r.amount ?? r.totalIncome ?? r.total)); }
+  function costOf(r){ return num(r && (r.cost ?? r.Cost ?? r.itemCost ?? r.cogs ?? r.costOfSold ?? r['Cost of Sold'])); }
+  function feeOf(r){ return num(r && (r.fees ?? r.fee ?? r.Fees ?? r.platformFees ?? r.sellingFees)); }
+  function shipOf(r){ return num(r && (r.ship ?? r.shipping ?? r.Shipping ?? r.shippingCost ?? r.postage)); }
+  function profitOf(r){ const p = r && (r.profit ?? r.netProfit ?? r.totalProfit); return (p !== undefined && p !== null && String(p).trim() !== '') ? num(p) : saleOf(r)-costOf(r)-feeOf(r)-shipOf(r); }
+  function platformOf(r){ return String(r && (r.platform ?? r.Platform ?? r.marketplace ?? r.source ?? '')).toLowerCase(); }
+  function set(id,val){ const el=$(id); if(el) el.textContent = val; }
+  function selectedRows(){
+    const sel = $('rs15SnapshotYear');
+    const now = new Date();
+    const val = (sel && sel.value) || localStorage.getItem('rs15SnapshotYear') || 'CURRENT';
+    localStorage.setItem('rs15SnapshotYear', val);
+    const target = val === 'CURRENT' ? String(now.getFullYear()) : val;
+    const rows = soldRows().filter(function(r){
+      if(target === 'ALL') return true;
+      const d = dateOf(r); return d && String(d.getFullYear()) === String(target);
+    });
+    return { val, target, rows };
+  }
+  function updateSnapshotOnly(){
+    const info = selectedRows();
+    const rows = info.rows;
+    const income = rows.reduce((s,r)=>s+saleOf(r),0);
+    const cost = rows.reduce((s,r)=>s+costOf(r),0);
+    const profit = rows.reduce((s,r)=>s+profitOf(r),0);
+    set('rs15YtdIncome', money(income));
+    set('rs15YtdCost', money(cost));
+    set('rs15YtdProfit', money(profit));
+    set('rs15YtdItems', whole(rows.length));
+    set('rs15SnapYear', info.val === 'CURRENT' ? 'Current year' : (info.val === 'ALL' ? 'All years' : info.val));
+    function bucket(kind){
+      const b = rows.filter(function(r){ const p=platformOf(r); if(kind==='m') return p.includes('mercari'); if(kind==='e') return p.includes('ebay') || p.includes('e-bay') || p.includes('e bay'); return p.includes('private') || p.includes('cash') || p.includes('local') || p.includes('direct') || p.includes('manual') || p.includes('offline'); });
+      return { income:b.reduce((s,r)=>s+saleOf(r),0), count:b.length };
+    }
+    const m=bucket('m'), e=bucket('e'), p=bucket('p');
+    set('rs15MercariIncome', money(m.income)); set('rs15MercariCount', whole(m.count)+' sales');
+    set('rs15EbayIncome', money(e.income)); set('rs15EbayCount', whole(e.count)+' sales');
+    set('rs15PrivateIncome', money(p.income)); set('rs15PrivateCount', whole(p.count)+' sales');
+  }
+  document.addEventListener('change', function(e){
+    if(e.target && e.target.id === 'rs15SnapshotYear'){
+      localStorage.setItem('rs15SnapshotYear', e.target.value || 'CURRENT');
+      updateSnapshotOnly();
+      // Stop late/global dashboard refreshers from rebuilding the graph layer.
+      e.stopImmediatePropagation();
+    }
+  }, true);
+  document.addEventListener('input', function(e){
+    if(e.target && e.target.id === 'rs15SnapshotYear'){
+      localStorage.setItem('rs15SnapshotYear', e.target.value || 'CURRENT');
+      updateSnapshotOnly();
+      e.stopImmediatePropagation();
+    }
+  }, true);
+  window.addEventListener('load', function(){ setTimeout(updateSnapshotOnly, 600); });
+})();
+</script>
 </body>
 </html>
 
@@ -23145,6 +23216,8 @@ body.skin-dreamtrip .chart-wrap{
   // v29: do not redraw charts on every input/slider move; it caused flicker.
   document.addEventListener('change',function(e){
     const t=e.target;
+    // Sold Snapshot year should update only its own snapshot cards. Do not redraw the graph layer.
+    if(t && t.id === 'rs15SnapshotYear') return;
     if(t && (t.id==='rs15Reinvest' || t.id==='rs15BudgetMode')) return;
     schedule(180);
   },true);
