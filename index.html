@@ -22724,6 +22724,464 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== RESELLr v61: performance build (pagination + cached data + chart stabilization) ===== -->
+<style id="resellr-v61-performance-css">
+  html.rs-perf-mode .chart-wrap canvas{ image-rendering:auto; }
+  html.rs-perf-mode .table-wrap{ contain: content; }
+  html.rs-perf-mode tbody tr{ content-visibility:auto; contain-intrinsic-size:42px; }
+  .rs-perf-pager{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    margin:10px 0 0; padding:10px 12px; border:1px solid var(--border);
+    border-radius:14px; background:rgba(0,0,0,.12); color:var(--muted); font-size:12px;
+  }
+  .rs-perf-pager .rs-perf-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .rs-perf-pager button{ width:auto !important; padding:7px 10px !important; font-size:12px !important; }
+  .rs-perf-badge{ font-size:11px; opacity:.78; }
+</style>
+<script id="resellr-v61-performance-js">
+(function(){
+  'use strict';
+  document.documentElement.classList.add('rs-perf-mode');
+  const PAGE_SIZE = 75;
+  const state = {activePage:1, holdsPage:1, soldPage:1, activeSearch:'', holdsSearch:'', soldSearch:''};
+  const cache = Object.create(null);
+  const fmt = (v)=>{ try{return formatDollars(v);}catch(e){return '$' + (Number(v)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});} };
+  const esc = (v)=> String(v ?? '').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const getRaw = (key)=>{ try{return localStorage.getItem(key)||'[]';}catch(e){return '[]';} };
+  function cachedRead(key){
+    const raw = getRaw(key);
+    const hit = cache[key];
+    if(hit && hit.raw === raw) return hit.data;
+    let data=[]; try{ data = JSON.parse(raw) || []; }catch(e){ data=[]; }
+    cache[key] = {raw, data};
+    return data;
+  }
+  function cachedWrite(key, arr){
+    try{ localStorage.setItem(key, JSON.stringify(arr||[])); }catch(e){}
+    delete cache[key];
+  }
+  if(typeof ACTIVE_KEY !== 'undefined'){
+    window.readActive = function(){ return cachedRead(ACTIVE_KEY); };
+    window.writeActive = function(arr){ cachedWrite(ACTIVE_KEY, arr); };
+  }
+  if(typeof HOLDS_KEY !== 'undefined'){
+    window.readHolds = function(){ return cachedRead(HOLDS_KEY); };
+    window.writeHolds = function(arr){ cachedWrite(HOLDS_KEY, arr); };
+  }
+  if(typeof SOLD_KEY !== 'undefined'){
+    window.readSold = function(){ return cachedRead(SOLD_KEY); };
+    window.writeSold = function(arr){ cachedWrite(SOLD_KEY, arr); };
+  }
+
+  // Chart.js speed / no flicker.
+  function stabilizeCharts(){
+    if(!window.Chart) return;
+    try{
+      Chart.defaults.animation = false;
+      Chart.defaults.transitions.active.animation.duration = 0;
+      Chart.defaults.responsiveAnimationDuration = 0;
+      Chart.defaults.elements.line.tension = 0.25;
+    }catch(e){}
+  }
+  stabilizeCharts();
+
+  function monthKeySafe(iso){ try{return monthKey(iso);}catch(e){ const m=String(iso||'').match(/^(\d{4})-(\d{2})/); return m?m[1]+'-'+m[2]:null; } }
+  function yearSafe(d){ try{return extractYear(d);}catch(e){ const m=String(d||'').match(/^(\d{4})/); return m?m[1]:''; } }
+  function ensurePager(id, tbody, page, total, onPage){
+    const wrap = tbody && tbody.closest('.table-wrap');
+    if(!wrap) return;
+    let pager = document.getElementById(id);
+    if(!pager){
+      pager = document.createElement('div');
+      pager.id = id; pager.className = 'rs-perf-pager';
+      wrap.insertAdjacentElement('afterend', pager);
+    }
+    const shown = Math.min(total, page * PAGE_SIZE);
+    const more = shown < total;
+    pager.innerHTML = `<div><b>${shown.toLocaleString()}</b> of <b>${total.toLocaleString()}</b> shown <span class="rs-perf-badge">• Performance mode</span></div><div class="rs-perf-actions"></div>`;
+    const actions = pager.querySelector('.rs-perf-actions');
+    if(more){
+      const moreBtn=document.createElement('button'); moreBtn.type='button'; moreBtn.textContent='Load more';
+      moreBtn.onclick=()=>onPage(page+1);
+      actions.appendChild(moreBtn);
+      const allBtn=document.createElement('button'); allBtn.type='button'; allBtn.textContent='Show all';
+      allBtn.onclick=()=>onPage(Math.ceil(total/PAGE_SIZE));
+      actions.appendChild(allBtn);
+    }
+    if(page>1){
+      const lessBtn=document.createElement('button'); lessBtn.type='button'; lessBtn.textContent='Show less';
+      lessBtn.onclick=()=>onPage(1);
+      actions.appendChild(lessBtn);
+    }
+  }
+
+  window.setActiveSearch = function(val){ state.activeSearch=String(val||'').trim().toLowerCase(); state.activePage=1; debounce('active', ()=>window.renderActive&&window.renderActive()); };
+  window.setHoldsSearch = function(val){ state.holdsSearch=String(val||'').trim().toLowerCase(); state.holdsPage=1; debounce('holds', ()=>window.renderHolds&&window.renderHolds()); };
+  window.setSoldSearch = function(val){ state.soldSearch=String(val||'').trim().toLowerCase(); state.soldPage=1; debounce('sold', ()=>window.renderSold&&window.renderSold()); };
+  const timers={}; function debounce(k, fn){ clearTimeout(timers[k]); timers[k]=setTimeout(fn,180); }
+
+  function matchTerm(obj, term){ if(!term) return true; return [obj.item,obj.notes,obj.platform,obj.type,obj.date].join(' ').toLowerCase().includes(term); }
+
+  function renderActiveRow(r){
+    const tr=document.createElement('tr');
+    const vals=[r.date||'', r.item||'', r.type||'', r.platform||'', fmt(r.cost), fmt(r.list), String(r.qty??1), r.notes||''];
+    vals.forEach(v=>{ const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
+    const action=document.createElement('td'); action.className='action-cell';
+    const e=document.createElement('span'); e.className='edit'; e.title='Edit'; e.textContent='✏️'; e.onclick=()=>openEditModal('active', r._id);
+    const comps=document.createElement('span'); comps.className='ebay-comps-action'; comps.title='Search eBay sold comps'; comps.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><path d="M3 16.5 L8.5 10.8 L13 14.1 L21 5.5" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.2 5.5 H21 V10.3" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'; comps.onclick=()=>window.open(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(r.item||'')}&LH_Sold=1&LH_Complete=1`,'_blank','noopener,noreferrer');
+    const s=document.createElement('span'); s.className='soldbtn'; s.title='Mark Sold'; s.textContent='✅'; s.onclick=()=>openMarkSoldModal(r._id);
+    const h=document.createElement('span'); h.className='yellow'; h.title='Move to Holds'; h.textContent='🧊'; h.style.cursor='pointer'; h.onclick=()=>moveActiveToHolds(r._id);
+    const d=document.createElement('span'); d.className='trash'; d.title='Delete'; d.textContent='🗑'; d.onclick=()=>deleteActiveById(r._id);
+    [e,comps,s,h,d].forEach((x,i)=>{ if(i) x.style.marginLeft='8px'; action.appendChild(x); });
+    tr.appendChild(action); return tr;
+  }
+
+  window.renderActive = function(){
+    const all=readActive(); try{refreshActiveFilters(all);}catch(e){}
+    const year=document.getElementById('activeYearFilter')?.value||'ALL';
+    const month=document.getElementById('activeMonthFilter')?.value||'ALL';
+    const platform=document.getElementById('activePlatformFilter')?.value||'ALL';
+    const filtered=all.filter(r=>((year==='ALL')||yearSafe(r.date)===year)&&((month==='ALL')||monthKeySafe(r.date)===month)&&((platform==='ALL')||String(r.platform||'')===platform)&&matchTerm(r,state.activeSearch));
+    try{
+      const totals=getActiveInventoryTotals(filtered,false);
+      const c=document.getElementById('activeCountStat'), cost=document.getElementById('activeCostStat'), list=document.getElementById('activeListStat');
+      if(c)c.textContent=`ITEMS (QTY): ${Number(totals.qtyCount||0).toLocaleString()}`;
+      if(cost)cost.textContent=`TOTAL COST: ${fmt(totals.totalCost)}`;
+      if(list)list.textContent=`TOTAL LIST: ${fmt(totals.totalValue)}`;
+    }catch(e){}
+    const tbody=document.getElementById('activeTableBody'); if(!tbody) return;
+    tbody.innerHTML=''; const frag=document.createDocumentFragment();
+    const sorted=[...filtered].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+    sorted.slice(0,state.activePage*PAGE_SIZE).forEach(r=>frag.appendChild(renderActiveRow(r)));
+    tbody.appendChild(frag);
+    ensurePager('activePerfPager',tbody,state.activePage,sorted.length,(p)=>{state.activePage=p; renderActive();});
+    try{updateNetWorth();}catch(e){}; try{safeBudgetRefresh();}catch(e){};
+  };
+
+  function renderHoldsRow(r){
+    const tr=document.createElement('tr');
+    const vals=[r.date||'', r.item||'', r.type||'', r.platform||'', fmt(r.cost), fmt(r.value), String(Number(r.qty||1)), r.notes||''];
+    vals.forEach(v=>{ const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
+    const action=document.createElement('td'); action.className='action-cell';
+    const e=document.createElement('span'); e.className='edit'; e.title='Edit'; e.textContent='✏️'; e.onclick=()=>openEditModal('hold', r._id);
+    const mv=document.createElement('span'); mv.className='soldbtn'; mv.title='Move to Inventory'; mv.textContent='📋'; mv.onclick=()=>moveHoldToInventory(r._id);
+    const del=document.createElement('span'); del.className='trash'; del.title='Delete'; del.textContent='🗑'; del.onclick=()=>deleteHoldById(r._id);
+    [e,mv,del].forEach((x,i)=>{ if(i) x.style.marginLeft='8px'; action.appendChild(x); }); tr.appendChild(action); return tr;
+  }
+
+  window.renderHolds = function(){
+    const all=readHolds(); try{refreshHoldsFilters(all);}catch(e){}
+    const year=document.getElementById('holdsYearFilter')?.value||'ALL';
+    const month=document.getElementById('holdsMonthFilter')?.value||'ALL';
+    const filtered=all.filter(r=>((year==='ALL')||yearSafe(r.date)===year)&&((month==='ALL')||monthKeySafe(r.date)===month)&&matchTerm(r,state.holdsSearch));
+    const tbody=document.getElementById('holdsTableBody'); if(tbody){
+      tbody.innerHTML=''; const frag=document.createDocumentFragment();
+      const sorted=[...filtered].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+      sorted.slice(0,state.holdsPage*PAGE_SIZE).forEach(r=>frag.appendChild(renderHoldsRow(r)));
+      tbody.appendChild(frag);
+      ensurePager('holdsPerfPager',tbody,state.holdsPage,sorted.length,(p)=>{state.holdsPage=p; renderHolds();});
+    }
+    try{updateHoldsDashboard(filtered,all);}catch(e){}; try{updateNetWorth();}catch(e){};
+  };
+
+  function renderSoldRow(r){
+    const tr=document.createElement('tr');
+    const vals=[r.date||'', r.item||'', r.type||'', r.platform||'', fmt(r.sale), fmt(r.cost), fmt(r.fees), fmt(r.ship)];
+    vals.forEach(v=>{ const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
+    const p=Number(r.profit)||0; const tdP=document.createElement('td'); tdP.textContent=fmt(p); tdP.className=p>0?'profit-pos':(p<0?'profit-neg':'profit-zero'); tr.appendChild(tdP);
+    const action=document.createElement('td'); action.className='action-cell';
+    const e=document.createElement('span'); e.className='edit'; e.title='Edit'; e.textContent='✏️'; e.onclick=()=>openEditModal('sold', r._id);
+    const del=document.createElement('span'); del.className='trash'; del.title='Delete'; del.textContent='🗑'; del.style.marginLeft='8px'; del.onclick=()=>deleteSoldById(r._id);
+    action.appendChild(e); action.appendChild(del); tr.appendChild(action); return tr;
+  }
+
+  window.renderSold = function(){
+    const all=readSold(); try{refreshSoldFilters(all);}catch(e){}
+    const year=document.getElementById('soldYearFilter')?.value||'ALL';
+    const month=document.getElementById('soldMonthFilter')?.value||'ALL';
+    const platform=document.getElementById('soldPlatformFilter')?.value||'ALL';
+    const type=document.getElementById('soldTypeFilter')?.value||'ALL';
+    const filtered=all.filter(r=>((year==='ALL')||yearSafe(r.date)===year)&&((month==='ALL')||monthKeySafe(r.date)===month)&&((platform==='ALL')||String(r.platform||'')===platform)&&((type==='ALL')||String(r.type||'')===type)&&matchTerm(r,state.soldSearch));
+    const tbody=document.getElementById('soldTableBody'); if(!tbody) return;
+    tbody.innerHTML=''; const frag=document.createDocumentFragment();
+    const sorted=[...filtered].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+    sorted.slice(0,state.soldPage*PAGE_SIZE).forEach(r=>frag.appendChild(renderSoldRow(r)));
+    tbody.appendChild(frag);
+    ensurePager('soldPerfPager',tbody,state.soldPage,sorted.length,(p)=>{state.soldPage=p; renderSold();});
+    try{ updateSoldSummaryAndCharts(); }catch(e){}
+    try{ updateDashboardInventoryStats(); }catch(e){}
+    try{ updateNetWorth(); }catch(e){}
+    try{ updateDashboardYTD(); }catch(e){}
+    try{ safeBudgetRefresh(); }catch(e){}
+  };
+
+  // Filter dropdowns should reset only the related table page.
+  function wireFilterResets(){
+    ['activeYearFilter','activeMonthFilter','activePlatformFilter'].forEach(id=>document.getElementById(id)?.addEventListener('change',()=>{state.activePage=1;}));
+    ['holdsYearFilter','holdsMonthFilter'].forEach(id=>document.getElementById(id)?.addEventListener('change',()=>{state.holdsPage=1;}));
+    ['soldYearFilter','soldMonthFilter','soldPlatformFilter','soldTypeFilter'].forEach(id=>document.getElementById(id)?.addEventListener('change',()=>{state.soldPage=1;}));
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', wireFilterResets); else wireFilterResets();
+
+  // Re-render once after all legacy scripts settle.
+  setTimeout(()=>{ try{renderActive();}catch(e){} try{renderHolds();}catch(e){} try{renderSold();}catch(e){} }, 300);
+})();
+</script>
+
+
+
+<!-- ===== RESELLr v62 TRUE PERFORMANCE PATCH: cached data + pagination + chart redraw guard ===== -->
+<style id="resellr-v62-performance-css">
+  .perf-pager{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    margin:10px 0 0; padding:8px 10px;
+    border:1px solid var(--border); border-radius:12px;
+    background:rgba(255,255,255,.025); color:var(--muted); font-size:12px;
+  }
+  .perf-pager .perf-info{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .perf-pager .perf-controls{display:flex; align-items:center; gap:8px;}
+  .perf-pager button{width:auto!important; min-width:34px; padding:6px 9px!important; border-radius:10px!important; font-size:12px!important;}
+  .perf-pager select{width:auto!important; min-width:74px; margin:0!important; padding:6px 8px!important; font-size:12px!important;}
+  @media(max-width:700px){.perf-pager{align-items:flex-start; flex-direction:column}.perf-pager .perf-controls{width:100%; flex-wrap:wrap}.perf-pager button{flex:1}}
+</style>
+<script id="resellr-v62-performance-js">
+(function(){
+  if (window.__RESELLR_V62_PERFORMANCE__) return;
+  window.__RESELLR_V62_PERFORMANCE__ = true;
+
+  const KEYS = { active:'activeInventory', sold:'soldInventory', holds:'inventoryHolds' };
+  const state = {
+    active:{page:1, per:75, sig:''},
+    sold:{page:1, per:75, sig:''},
+    holds:{page:1, per:75, sig:''},
+    chartSoldHash:null,
+    pendingChartTimer:null
+  };
+  window.__resellrPerfState = state;
+
+  const cache = {};
+  function raw(key){ try{return localStorage.getItem(key)||'[]';}catch(e){return '[]';} }
+  function readCached(key){
+    const r = raw(key);
+    const c = cache[key];
+    if (c && c.raw === r) return c.data;
+    let data=[];
+    try{ data = JSON.parse(r) || []; }catch(e){ data=[]; }
+    if (!Array.isArray(data)) data=[];
+    cache[key] = {raw:r, data};
+    return data;
+  }
+  function writeCached(key, arr){
+    const r = JSON.stringify(Array.isArray(arr)?arr:[]);
+    try{ localStorage.setItem(key,r); }catch(e){}
+    cache[key] = {raw:r, data:Array.isArray(arr)?arr:[]};
+  }
+
+  // Override the hot read/write paths so the same large JSON is not parsed repeatedly.
+  window.readActive = function(){ return readCached(KEYS.active); };
+  window.writeActive = function(arr){ writeCached(KEYS.active, arr); };
+  window.readSold = function(){ return readCached(KEYS.sold); };
+  window.writeSold = function(arr){ writeCached(KEYS.sold, arr); };
+  window.readHolds = function(){ return readCached(KEYS.holds); };
+  window.writeHolds = function(arr){ writeCached(KEYS.holds, arr); };
+
+  function money(v){ return (typeof window.formatDollars==='function') ? window.formatDollars(v) : ('$'+(Number(v)||0).toFixed(2)); }
+  function yr(v){ return (typeof window.extractYear==='function') ? window.extractYear(v) : String(v||'').slice(0,4); }
+  function mk(v){ return (typeof window.monthKey==='function') ? window.monthKey(v) : (String(v||'').match(/^(\d{4}-\d{2})/)||[])[1]; }
+  function byDateDesc(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); }
+  function safe(fn){ try{ if(typeof fn==='function') fn(); }catch(e){} }
+  function id(){ return Math.random().toString(36).slice(2)+Date.now().toString(36); }
+  if (typeof window.genId !== 'function') window.genId = id;
+
+  function ensurePager(kind, tbodyId){
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return null;
+    const table = tbody.closest('table');
+    const wrap = table ? (table.closest('.table-wrap') || table.parentElement) : tbody.parentElement;
+    if (!wrap) return null;
+    let pager = document.getElementById('perfPager_'+kind);
+    if (!pager){
+      pager = document.createElement('div');
+      pager.className = 'perf-pager';
+      pager.id = 'perfPager_'+kind;
+      pager.innerHTML = `
+        <div class="perf-info" id="perfPager_${kind}_info"></div>
+        <div class="perf-controls">
+          <button type="button" id="perfPager_${kind}_prev">‹</button>
+          <button type="button" id="perfPager_${kind}_next">›</button>
+          <select id="perfPager_${kind}_per">
+            <option value="50">50</option><option value="75">75</option><option value="100">100</option><option value="150">150</option><option value="999999">All</option>
+          </select>
+        </div>`;
+      wrap.insertAdjacentElement('afterend', pager);
+      pager.querySelector('#perfPager_'+kind+'_prev').addEventListener('click', ()=>{ state[kind].page=Math.max(1,state[kind].page-1); renderKind(kind); });
+      pager.querySelector('#perfPager_'+kind+'_next').addEventListener('click', ()=>{ state[kind].page=state[kind].page+1; renderKind(kind); });
+      pager.querySelector('#perfPager_'+kind+'_per').addEventListener('change', (e)=>{ state[kind].per=Number(e.target.value)||75; state[kind].page=1; renderKind(kind); });
+    }
+    const perSel = pager.querySelector('#perfPager_'+kind+'_per');
+    if (perSel && String(state[kind].per)!==perSel.value) perSel.value=String(state[kind].per);
+    return pager;
+  }
+
+  function applyPager(kind, rows, tbodyId){
+    const st = state[kind];
+    const sig = rows.map(r=>r && (r._id||r.item||'')).join('|') + '::' + rows.length;
+    if (st.sig !== sig){ st.sig = sig; st.page = 1; }
+    const pager = ensurePager(kind, tbodyId);
+    const total = rows.length;
+    const per = st.per || 75;
+    const pages = Math.max(1, Math.ceil(total / per));
+    st.page = Math.max(1, Math.min(st.page, pages));
+    const start = per >= 999999 ? 0 : (st.page-1)*per;
+    const end = per >= 999999 ? total : Math.min(total, start+per);
+    if (pager){
+      const info = pager.querySelector('#perfPager_'+kind+'_info');
+      const prev = pager.querySelector('#perfPager_'+kind+'_prev');
+      const next = pager.querySelector('#perfPager_'+kind+'_next');
+      if (info) info.textContent = total ? `Showing ${start+1}-${end} of ${total.toLocaleString()}` : 'No matching rows';
+      if (prev) prev.disabled = st.page<=1;
+      if (next) next.disabled = st.page>=pages;
+    }
+    return rows.slice(start, end);
+  }
+
+  function iconSpan(cls,title,text,onclick){ const s=document.createElement('span'); s.className=cls; s.title=title; s.textContent=text; s.style.marginLeft='8px'; s.style.cursor='pointer'; s.onclick=onclick; return s; }
+
+  function renderActiveFast(){
+    const all = window.readActive();
+    safe(()=>window.refreshActiveFilters(all));
+    const year = document.getElementById('activeYearFilter')?.value || 'ALL';
+    const month = document.getElementById('activeMonthFilter')?.value || 'ALL';
+    const platformF = document.getElementById('activePlatformFilter')?.value || 'ALL';
+    const filtered = all.filter(r=>{
+      const okY = year==='ALL' || yr(r.date)===year;
+      const okM = month==='ALL' || mk(r.date)===month;
+      const okP = platformF==='ALL' || String(r.platform||'')===platformF;
+      const okS = (typeof window.matchesActiveSearch==='function') ? window.matchesActiveSearch(r) : true;
+      return okY && okM && okP && okS;
+    });
+    const totals = (typeof window.getActiveInventoryTotals==='function') ? window.getActiveInventoryTotals(filtered,false) : {qtyCount:filtered.length,totalCost:filtered.reduce((s,r)=>s+(+r.cost||0),0),totalValue:filtered.reduce((s,r)=>s+(+r.list||0),0)};
+    const countEl=document.getElementById('activeCountStat'), costEl=document.getElementById('activeCostStat'), listEl=document.getElementById('activeListStat');
+    if(countEl) countEl.textContent=`ITEMS (QTY): ${Number(totals.qtyCount||0).toLocaleString()}`;
+    if(costEl) costEl.textContent=`TOTAL COST: ${money(totals.totalCost)}`;
+    if(listEl) listEl.textContent=`TOTAL LIST: ${money(totals.totalValue)}`;
+    const tbody=document.getElementById('activeTableBody'); if(!tbody) return;
+    tbody.innerHTML='';
+    const pageRows = applyPager('active', [...filtered].sort(byDateDesc), 'activeTableBody');
+    const frag=document.createDocumentFragment();
+    pageRows.forEach(r=>{
+      const tr=document.createElement('tr');
+      [r.date||'', r.item||'', r.type||'', r.platform||'', money(r.cost), money(r.list), String(r.qty??1), r.notes||''].forEach(v=>{ const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); });
+      const action=document.createElement('td'); action.className='action-cell';
+      action.appendChild(iconSpan('edit','Edit','✏️',()=>window.openEditModal && window.openEditModal('active',r._id)));
+      const comps=document.createElement('span'); comps.className='ebay-comps-action'; comps.title='Search eBay sold comps'; comps.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><path d="M3 16.5 L8.5 10.8 L13 14.1 L21 5.5" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.2 5.5 H21 V10.3" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'; comps.onclick=()=>{ const q=encodeURIComponent(r.item||''); window.open(`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`,'_blank','noopener,noreferrer');};
+      action.appendChild(comps);
+      action.appendChild(iconSpan('soldbtn','Mark Sold','💲',()=>window.openMarkSoldModal && window.openMarkSoldModal(r._id)));
+      action.appendChild(iconSpan('yellow','Move to Holds','🧊',()=>window.moveActiveToHolds && window.moveActiveToHolds(r._id)));
+      action.appendChild(iconSpan('trash','Delete','🗑',()=>window.deleteActiveById && window.deleteActiveById(r._id)));
+      tr.appendChild(action); frag.appendChild(tr);
+    });
+    tbody.appendChild(frag);
+    safe(window.updateNetWorth); safe(window.safeBudgetRefresh);
+  }
+
+  function renderHoldsFast(){
+    const all=window.readHolds(); safe(()=>window.refreshHoldsFilters(all));
+    const year=document.getElementById('holdsYearFilter')?.value||'ALL';
+    const month=document.getElementById('holdsMonthFilter')?.value||'ALL';
+    const filtered=all.filter(r=> (year==='ALL'||yr(r.date)===year) && (month==='ALL'||mk(r.date)===month) && ((typeof window.matchesHoldsSearch==='function')?window.matchesHoldsSearch(r):true));
+    const tbody=document.getElementById('holdsTableBody'); if(!tbody) return;
+    tbody.innerHTML='';
+    const rows=applyPager('holds',[...filtered].sort(byDateDesc),'holdsTableBody');
+    const frag=document.createDocumentFragment();
+    rows.forEach(r=>{
+      const tr=document.createElement('tr');
+      [r.date||'', r.item||'', r.type||'', r.platform||'', money(r.cost), money(r.value), String(Number(r.qty||1)), r.notes||''].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
+      const action=document.createElement('td'); action.className='action-cell';
+      action.appendChild(iconSpan('edit','Edit','✏️',()=>window.openEditModal && window.openEditModal('hold',r._id)));
+      action.appendChild(iconSpan('soldbtn','Move to Inventory','📋',()=>window.moveHoldToInventory && window.moveHoldToInventory(r._id)));
+      action.appendChild(iconSpan('trash','Delete','🗑',()=>window.deleteHoldById && window.deleteHoldById(r._id)));
+      tr.appendChild(action); frag.appendChild(tr);
+    });
+    tbody.appendChild(frag);
+    safe(()=>window.updateHoldsDashboard && window.updateHoldsDashboard(filtered,all)); safe(window.updateNetWorth);
+  }
+
+  function refreshSoldChartsOnlyWhenDataChanged(){
+    const h = raw(KEYS.sold);
+    const run = ()=>{ try{ window.updateSoldSummaryAndCharts && window.updateSoldSummaryAndCharts(); }catch(e){} };
+    if (state.chartSoldHash !== h){
+      state.chartSoldHash = h;
+      if (state.pendingChartTimer) clearTimeout(state.pendingChartTimer);
+      state.pendingChartTimer = setTimeout(run, 120);
+    } else {
+      // Data did not change, so update text-only dashboard bits if available, but avoid chart destruction/rebuild.
+      try{ window.updateSoldSnapshotYear && window.updateSoldSnapshotYear(); }catch(e){}
+    }
+  }
+
+  function renderSoldFast(){
+    const all=window.readSold(); safe(()=>window.refreshSoldFilters(all));
+    const year=document.getElementById('soldYearFilter')?.value||'ALL';
+    const month=document.getElementById('soldMonthFilter')?.value||'ALL';
+    const platform=document.getElementById('soldPlatformFilter')?.value||'ALL';
+    const type=document.getElementById('soldTypeFilter')?.value||'ALL';
+    const filtered=all.filter(r=>{
+      const okY=year==='ALL'||yr(r.date)===year; const okM=month==='ALL'||mk(r.date)===month; const okP=platform==='ALL'||String(r.platform||'')===platform; const okT=type==='ALL'||String(r.type||'')===type;
+      const okS=(typeof window.matchesSoldSearch==='function')?window.matchesSoldSearch(r):true;
+      return okY&&okM&&okP&&okT&&okS;
+    });
+    const tbody=document.getElementById('soldTableBody'); if(!tbody) return;
+    tbody.innerHTML='';
+    const rows=applyPager('sold',[...filtered].sort(byDateDesc),'soldTableBody');
+    const frag=document.createDocumentFragment();
+    rows.forEach(r=>{
+      const tr=document.createElement('tr');
+      [r.date||'',r.item||'',r.type||'',r.platform||'',money(r.sale),money(r.cost),money(r.fees),money(r.ship)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
+      const tdProfit=document.createElement('td'); tdProfit.textContent=money(r.profit); const p=Number(r.profit)||0; tdProfit.classList.add(p>0?'profit-pos':p<0?'profit-neg':'profit-zero'); tr.appendChild(tdProfit);
+      const action=document.createElement('td'); action.className='action-cell';
+      action.appendChild(iconSpan('edit','Edit','✏️',()=>window.openEditModal && window.openEditModal('sold',r._id)));
+      action.appendChild(iconSpan('trash','Delete','🗑',()=>window.deleteSoldById && window.deleteSoldById(r._id)));
+      tr.appendChild(action); frag.appendChild(tr);
+    });
+    tbody.appendChild(frag);
+    refreshSoldChartsOnlyWhenDataChanged();
+    safe(window.updateDashboardInventoryStats); safe(window.updateNetWorth); safe(window.updateDashboardYTD); safe(window.safeBudgetRefresh);
+  }
+
+  function renderKind(kind){
+    if(kind==='active') return renderActiveFast();
+    if(kind==='sold') return renderSoldFast();
+    if(kind==='holds') return renderHoldsFast();
+  }
+
+  // Install overrides after every older script has loaded.
+  function install(){
+    window.renderActive = renderActiveFast;
+    window.renderSold = renderSoldFast;
+    window.renderHolds = renderHoldsFast;
+    // Chart.js: kill costly animations globally.
+    if (window.Chart && Chart.defaults){
+      Chart.defaults.animation = false;
+      Chart.defaults.responsiveAnimationDuration = 0;
+    }
+    // Debounce text search inputs without changing their existing markup.
+    ['activeSearchTop','soldSearchTop','holdsSearchTop'].forEach((sid)=>{
+      const el=document.getElementById(sid); if(!el || el.__perfDebounced) return; el.__perfDebounced=true;
+      const old = el.oninput || el.onchange;
+      let t=null;
+      el.addEventListener('input', function(ev){ clearTimeout(t); t=setTimeout(()=>{ if(typeof old==='function') old.call(el,ev); },180); }, true);
+    });
+    try{ renderActiveFast(); }catch(e){}
+    try{ renderSoldFast(); }catch(e){}
+    try{ renderHoldsFast(); }catch(e){}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install); else setTimeout(install,0);
+})();
+</script>
+
 </body>
 </html>
 
