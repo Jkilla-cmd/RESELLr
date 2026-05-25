@@ -22593,6 +22593,137 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.addEventListener('load', function(){ setTimeout(updateSnapshotOnly, 600); });
 })();
 </script>
+
+
+<!-- ===== RESELLr v59: robust icon/image fallbacks ===== -->
+<style id="resellr-v59-icon-fallback-css">
+  .action-cell{
+    white-space: nowrap !important;
+    min-width: 160px !important;
+  }
+  .action-cell .edit,
+  .action-cell .soldbtn,
+  .action-cell .trash,
+  .action-cell .yellow,
+  .action-cell .resellr-icon-action{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:30px !important;
+    height:30px !important;
+    margin:0 3px !important;
+    border-radius:10px !important;
+    border:1px solid rgba(255,255,255,.14) !important;
+    background:rgba(255,255,255,.055) !important;
+    font-size:16px !important;
+    line-height:1 !important;
+    cursor:pointer !important;
+    vertical-align:middle !important;
+    opacity:1 !important;
+    filter:none !important;
+    text-shadow:none !important;
+  }
+  .action-cell .edit{ color:#fbbf24 !important; }
+  .action-cell .soldbtn{ color:#22c55e !important; }
+  .action-cell .trash{ color:#ef4444 !important; }
+  .action-cell .yellow{ color:#fbbf24 !important; }
+  .action-cell .edit:hover,
+  .action-cell .soldbtn:hover,
+  .action-cell .trash:hover,
+  .action-cell .yellow:hover,
+  .action-cell .resellr-icon-action:hover{
+    transform:translateY(-1px);
+    background:rgba(255,255,255,.10) !important;
+    border-color:rgba(255,255,255,.26) !important;
+  }
+  #holdCharacter{
+    width:170px !important;
+    height:auto !important;
+    z-index:10080 !important;
+    pointer-events:none !important;
+    opacity:0;
+  }
+  #holdCharacter.show{ opacity:1 !important; right:18px !important; }
+  .holds-easter-figure{
+    object-fit:contain !important;
+  }
+</style>
+<script id="resellr-v59-icon-fallback-js">
+(function(){
+  const TOASTY_SVG = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 180'>
+    <defs>
+      <linearGradient id='g' x1='0' x2='1'><stop stop-color='#111827'/><stop offset='1' stop-color='#0f172a'/></linearGradient>
+      <filter id='s' x='-20%' y='-20%' width='140%' height='140%'><feDropShadow dx='0' dy='10' stdDeviation='8' flood-color='#000' flood-opacity='.45'/></filter>
+    </defs>
+    <g filter='url(#s)'>
+      <rect x='30' y='38' width='126' height='104' rx='28' fill='url(#g)' stroke='#38bdf8' stroke-width='4'/>
+      <circle cx='77' cy='83' r='10' fill='#e5f0ff'/>
+      <circle cx='122' cy='83' r='10' fill='#e5f0ff'/>
+      <path d='M78 116c18 13 38 13 56 0' fill='none' stroke='#22c55e' stroke-width='8' stroke-linecap='round'/>
+      <path d='M45 60c22-30 68-34 102-5' fill='none' stroke='#f43f5e' stroke-width='10' stroke-linecap='round'/>
+      <rect x='122' y='30' width='48' height='28' rx='8' fill='#f43f5e' stroke='#111827' stroke-width='4'/>
+      <text x='35' y='169' font-family='Arial Black,Arial' font-size='26' fill='#fbbf24' stroke='#111827' stroke-width='2'>TOASTY!</text>
+    </g>
+  </svg>`);
+
+  function setTxt(el, txt){
+    if(!el) return;
+    el.textContent = txt;
+    el.style.fontFamily = 'system-ui, Apple Color Emoji, Segoe UI Emoji, sans-serif';
+  }
+
+  function fixActionIcons(root=document){
+    try{
+      root.querySelectorAll('.action-cell span').forEach(el=>{
+        const title = (el.getAttribute('title') || '').toLowerCase();
+        if(title.includes('mark sold')) setTxt(el, '💲');
+        else if(title.includes('delete')) setTxt(el, '🗑️');
+        else if(title.includes('move to inventory')) setTxt(el, '↩️');
+        else if(title.includes('move to holds')) setTxt(el, '📥');
+        else if(title.includes('edit')) setTxt(el, '✏️');
+      });
+    }catch(e){}
+  }
+
+  function fixToasty(){
+    try{
+      document.querySelectorAll('img#holdCharacter, img.holds-easter-figure, img[src*="holds-character"]').forEach(img=>{
+        img.onerror = null;
+        img.src = TOASTY_SVG;
+        img.style.background = 'transparent';
+      });
+    }catch(e){}
+  }
+
+  function patchRender(name){
+    const fn = window[name];
+    if(typeof fn !== 'function' || fn.__resellrV59Patched) return;
+    const wrapped = function(){
+      const result = fn.apply(this, arguments);
+      setTimeout(()=>{ fixActionIcons(); fixToasty(); }, 0);
+      return result;
+    };
+    wrapped.__resellrV59Patched = true;
+    window[name] = wrapped;
+  }
+
+  function init(){
+    fixToasty();
+    fixActionIcons();
+    ['renderActive','renderHolds','renderSold'].forEach(patchRender);
+    const mo = new MutationObserver(()=>{
+      clearTimeout(window.__resellrV59IconTimer);
+      window.__resellrV59IconTimer = setTimeout(()=>{ fixActionIcons(); fixToasty(); }, 40);
+    });
+    mo.observe(document.body, {childList:true, subtree:true});
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+
 </body>
 </html>
 
