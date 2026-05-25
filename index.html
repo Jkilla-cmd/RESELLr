@@ -23182,6 +23182,73 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== v66: force lock box image to full-bleed edge-to-edge ===== -->
+<style id="rs-v66-lockbox-full-bleed-fix">
+  /* Keep wallpaper OFF the outside lock screen */
+  html.rs-has-command-bg #lockScreen,
+  body.rs-app-locked #lockScreen,
+  #lockScreen{
+    background: rgba(10,14,20,0.96) !important;
+    background-image: none !important;
+  }
+
+  html.rs-has-command-bg #lockScreen .lockBox{
+    position: relative !important;
+    overflow: hidden !important;
+    isolation: isolate !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 28px 90px rgba(0,0,0,.58) !important;
+  }
+
+  /* Image layer: sits INSIDE the card and covers the entire rounded box */
+  html.rs-has-command-bg #lockScreen .lockBox::before{
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-image: var(--rs-shared-bg, var(--rs15-command-bg, none)) !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    opacity: .46 !important;
+    filter: none !important;
+    pointer-events: none !important;
+  }
+
+  /* Command View-style readability fade over the full image */
+  html.rs-has-command-bg #lockScreen .lockBox::after{
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    background:
+      linear-gradient(90deg,
+        color-mix(in srgb, var(--panel) 96%, transparent) 0%,
+        color-mix(in srgb, var(--panel) 88%, transparent) 34%,
+        color-mix(in srgb, var(--panel) 54%, transparent) 68%,
+        color-mix(in srgb, var(--panel) 20%, transparent) 100%),
+      linear-gradient(180deg,
+        rgba(0,0,0,.18) 0%,
+        rgba(0,0,0,.06) 45%,
+        rgba(0,0,0,.28) 100%) !important;
+    pointer-events: none !important;
+  }
+
+  html.rs-has-command-bg #lockScreen .lockBox > *{
+    position: relative !important;
+    z-index: 2 !important;
+  }
+</style>
 </body>
 </html>
 
