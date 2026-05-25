@@ -25123,3 +25123,192 @@ body.skin-dreamtrip .chart-wrap{
   if(lock){ try{ new MutationObserver(sync).observe(lock,{attributes:true,attributeFilter:['style','class']}); }catch(e){} }
 })();
 </script>
+
+<!-- ===== v60: remove dashboard label, avatar player controls, reset fix, lockbox image cover ===== -->
+<style id="rs-v60-player-lockbox-css">
+  /* Remove the standalone Dashboard label at the top of the page without hiding sidebar nav labels. */
+  .canvas > h1:first-child,
+  .canvas > h2:first-child,
+  .canvas > .title:first-child,
+  .canvas > .page-title:first-child,
+  .canvas > .section-title:first-child,
+  #secDashboard > h1,
+  #secDashboard > h2,
+  #secDashboard > .title,
+  #secDashboard > .page-title,
+  #secDashboard > .section-title{
+    display:none !important;
+    visibility:hidden !important;
+    height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+  }
+
+  /* Lock box background: image fills the whole password box, with readable glass fade over it. */
+  html.rs-has-command-bg #lockScreen .lockBox{
+    position:relative !important;
+    overflow:hidden !important;
+    isolation:isolate !important;
+    background:rgba(10,14,20,0.88) !important;
+  }
+  html.rs-has-command-bg #lockScreen .lockBox::before{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    display:block !important;
+    z-index:-2 !important;
+    background-image:var(--rs-shared-bg, var(--rs15-command-bg, none)) !important;
+    background-size:cover !important;
+    background-position:center center !important;
+    background-repeat:no-repeat !important;
+    opacity:.86 !important;
+  }
+  html.rs-has-command-bg #lockScreen .lockBox::after{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    display:block !important;
+    z-index:-1 !important;
+    background:linear-gradient(90deg, rgba(5,8,14,.88) 0%, rgba(5,8,14,.70) 48%, rgba(5,8,14,.42) 100%) !important;
+    pointer-events:none !important;
+  }
+  #lockScreen .lockBox > *{
+    position:relative !important;
+    z-index:1 !important;
+  }
+
+  /* Better avatar menu player layout. */
+  #rsV55Menu .rs-v60-player{
+    display:grid !important;
+    grid-template-columns:1fr auto auto !important;
+    gap:8px !important;
+    align-items:center !important;
+    padding:8px !important;
+    border:1px solid var(--border) !important;
+    border-radius:14px !important;
+    background:rgba(255,255,255,.035) !important;
+  }
+  #rsV55Menu .rs-v60-player-title{
+    min-width:0 !important;
+    overflow:hidden !important;
+    white-space:nowrap !important;
+    text-overflow:ellipsis !important;
+    font-size:12px !important;
+    color:var(--text) !important;
+  }
+  #rsV55Menu .rs-v60-player button,
+  #rsV55Menu .rs-v60-icon-btn{
+    width:34px !important;
+    height:34px !important;
+    padding:0 !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:12px !important;
+    font-size:14px !important;
+  }
+</style>
+<script id="rs-v60-player-lockbox-js">
+(function(){
+  if(window.__rsV60PlayerLockbox) return;
+  window.__rsV60PlayerLockbox = true;
+  function $(id){ return document.getElementById(id); }
+  function isVisible(el){ if(!el) return false; const cs=getComputedStyle(el); return cs.display!=='none' && cs.visibility!=='hidden' && cs.opacity!=='0'; }
+  function isLocked(){ return isVisible($('lockScreen')); }
+
+  function removeDashboardLabel(){
+    document.querySelectorAll('.canvas > h1:first-child,.canvas > h2:first-child,.canvas > .title:first-child,.canvas > .page-title:first-child,.canvas > .section-title:first-child,#secDashboard > h1,#secDashboard > h2,#secDashboard > .title,#secDashboard > .page-title,#secDashboard > .section-title').forEach(function(el){
+      if(String(el.textContent||'').trim().toLowerCase()==='dashboard' || el.closest('#secDashboard')){
+        el.style.setProperty('display','none','important');
+        el.style.setProperty('height','0','important');
+        el.style.setProperty('margin','0','important');
+        el.style.setProperty('padding','0','important');
+        el.style.setProperty('overflow','hidden','important');
+      }
+    });
+  }
+
+  function trackTitle(){
+    try{
+      if(window.lofiPlaylist && typeof window.lofiIndex !== 'undefined'){
+        const t = window.lofiPlaylist[window.lofiIndex] && window.lofiPlaylist[window.lofiIndex].title;
+        if(t) return t;
+      }
+    }catch(e){}
+    const audio=$('lofiAudio');
+    if(audio && audio.src){
+      try{ return decodeURIComponent(audio.src.split('/').pop().replace(/\.[a-z0-9]+$/i,'').replace(/[-_]/g,' ')); }catch(e){}
+    }
+    return 'Lo-Fi Player';
+  }
+  function updatePlayerUi(){
+    const audio=$('lofiAudio');
+    const play=$('rsV60PlayPause');
+    const title=$('rsV60PlayerTitle');
+    if(play) play.textContent = audio && !audio.paused ? '⏸' : '▶';
+    if(title) title.textContent = trackTitle();
+  }
+  function ensurePlayerMenu(){
+    const menu=$('rsV55Menu');
+    if(!menu) return;
+    if(!$('rsV60Player')){
+      const oldLofi=menu.querySelector('[data-rs55="lofi"]');
+      if(oldLofi) oldLofi.style.display='none';
+      const player=document.createElement('div');
+      player.id='rsV60Player';
+      player.className='rs-v60-player';
+      player.innerHTML='<div id="rsV60PlayerTitle" class="rs-v60-player-title">Lo-Fi Player</div><button type="button" id="rsV60PlayPause" title="Play / Pause">▶</button><button type="button" id="rsV60Next" title="Next song">⏭</button>';
+      menu.insertBefore(player, menu.firstChild);
+    }
+    updatePlayerUi();
+  }
+  function playPause(){
+    try{ if(typeof window.playPauseLofi==='function'){ window.playPauseLofi(); setTimeout(updatePlayerUi,80); return; } }catch(e){}
+    try{ if(typeof window.toggleLofiMusic==='function'){ window.toggleLofiMusic(); setTimeout(updatePlayerUi,350); return; } }catch(e){}
+    let audio=$('lofiAudio');
+    if(!audio){ audio=document.createElement('audio'); audio.id='lofiAudio'; audio.preload='auto'; audio.style.display='none'; document.body.appendChild(audio); }
+    if(!audio.src) audio.src='assets/audio/watermello.mp3';
+    if(audio.paused) audio.play().catch(function(){ alert('Browser blocked playback. Tap play again.'); }); else audio.pause();
+    setTimeout(updatePlayerUi,80);
+  }
+  function nextTrack(){
+    try{ if(typeof window.nextLofiTrack==='function'){ window.nextLofiTrack(); setTimeout(updatePlayerUi,120); return; } }catch(e){}
+    try{
+      if(window.lofiPlaylist && typeof window.loadLofiTrack==='function'){
+        const next=(Number(window.lofiIndex)||0)+1;
+        window.loadLofiTrack(next,true); setTimeout(updatePlayerUi,120); return;
+      }
+    }catch(e){}
+    playPause();
+  }
+  function hardReset(){
+    try{ if(typeof window.resetDashboardLayout==='function'){ window.resetDashboardLayout(); return; } }catch(e){}
+    try{ if(typeof window.factoryReset==='function'){ window.factoryReset(); return; } }catch(e){}
+    const btn=$('dockResetButton') || $('resetLayoutBtn') || document.querySelector('button[onclick*="resetDashboardLayout"],button[onclick*="factoryReset"]');
+    if(btn) btn.click();
+  }
+
+  document.addEventListener('click', function(ev){
+    const play=ev.target.closest && ev.target.closest('#rsV60PlayPause');
+    const next=ev.target.closest && ev.target.closest('#rsV60Next');
+    const reset=ev.target.closest && ev.target.closest('#rsV55Menu [data-rs55="reset"]');
+    if(play){ ev.preventDefault(); ev.stopPropagation(); if(!isLocked()) playPause(); return; }
+    if(next){ ev.preventDefault(); ev.stopPropagation(); if(!isLocked()) nextTrack(); return; }
+    if(reset){ ev.preventDefault(); ev.stopPropagation(); if(!isLocked()) hardReset(); const dock=$('rsV55Dock'); if(dock) dock.classList.remove('open'); return; }
+  }, true);
+
+  function boot(){
+    removeDashboardLabel();
+    ensurePlayerMenu();
+    const audio=$('lofiAudio');
+    if(audio && !audio.dataset.rsV60Bound){
+      audio.dataset.rsV60Bound='1';
+      ['play','pause','ended','loadedmetadata','canplay'].forEach(function(evt){ audio.addEventListener(evt, updatePlayerUi); });
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  window.addEventListener('load', function(){ setTimeout(boot,100); setTimeout(boot,800); });
+  setInterval(function(){ ensurePlayerMenu(); removeDashboardLabel(); updatePlayerUi(); }, 1500);
+})();
+</script>
