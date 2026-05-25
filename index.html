@@ -25770,3 +25770,73 @@ body.skin-dreamtrip .chart-wrap{
   setInterval(function(){ ensurePlayerMenu(); removeDashboardLabel(); updatePlayerUi(); }, 1500);
 })();
 </script>
+
+<!-- ===== RESELLr v63: restore fast table search after performance patch ===== -->
+<script id="resellr-v63-search-fix-js">
+(function(){
+  'use strict';
+  let activeTerm = '';
+  let holdsTerm = '';
+  let soldTerm = '';
+  const timers = {};
+  function norm(v){ return String(v || '').trim().toLowerCase(); }
+  function hay(obj){
+    return [obj && obj.item, obj && obj.notes, obj && obj.platform, obj && obj.type, obj && obj.date]
+      .join(' ')
+      .toLowerCase();
+  }
+  function debounce(key, fn){
+    clearTimeout(timers[key]);
+    timers[key] = setTimeout(fn, 120);
+  }
+
+  window.matchesActiveSearch = function(obj){ return !activeTerm || hay(obj).includes(activeTerm); };
+  window.matchesHoldsSearch = function(obj){ return !holdsTerm || hay(obj).includes(holdsTerm); };
+  window.matchesSoldSearch = function(obj){ return !soldTerm || hay(obj).includes(soldTerm); };
+
+  window.setActiveSearch = function(val){
+    activeTerm = norm(val);
+    try{ if(typeof activeSearchTerm !== 'undefined') activeSearchTerm = activeTerm; }catch(e){}
+    try{ if(typeof activeSearch !== 'undefined') activeSearch = activeTerm; }catch(e){}
+    const st = window.__resellrPerfState;
+    if(st && st.active) st.active.page = 1;
+    debounce('active', function(){ try{ window.renderActive && window.renderActive(); }catch(e){} });
+  };
+  window.setHoldsSearch = function(val){
+    holdsTerm = norm(val);
+    try{ if(typeof holdsSearchTerm !== 'undefined') holdsSearchTerm = holdsTerm; }catch(e){}
+    const st = window.__resellrPerfState;
+    if(st && st.holds) st.holds.page = 1;
+    debounce('holds', function(){ try{ window.renderHolds && window.renderHolds(); }catch(e){} });
+  };
+  window.setSoldSearch = function(val){
+    soldTerm = norm(val);
+    try{ if(typeof soldSearchTerm !== 'undefined') soldSearchTerm = soldTerm; }catch(e){}
+    const st = window.__resellrPerfState;
+    if(st && st.sold) st.sold.page = 1;
+    debounce('sold', function(){ try{ window.renderSold && window.renderSold(); }catch(e){} });
+  };
+
+  function wireSearchInputs(){
+    const map = {
+      activeSearchTop: window.setActiveSearch,
+      holdsSearchTop: window.setHoldsSearch,
+      soldSearchTop: window.setSoldSearch
+    };
+    Object.keys(map).forEach(function(id){
+      const el = document.getElementById(id);
+      if(!el || el.__v63SearchFixed) return;
+      el.__v63SearchFixed = true;
+      el.oninput = function(){ map[id](el.value); };
+      el.addEventListener('input', function(e){
+        e.stopImmediatePropagation();
+        map[id](el.value);
+      }, true);
+    });
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireSearchInputs);
+  else wireSearchInputs();
+  setTimeout(wireSearchInputs, 300);
+})();
+</script>
