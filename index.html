@@ -26068,3 +26068,172 @@ body.skin-dreamtrip .chart-wrap{
     z-index:1 !important;
   }
 </style>
+
+
+<!-- ===== v67: Tax Report tab ===== -->
+<style id="rs-v67-tax-report-css">
+  .tax-report-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:14px;}
+  .tax-card{border:1px solid var(--border);border-radius:16px;background:color-mix(in srgb,var(--panel) 78%,transparent);padding:14px;min-height:92px;}
+  .tax-card .tax-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;}
+  .tax-card .tax-value{font-size:24px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;}
+  .tax-card.good .tax-value{color:var(--green);}
+  .tax-card.warn .tax-value{color:var(--yellow);}
+  .tax-card.danger .tax-value{color:var(--red);}
+  .tax-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:10px;}
+  .tax-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+  .tax-actions button{width:auto;min-width:150px;}
+  .tax-note{font-size:12px;line-height:1.55;color:var(--muted);margin-top:10px;}
+  .tax-table-wrap{margin-top:14px;max-height:360px;overflow:auto;border:1px solid var(--border);border-radius:14px;}
+  .tax-table-wrap table{min-width:900px;}
+  .tax-negative{color:var(--red)!important;}
+  .tax-positive{color:var(--green)!important;}
+  .nav button[data-target="secTaxReport"]::before{content:"🧾";}
+  .app:not(.sidebar-closed) .nav button[data-target="secTaxReport"]::after,
+  .app.sidebar-open .nav button[data-target="secTaxReport"]::after{content:"Tax Report";}
+</style>
+<script id="rs-v67-tax-report-js">
+(function(){
+  if(window.__rsV67TaxReport) return;
+  window.__rsV67TaxReport = true;
+  const TAX_EXP_KEY = 'resellrTaxExpensesV1';
+  function $(id){return document.getElementById(id);}
+  function num(v){const n=Number(String(v??'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0;}
+  function money(v){return '$'+(Number(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function whole(v){return (Number(v)||0).toLocaleString('en-US');}
+  function readArray(key){try{const a=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+  function soldRows(){try{return typeof window.readSold==='function'?window.readSold():readArray('soldInventory')}catch(e){return readArray('soldInventory')}}
+  function dateOf(r){const raw=r&&(r.date||r.soldDate||r.Date||r['Sold Date']||r.saleDate||r.completedDate||r.createdAt);const d=raw?new Date(raw):null;return d&&!isNaN(d)?d:null;}
+  function saleOf(r){return num(r&&(r.sale??r.sales??r.price??r.salePrice??r.soldPrice??r.revenue??r.income??r.amount??r.totalIncome??r.total));}
+  function costOf(r){return num(r&&(r.cost??r.Cost??r.itemCost??r.cogs??r.costOfSold??r['Cost of Sold']));}
+  function feeOf(r){return num(r&&(r.fees??r.fee??r.Fees??r.platformFees??r.sellingFees));}
+  function shipOf(r){return num(r&&(r.ship??r.shipping??r.Shipping??r.shippingCost??r.postage));}
+  function profitOf(r){const p=r&&(r.profit??r.netProfit??r.totalProfit);return (p!==undefined&&p!==null&&String(p).trim()!=='')?num(p):saleOf(r)-costOf(r)-feeOf(r)-shipOf(r);}
+  function platformOf(r){return String(r&&(r.platform??r.Platform??r.marketplace??r.source??'')).trim()||'Unspecified';}
+  function itemOf(r){return String(r&&(r.item??r.title??r.name??r.Item??'')).trim();}
+  function readExpenses(){try{return JSON.parse(localStorage.getItem(TAX_EXP_KEY)||'{}')||{}}catch(e){return{}}}
+  function writeExpenses(obj){localStorage.setItem(TAX_EXP_KEY,JSON.stringify(obj||{}));}
+  function currentYear(){return String(new Date().getFullYear());}
+  function selectedYear(){return ($('taxYear')&&$('taxYear').value)||currentYear();}
+  function getYearRows(year){return soldRows().filter(r=>{if(year==='ALL')return true;const d=dateOf(r);return d&&String(d.getFullYear())===String(year);});}
+  function populateTaxYears(){
+    const sel=$('taxYear'); if(!sel) return;
+    const existing=sel.value||localStorage.getItem('resellrTaxYear')||currentYear();
+    const years=[...new Set(soldRows().map(dateOf).filter(Boolean).map(d=>String(d.getFullYear())))].sort((a,b)=>Number(b)-Number(a));
+    if(!years.includes(currentYear())) years.unshift(currentYear());
+    sel.innerHTML='<option value="ALL">All Years</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
+    sel.value = [...sel.options].some(o=>o.value===existing)?existing:currentYear();
+  }
+  function setText(id,val){const el=$(id);if(el)el.textContent=val;}
+  function calculateTaxReport(){
+    const year=selectedYear(); localStorage.setItem('resellrTaxYear',year);
+    const rows=getYearRows(year);
+    const gross=rows.reduce((s,r)=>s+saleOf(r),0);
+    const cogs=rows.reduce((s,r)=>s+costOf(r),0);
+    const fees=rows.reduce((s,r)=>s+feeOf(r),0);
+    const shipping=rows.reduce((s,r)=>s+shipOf(r),0);
+    const data=readExpenses()[year]||{};
+    const supplies=num(data.supplies), mileage=num(data.mileage), misc=num(data.misc), other=num(data.other);
+    const extra=supplies+mileage+misc+other;
+    const netBeforeExtra=gross-cogs-fees-shipping;
+    const taxable=netBeforeExtra-extra;
+    setText('taxGross',money(gross));
+    setText('taxCogs',money(cogs));
+    setText('taxFees',money(fees));
+    setText('taxShipping',money(shipping));
+    setText('taxExtra',money(extra));
+    setText('taxTaxable',money(taxable));
+    setText('taxItems',whole(rows.length));
+    setText('taxAvgProfit',money(rows.length?taxable/rows.length:0));
+    const taxableEl=$('taxTaxable'); if(taxableEl){taxableEl.classList.toggle('tax-negative',taxable<0);taxableEl.classList.toggle('tax-positive',taxable>=0)}
+    renderTaxRows(rows);
+  }
+  function loadExpenseInputs(){
+    const year=selectedYear(); const data=readExpenses()[year]||{};
+    ['supplies','mileage','misc','other'].forEach(k=>{const el=$('tax_'+k); if(el) el.value=data[k]??'';});
+  }
+  function saveTaxExpenses(){
+    const year=selectedYear(); const all=readExpenses(); all[year]={};
+    ['supplies','mileage','misc','other'].forEach(k=>{all[year][k]=num($('tax_'+k)?.value||0);});
+    writeExpenses(all); calculateTaxReport();
+    try{ if(typeof showToast==='function') showToast('Tax expenses saved'); }catch(e){}
+  }
+  function renderTaxRows(rows){
+    const body=$('taxSoldBody'); if(!body) return;
+    const display=rows.slice().sort((a,b)=>(dateOf(b)?.getTime()||0)-(dateOf(a)?.getTime()||0));
+    body.innerHTML=display.map(r=>{
+      const d=dateOf(r); const ds=d?d.toLocaleDateString('en-US'):'—';
+      return `<tr><td>${ds}</td><td>${escapeHtml(itemOf(r)||'—')}</td><td>${escapeHtml(platformOf(r))}</td><td class="num">${money(saleOf(r))}</td><td class="num">${money(costOf(r))}</td><td class="num">${money(feeOf(r))}</td><td class="num">${money(shipOf(r))}</td><td class="num">${money(profitOf(r))}</td></tr>`;
+    }).join('') || '<tr><td colspan="8" class="muted">No sold rows for this year.</td></tr>';
+  }
+  function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+  function csvCell(v){const s=String(v??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+  function exportTaxCSV(){
+    const year=selectedYear(); const rows=getYearRows(year);
+    const data=readExpenses()[year]||{};
+    const gross=rows.reduce((s,r)=>s+saleOf(r),0), cogs=rows.reduce((s,r)=>s+costOf(r),0), fees=rows.reduce((s,r)=>s+feeOf(r),0), shipping=rows.reduce((s,r)=>s+shipOf(r),0);
+    const extra=num(data.supplies)+num(data.mileage)+num(data.misc)+num(data.other), taxable=gross-cogs-fees-shipping-extra;
+    let lines=[['RESELLr Tax Report',year],[],['Summary','Amount'],['Gross Sales',gross],['Cost of Goods Sold',cogs],['Platform Fees',fees],['Shipping Paid',shipping],['Supplies',num(data.supplies)],['Mileage/Auto',num(data.mileage)],['Misc Expenses',num(data.misc)],['Other Deductions',num(data.other)],['Estimated Taxable Profit',taxable],['Items Sold',rows.length],[],['Date','Item','Platform','Sale Price','Cost','Fees','Shipping','Profit']];
+    rows.slice().sort((a,b)=>(dateOf(a)?.getTime()||0)-(dateOf(b)?.getTime()||0)).forEach(r=>{
+      const d=dateOf(r); lines.push([d?d.toLocaleDateString('en-US'):'',itemOf(r),platformOf(r),saleOf(r),costOf(r),feeOf(r),shipOf(r),profitOf(r)]);
+    });
+    const csv=lines.map(row=>row.map(csvCell).join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=`RESELLr-tax-report-${year}.csv`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),500);
+  }
+  function printTaxReport(){ window.print(); }
+  function buildSection(){
+    if($('secTaxReport')) return;
+    const main=document.querySelector('main.canvas')||document.body;
+    const sec=document.createElement('section'); sec.id='secTaxReport'; sec.className='section';
+    sec.innerHTML=`
+      <div class="panel">
+        <div class="command-section-title"><h3>Tax Report</h3><span class="pill muted">Yearly sales + deductions</span></div>
+        <div class="tax-form-grid">
+          <div><label>Tax Year</label><select id="taxYear"></select></div>
+          <div><label>Supplies / Packing ($)</label><input type="number" step="0.01" id="tax_supplies" placeholder="0.00"></div>
+          <div><label>Mileage / Auto ($)</label><input type="number" step="0.01" id="tax_mileage" placeholder="0.00"></div>
+          <div><label>Misc Expenses ($)</label><input type="number" step="0.01" id="tax_misc" placeholder="0.00"></div>
+          <div><label>Other Deductions ($)</label><input type="number" step="0.01" id="tax_other" placeholder="0.00"></div>
+        </div>
+        <div class="tax-actions"><button id="taxSaveBtn">Save Expenses</button><button id="taxExportBtn">Export Tax CSV</button><button id="taxPrintBtn">Print Report</button></div>
+        <div class="tax-note">This is a recordkeeping report, not tax advice. Confirm deductible categories with a tax professional.</div>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <h3>Summary</h3>
+        <div class="tax-report-grid">
+          <div class="tax-card"><div class="tax-label">Gross Sales</div><div class="tax-value" id="taxGross">$0.00</div></div>
+          <div class="tax-card"><div class="tax-label">Cost of Goods Sold</div><div class="tax-value" id="taxCogs">$0.00</div></div>
+          <div class="tax-card"><div class="tax-label">Platform Fees</div><div class="tax-value" id="taxFees">$0.00</div></div>
+          <div class="tax-card"><div class="tax-label">Shipping Paid</div><div class="tax-value" id="taxShipping">$0.00</div></div>
+          <div class="tax-card warn"><div class="tax-label">Extra Deductions</div><div class="tax-value" id="taxExtra">$0.00</div></div>
+          <div class="tax-card good"><div class="tax-label">Estimated Taxable Profit</div><div class="tax-value" id="taxTaxable">$0.00</div></div>
+          <div class="tax-card"><div class="tax-label">Items Sold</div><div class="tax-value" id="taxItems">0</div></div>
+          <div class="tax-card"><div class="tax-label">Avg Taxable Profit / Item</div><div class="tax-value" id="taxAvgProfit">$0.00</div></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <h3>Sold Detail</h3>
+        <div class="tax-table-wrap"><table><thead><tr><th>Date</th><th>Item</th><th>Platform</th><th>Sale</th><th>Cost</th><th>Fees</th><th>Shipping</th><th>Profit</th></tr></thead><tbody id="taxSoldBody"></tbody></table></div>
+      </div>`;
+    main.appendChild(sec);
+  }
+  function addNav(){
+    const nav=$('nav'); if(!nav || nav.querySelector('[data-target="secTaxReport"]')) return;
+    const btn=document.createElement('button'); btn.type='button'; btn.dataset.target='secTaxReport'; btn.innerHTML='🧾 Tax Report';
+    btn.addEventListener('click',function(){ try{ showSection('secTaxReport'); }catch(e){ document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id==='secTaxReport')); } initTaxReport(); });
+    const settings=nav.querySelector('[data-target="secSettings"]');
+    if(settings) nav.insertBefore(btn, settings); else nav.appendChild(btn);
+  }
+  function hook(){
+    $('taxYear')?.addEventListener('change',function(){localStorage.setItem('resellrTaxYear',this.value);loadExpenseInputs();calculateTaxReport();});
+    ['tax_supplies','tax_mileage','tax_misc','tax_other'].forEach(id=>$(id)?.addEventListener('input',function(){ clearTimeout(window.__taxSaveDeb); window.__taxSaveDeb=setTimeout(saveTaxExpenses,300); }));
+    $('taxSaveBtn')?.addEventListener('click',saveTaxExpenses);
+    $('taxExportBtn')?.addEventListener('click',exportTaxCSV);
+    $('taxPrintBtn')?.addEventListener('click',printTaxReport);
+  }
+  function initTaxReport(){ buildSection(); populateTaxYears(); loadExpenseInputs(); hook(); calculateTaxReport(); }
+  window.initTaxReport=initTaxReport; window.exportTaxCSV=exportTaxCSV;
+  document.addEventListener('DOMContentLoaded',function(){ buildSection(); addNav(); initTaxReport(); });
+  setTimeout(function(){ buildSection(); addNav(); initTaxReport(); },600);
+})();
+</script>
