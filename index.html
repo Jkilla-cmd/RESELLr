@@ -23249,6 +23249,178 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     z-index: 2 !important;
   }
 </style>
+
+
+<!-- ===== v68: YouTube Live mini-player replaces local Lo-Fi tracks ===== -->
+<style id="rs-v68-youtube-live-mini-player-css">
+  #rsV55Menu{
+    min-width:320px !important;
+    max-width:min(360px, calc(100vw - 24px)) !important;
+  }
+  #rsV55Menu #rsYTLivePlayer{
+    display:block !important;
+    width:100% !important;
+    padding:10px !important;
+    border:1px solid var(--border) !important;
+    border-radius:16px !important;
+    background:rgba(255,255,255,.04) !important;
+    box-shadow:0 10px 24px rgba(0,0,0,.22) !important;
+    overflow:hidden !important;
+  }
+  #rsV55Menu .rs-yt-live-head{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:8px !important;
+    margin-bottom:8px !important;
+  }
+  #rsV55Menu .rs-yt-live-title{
+    font-size:12px !important;
+    font-weight:800 !important;
+    letter-spacing:.04em !important;
+    color:var(--text) !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  #rsV55Menu .rs-yt-live-pill{
+    flex:0 0 auto !important;
+    font-size:10px !important;
+    line-height:1 !important;
+    padding:5px 7px !important;
+    border-radius:999px !important;
+    border:1px solid color-mix(in srgb, var(--accent) 40%, transparent) !important;
+    color:var(--accent) !important;
+    background:color-mix(in srgb, var(--accent) 10%, transparent) !important;
+  }
+  #rsV55Menu .rs-yt-live-frame-wrap{
+    position:relative !important;
+    width:100% !important;
+    aspect-ratio:16 / 9 !important;
+    border-radius:14px !important;
+    overflow:hidden !important;
+    background:#000 !important;
+    border:1px solid rgba(255,255,255,.08) !important;
+  }
+  #rsV55Menu .rs-yt-live-frame-wrap iframe{
+    position:absolute !important;
+    inset:0 !important;
+    width:100% !important;
+    height:100% !important;
+    border:0 !important;
+    display:block !important;
+  }
+  #rsV55Menu .rs-yt-live-note{
+    margin-top:7px !important;
+    font-size:11px !important;
+    color:var(--muted) !important;
+    line-height:1.35 !important;
+  }
+  /* Fully retire the old local MP3 player controls inside the avatar menu. */
+  #rsV55Menu #rsV60Player,
+  #rsV55Menu [data-rs55="lofi"],
+  #rsV55Menu #rsV60PlayPause,
+  #rsV55Menu #rsV60Next{
+    display:none !important;
+    visibility:hidden !important;
+    height:0 !important;
+    min-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    pointer-events:none !important;
+  }
+  @media (max-width:480px){
+    #rsV55Menu{ min-width:min(320px, calc(100vw - 20px)) !important; }
+  }
+</style>
+<script id="rs-v68-youtube-live-mini-player-js">
+(function(){
+  if(window.__rsV68YouTubeLiveMiniPlayer) return;
+  window.__rsV68YouTubeLiveMiniPlayer = true;
+  const VIDEO_ID = 'EWrX250Zhko';
+  const EMBED_SRC = 'https://www.youtube.com/embed/' + VIDEO_ID + '?rel=0&modestbranding=1&playsinline=1&enablejsapi=0';
+  function $(id){ return document.getElementById(id); }
+  function stopLocalLofi(){
+    try{
+      const audio = $('lofiAudio');
+      if(audio){
+        audio.pause();
+        audio.removeAttribute('src');
+        audio.load && audio.load();
+      }
+    }catch(e){}
+  }
+  function hideOldLofiControls(menu){
+    if(!menu) return;
+    menu.querySelectorAll('#rsV60Player,[data-rs55="lofi"],#rsV60PlayPause,#rsV60Next').forEach(function(el){
+      el.style.setProperty('display','none','important');
+      el.style.setProperty('visibility','hidden','important');
+      el.style.setProperty('height','0','important');
+      el.style.setProperty('min-height','0','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('padding','0','important');
+      el.style.setProperty('overflow','hidden','important');
+      el.style.setProperty('pointer-events','none','important');
+    });
+  }
+  function ensurePlayer(){
+    const menu = $('rsV55Menu');
+    if(!menu) return;
+    stopLocalLofi();
+    hideOldLofiControls(menu);
+    let player = $('rsYTLivePlayer');
+    if(!player){
+      player = document.createElement('div');
+      player.id = 'rsYTLivePlayer';
+      player.innerHTML = `
+        <div class="rs-yt-live-head">
+          <div class="rs-yt-live-title">YouTube Live Lo-Fi</div>
+          <div class="rs-yt-live-pill">LIVE</div>
+        </div>
+        <div class="rs-yt-live-frame-wrap">
+          <iframe
+            id="rsYTLiveFrame"
+            src="${EMBED_SRC}"
+            title="YouTube Live Lo-Fi Stream"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen></iframe>
+        </div>
+        <div class="rs-yt-live-note">Use the YouTube controls for play/pause. Since this is a live stream, skip is not available.</div>`;
+      menu.insertBefore(player, menu.firstChild);
+    }else{
+      const frame = $('rsYTLiveFrame');
+      if(frame && frame.getAttribute('src') !== EMBED_SRC) frame.setAttribute('src', EMBED_SRC);
+      if(player.parentElement !== menu) menu.insertBefore(player, menu.firstChild);
+    }
+  }
+  function boot(){
+    ensurePlayer();
+    const menu = $('rsV55Menu');
+    if(menu && !menu.dataset.rsV68Observed){
+      menu.dataset.rsV68Observed = '1';
+      try{ new MutationObserver(function(){ ensurePlayer(); }).observe(menu,{childList:true,subtree:true,attributes:true}); }catch(e){}
+    }
+  }
+  document.addEventListener('click', function(ev){
+    const old = ev.target && ev.target.closest && ev.target.closest('[data-rs55="lofi"],#rsV60PlayPause,#rsV60Next');
+    if(old){
+      ev.preventDefault();
+      ev.stopPropagation();
+      ensurePlayer();
+      return;
+    }
+    if(ev.target && ev.target.closest && ev.target.closest('#rsV55DockBtn,#rsV55Dock,#rsV55Menu')){
+      setTimeout(ensurePlayer, 40);
+    }
+  }, true);
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  window.addEventListener('load', function(){ setTimeout(boot,80); setTimeout(boot,600); });
+  setInterval(ensurePlayer, 2000);
+})();
+</script>
+
 </body>
 </html>
 
