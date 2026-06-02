@@ -23325,6 +23325,273 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== v70: Restore YouTube mini-player + make eBay Draft Helper visible in Inventory ===== -->
+<style id="rs-v70-youtube-ebay-restore-css">
+  #rsV55Menu{
+    min-width:320px !important;
+    max-width:min(370px, calc(100vw - 24px)) !important;
+  }
+  #rsV55Menu #rsYTLivePlayer{
+    display:block !important;
+    width:100% !important;
+    padding:10px !important;
+    border:1px solid var(--border) !important;
+    border-radius:16px !important;
+    background:rgba(255,255,255,.04) !important;
+    box-shadow:0 10px 24px rgba(0,0,0,.22) !important;
+    overflow:hidden !important;
+    margin:8px 0 10px !important;
+  }
+  #rsV55Menu .rs-yt-live-head{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:8px !important;
+    margin-bottom:8px !important;
+  }
+  #rsV55Menu .rs-yt-live-title{
+    font-size:12px !important;
+    font-weight:800 !important;
+    letter-spacing:.04em !important;
+    color:var(--text) !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  #rsV55Menu .rs-yt-live-pill{
+    flex:0 0 auto !important;
+    font-size:10px !important;
+    line-height:1 !important;
+    padding:5px 7px !important;
+    border-radius:999px !important;
+    border:1px solid color-mix(in srgb, var(--accent) 40%, transparent) !important;
+    color:var(--accent) !important;
+    background:color-mix(in srgb, var(--accent) 10%, transparent) !important;
+  }
+  #rsV55Menu .rs-yt-live-frame-wrap{
+    position:relative !important;
+    width:100% !important;
+    aspect-ratio:16 / 9 !important;
+    border-radius:14px !important;
+    overflow:hidden !important;
+    background:#000 !important;
+    border:1px solid rgba(255,255,255,.08) !important;
+  }
+  #rsV55Menu .rs-yt-live-frame-wrap iframe{
+    position:absolute !important;
+    inset:0 !important;
+    width:100% !important;
+    height:100% !important;
+    border:0 !important;
+    display:block !important;
+  }
+  #rsV55Menu .rs-yt-live-note{
+    margin-top:7px !important;
+    font-size:11px !important;
+    color:var(--muted) !important;
+    line-height:1.35 !important;
+  }
+  #rsV55Menu #rsV60Player,
+  #rsV55Menu [data-rs55="lofi"],
+  #rsV55Menu #rsV60PlayPause,
+  #rsV55Menu #rsV60Next{
+    display:none !important;
+    visibility:hidden !important;
+    height:0 !important;
+    min-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    pointer-events:none !important;
+  }
+  #activeTableBody .action-cell{
+    min-width:210px !important;
+    width:auto !important;
+    white-space:nowrap !important;
+  }
+  .ebay-list-action{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:5px !important;
+    width:auto !important;
+    min-width:58px !important;
+    height:28px !important;
+    margin-left:8px !important;
+    padding:0 9px !important;
+    cursor:pointer !important;
+    border-radius:10px !important;
+    color:var(--accent) !important;
+    border:1px solid color-mix(in srgb, var(--accent) 32%, transparent) !important;
+    background:color-mix(in srgb, var(--accent) 10%, transparent) !important;
+    font-size:12px !important;
+    font-weight:800 !important;
+    line-height:1 !important;
+    user-select:none !important;
+    vertical-align:middle !important;
+  }
+  .ebay-list-action:hover{
+    transform:translateY(-1px) !important;
+    background:color-mix(in srgb, var(--accent) 18%, transparent) !important;
+    border-color:color-mix(in srgb, var(--accent) 48%, transparent) !important;
+  }
+  @media (max-width:480px){
+    #rsV55Menu{ min-width:min(320px, calc(100vw - 20px)) !important; }
+    .ebay-list-action{ min-width:42px !important; padding:0 7px !important; font-size:11px !important; }
+  }
+</style>
+<script id="rs-v70-youtube-ebay-restore-js">
+(function(){
+  if(window.__rsV70YouTubeEbayRestore) return;
+  window.__rsV70YouTubeEbayRestore = true;
+  const VIDEO_ID = 'EWrX250Zhko';
+  const EMBED_SRC = 'https://www.youtube.com/embed/' + VIDEO_ID + '?rel=0&modestbranding=1&playsinline=1&enablejsapi=0';
+  function $(id){ return document.getElementById(id); }
+  function stopLocalLofi(){
+    try{
+      const audio = $('lofiAudio');
+      if(audio){ audio.pause(); audio.removeAttribute('src'); audio.load && audio.load(); }
+    }catch(e){}
+  }
+  function hideOldLofiControls(menu){
+    if(!menu) return;
+    menu.querySelectorAll('#rsV60Player,[data-rs55="lofi"],#rsV60PlayPause,#rsV60Next').forEach(function(el){
+      el.style.setProperty('display','none','important');
+      el.style.setProperty('visibility','hidden','important');
+      el.style.setProperty('height','0','important');
+      el.style.setProperty('min-height','0','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('padding','0','important');
+      el.style.setProperty('overflow','hidden','important');
+      el.style.setProperty('pointer-events','none','important');
+    });
+  }
+  function ensureYouTubePlayer(){
+    const menu = $('rsV55Menu');
+    if(!menu) return;
+    hideOldLofiControls(menu);
+    let wrap = $('rsYTLivePlayer');
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.id = 'rsYTLivePlayer';
+      wrap.innerHTML =
+        '<div class="rs-yt-live-head">' +
+          '<div class="rs-yt-live-title">Lo-Fi Live Stream</div>' +
+          '<div class="rs-yt-live-pill">YouTube</div>' +
+        '</div>' +
+        '<div class="rs-yt-live-frame-wrap">' +
+          '<iframe title="Lo-Fi Live" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy" src="' + EMBED_SRC + '"></iframe>' +
+        '</div>' +
+        '<div class="rs-yt-live-note">Use the YouTube controls for play/pause and volume.</div>';
+      const firstAction = menu.querySelector('.dock-action, button, a, [role="button"]');
+      if(firstAction && firstAction.parentNode === menu){
+        menu.insertBefore(wrap, firstAction);
+      }else{
+        menu.insertBefore(wrap, menu.firstChild);
+      }
+    }else{
+      const frame = wrap.querySelector('iframe');
+      if(frame && !frame.src) frame.src = EMBED_SRC;
+    }
+    stopLocalLofi();
+  }
+
+  function moneyVal(v){
+    const n = Number(String(v ?? '').replace(/[^0-9.-]/g,''));
+    return Number.isFinite(n) && n > 0 ? n.toFixed(2) : '';
+  }
+  function clean(v){ return String(v ?? '').trim(); }
+  function listingText(item){
+    const title = clean(item.item || item.title || item.name);
+    const type = clean(item.type);
+    const platform = clean(item.platform);
+    const price = moneyVal(item.list || item.price || item.salePrice);
+    const notes = clean(item.notes);
+    return [
+      title ? `Title: ${title}` : '',
+      type ? `Type: ${type}` : '',
+      price ? `Suggested price: $${price}` : '',
+      platform ? `Current platform: ${platform}` : '',
+      notes ? `Notes: ${notes}` : '',
+      '',
+      'RESELLr eBay draft helper copied this info for listing.'
+    ].filter(Boolean).join('\n');
+  }
+  window.resellrListOnEbay = function(item){
+    item = item || {};
+    const title = clean(item.item || item.title || item.name || '');
+    const details = listingText(item);
+    try{ if(navigator.clipboard && details){ navigator.clipboard.writeText(details).catch(function(){}); } }catch(e){}
+    const url = 'https://www.ebay.com/sl/prelist?title=' + encodeURIComponent(title);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    try{ if(typeof window.showToast === 'function') window.showToast('eBay draft opened. Listing details copied.'); }catch(e){}
+  };
+  window.resellrMakeEbayListButton = function(item){
+    const b = document.createElement('span');
+    b.className = 'ebay-list-action';
+    b.title = 'List on eBay draft';
+    b.setAttribute('role','button');
+    b.setAttribute('tabindex','0');
+    b.setAttribute('aria-label','List on eBay');
+    b.textContent = '📝 eBay';
+    b.onclick = function(ev){ try{ ev.preventDefault(); ev.stopPropagation(); }catch(e){} window.resellrListOnEbay(item); };
+    b.onkeydown = function(ev){ if(ev.key === 'Enter' || ev.key === ' '){ b.click(); } };
+    return b;
+  };
+
+  function readActiveRows(){
+    try{ if(typeof window.readActive === 'function') return window.readActive() || []; }catch(e){}
+    try{ return JSON.parse(localStorage.getItem('activeInventory') || '[]') || []; }catch(e){ return []; }
+  }
+  function addEbayButtonsToVisibleInventory(){
+    const tbody = $('activeTableBody');
+    if(!tbody) return;
+    const rows = readActiveRows();
+    Array.from(tbody.querySelectorAll('tr')).forEach(function(tr){
+      const action = tr.querySelector('td.action-cell') || tr.lastElementChild;
+      if(!action || action.querySelector('.ebay-list-action')) return;
+      const cells = tr.querySelectorAll('td');
+      const date = cells[0] ? cells[0].textContent.trim() : '';
+      const itemName = cells[1] ? cells[1].textContent.trim() : '';
+      const match = rows.find(function(r){ return clean(r.item) === itemName && (!date || clean(r.date) === date); }) || {item:itemName, title:itemName};
+      const comps = action.querySelector('.ebay-comps-action');
+      const btn = window.resellrMakeEbayListButton(match);
+      if(comps && comps.nextSibling) action.insertBefore(btn, comps.nextSibling);
+      else if(comps) action.insertBefore(btn, comps.nextSibling);
+      else action.insertBefore(btn, action.firstChild);
+    });
+  }
+  function refresh(){
+    ensureYouTubePlayer();
+    addEbayButtonsToVisibleInventory();
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(refresh, 100);
+    setTimeout(refresh, 500);
+    setTimeout(function(){
+      try{
+        if(typeof window.renderActiveFast === 'function') window.renderActiveFast();
+        else if(typeof window.renderActive === 'function') window.renderActive();
+      }catch(e){}
+      refresh();
+    }, 900);
+  });
+  document.addEventListener('click', function(e){
+    const t=e.target;
+    if(t && (t.closest && (t.closest('#rsV55Dock') || t.closest('#rsV55Menu') || t.closest('[data-target="secInventory"]') || t.closest('#secInventory')))){
+      setTimeout(refresh, 80);
+      setTimeout(refresh, 350);
+    }
+  }, true);
+  const mo = new MutationObserver(function(){ clearTimeout(window.__rsV70RefreshTimer); window.__rsV70RefreshTimer = setTimeout(refresh, 80); });
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ mo.observe(document.body, {childList:true, subtree:true}); }catch(e){}
+  });
+})();
+</script>
+
 </body>
 </html>
 
