@@ -23592,6 +23592,264 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== v71: Replace YouTube mini-player with LoFi Cafe card ===== -->
+<style id="rs-v71-lofi-cafe-card-css">
+  /* Hide the previous YouTube/live iframe and old local-player controls. */
+  #rsV55Menu #rsYTLivePlayer,
+  #rsV55Menu iframe[src*="youtube.com/embed"],
+  #rsV55Menu #rsV60Player,
+  #rsV55Menu [data-rs55="lofi"],
+  #rsV55Menu #rsV60PlayPause,
+  #rsV55Menu #rsV60Next{
+    display:none !important;
+    visibility:hidden !important;
+    height:0 !important;
+    min-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    pointer-events:none !important;
+  }
+
+  #rsV55Menu{
+    min-width:320px !important;
+    max-width:min(370px, calc(100vw - 24px)) !important;
+  }
+
+  #rsV55Menu #rsLofiCafeCard{
+    position:relative !important;
+    display:block !important;
+    width:100% !important;
+    min-height:172px !important;
+    padding:14px !important;
+    margin:8px 0 12px !important;
+    border:1px solid var(--border) !important;
+    border-radius:18px !important;
+    overflow:hidden !important;
+    background:
+      linear-gradient(90deg, rgba(5,8,14,.90) 0%, rgba(5,8,14,.76) 44%, rgba(5,8,14,.30) 100%),
+      var(--panel) !important;
+    box-shadow:0 16px 34px rgba(0,0,0,.28) !important;
+    isolation:isolate !important;
+  }
+  #rsV55Menu #rsLofiCafeCard::before{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    background-image:var(--rsCommandBg, none) !important;
+    background-size:cover !important;
+    background-position:center right !important;
+    background-repeat:no-repeat !important;
+    opacity:.62 !important;
+    z-index:-2 !important;
+  }
+  #rsV55Menu #rsLofiCafeCard::after{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    background:
+      radial-gradient(circle at 85% 18%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 36%),
+      linear-gradient(90deg, rgba(0,0,0,.82), rgba(0,0,0,.42), rgba(0,0,0,.18)) !important;
+    z-index:-1 !important;
+  }
+  .rs-lofi-cafe-top{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:10px !important;
+    margin-bottom:18px !important;
+  }
+  .rs-lofi-cafe-title{
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    font-size:13px !important;
+    font-weight:900 !important;
+    letter-spacing:.08em !important;
+    text-transform:uppercase !important;
+    color:var(--text) !important;
+    text-shadow:0 2px 12px rgba(0,0,0,.55) !important;
+  }
+  .rs-lofi-cafe-dot{
+    width:9px !important;
+    height:9px !important;
+    border-radius:999px !important;
+    background:var(--accent) !important;
+    box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent) !important;
+    animation:rsLofiCafePulse 1.8s infinite !important;
+  }
+  @keyframes rsLofiCafePulse{
+    0%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); opacity:1; }
+    70%{ box-shadow:0 0 0 10px transparent; opacity:.75; }
+    100%{ box-shadow:0 0 0 0 transparent; opacity:1; }
+  }
+  .rs-lofi-cafe-pill{
+    flex:0 0 auto !important;
+    font-size:10px !important;
+    line-height:1 !important;
+    padding:6px 8px !important;
+    border-radius:999px !important;
+    color:var(--accent) !important;
+    background:color-mix(in srgb, var(--accent) 12%, transparent) !important;
+    border:1px solid color-mix(in srgb, var(--accent) 36%, transparent) !important;
+    backdrop-filter:blur(8px) !important;
+  }
+  .rs-lofi-cafe-sub{
+    max-width:210px !important;
+    font-size:12px !important;
+    line-height:1.35 !important;
+    color:color-mix(in srgb, var(--text) 82%, var(--muted)) !important;
+    margin-bottom:14px !important;
+    text-shadow:0 2px 12px rgba(0,0,0,.55) !important;
+  }
+  .rs-lofi-cafe-actions{
+    display:flex !important;
+    gap:8px !important;
+    flex-wrap:wrap !important;
+  }
+  .rs-lofi-cafe-btn{
+    width:auto !important;
+    min-width:0 !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:6px !important;
+    padding:8px 10px !important;
+    border-radius:12px !important;
+    font-size:12px !important;
+    font-weight:800 !important;
+    line-height:1 !important;
+    color:var(--text) !important;
+    border:1px solid color-mix(in srgb, var(--accent) 34%, transparent) !important;
+    background:rgba(255,255,255,.07) !important;
+    backdrop-filter:blur(8px) !important;
+    cursor:pointer !important;
+  }
+  .rs-lofi-cafe-btn:hover{
+    background:color-mix(in srgb, var(--accent) 18%, transparent) !important;
+    border-color:color-mix(in srgb, var(--accent) 55%, transparent) !important;
+    transform:translateY(-1px) !important;
+  }
+
+  /* Clean up the eBay draft button spacing while we are here. */
+  .ebay-list-action{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:4px !important;
+    height:28px !important;
+    min-width:50px !important;
+    padding:0 8px !important;
+    margin-left:6px !important;
+    border-radius:10px !important;
+    font-size:11px !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+    vertical-align:middle !important;
+  }
+  #activeTableBody .action-cell{
+    min-width:190px !important;
+    white-space:nowrap !important;
+  }
+</style>
+<script id="rs-v71-lofi-cafe-card-js">
+(function(){
+  if(window.__rsV71LofiCafeCard) return;
+  window.__rsV71LofiCafeCard = true;
+  const LOFI_URL = 'https://www.lofi.cafe/';
+  function $(id){ return document.getElementById(id); }
+  function stopLocalAudio(){
+    try{
+      const audio = $('lofiAudio');
+      if(audio){ audio.pause(); audio.removeAttribute('src'); if(audio.load) audio.load(); }
+    }catch(e){}
+  }
+  function openLofiCafe(popout){
+    const features = popout ? 'popup=yes,width=430,height=720,noopener,noreferrer' : 'noopener,noreferrer';
+    window.open(LOFI_URL, popout ? 'resellr_lofi_cafe' : '_blank', features);
+    try{ if(typeof window.showToast === 'function') window.showToast('Opening LoFi Cafe'); }catch(e){}
+  }
+  function removeYouTube(){
+    document.querySelectorAll('#rsYTLivePlayer, iframe[src*="youtube.com/embed"], iframe[src*="youtube-nocookie.com/embed"]').forEach(function(el){
+      const wrap = el.id === 'rsYTLivePlayer' ? el : el.closest('#rsYTLivePlayer') || el;
+      if(wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);
+    });
+  }
+  function hideOld(menu){
+    if(!menu) return;
+    menu.querySelectorAll('#rsV60Player,[data-rs55="lofi"],#rsV60PlayPause,#rsV60Next,#rsYTLivePlayer').forEach(function(el){
+      el.style.setProperty('display','none','important');
+      el.style.setProperty('visibility','hidden','important');
+      el.style.setProperty('height','0','important');
+      el.style.setProperty('min-height','0','important');
+      el.style.setProperty('margin','0','important');
+      el.style.setProperty('padding','0','important');
+      el.style.setProperty('overflow','hidden','important');
+      el.style.setProperty('pointer-events','none','important');
+    });
+  }
+  function syncCommandBgVar(){
+    try{
+      const bg = localStorage.getItem('rs15CommandBg') || '';
+      if(bg){ document.documentElement.style.setProperty('--rsCommandBg', 'url("' + bg.replace(/"/g, '\"') + '")'); }
+    }catch(e){}
+  }
+  function ensureCard(){
+    const menu = $('rsV55Menu') || document.querySelector('.rs-dock-menu, .rs-v42-menu, #rsDockV41 .rs-dock-menu');
+    if(!menu) return;
+    stopLocalAudio();
+    removeYouTube();
+    hideOld(menu);
+    syncCommandBgVar();
+    let card = $('rsLofiCafeCard');
+    if(!card){
+      card = document.createElement('div');
+      card.id = 'rsLofiCafeCard';
+      card.innerHTML =
+        '<div class="rs-lofi-cafe-top">' +
+          '<div class="rs-lofi-cafe-title"><span class="rs-lofi-cafe-dot"></span><span>LoFi Cafe</span></div>' +
+          '<div class="rs-lofi-cafe-pill">STREAM</div>' +
+        '</div>' +
+        '<div class="rs-lofi-cafe-sub">Relax & list comics. Opens the live LoFi Cafe stream in its own tab so RESELLr stays fast.</div>' +
+        '<div class="rs-lofi-cafe-actions">' +
+          '<button type="button" class="rs-lofi-cafe-btn" data-rs-lofi-cafe="open">▶ Open Stream</button>' +
+          '<button type="button" class="rs-lofi-cafe-btn" data-rs-lofi-cafe="popout">↗ Pop Out</button>' +
+        '</div>';
+      const first = menu.querySelector('button, a, [role="button"]');
+      if(first && first.parentNode === menu) menu.insertBefore(card, first);
+      else menu.insertBefore(card, menu.firstChild);
+    }
+  }
+  document.addEventListener('click', function(e){
+    const btn = e.target && e.target.closest ? e.target.closest('[data-rs-lofi-cafe]') : null;
+    if(btn){
+      e.preventDefault();
+      e.stopPropagation();
+      openLofiCafe(btn.getAttribute('data-rs-lofi-cafe') === 'popout');
+      return;
+    }
+    if(e.target && e.target.closest && (e.target.closest('#rsV55Dock') || e.target.closest('#rsV55Menu'))){
+      setTimeout(ensureCard, 40);
+      setTimeout(ensureCard, 200);
+    }
+  }, true);
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(ensureCard, 100);
+    setTimeout(ensureCard, 500);
+    setTimeout(ensureCard, 1100);
+  });
+  const mo = new MutationObserver(function(){
+    clearTimeout(window.__rsV71LofiTimer);
+    window.__rsV71LofiTimer = setTimeout(ensureCard, 80);
+  });
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ mo.observe(document.body, {childList:true, subtree:true}); }catch(e){}
+  });
+})();
+</script>
+
 </body>
 </html>
 
