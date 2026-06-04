@@ -23991,6 +23991,212 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== v74: Inventory action spacing hard fix - compact 2-row grid ===== -->
+<style id="rs-v74-inventory-actions-grid-css">
+  /* Give the actions column enough room and stop the icons from running off-screen. */
+  #secInventory table th:last-child,
+  #secInventory table td:last-child,
+  #activeTableBody td.action-cell,
+  #activeTableBody .action-cell{
+    width: 168px !important;
+    min-width: 168px !important;
+    max-width: 168px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    vertical-align: middle !important;
+    white-space: normal !important;
+    overflow: visible !important;
+  }
+
+  #activeTableBody .inventory-action-grid{
+    display: grid !important;
+    grid-template-columns: repeat(3, 42px) !important;
+    grid-auto-rows: 34px !important;
+    gap: 7px 8px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 142px !important;
+    margin: 0 auto !important;
+    padding: 2px 0 !important;
+  }
+
+  #activeTableBody .inventory-action-grid > *,
+  #activeTableBody .action-cell > .edit,
+  #activeTableBody .action-cell > .soldbtn,
+  #activeTableBody .action-cell > .trash,
+  #activeTableBody .action-cell > button,
+  #activeTableBody .action-cell > a,
+  #activeTableBody .action-cell > span{
+    box-sizing: border-box !important;
+    width: 42px !important;
+    height: 34px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 11px !important;
+    line-height: 1 !important;
+    font-size: 18px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+  }
+
+  /* eBay button gets the full second-row style without squeezing text. */
+  #activeTableBody .inventory-action-grid .ebay-list-action{
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+    grid-column: span 1 !important;
+    height: 34px !important;
+    gap: 3px !important;
+    padding: 0 5px !important;
+    font-size: 10px !important;
+  }
+
+  #activeTableBody .inventory-action-grid .ebay-list-action .rs-ebay-pencil{
+    font-size: 12px !important;
+  }
+  #activeTableBody .inventory-action-grid .ebay-list-action .rs-ebay-label{
+    display: inline-block !important;
+    font-size: 10px !important;
+    line-height: 1 !important;
+  }
+
+  /* Remove old vertical bar separators if the old render used them. */
+  #activeTableBody .action-cell .rs-action-separator,
+  #activeTableBody .inventory-action-grid .rs-action-separator{
+    display:none !important;
+  }
+
+  @media (max-width: 800px){
+    #secInventory table th:last-child,
+    #secInventory table td:last-child,
+    #activeTableBody td.action-cell,
+    #activeTableBody .action-cell{
+      width: 148px !important;
+      min-width: 148px !important;
+      max-width: 148px !important;
+    }
+    #activeTableBody .inventory-action-grid{
+      grid-template-columns: repeat(3, 38px) !important;
+      grid-auto-rows: 32px !important;
+      gap: 6px !important;
+      min-width: 126px !important;
+    }
+    #activeTableBody .inventory-action-grid > *,
+    #activeTableBody .action-cell > .edit,
+    #activeTableBody .action-cell > .soldbtn,
+    #activeTableBody .action-cell > .trash,
+    #activeTableBody .action-cell > button,
+    #activeTableBody .action-cell > a,
+    #activeTableBody .action-cell > span{
+      width: 38px !important;
+      height: 32px !important;
+      min-width: 38px !important;
+      max-width: 38px !important;
+      font-size: 17px !important;
+    }
+    #activeTableBody .inventory-action-grid .ebay-list-action{
+      width: 52px !important;
+      min-width: 52px !important;
+      max-width: 52px !important;
+      font-size: 9px !important;
+    }
+  }
+</style>
+<script id="rs-v74-inventory-actions-grid-js">
+(function(){
+  if(window.__rsV74InventoryActionGrid) return;
+  window.__rsV74InventoryActionGrid = true;
+
+  function isActionNode(el){
+    if(!el || el.nodeType !== 1) return false;
+    if(el.classList && el.classList.contains('inventory-action-grid')) return false;
+    const tag = el.tagName ? el.tagName.toLowerCase() : '';
+    if(['button','a','span'].includes(tag)) return true;
+    return false;
+  }
+
+  function cleanupTextNodes(cell){
+    Array.from(cell.childNodes).forEach(function(n){
+      if(n.nodeType === 3 && String(n.textContent || '').trim()){
+        // Old action cells sometimes left pipe separators. Remove them.
+        if(String(n.textContent).replace(/[|\s]/g,'') === '') n.remove();
+        else n.textContent = '';
+      }
+    });
+  }
+
+  function normalizeActionLabels(el){
+    if(!el || !el.setAttribute) return;
+    const txt = (el.textContent || '').trim().toLowerCase();
+    if(el.classList && el.classList.contains('ebay-list-action')) return;
+    if(txt.includes('delete') || txt === '🗑️' || txt === '🗑'){
+      el.title = el.title || 'Delete';
+    }
+    if(txt.includes('hold')){
+      el.title = el.title || 'Move to Holds';
+    }
+    if(txt.includes('sold') || txt.includes('$')){
+      el.title = el.title || 'Mark Sold';
+    }
+  }
+
+  function gridOneCell(cell){
+    if(!cell) return;
+    if(cell.querySelector(':scope > .inventory-action-grid')) return;
+
+    cleanupTextNodes(cell);
+
+    const kids = Array.from(cell.children).filter(isActionNode);
+    if(kids.length < 2) return;
+
+    const grid = document.createElement('div');
+    grid.className = 'inventory-action-grid';
+    kids.forEach(function(k){
+      normalizeActionLabels(k);
+      grid.appendChild(k);
+    });
+    cell.appendChild(grid);
+    cell.classList.add('action-cell');
+  }
+
+  function fixInventoryActionGrid(){
+    const tbody = document.getElementById('activeTableBody');
+    if(!tbody) return;
+    Array.from(tbody.querySelectorAll('tr')).forEach(function(tr){
+      const cell = tr.querySelector('td.action-cell') || tr.lastElementChild;
+      gridOneCell(cell);
+    });
+  }
+
+  window.resellrFixInventoryActionGrid = fixInventoryActionGrid;
+
+  function schedule(){
+    clearTimeout(window.__rsV74ActionGridTimer);
+    window.__rsV74ActionGridTimer = setTimeout(fixInventoryActionGrid, 70);
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(fixInventoryActionGrid, 100);
+    setTimeout(fixInventoryActionGrid, 500);
+    setTimeout(fixInventoryActionGrid, 1200);
+    try{
+      const mo = new MutationObserver(schedule);
+      mo.observe(document.body, {childList:true, subtree:true});
+    }catch(e){}
+  });
+  document.addEventListener('click', function(){ setTimeout(fixInventoryActionGrid, 80); }, true);
+})();
+</script>
 </body>
 </html>
 
