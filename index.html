@@ -26838,3 +26838,199 @@ body.skin-dreamtrip .chart-wrap{
   setTimeout(function(){ buildSection(); addNav(); initTaxReport(); },600);
 })();
 </script>
+
+<!-- ===== v72: eBay Draft button spacing + mobile photo helper note ===== -->
+<style id="rs-v72-ebay-button-spacing-css">
+  /* Keep the Inventory action row tight and readable. */
+  #activeTableBody td.action-cell,
+  #activeTableBody .action-cell{
+    min-width:170px !important;
+    width:auto !important;
+    white-space:nowrap !important;
+    display:table-cell !important;
+    vertical-align:middle !important;
+  }
+
+  #activeTableBody .action-cell > span,
+  #activeTableBody .action-cell > button,
+  #activeTableBody .action-cell > a{
+    margin-right:6px !important;
+  }
+
+  #activeTableBody .action-cell > span:last-child,
+  #activeTableBody .action-cell > button:last-child,
+  #activeTableBody .action-cell > a:last-child{
+    margin-right:0 !important;
+  }
+
+  .ebay-list-action{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:5px !important;
+    height:28px !important;
+    min-width:56px !important;
+    max-width:72px !important;
+    padding:0 8px !important;
+    margin-left:0 !important;
+    margin-right:6px !important;
+    border-radius:10px !important;
+    font-size:11px !important;
+    font-weight:800 !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+    vertical-align:middle !important;
+    color:var(--accent) !important;
+    border:1px solid color-mix(in srgb, var(--accent) 32%, transparent) !important;
+    background:color-mix(in srgb, var(--accent) 10%, transparent) !important;
+    cursor:pointer !important;
+    user-select:none !important;
+  }
+  .ebay-list-action:hover{
+    transform:translateY(-1px) !important;
+    background:color-mix(in srgb, var(--accent) 18%, transparent) !important;
+    border-color:color-mix(in srgb, var(--accent) 48%, transparent) !important;
+  }
+  .ebay-list-action .rs-ebay-pencil{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    font-size:12px !important;
+    line-height:1 !important;
+    transform:translateY(-.5px) !important;
+  }
+  .ebay-list-action .rs-ebay-label{
+    display:inline-block !important;
+    font-size:11px !important;
+    line-height:1 !important;
+  }
+
+  @media (max-width:700px){
+    #activeTableBody td.action-cell,
+    #activeTableBody .action-cell{ min-width:150px !important; }
+    .ebay-list-action{ min-width:42px !important; max-width:42px !important; width:42px !important; padding:0 !important; }
+    .ebay-list-action .rs-ebay-label{ display:none !important; }
+  }
+</style>
+<script id="rs-v72-ebay-button-photo-helper-js">
+(function(){
+  if(window.__rsV72EbayPhotoHelper) return;
+  window.__rsV72EbayPhotoHelper = true;
+
+  function moneyVal(v){
+    const n = Number(String(v ?? '').replace(/[^0-9.-]/g,''));
+    return Number.isFinite(n) && n > 0 ? n.toFixed(2) : '';
+  }
+  function clean(v){ return String(v ?? '').trim(); }
+
+  function listingText(item){
+    const title = clean(item.item || item.title || item.name);
+    const type = clean(item.type);
+    const platform = clean(item.platform);
+    const price = moneyVal(item.list || item.price || item.salePrice);
+    const notes = clean(item.notes);
+    return [
+      title ? `Title: ${title}` : '',
+      type ? `Type: ${type}` : '',
+      price ? `Suggested price: $${price}` : '',
+      platform ? `Current platform: ${platform}` : '',
+      notes ? `Notes: ${notes}` : '',
+      '',
+      'Photo step: in eBay, choose Photos & Video → Upload from mobile. eBay will send the photo-upload notification to your phone.',
+      '',
+      'RESELLr copied this draft helper text.'
+    ].filter(Boolean).join('\n');
+  }
+
+  window.resellrListOnEbay = function(item){
+    item = item || {};
+    const title = clean(item.item || item.title || item.name || '');
+    const details = listingText(item);
+    try{
+      if(navigator.clipboard && details){ navigator.clipboard.writeText(details).catch(function(){}); }
+    }catch(e){}
+
+    /* eBay does not provide a public URL parameter that jumps straight into the mobile-photo modal.
+       This opens the listing draft safely and reminds the user to choose Upload from mobile on eBay. */
+    const url = 'https://www.ebay.com/sl/prelist?title=' + encodeURIComponent(title);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    try{
+      if(typeof window.showToast === 'function'){
+        window.showToast('eBay draft opened. On eBay, choose Upload from mobile for phone photos.');
+      }
+    }catch(e){}
+  };
+
+  window.resellrMakeEbayListButton = function(item){
+    const b = document.createElement('span');
+    b.className = 'ebay-list-action';
+    b.title = 'Open eBay draft. Use Upload from mobile on eBay for phone photos.';
+    b.setAttribute('role','button');
+    b.setAttribute('tabindex','0');
+    b.setAttribute('aria-label','List on eBay draft');
+    b.innerHTML = '<span class="rs-ebay-pencil">📝</span><span class="rs-ebay-label">eBay</span>';
+    b.onclick = function(ev){
+      try{ ev.preventDefault(); ev.stopPropagation(); }catch(e){}
+      window.resellrListOnEbay(item);
+    };
+    b.onkeydown = function(ev){ if(ev.key === 'Enter' || ev.key === ' '){ b.click(); } };
+    return b;
+  };
+
+  function readActiveRows(){
+    try{ if(typeof window.readActive === 'function') return window.readActive() || []; }catch(e){}
+    try{ return JSON.parse(localStorage.getItem('activeInventory') || '[]') || []; }catch(e){ return []; }
+  }
+
+  function normalizeExistingEbayButtons(){
+    document.querySelectorAll('.ebay-list-action').forEach(function(btn){
+      btn.innerHTML = '<span class="rs-ebay-pencil">📝</span><span class="rs-ebay-label">eBay</span>';
+      btn.title = 'Open eBay draft. Use Upload from mobile on eBay for phone photos.';
+    });
+  }
+
+  function addEbayButtonsToVisibleInventory(){
+    const tbody = document.getElementById('activeTableBody');
+    if(!tbody) return;
+    const rows = readActiveRows();
+    Array.from(tbody.querySelectorAll('tr')).forEach(function(tr){
+      const action = tr.querySelector('td.action-cell') || tr.lastElementChild;
+      if(!action) return;
+      if(action.querySelector('.ebay-list-action')) return;
+      const cells = tr.querySelectorAll('td');
+      const date = cells[0] ? cells[0].textContent.trim() : '';
+      const itemName = cells[1] ? cells[1].textContent.trim() : '';
+      const match = rows.find(function(r){ return clean(r.item) === itemName && (!date || clean(r.date) === date); }) || {item:itemName, title:itemName};
+      const btn = window.resellrMakeEbayListButton(match);
+      const comps = action.querySelector('.ebay-comps-action');
+      if(comps) action.insertBefore(btn, comps);
+      else action.insertBefore(btn, action.firstChild);
+    });
+    normalizeExistingEbayButtons();
+  }
+
+  function refresh(){
+    addEbayButtonsToVisibleInventory();
+    normalizeExistingEbayButtons();
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(refresh,100);
+    setTimeout(refresh,500);
+    setTimeout(refresh,1000);
+  });
+  document.addEventListener('click', function(e){
+    if(e.target && e.target.closest && (e.target.closest('[data-target="secInventory"]') || e.target.closest('#secInventory'))){
+      setTimeout(refresh,80);
+      setTimeout(refresh,300);
+    }
+  }, true);
+  const mo = new MutationObserver(function(){
+    clearTimeout(window.__rsV72EbayRefreshTimer);
+    window.__rsV72EbayRefreshTimer = setTimeout(refresh,80);
+  });
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ mo.observe(document.body, {childList:true, subtree:true}); }catch(e){}
+  });
+})();
+</script>
