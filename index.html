@@ -28009,3 +28009,132 @@ body.skin-dreamtrip .chart-wrap{
   document.addEventListener('input', function(){ setTimeout(fixAll, 120); }, true);
 })();
 </script>
+
+<!-- ===== v78: Inventory action grid row-height fix ===== -->
+<style id="rs-v78-inventory-action-row-height-fix">
+  /* The action buttons were fitting horizontally, but the table rows were too short.
+     This forces each Inventory row to reserve enough vertical room for the 2-row action grid. */
+  #secInventory .table-wrap{
+    overflow-x:auto !important;
+    overflow-y:visible !important;
+  }
+
+  #secInventory table{
+    table-layout: fixed !important;
+    min-width: 1240px !important;
+    width: 1240px !important;
+  }
+
+  #secInventory table th:nth-child(1),
+  #secInventory table td:nth-child(1){ width: 110px !important; }
+  #secInventory table th:nth-child(2),
+  #secInventory table td:nth-child(2){ width: 260px !important; }
+  #secInventory table th:nth-child(3),
+  #secInventory table td:nth-child(3){ width: 110px !important; }
+  #secInventory table th:nth-child(4),
+  #secInventory table td:nth-child(4){ width: 130px !important; }
+  #secInventory table th:nth-child(5),
+  #secInventory table td:nth-child(5){ width: 90px !important; }
+  #secInventory table th:nth-child(6),
+  #secInventory table td:nth-child(6){ width: 90px !important; }
+  #secInventory table th:nth-child(7),
+  #secInventory table td:nth-child(7){ width: 70px !important; }
+  #secInventory table th:nth-child(8),
+  #secInventory table td:nth-child(8){ width: 170px !important; }
+  #secInventory table th:last-child,
+  #secInventory table td:last-child{
+    width: 210px !important;
+    min-width: 210px !important;
+    max-width: 210px !important;
+  }
+
+  #activeTableBody tr{
+    min-height: 96px !important;
+    height: 96px !important;
+  }
+
+  #activeTableBody td{
+    height: 96px !important;
+    vertical-align: middle !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    overflow: hidden !important;
+  }
+
+  #activeTableBody td.action-cell{
+    height: 96px !important;
+    width: 210px !important;
+    min-width: 210px !important;
+    max-width: 210px !important;
+    padding: 8px 10px !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    vertical-align: middle !important;
+    text-align: center !important;
+  }
+
+  #activeTableBody .rs75-action-grid,
+  #activeTableBody .inventory-action-grid,
+  #activeTableBody .rs-v76-action-grid{
+    display: grid !important;
+    grid-template-columns: repeat(3, 54px) !important;
+    grid-template-rows: repeat(2, 36px) !important;
+    gap: 6px !important;
+    width: 174px !important;
+    height: 78px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: visible !important;
+  }
+
+  #activeTableBody .rs75-action-grid > *,
+  #activeTableBody .inventory-action-grid > *,
+  #activeTableBody .rs-v76-action-grid > *,
+  #activeTableBody td.action-cell .rs75-act,
+  #activeTableBody td.action-cell .edit,
+  #activeTableBody td.action-cell .soldbtn,
+  #activeTableBody td.action-cell .trash,
+  #activeTableBody td.action-cell .yellow,
+  #activeTableBody td.action-cell .ebay-comps-action,
+  #activeTableBody td.action-cell .ebay-list-action{
+    width: 54px !important;
+    height: 36px !important;
+    min-width: 54px !important;
+    max-width: 54px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    border-radius: 12px !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    flex: 0 0 54px !important;
+  }
+
+  #activeTableBody td.action-cell .ebay-list-action{
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.03em !important;
+  }
+
+  /* If old loose icons remain outside the grid for any reason, make them stop adding phantom spacing. */
+  #activeTableBody td.action-cell > span:not(.rs75-action-grid):not(.inventory-action-grid):not(.rs-v76-action-grid),
+  #activeTableBody td.action-cell > button:not(.rs75-action-grid):not(.inventory-action-grid):not(.rs-v76-action-grid){
+    margin-left: 0 !important;
+  }
+</style>
+<script id="rs-v78-force-action-refresh">
+(function(){
+  function run(){ try{ if(window.resellrFixInventoryActionSpacing) window.resellrFixInventoryActionSpacing(); }catch(e){} }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(run,80); setTimeout(run,400); setTimeout(run,1200); });
+  document.addEventListener('click', function(){ setTimeout(run,120); }, true);
+  document.addEventListener('input', function(){ setTimeout(run,160); }, true);
+})();
+</script>
