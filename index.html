@@ -24369,6 +24369,184 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   window.resellrFixInventoryActionGrid = run;
 })();
 </script>
+
+
+<!-- ===== v77 REAL FIX: compact inventory actions that fit narrow screens ===== -->
+<style id="rs-v77-compact-inventory-actions-css">
+  /* Final override: keep the Inventory action column compact enough to fit on small screens. */
+  #secInventory table th:last-child,
+  #secInventory table td:last-child,
+  #activeTableBody td.action-cell,
+  #activeTableBody .action-cell{
+    width:112px !important;
+    min-width:112px !important;
+    max-width:112px !important;
+    padding:4px !important;
+    text-align:center !important;
+    vertical-align:middle !important;
+    white-space:normal !important;
+    overflow:visible !important;
+  }
+
+  #activeTableBody .rs-action-grid-v77{
+    display:grid !important;
+    grid-template-columns:28px 28px 42px !important;
+    grid-template-rows:28px 28px !important;
+    gap:4px !important;
+    width:106px !important;
+    min-width:106px !important;
+    max-width:106px !important;
+    margin:0 auto !important;
+    padding:0 !important;
+    align-items:center !important;
+    justify-content:center !important;
+    justify-items:center !important;
+  }
+
+  #activeTableBody .rs-action-grid-v77 > *,
+  #activeTableBody .rs-action-grid-v77 .edit,
+  #activeTableBody .rs-action-grid-v77 .soldbtn,
+  #activeTableBody .rs-action-grid-v77 .sold-btn,
+  #activeTableBody .rs-action-grid-v77 .holdbtn,
+  #activeTableBody .rs-action-grid-v77 .movehold,
+  #activeTableBody .rs-action-grid-v77 .trash,
+  #activeTableBody .rs-action-grid-v77 .ebay-comps-action,
+  #activeTableBody .rs-action-grid-v77 .ebay-list-action{
+    box-sizing:border-box !important;
+    margin:0 !important;
+    padding:0 !important;
+    height:28px !important;
+    min-height:28px !important;
+    max-height:28px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:9px !important;
+    line-height:1 !important;
+    overflow:hidden !important;
+    white-space:nowrap !important;
+    text-align:center !important;
+  }
+
+  #activeTableBody .rs-action-grid-v77 > *:not(.ebay-list-action),
+  #activeTableBody .rs-action-grid-v77 .edit,
+  #activeTableBody .rs-action-grid-v77 .soldbtn,
+  #activeTableBody .rs-action-grid-v77 .sold-btn,
+  #activeTableBody .rs-action-grid-v77 .holdbtn,
+  #activeTableBody .rs-action-grid-v77 .movehold,
+  #activeTableBody .rs-action-grid-v77 .trash,
+  #activeTableBody .rs-action-grid-v77 .ebay-comps-action{
+    width:28px !important;
+    min-width:28px !important;
+    max-width:28px !important;
+    font-size:16px !important;
+  }
+
+  #activeTableBody .rs-action-grid-v77 .ebay-list-action{
+    width:42px !important;
+    min-width:42px !important;
+    max-width:42px !important;
+    gap:1px !important;
+    font-size:8px !important;
+    font-weight:800 !important;
+    letter-spacing:0 !important;
+  }
+
+  #activeTableBody .rs-action-grid-v77 .ebay-list-action .rs-ebay-pencil{
+    font-size:9px !important;
+    line-height:1 !important;
+  }
+  #activeTableBody .rs-action-grid-v77 .ebay-list-action .rs-ebay-label{
+    font-size:8px !important;
+    line-height:1 !important;
+    display:inline-block !important;
+    max-width:25px !important;
+    overflow:hidden !important;
+  }
+
+  #activeTableBody .rs-action-grid-v77 svg{
+    width:17px !important;
+    height:17px !important;
+  }
+
+  #activeTableBody .rs-action-grid-v77 .rs-action-empty{
+    opacity:0 !important;
+    pointer-events:none !important;
+  }
+
+  #activeTableBody .action-cell > :not(.rs-action-grid-v77){
+    margin:0 !important;
+  }
+
+  #activeTableBody .action-cell .rs-action-separator,
+  #activeTableBody .rs-action-grid-v77 .rs-action-separator{
+    display:none !important;
+  }
+</style>
+<script id="rs-v77-compact-inventory-actions-js">
+(function(){
+  function has(el,cls){ return !!(el && el.classList && el.classList.contains(cls)); }
+  function label(el){ return String((el && (el.getAttribute('title') || el.getAttribute('aria-label') || el.textContent)) || '').toLowerCase(); }
+  function isAction(el){
+    if(!el || el.nodeType !== 1) return false;
+    if(has(el,'rs-action-grid-v77') || has(el,'rs-action-grid-v76') || has(el,'inventory-action-grid')) return false;
+    const tag=(el.tagName||'').toLowerCase();
+    if(!['span','button','a','div'].includes(tag)) return false;
+    const t=label(el);
+    return has(el,'edit') || has(el,'soldbtn') || has(el,'sold-btn') || has(el,'holdbtn') || has(el,'movehold') || has(el,'trash') || has(el,'ebay-comps-action') || has(el,'ebay-list-action') || t.includes('edit') || t.includes('ebay') || t.includes('comps') || t.includes('sold') || t.includes('hold') || t.includes('delete') || t.includes('trash') || t.includes('🗑') || t.includes('💲') || t.includes('📝');
+  }
+  function collect(cell){
+    const out=[];
+    Array.from(cell.children).forEach(ch=>{
+      if(has(ch,'rs-action-grid-v77') || has(ch,'rs-action-grid-v76') || has(ch,'inventory-action-grid')){
+        Array.from(ch.children).forEach(k=>{ if(isAction(k)) out.push(k); });
+      }else if(isAction(ch)) out.push(ch);
+    });
+    return out;
+  }
+  function take(arr,fn){ const i=arr.findIndex(fn); return i>-1 ? arr.splice(i,1)[0] : null; }
+  function empty(){ const s=document.createElement('span'); s.className='rs-action-empty'; s.setAttribute('aria-hidden','true'); return s; }
+  function compactEbay(btn){
+    if(!btn) return btn;
+    btn.classList.add('ebay-list-action');
+    if(!btn.querySelector('.rs-ebay-label')){
+      btn.innerHTML='<span class="rs-ebay-pencil">📝</span><span class="rs-ebay-label">eBay</span>';
+    }
+    btn.title = btn.title || 'List on eBay draft';
+    return btn;
+  }
+  function normalizeCell(cell){
+    if(!cell) return;
+    cell.classList.add('action-cell');
+    const actions=collect(cell);
+    if(actions.length<2) return;
+
+    const edit=take(actions, el=>has(el,'edit') || label(el).includes('edit'));
+    const comps=take(actions, el=>has(el,'ebay-comps-action') || label(el).includes('comps') || label(el).includes('price') || label(el).includes('trend'));
+    const ebay=compactEbay(take(actions, el=>has(el,'ebay-list-action') || label(el).includes('ebay')));
+    const sold=take(actions, el=>has(el,'soldbtn') || has(el,'sold-btn') || label(el).includes('sold') || label(el).includes('mark') || label(el).includes('$') || label(el).includes('💲'));
+    const hold=take(actions, el=>has(el,'holdbtn') || has(el,'movehold') || label(el).includes('hold') || label(el).includes('ice'));
+    const del=take(actions, el=>has(el,'trash') || label(el).includes('delete') || label(el).includes('trash') || label(el).includes('🗑'));
+
+    cell.innerHTML='';
+    const grid=document.createElement('div');
+    grid.className='rs-action-grid-v77';
+    [edit, comps, ebay, sold, hold, del].forEach(el=>grid.appendChild(el || empty()));
+    cell.appendChild(grid);
+  }
+  function run(){
+    const tbody=document.getElementById('activeTableBody');
+    if(!tbody) return;
+    Array.from(tbody.querySelectorAll('tr')).forEach(tr=>normalizeCell(tr.querySelector('td.action-cell') || tr.lastElementChild));
+  }
+  window.resellrFixInventoryActionGrid = run;
+  function schedule(){ clearTimeout(window.__rsV77ActionGridTimer); window.__rsV77ActionGridTimer=setTimeout(run,40); }
+  document.addEventListener('DOMContentLoaded',()=>{ setTimeout(run,80); setTimeout(run,350); setTimeout(run,1000); });
+  document.addEventListener('click',()=>setTimeout(run,70),true);
+  document.addEventListener('change',()=>setTimeout(run,70),true);
+  try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
+})();
+</script>
 </body>
 </html>
 
