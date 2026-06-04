@@ -23850,6 +23850,147 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+
+<!-- ===== v73: Inventory action buttons two-row layout + eBay Like New helper ===== -->
+<style id="rs-v73-ebay-two-row-actions-css">
+  /* Split Inventory action icons into two clean rows instead of one crowded line. */
+  #activeTableBody td.action-cell,
+  #activeTableBody .action-cell{
+    min-width:132px !important;
+    width:132px !important;
+    max-width:132px !important;
+    white-space:normal !important;
+    vertical-align:middle !important;
+    line-height:1 !important;
+  }
+
+  #activeTableBody td.action-cell,
+  #activeTableBody .action-cell{
+    display:flex !important;
+    flex-wrap:wrap !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:7px 8px !important;
+    padding-top:10px !important;
+    padding-bottom:10px !important;
+  }
+
+  #activeTableBody .action-cell > span,
+  #activeTableBody .action-cell > button,
+  #activeTableBody .action-cell > a{
+    margin:0 !important;
+  }
+
+  #activeTableBody .action-cell .edit,
+  #activeTableBody .action-cell .soldbtn,
+  #activeTableBody .action-cell .trash,
+  #activeTableBody .action-cell .holdbtn,
+  #activeTableBody .action-cell .movehold,
+  #activeTableBody .action-cell .ebay-comps-action{
+    width:26px !important;
+    height:26px !important;
+    min-width:26px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    font-size:18px !important;
+    line-height:1 !important;
+  }
+
+  #activeTableBody .action-cell .ebay-list-action{
+    width:56px !important;
+    min-width:56px !important;
+    max-width:56px !important;
+    height:26px !important;
+    padding:0 6px !important;
+    margin:0 !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:4px !important;
+    border-radius:10px !important;
+    font-size:10px !important;
+    font-weight:800 !important;
+    line-height:1 !important;
+  }
+
+  #activeTableBody .action-cell .ebay-list-action .rs-ebay-pencil{
+    font-size:11px !important;
+    line-height:1 !important;
+  }
+
+  #activeTableBody .action-cell .ebay-list-action .rs-ebay-label{
+    font-size:10px !important;
+    line-height:1 !important;
+  }
+</style>
+
+<script id="rs-v73-ebay-like-new-helper-js">
+(function(){
+  /* Keep the draft helper simple and safe. eBay's public draft URL does not reliably accept
+     condition/mobile-photo parameters, so we copy the preferred values into clipboard helper text. */
+  function clean(v){ return String(v ?? '').trim(); }
+  function moneyVal(v){
+    const n = Number(String(v ?? '').replace(/[^0-9.-]/g,''));
+    return Number.isFinite(n) && n > 0 ? n.toFixed(2) : '';
+  }
+  function listingText(item){
+    item = item || {};
+    const title = clean(item.item || item.title || item.name);
+    const type = clean(item.type);
+    const platform = clean(item.platform);
+    const price = moneyVal(item.list || item.price || item.salePrice);
+    const notes = clean(item.notes);
+    return [
+      title ? `Title: ${title}` : '',
+      type ? `Type: ${type}` : '',
+      'Condition: Like New',
+      price ? `Suggested price: $${price}` : '',
+      platform ? `Current platform: ${platform}` : '',
+      notes ? `Notes: ${notes}` : '',
+      '',
+      'Photo step: in eBay, go to Photos & Video → Upload from mobile. eBay will send the notification to your phone.',
+      '',
+      'RESELLr copied this helper text.'
+    ].filter(Boolean).join('\n');
+  }
+
+  window.resellrListOnEbay = function(item){
+    item = item || {};
+    const title = clean(item.item || item.title || item.name || '');
+    const details = listingText(item);
+    try{
+      if(navigator.clipboard && details){ navigator.clipboard.writeText(details).catch(function(){}); }
+    }catch(e){}
+
+    const url = 'https://www.ebay.com/sl/prelist?title=' + encodeURIComponent(title);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    try{
+      if(typeof window.showToast === 'function'){
+        window.showToast('eBay draft opened. Helper copied: Condition Like New + Upload from mobile reminder.');
+      }
+    }catch(e){}
+  };
+
+  window.resellrMakeEbayListButton = function(item){
+    const b = document.createElement('span');
+    b.className = 'ebay-list-action';
+    b.title = 'Open eBay draft. RESELLr copies Condition: Like New and mobile photo reminder.';
+    b.setAttribute('role','button');
+    b.setAttribute('tabindex','0');
+    b.setAttribute('aria-label','List on eBay draft');
+    b.innerHTML = '<span class="rs-ebay-pencil">📝</span><span class="rs-ebay-label">eBay</span>';
+    b.onclick = function(ev){
+      try{ ev.preventDefault(); ev.stopPropagation(); }catch(e){}
+      window.resellrListOnEbay(item);
+    };
+    b.onkeydown = function(ev){ if(ev.key === 'Enter' || ev.key === ' '){ b.click(); } };
+    return b;
+  };
+})();
+</script>
+
 </body>
 </html>
 
