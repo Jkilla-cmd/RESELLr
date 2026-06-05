@@ -13128,50 +13128,53 @@ function renderActive() {
     const tdNotes = document.createElement("td"); tdNotes.textContent = r.notes || ""; tr.appendChild(tdNotes);
 
     const action = document.createElement("td");
-    action.className = "action-cell action-menu-cell";
+    action.className = "action-cell rs-action-menu-cell";
+
+    const menuWrap = document.createElement("div");
+    menuWrap.className = "rs-row-actions";
 
     const menuBtn = document.createElement("button");
     menuBtn.type = "button";
-    menuBtn.className = "row-actions-trigger";
+    menuBtn.className = "rs-row-actions-btn";
     menuBtn.title = "Actions";
-    menuBtn.setAttribute("aria-label", "Inventory actions");
+    menuBtn.setAttribute("aria-label", "Actions");
     menuBtn.textContent = "⋮";
 
-    menuBtn.onclick = (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      document.querySelectorAll(".row-actions-menu.open").forEach(m => m.classList.remove("open"));
-      menu.classList.toggle("open");
-    };
-
     const menu = document.createElement("div");
-    menu.className = "row-actions-menu";
+    menu.className = "rs-row-actions-menu";
 
-    const addMenuAction = (label, icon, fn, danger=false) => {
+    const addMenuItem = (label, fn, danger=false) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = danger ? "row-action-item danger" : "row-action-item";
-      b.innerHTML = `<span class="row-action-icon">${icon}</span><span>${label}</span>`;
+      b.className = danger ? "danger" : "";
+      b.textContent = label;
       b.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); menu.classList.remove("open"); fn(); };
       menu.appendChild(b);
     };
 
-    addMenuAction("Edit", "✏️", () => openEditModal("active", r._id));
-    addMenuAction("View eBay Comps", "📈", () => {
+    addMenuItem("✏️ Edit", () => openEditModal("active", r._id));
+    addMenuItem("📈 eBay Comps", () => {
       const q = encodeURIComponent(r.item || "");
       window.open(`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, "_blank", "noopener,noreferrer");
     });
-    addMenuAction("eBay Draft", "📝", () => {
+    addMenuItem("📝 eBay Draft", () => {
       if (window.resellrOpenEbayDraft) return window.resellrOpenEbayDraft(r);
-      const title = encodeURIComponent(r.item || "");
-      window.open(`https://www.ebay.com/sl/prelist?title=${title}`, "_blank", "noopener,noreferrer");
+      const q = encodeURIComponent(r.item || "");
+      window.open(`https://www.ebay.com/sl/prelist/suggest?title=${q}`, "_blank", "noopener,noreferrer");
     });
-    addMenuAction("Mark Sold", "💲", () => openMarkSoldModal(r._id));
-    addMenuAction("Move to Holds", "📥", () => moveActiveToHolds(r._id));
-    addMenuAction("Delete", "🗑️", () => deleteActiveById(r._id), true);
+    addMenuItem("💲 Mark Sold", () => openMarkSoldModal(r._id));
+    addMenuItem("📥 Move to Holds", () => moveActiveToHolds(r._id));
+    addMenuItem("🗑 Delete", () => deleteActiveById(r._id), true);
 
-    action.appendChild(menuBtn);
-    action.appendChild(menu);
+    menuBtn.onclick = (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      document.querySelectorAll(".rs-row-actions-menu.open").forEach(m => { if (m !== menu) m.classList.remove("open"); });
+      menu.classList.toggle("open");
+    };
+
+    menuWrap.appendChild(menuBtn);
+    menuWrap.appendChild(menu);
+    action.appendChild(menuWrap);
     tr.appendChild(action);
 
     tbody.appendChild(tr);
@@ -19567,7 +19570,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     let ci=0, cp=0; const dayRows=[...daily.values()].sort((a,b)=>a.date-b.date).map(x=>{ci+=x.income; cp+=x.profit; return {...x,income:ci,profit:cp};});
     const gc=destroy('rs15GrowthChart'); if(gc){ new Chart(gc,{type:'line',data:{labels:dayRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',day:'numeric'})),datasets:[{label:'Total Income',data:dayRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false},{label:'Total Profit',data:dayRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'12%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
     const monthly=new Map(); data.sold.forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!monthly.has(k)) monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const b=monthly.get(k); b.income+=saleOf(r); b.cost+=costOf(r); b.profit+=profitOf(r);}); const monRows=[...monthly.values()].sort((a,b)=>a.date-b.date).slice(-12);
-    const mc=destroy('rs15MonthlyChart'); if(mc){ new Chart(mc,{type:'line',data:{labels:monRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'})),datasets:[{label:'Total Income',data:monRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost of Sold',data:monRows.map(x=>+x.cost.toFixed(2)),borderColor:css('--red','#ef4444'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Profit',data:monRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost + Profit',data:monRows.map(x=>+(x.cost+x.profit).toFixed(2)),borderColor:css('--accent-2','#8d7dff'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'$300 Goal',data:monRows.map(()=>300),borderColor:css('--yellow','#fbbf24'),backgroundColor:'transparent',borderWidth:2,borderDash:[6,5],pointRadius:0,tension:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'14%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
+    const mc=destroy('rs15MonthlyChart'); if(mc){ new Chart(mc,{type:'line',data:{labels:monRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'})),datasets:[{label:'Total Income',data:monRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost of Sold',data:monRows.map(x=>+x.cost.toFixed(2)),borderColor:css('--red','#ef4444'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Profit',data:monRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'$300 Goal',data:monRows.map(()=>300),borderColor:css('--yellow','#fbbf24'),backgroundColor:'transparent',borderWidth:2,borderDash:[6,5],pointRadius:0,tension:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'14%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
     const ic=destroy('rs15InventoryChart'); if(ic){ new Chart(ic,{type:'doughnut',data:{labels:['Inventory Cost','Unrealized Gain','Realized Profit','Holds Value'],datasets:[{data:[Math.max(data.invCost,0),Math.max(data.invValue-data.invCost,0),Math.max(data.allProfit,0),Math.max(data.holdValue,0)],backgroundColor:[css('--accent','#38bdf8'),css('--green','#22c55e'),css('--yellow','#fbbf24'),css('--red','#ef4444')],borderColor:css('--panel','#0a1018'),borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}}); }
   }
 
@@ -24546,13 +24549,43 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
-<script id="rs-v80-actions-menu-close">
-document.addEventListener('click', function(e){
-  if(!e.target.closest || !e.target.closest('.action-menu-cell')){
-    document.querySelectorAll('.row-actions-menu.open').forEach(m => m.classList.remove('open'));
-  }
-}, true);
+<style id="rsActionsMenuFinalFix">
+#activeTableBody td.action-cell.rs-action-menu-cell,
+#activeTableBody td.action-cell{
+  width:56px !important;
+  min-width:56px !important;
+  max-width:56px !important;
+  padding:6px 8px !important;
+  text-align:center !important;
+  white-space:normal !important;
+  display:table-cell !important;
+  overflow:visible !important;
+}
+.rs-row-actions{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.rs-row-actions-btn{
+  width:38px !important;height:38px !important;min-width:38px !important;
+  padding:0 !important;border-radius:12px !important;font-size:24px !important;
+  line-height:1 !important;text-align:center !important;
+}
+.rs-row-actions-menu{
+  display:none;position:absolute;right:0;top:42px;z-index:10080;
+  min-width:190px;padding:8px;border-radius:14px;
+  background:rgba(8,12,20,.96);border:1px solid var(--border);
+  box-shadow:0 18px 50px rgba(0,0,0,.45);backdrop-filter:blur(12px);
+}
+.rs-row-actions-menu.open{display:flex;flex-direction:column;gap:6px;}
+.rs-row-actions-menu button{
+  width:100% !important;text-align:left !important;padding:9px 10px !important;
+  border-radius:10px !important;font-size:13px !important;white-space:nowrap !important;
+}
+#activeTableBody tr:nth-last-child(-n+3) .rs-row-actions-menu{top:auto;bottom:42px;}
+</style>
+<script>
+document.addEventListener('click', function(){
+  document.querySelectorAll('.rs-row-actions-menu.open').forEach(function(m){m.classList.remove('open');});
+});
 </script>
+
 </body>
 </html>
 
@@ -25118,49 +25151,51 @@ body.skin-dreamtrip .chart-wrap{
   }
   function renderGrowth(){
     const panel=findPanel('Business\\s+Growth');
-    const v=vis(G_VIS,{income:true,profit:true});
-    const mount=setChartBox(panel,'Growth','<button type="button" data-rs28-growth="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-growth="profit"><span class="rs28-dot" style="background:var(--green)"></span>Total Profit</button>');
+    const v=vis(G_VIS,{income:true,profit:true,combined:true});
+    const mount=setChartBox(panel,'Growth','<button type="button" data-rs28-growth="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-growth="profit"><span class="rs28-dot" style="background:var(--green)"></span>Total Profit</button><button type="button" data-rs28-growth="combined"><span class="rs28-dot" style="background:var(--yellow)"></span>Cost + Profit</button>');
     if(!mount) return;
     qsa('[data-rs28-growth="income"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v.income));
     qsa('[data-rs28-growth="profit"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v.profit));
+    qsa('[data-rs28-growth="combined"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v.combined));
     const start=rangeStart(), daily=new Map(), all=soldRows();
     let allInc=0, allProf=0; all.forEach(r=>{allInc+=saleOf(r);allProf+=profitOf(r);});
     if($('rs15GrowthIncome')) $('rs15GrowthIncome').textContent=money(allInc);
     if($('rs15GrowthProfit')) $('rs15GrowthProfit').textContent=money(allProf);
     if($('rs15GrowthItems')) $('rs15GrowthItems').textContent=(all.length||0).toLocaleString('en-US');
-    all.forEach(r=>{const d=dateOf(r); if(!d||(start&&d<start))return; const k=dayKey(d); if(!daily.has(k))daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0}); const x=daily.get(k); x.income+=saleOf(r); x.profit+=profitOf(r);});
-    let inc=0,prof=0; const rows=Array.from(daily.values()).sort((a,b)=>a.date-b.date).map(x=>{inc+=x.income;prof+=x.profit;return {date:x.date,income:inc,profit:prof};});
+    all.forEach(r=>{const d=dateOf(r); if(!d||(start&&d<start))return; const k=dayKey(d); if(!daily.has(k))daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,cost:0}); const x=daily.get(k); x.income+=saleOf(r); x.profit+=profitOf(r); x.cost+=costOf(r);});
+    let inc=0,prof=0,cost=0; const rows=Array.from(daily.values()).sort((a,b)=>a.date-b.date).map(x=>{inc+=x.income;prof+=x.profit;cost+=x.cost;return {date:x.date,income:inc,profit:prof,cost:cost,combined:cost+prof};});
     if(!rows.length){mount.innerHTML='<div class="rs28-empty">No sold data found for this range.</div>';return;}
-    const W=1200,H=360,pad={l:86,r:32,t:18,b:56}; let maxY=100; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.profit)maxY=Math.max(maxY,r.profit);}); maxY=Math.ceil(maxY*1.12/100)*100;
-    const accent=css('--accent','#38bdf8'), green=css('--green','#22c55e'), text=css('--text','#e5e7eb'), muted=css('--muted','#94a3b8');
+    const W=1200,H=360,pad={l:86,r:32,t:18,b:56}; let maxY=100; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.profit)maxY=Math.max(maxY,r.profit);if(v.combined)maxY=Math.max(maxY,r.combined);}); maxY=Math.ceil(maxY*1.12/100)*100;
+    const accent=css('--accent','#38bdf8'), green=css('--green','#22c55e'), yellow=css('--yellow','#fbbf24'), text=css('--text','#e5e7eb'), muted=css('--muted','#94a3b8');
     let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-label="Business Growth chart">'+gridSvg(W,H,pad,maxY);
     const min=rows[0].date.getTime(), max=rows[rows.length-1].date.getTime(), span=Math.max(1,max-min);
     labelRows(rows,5).forEach(r=>{const x=pad.l+((r.date.getTime()-min)/span)*(W-pad.l-pad.r); const main=r.date.toLocaleDateString('en-US',{month:'short',day:'numeric'}); const yr=String(r.date.getFullYear()); svg+='<line x1="'+x+'" y1="'+pad.t+'" x2="'+x+'" y2="'+(H-pad.b)+'" stroke="rgba(255,255,255,.10)"/><text x="'+x+'" y="'+(H-31)+'" text-anchor="middle" fill="'+esc(text)+'" font-size="13" font-weight="700">'+esc(main)+'</text><text x="'+x+'" y="'+(H-12)+'" text-anchor="middle" fill="'+esc(muted)+'" font-size="12">'+esc(yr)+'</text>';});
     if(v.income) svg+='<path d="'+path(rows,'income',W,H,pad,maxY)+'" fill="none" stroke="'+esc(accent)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
     if(v.profit) svg+='<path d="'+path(rows,'profit',W,H,pad,maxY)+'" fill="none" stroke="'+esc(green)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
+    if(v.combined) svg+='<path d="'+path(rows,'combined',W,H,pad,maxY)+'" fill="none" stroke="'+esc(yellow)+'" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="10 7"/>';
     mount.innerHTML=svg+'</svg>';
   }
   function renderMonthly(){
     const panel=findPanel('Monthly\\s+Profit\\s+View');
     const v=vis(M_VIS,{income:true,cost:true,profit:true,combined:true,goal:true});
-    const mount=setChartBox(panel,'Monthly','<button type="button" data-rs28-monthly="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-monthly="cost"><span class="rs28-dot" style="background:var(--red)"></span>Cost of Sold</button><button type="button" data-rs28-monthly="profit"><span class="rs28-dot" style="background:var(--green)"></span>Profit</button><button type="button" data-rs28-monthly="combined"><span class="rs28-dot" style="background:var(--accent-2)"></span>Cost + Profit</button><button type="button" data-rs28-monthly="goal"><span class="rs28-dot" style="background:var(--yellow)"></span>$300 Goal</button>');
+    const mount=setChartBox(panel,'Monthly','<button type="button" data-rs28-monthly="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-monthly="cost"><span class="rs28-dot" style="background:var(--red)"></span>Cost of Sold</button><button type="button" data-rs28-monthly="profit"><span class="rs28-dot" style="background:var(--green)"></span>Profit</button><button type="button" data-rs28-monthly="combined"><span class="rs28-dot" style="background:var(--yellow)"></span>Cost + Profit</button><button type="button" data-rs28-monthly="goal"><span class="rs28-dot" style="background:var(--yellow)"></span>$300 Goal</button>');
     if(!mount)return;
     Object.keys(v).forEach(k=>qsa('[data-rs28-monthly="'+k+'"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v[k])));
-    const map=new Map(); soldRows().forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!map.has(k))map.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const x=map.get(k); x.income+=saleOf(r); x.cost+=costOf(r); x.profit+=profitOf(r); x.combined=x.cost+x.profit;});
+    const map=new Map(); soldRows().forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!map.has(k))map.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0,combined:0}); const x=map.get(k); x.income+=saleOf(r); x.cost+=costOf(r); x.profit+=profitOf(r); x.combined=x.cost+x.profit;});
     const rows=Array.from(map.values()).sort((a,b)=>a.date-b.date); if(!rows.length){mount.innerHTML='<div class="rs28-empty">No sold data found.</div>';return;}
     const now=new Date(), thisK=monthKey(now), cur=map.get(thisK)||{income:0,cost:0,profit:0};
     if($('rs15MonthIncome')) $('rs15MonthIncome').textContent=money(cur.income);
     if($('rs15MonthProfit')) $('rs15MonthProfit').textContent=money(cur.profit);
     if($('rs15MonthCost')) $('rs15MonthCost').textContent=money(cur.cost);
-    const W=1200,H=360,pad={l:86,r:32,t:18,b:50}; let maxY=300; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.cost)maxY=Math.max(maxY,r.cost);if(v.profit)maxY=Math.max(maxY,r.profit); if(v.combined)maxY=Math.max(maxY,(r.cost+r.profit));}); maxY=Math.ceil(maxY*1.15/100)*100;
-    const accent=css('--accent','#38bdf8'), red=css('--red','#ef4444'), green=css('--green','#22c55e'), purple=css('--accent-2','#8d7dff'), yellow=css('--yellow','#fbbf24'), text=css('--text','#e5e7eb');
+    const W=1200,H=360,pad={l:86,r:32,t:18,b:50}; let maxY=300; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.cost)maxY=Math.max(maxY,r.cost);if(v.profit)maxY=Math.max(maxY,r.profit);if(v.combined)maxY=Math.max(maxY,r.combined);}); maxY=Math.ceil(maxY*1.15/100)*100;
+    const accent=css('--accent','#38bdf8'), red=css('--red','#ef4444'), green=css('--green','#22c55e'), yellow=css('--yellow','#fbbf24'), text=css('--text','#e5e7eb');
     let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-label="Monthly Profit View chart">'+gridSvg(W,H,pad,maxY);
     const min=rows[0].date.getTime(), max=rows[rows.length-1].date.getTime(), span=Math.max(1,max-min);
     labelRows(rows,6).forEach(r=>{const x=pad.l+((r.date.getTime()-min)/span)*(W-pad.l-pad.r); svg+='<line x1="'+x+'" y1="'+pad.t+'" x2="'+x+'" y2="'+(H-pad.b)+'" stroke="rgba(255,255,255,.10)"/><text x="'+x+'" y="'+(H-14)+'" text-anchor="middle" fill="'+esc(text)+'" font-size="12" font-weight="700">'+esc(r.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'}))+'</text>';});
     if(v.income) svg+='<path d="'+path(rows,'income',W,H,pad,maxY)+'" fill="none" stroke="'+esc(accent)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
     if(v.cost) svg+='<path d="'+path(rows,'cost',W,H,pad,maxY)+'" fill="none" stroke="'+esc(red)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
     if(v.profit) svg+='<path d="'+path(rows,'profit',W,H,pad,maxY)+'" fill="none" stroke="'+esc(green)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
-    if(v.combined){ const combinedRows=rows.map(r=>Object.assign({},r,{combined:(r.cost+r.profit)})); svg+='<path d="'+path(combinedRows,'combined',W,H,pad,maxY)+'" fill="none" stroke="'+esc(purple)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>'; }
+    if(v.combined) svg+='<path d="'+path(rows,'combined',W,H,pad,maxY)+'" fill="none" stroke="'+esc(yellow)+'" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="10 7"/>';
     if(v.goal){ const y=H-pad.b-(300/maxY)*(H-pad.t-pad.b); svg+='<line x1="'+pad.l+'" y1="'+y+'" x2="'+(W-pad.r)+'" y2="'+y+'" stroke="'+esc(yellow)+'" stroke-width="4" stroke-dasharray="10 8"/>'; }
     mount.innerHTML=svg+'</svg>';
   }
@@ -25169,7 +25204,7 @@ body.skin-dreamtrip .chart-wrap{
 
   document.addEventListener('click',function(e){
     const g=e.target.closest&&e.target.closest('[data-rs28-growth]');
-    if(g){const v=vis(G_VIS,{income:true,profit:true}); const k=g.getAttribute('data-rs28-growth'); v[k]=!v[k]; if(!v.income&&!v.profit)v[k]=true; setVis(G_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
+    if(g){const v=vis(G_VIS,{income:true,profit:true,combined:true}); const k=g.getAttribute('data-rs28-growth'); v[k]=!v[k]; if(!v.income&&!v.profit&&!v.combined)v[k]=true; setVis(G_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
     const m=e.target.closest&&e.target.closest('[data-rs28-monthly]');
     if(m){const v=vis(M_VIS,{income:true,cost:true,profit:true,combined:true,goal:true}); const k=m.getAttribute('data-rs28-monthly'); v[k]=!v[k]; if(!v.income&&!v.cost&&!v.profit&&!v.combined&&!v.goal)v[k]=true; setVis(M_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
     if(e.target.closest&&e.target.closest('[data-rs15-range]')) schedule(120);
@@ -28136,75 +28171,6 @@ body.skin-dreamtrip .chart-wrap{
   #activeTableBody td.action-cell > button:not(.rs75-action-grid):not(.inventory-action-grid):not(.rs-v76-action-grid){
     margin-left: 0 !important;
   }
-
-
-/* === v80 Inventory single Actions menu fix === */
-#activeTableBody td.action-cell.action-menu-cell{
-  width: 74px !important;
-  min-width: 74px !important;
-  max-width: 74px !important;
-  display: table-cell !important;
-  text-align: center !important;
-  white-space: nowrap !important;
-  position: relative !important;
-  padding: 8px !important;
-  overflow: visible !important;
-}
-#activeTableBody .row-actions-trigger{
-  width: 44px !important;
-  height: 36px !important;
-  min-width: 44px !important;
-  padding: 0 !important;
-  margin: 0 auto !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 26px !important;
-  line-height: 1 !important;
-  border-radius: 12px !important;
-  color: var(--text) !important;
-  background: rgba(255,255,255,.055) !important;
-  border: 1px solid rgba(255,255,255,.14) !important;
-}
-#activeTableBody .row-actions-menu{
-  display: none;
-  position: absolute;
-  right: 8px;
-  top: 44px;
-  z-index: 99999;
-  width: 210px;
-  padding: 8px;
-  border-radius: 14px;
-  background: rgba(8,12,20,.96);
-  border: 1px solid var(--border);
-  box-shadow: 0 18px 50px rgba(0,0,0,.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-#activeTableBody .row-actions-menu.open{ display: grid !important; gap: 6px; }
-#activeTableBody .row-action-item{
-  width: 100% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 10px !important;
-  padding: 9px 10px !important;
-  font-size: 13px !important;
-  color: var(--text) !important;
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  border-radius: 10px !important;
-  text-align: left !important;
-}
-#activeTableBody .row-action-item:hover{
-  background: color-mix(in srgb, var(--accent) 14%, transparent) !important;
-  border-color: color-mix(in srgb, var(--accent) 25%, transparent) !important;
-  transform: none !important;
-}
-#activeTableBody .row-action-item.danger{ color: var(--red) !important; }
-#activeTableBody .row-action-icon{ width: 22px; text-align: center; display: inline-block; }
-.table-wrap{ overflow: visible !important; }
-#activeTableBody tr, #activeTableBody td{ overflow: visible !important; }
 </style>
 <script id="rs-v78-force-action-refresh">
 (function(){
