@@ -13128,53 +13128,52 @@ function renderActive() {
     const tdNotes = document.createElement("td"); tdNotes.textContent = r.notes || ""; tr.appendChild(tdNotes);
 
     const action = document.createElement("td");
-    action.className = "action-cell rs-action-menu-cell";
+    action.className = "action-cell";
 
-    const menuWrap = document.createElement("div");
-    menuWrap.className = "rs-row-actions";
+    const e = document.createElement("span");
+    e.className = "edit";
+    e.title = "Edit";
+    e.textContent = "✏️";
+    e.onclick = () => openEditModal("active", r._id);
 
-    const menuBtn = document.createElement("button");
-    menuBtn.type = "button";
-    menuBtn.className = "rs-row-actions-btn";
-    menuBtn.title = "Actions";
-    menuBtn.setAttribute("aria-label", "Actions");
-    menuBtn.textContent = "⋮";
+    const sbtn = document.createElement("span");
+    sbtn.className = "soldbtn";
+    sbtn.title = "Mark Sold";
+    sbtn.textContent = "✅";
+    
+    sbtn.onclick = () => openMarkSoldModal(r._id);
 
-    const menu = document.createElement("div");
-    menu.className = "rs-row-actions-menu";
+    const hbtn = document.createElement("span");
+    hbtn.className = "yellow";
+    hbtn.title = "Move to Holds";
+    hbtn.textContent = "🧊";
+    
+    hbtn.style.cursor = "pointer";
+    hbtn.onclick = () => moveActiveToHolds(r._id);
 
-    const addMenuItem = (label, fn, danger=false) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = danger ? "danger" : "";
-      b.textContent = label;
-      b.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); menu.classList.remove("open"); fn(); };
-      menu.appendChild(b);
-    };
+    const d = document.createElement("span");
+    d.className = "trash";
+    d.title = "Delete";
+    d.textContent = "🗑";
+    
+    d.onclick = () => deleteActiveById(r._id);
 
-    addMenuItem("✏️ Edit", () => openEditModal("active", r._id));
-    addMenuItem("📈 eBay Comps", () => {
+    
+    const comps = document.createElement("span");
+    comps.className = "ebay-comps-action";
+    comps.title = "Search eBay sold comps";
+    comps.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><path d="M3 16.5 L8.5 10.8 L13 14.1 L21 5.5" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.2 5.5 H21 V10.3" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    comps.onclick = () => {
       const q = encodeURIComponent(r.item || "");
       window.open(`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, "_blank", "noopener,noreferrer");
-    });
-    addMenuItem("📝 eBay Draft", () => {
-      if (window.resellrOpenEbayDraft) return window.resellrOpenEbayDraft(r);
-      const q = encodeURIComponent(r.item || "");
-      window.open(`https://www.ebay.com/sl/prelist/suggest?title=${q}`, "_blank", "noopener,noreferrer");
-    });
-    addMenuItem("💲 Mark Sold", () => openMarkSoldModal(r._id));
-    addMenuItem("📥 Move to Holds", () => moveActiveToHolds(r._id));
-    addMenuItem("🗑 Delete", () => deleteActiveById(r._id), true);
-
-    menuBtn.onclick = (ev) => {
-      ev.preventDefault(); ev.stopPropagation();
-      document.querySelectorAll(".rs-row-actions-menu.open").forEach(m => { if (m !== menu) m.classList.remove("open"); });
-      menu.classList.toggle("open");
     };
 
-    menuWrap.appendChild(menuBtn);
-    menuWrap.appendChild(menu);
-    action.appendChild(menuWrap);
+    action.appendChild(e);
+    action.appendChild(comps);
+    if (window.resellrMakeEbayListButton) action.appendChild(window.resellrMakeEbayListButton(r));
+    action.appendChild(sbtn);
+    action.appendChild(hbtn);
+    action.appendChild(d);
     tr.appendChild(action);
 
     tbody.appendChild(tr);
@@ -24549,41 +24548,333 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
-<style id="rsActionsMenuFinalFix">
-#activeTableBody td.action-cell.rs-action-menu-cell,
-#activeTableBody td.action-cell{
-  width:56px !important;
-  min-width:56px !important;
-  max-width:56px !important;
-  padding:6px 8px !important;
-  text-align:center !important;
-  white-space:normal !important;
-  display:table-cell !important;
-  overflow:visible !important;
-}
-.rs-row-actions{position:relative;display:inline-flex;align-items:center;justify-content:center;}
-.rs-row-actions-btn{
-  width:38px !important;height:38px !important;min-width:38px !important;
-  padding:0 !important;border-radius:12px !important;font-size:24px !important;
-  line-height:1 !important;text-align:center !important;
-}
-.rs-row-actions-menu{
-  display:none;position:absolute;right:0;top:42px;z-index:10080;
-  min-width:190px;padding:8px;border-radius:14px;
-  background:rgba(8,12,20,.96);border:1px solid var(--border);
-  box-shadow:0 18px 50px rgba(0,0,0,.45);backdrop-filter:blur(12px);
-}
-.rs-row-actions-menu.open{display:flex;flex-direction:column;gap:6px;}
-.rs-row-actions-menu button{
-  width:100% !important;text-align:left !important;padding:9px 10px !important;
-  border-radius:10px !important;font-size:13px !important;white-space:nowrap !important;
-}
-#activeTableBody tr:nth-last-child(-n+3) .rs-row-actions-menu{top:auto;bottom:42px;}
+<!-- ===== v82: Final inventory single actions menu + Cost+Profit chart line ===== -->
+<style id="rs-v82-final-actions-menu-costprofit">
+  #activeTableBody td.action-cell,
+  #activeTableBody .action-cell{
+    width:74px !important;
+    min-width:74px !important;
+    max-width:74px !important;
+    padding:6px 8px !important;
+    text-align:center !important;
+    white-space:nowrap !important;
+    display:table-cell !important;
+    vertical-align:middle !important;
+  }
+  #activeTableBody .action-cell > :not(.rs-actions-menu-btn){
+    display:none !important;
+  }
+  .rs-actions-menu-btn{
+    width:44px !important;
+    height:34px !important;
+    min-width:44px !important;
+    padding:0 !important;
+    margin:0 auto !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:12px !important;
+    font-size:22px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    color:var(--accent) !important;
+    border:1px solid color-mix(in srgb, var(--accent) 35%, transparent) !important;
+    background:rgba(2,6,23,.45) !important;
+    cursor:pointer !important;
+    user-select:none !important;
+  }
+  .rs-actions-menu-btn:hover{
+    transform:translateY(-1px) !important;
+    background:color-mix(in srgb, var(--accent) 14%, transparent) !important;
+  }
+  #rsActionsMenu{
+    position:fixed;
+    z-index:100000;
+    display:none;
+    min-width:210px;
+    padding:8px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:rgba(8,12,20,.96);
+    box-shadow:0 18px 55px rgba(0,0,0,.45);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+  #rsActionsMenu.open{display:block;}
+  #rsActionsMenu button{
+    width:100% !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:10px !important;
+    padding:10px 12px !important;
+    margin:0 !important;
+    border:0 !important;
+    border-radius:12px !important;
+    background:transparent !important;
+    color:var(--text) !important;
+    text-align:left !important;
+    font-size:13px !important;
+  }
+  #rsActionsMenu button:hover{
+    background:color-mix(in srgb, var(--accent) 14%, transparent) !important;
+    box-shadow:none !important;
+    transform:none !important;
+  }
+  #rsActionsMenu button.danger{color:var(--red) !important;}
 </style>
-<script>
-document.addEventListener('click', function(){
-  document.querySelectorAll('.rs-row-actions-menu.open').forEach(function(m){m.classList.remove('open');});
-});
+<script id="rs-v82-final-actions-menu-costprofit-js">
+(function(){
+  if(window.__rsV82FinalActionsMenuCostProfit) return;
+  window.__rsV82FinalActionsMenuCostProfit = true;
+
+  const ACTIVE_KEY = "activeInventory";
+  const SOLD_KEY = "soldInventory";
+
+  function clean(v){ return String(v ?? "").trim(); }
+  function num(v){
+    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
+    return Number.isFinite(n) ? n : 0;
+  }
+  function money(n){
+    try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(n)||0);}
+    catch(e){return "$"+(Number(n)||0).toFixed(2);}
+  }
+  function readRows(key){
+    try{return JSON.parse(localStorage.getItem(key)||"[]")||[];}catch(e){return [];}
+  }
+  function readActive(){
+    try{ if(typeof window.readActive==="function") return window.readActive()||[]; }catch(e){}
+    return readRows(ACTIVE_KEY);
+  }
+  function readSold(){
+    try{ if(typeof window.readSold==="function") return window.readSold()||[]; }catch(e){}
+    return readRows(SOLD_KEY);
+  }
+  function rowItemFromTr(tr){
+    const cells = tr ? tr.querySelectorAll("td") : [];
+    return {
+      date: clean(cells[0] && cells[0].textContent),
+      item: clean(cells[1] && cells[1].textContent),
+      type: clean(cells[2] && cells[2].textContent),
+      platform: clean(cells[3] && cells[3].textContent)
+    };
+  }
+  function findActiveFromTr(tr){
+    const meta = rowItemFromTr(tr);
+    const rows = readActive();
+    return rows.find(r => clean(r.item||r.title||r.name) === meta.item && (!meta.date || clean(r.date) === meta.date))
+        || rows.find(r => clean(r.item||r.title||r.name) === meta.item)
+        || { item: meta.item, title: meta.item, date: meta.date, type: meta.type, platform: meta.platform };
+  }
+
+  function ensureMenu(){
+    let menu = document.getElementById("rsActionsMenu");
+    if(menu) return menu;
+    menu = document.createElement("div");
+    menu.id = "rsActionsMenu";
+    menu.innerHTML = `
+      <button type="button" data-action="edit">✏️ <span>Edit</span></button>
+      <button type="button" data-action="comps">📈 <span>View eBay Comps</span></button>
+      <button type="button" data-action="ebay">📝 <span>eBay Draft</span></button>
+      <button type="button" data-action="sold">💲 <span>Mark Sold</span></button>
+      <button type="button" data-action="holds">📥 <span>Move to Holds</span></button>
+      <button type="button" class="danger" data-action="delete">🗑️ <span>Delete</span></button>
+    `;
+    document.body.appendChild(menu);
+
+    menu.addEventListener("click", function(ev){
+      const btn = ev.target.closest("button[data-action]");
+      if(!btn || !menu.__row) return;
+      const r = menu.__row;
+      const action = btn.getAttribute("data-action");
+      closeMenu();
+      try{
+        if(action === "edit"){
+          if(window.openEditModal) window.openEditModal("active", r._id);
+        }else if(action === "comps"){
+          const q = encodeURIComponent(clean(r.item||r.title||r.name));
+          window.open(`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, "_blank", "noopener,noreferrer");
+        }else if(action === "ebay"){
+          if(window.resellrListOnEbay) window.resellrListOnEbay(r);
+          else window.open("https://www.ebay.com/sl/prelist?title="+encodeURIComponent(clean(r.item||r.title||r.name)), "_blank", "noopener,noreferrer");
+        }else if(action === "sold"){
+          if(window.openMarkSoldModal) window.openMarkSoldModal(r._id);
+        }else if(action === "holds"){
+          if(window.moveActiveToHolds) window.moveActiveToHolds(r._id);
+        }else if(action === "delete"){
+          if(window.deleteActiveById) window.deleteActiveById(r._id);
+        }
+      }catch(e){ console.warn("RESELLr action menu error", e); }
+    });
+    return menu;
+  }
+
+  function closeMenu(){
+    const menu = document.getElementById("rsActionsMenu");
+    if(menu){ menu.classList.remove("open"); menu.__row = null; }
+  }
+
+  function openMenu(button, row){
+    const menu = ensureMenu();
+    menu.__row = row;
+    const rect = button.getBoundingClientRect();
+    const menuWidth = 220;
+    const left = Math.max(8, Math.min(window.innerWidth - menuWidth - 8, rect.right - menuWidth));
+    const top = Math.max(8, Math.min(window.innerHeight - 250, rect.bottom + 6));
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
+    menu.classList.add("open");
+  }
+
+  function convertActiveActionCells(){
+    const tbody = document.getElementById("activeTableBody");
+    if(!tbody) return;
+    tbody.querySelectorAll("tr").forEach(tr=>{
+      const action = tr.querySelector("td.action-cell") || tr.lastElementChild;
+      if(!action || action.__rsV82Converted) return;
+      action.__rsV82Converted = true;
+      action.innerHTML = "";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "rs-actions-menu-btn";
+      btn.title = "Actions";
+      btn.setAttribute("aria-label","Actions");
+      btn.textContent = "⋮";
+      btn.addEventListener("click", function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        openMenu(btn, findActiveFromTr(tr));
+      });
+      action.appendChild(btn);
+    });
+  }
+
+  document.addEventListener("click", function(ev){
+    if(!ev.target.closest("#rsActionsMenu") && !ev.target.closest(".rs-actions-menu-btn")) closeMenu();
+  }, true);
+  window.addEventListener("scroll", closeMenu, true);
+  window.addEventListener("resize", closeMenu);
+
+  const originalRenderActive = window.renderActive;
+  function renderActiveWrapped(){
+    try{
+      if(typeof originalRenderActive === "function") originalRenderActive.apply(this, arguments);
+    }catch(e){ console.warn(e); }
+    setTimeout(convertActiveActionCells, 0);
+  }
+
+  function installActionMenu(){
+    if(window.renderActive !== renderActiveWrapped){
+      const current = window.renderActive;
+      window.renderActive = function(){
+        try{ if(typeof current === "function") current.apply(this, arguments); }
+        catch(e){ console.warn(e); }
+        setTimeout(convertActiveActionCells, 0);
+      };
+    }
+    convertActiveActionCells();
+  }
+
+  function dOf(r){
+    const d = new Date(r.date || r.soldDate || r.createdAt || "");
+    return isNaN(d) ? null : d;
+  }
+  function saleOf(r){ return num(r.sale ?? r.salePrice ?? r.price ?? r.total ?? r.income); }
+  function costOf(r){ return num(r.cost ?? r.cogs ?? r.costOfSold); }
+  function profitOf(r){
+    if(r.profit !== undefined && r.profit !== null && r.profit !== "") return num(r.profit);
+    return saleOf(r) - costOf(r) - num(r.fees) - num(r.ship);
+  }
+  function addCostProfitToChart(canvasId, mode){
+    const canvas = document.getElementById(canvasId);
+    if(!canvas || !window.Chart || !Chart.getChart) return;
+    const chart = Chart.getChart(canvas);
+    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return;
+
+    const sold = readSold();
+    let rows = [];
+
+    if(mode === "growth"){
+      const byDay = new Map();
+      sold.forEach(r=>{
+        const d = dOf(r); if(!d) return;
+        const k = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+        if(!byDay.has(k)) byDay.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()), cost:0, profit:0});
+        const b = byDay.get(k);
+        b.cost += costOf(r);
+        b.profit += profitOf(r);
+      });
+      rows = [...byDay.values()].sort((a,b)=>a.date-b.date);
+      let running = 0;
+      rows = rows.map(x=>{ running += x.cost + x.profit; return {date:x.date, value:+running.toFixed(2)}; });
+    }else{
+      const byMonth = new Map();
+      sold.forEach(r=>{
+        const d = dOf(r); if(!d) return;
+        const k = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+        if(!byMonth.has(k)) byMonth.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1), cost:0, profit:0});
+        const b = byMonth.get(k);
+        b.cost += costOf(r);
+        b.profit += profitOf(r);
+      });
+      rows = [...byMonth.values()].sort((a,b)=>a.date-b.date).slice(-12)
+        .map(x=>({date:x.date, value:+(x.cost+x.profit).toFixed(2)}));
+    }
+
+    const labels = rows.map(x => mode==="growth"
+      ? x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"})
+      : x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"}));
+
+    const data = rows.map(x=>x.value);
+    const existing = chart.data.datasets.find(ds => ds.label === "Cost + Profit");
+    if(existing){
+      existing.data = data;
+      existing.hidden = false;
+    }else{
+      chart.data.datasets.push({
+        label:"Cost + Profit",
+        data,
+        borderColor:"#a78bfa",
+        backgroundColor:"transparent",
+        borderWidth:2.5,
+        pointRadius: mode==="growth" ? 0 : 2,
+        tension:.25,
+        fill:false
+      });
+    }
+    if(labels.length && chart.data.labels && chart.data.labels.length === labels.length){
+      chart.data.labels = labels;
+    }
+    try{ chart.update("none"); }catch(e){ chart.update(); }
+  }
+
+  function patchCostProfitCharts(){
+    addCostProfitToChart("rs15GrowthChart","growth");
+    addCostProfitToChart("rs15MonthlyChart","monthly");
+  }
+
+  function start(){
+    installActionMenu();
+    setTimeout(installActionMenu, 250);
+    setTimeout(installActionMenu, 900);
+
+    patchCostProfitCharts();
+    setTimeout(patchCostProfitCharts, 500);
+    setTimeout(patchCostProfitCharts, 1200);
+
+    const activeBody = document.getElementById("activeTableBody");
+    if(activeBody && window.MutationObserver){
+      new MutationObserver(()=>setTimeout(convertActiveActionCells,0)).observe(activeBody,{childList:true,subtree:true});
+    }
+
+    if(window.MutationObserver){
+      new MutationObserver(()=>setTimeout(patchCostProfitCharts,80)).observe(document.body,{childList:true,subtree:true});
+    }
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
 </script>
 
 </body>
@@ -25151,43 +25442,41 @@ body.skin-dreamtrip .chart-wrap{
   }
   function renderGrowth(){
     const panel=findPanel('Business\\s+Growth');
-    const v=vis(G_VIS,{income:true,profit:true,combined:true});
-    const mount=setChartBox(panel,'Growth','<button type="button" data-rs28-growth="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-growth="profit"><span class="rs28-dot" style="background:var(--green)"></span>Total Profit</button><button type="button" data-rs28-growth="combined"><span class="rs28-dot" style="background:var(--yellow)"></span>Cost + Profit</button>');
+    const v=vis(G_VIS,{income:true,profit:true});
+    const mount=setChartBox(panel,'Growth','<button type="button" data-rs28-growth="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-growth="profit"><span class="rs28-dot" style="background:var(--green)"></span>Total Profit</button>');
     if(!mount) return;
     qsa('[data-rs28-growth="income"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v.income));
     qsa('[data-rs28-growth="profit"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v.profit));
-    qsa('[data-rs28-growth="combined"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v.combined));
     const start=rangeStart(), daily=new Map(), all=soldRows();
     let allInc=0, allProf=0; all.forEach(r=>{allInc+=saleOf(r);allProf+=profitOf(r);});
     if($('rs15GrowthIncome')) $('rs15GrowthIncome').textContent=money(allInc);
     if($('rs15GrowthProfit')) $('rs15GrowthProfit').textContent=money(allProf);
     if($('rs15GrowthItems')) $('rs15GrowthItems').textContent=(all.length||0).toLocaleString('en-US');
-    all.forEach(r=>{const d=dateOf(r); if(!d||(start&&d<start))return; const k=dayKey(d); if(!daily.has(k))daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,cost:0}); const x=daily.get(k); x.income+=saleOf(r); x.profit+=profitOf(r); x.cost+=costOf(r);});
-    let inc=0,prof=0,cost=0; const rows=Array.from(daily.values()).sort((a,b)=>a.date-b.date).map(x=>{inc+=x.income;prof+=x.profit;cost+=x.cost;return {date:x.date,income:inc,profit:prof,cost:cost,combined:cost+prof};});
+    all.forEach(r=>{const d=dateOf(r); if(!d||(start&&d<start))return; const k=dayKey(d); if(!daily.has(k))daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0}); const x=daily.get(k); x.income+=saleOf(r); x.profit+=profitOf(r);});
+    let inc=0,prof=0; const rows=Array.from(daily.values()).sort((a,b)=>a.date-b.date).map(x=>{inc+=x.income;prof+=x.profit;return {date:x.date,income:inc,profit:prof};});
     if(!rows.length){mount.innerHTML='<div class="rs28-empty">No sold data found for this range.</div>';return;}
-    const W=1200,H=360,pad={l:86,r:32,t:18,b:56}; let maxY=100; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.profit)maxY=Math.max(maxY,r.profit);if(v.combined)maxY=Math.max(maxY,r.combined);}); maxY=Math.ceil(maxY*1.12/100)*100;
-    const accent=css('--accent','#38bdf8'), green=css('--green','#22c55e'), yellow=css('--yellow','#fbbf24'), text=css('--text','#e5e7eb'), muted=css('--muted','#94a3b8');
+    const W=1200,H=360,pad={l:86,r:32,t:18,b:56}; let maxY=100; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.profit)maxY=Math.max(maxY,r.profit);}); maxY=Math.ceil(maxY*1.12/100)*100;
+    const accent=css('--accent','#38bdf8'), green=css('--green','#22c55e'), text=css('--text','#e5e7eb'), muted=css('--muted','#94a3b8');
     let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-label="Business Growth chart">'+gridSvg(W,H,pad,maxY);
     const min=rows[0].date.getTime(), max=rows[rows.length-1].date.getTime(), span=Math.max(1,max-min);
     labelRows(rows,5).forEach(r=>{const x=pad.l+((r.date.getTime()-min)/span)*(W-pad.l-pad.r); const main=r.date.toLocaleDateString('en-US',{month:'short',day:'numeric'}); const yr=String(r.date.getFullYear()); svg+='<line x1="'+x+'" y1="'+pad.t+'" x2="'+x+'" y2="'+(H-pad.b)+'" stroke="rgba(255,255,255,.10)"/><text x="'+x+'" y="'+(H-31)+'" text-anchor="middle" fill="'+esc(text)+'" font-size="13" font-weight="700">'+esc(main)+'</text><text x="'+x+'" y="'+(H-12)+'" text-anchor="middle" fill="'+esc(muted)+'" font-size="12">'+esc(yr)+'</text>';});
     if(v.income) svg+='<path d="'+path(rows,'income',W,H,pad,maxY)+'" fill="none" stroke="'+esc(accent)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
     if(v.profit) svg+='<path d="'+path(rows,'profit',W,H,pad,maxY)+'" fill="none" stroke="'+esc(green)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
-    if(v.combined) svg+='<path d="'+path(rows,'combined',W,H,pad,maxY)+'" fill="none" stroke="'+esc(yellow)+'" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="10 7"/>';
     mount.innerHTML=svg+'</svg>';
   }
   function renderMonthly(){
     const panel=findPanel('Monthly\\s+Profit\\s+View');
-    const v=vis(M_VIS,{income:true,cost:true,profit:true,combined:true,goal:true});
-    const mount=setChartBox(panel,'Monthly','<button type="button" data-rs28-monthly="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-monthly="cost"><span class="rs28-dot" style="background:var(--red)"></span>Cost of Sold</button><button type="button" data-rs28-monthly="profit"><span class="rs28-dot" style="background:var(--green)"></span>Profit</button><button type="button" data-rs28-monthly="combined"><span class="rs28-dot" style="background:var(--yellow)"></span>Cost + Profit</button><button type="button" data-rs28-monthly="goal"><span class="rs28-dot" style="background:var(--yellow)"></span>$300 Goal</button>');
+    const v=vis(M_VIS,{income:true,cost:true,profit:true,goal:true});
+    const mount=setChartBox(panel,'Monthly','<button type="button" data-rs28-monthly="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-monthly="cost"><span class="rs28-dot" style="background:var(--red)"></span>Cost of Sold</button><button type="button" data-rs28-monthly="profit"><span class="rs28-dot" style="background:var(--green)"></span>Profit</button><button type="button" data-rs28-monthly="goal"><span class="rs28-dot" style="background:var(--yellow)"></span>$300 Goal</button>');
     if(!mount)return;
     Object.keys(v).forEach(k=>qsa('[data-rs28-monthly="'+k+'"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v[k])));
-    const map=new Map(); soldRows().forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!map.has(k))map.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0,combined:0}); const x=map.get(k); x.income+=saleOf(r); x.cost+=costOf(r); x.profit+=profitOf(r); x.combined=x.cost+x.profit;});
+    const map=new Map(); soldRows().forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!map.has(k))map.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const x=map.get(k); x.income+=saleOf(r); x.cost+=costOf(r); x.profit+=profitOf(r);});
     const rows=Array.from(map.values()).sort((a,b)=>a.date-b.date); if(!rows.length){mount.innerHTML='<div class="rs28-empty">No sold data found.</div>';return;}
     const now=new Date(), thisK=monthKey(now), cur=map.get(thisK)||{income:0,cost:0,profit:0};
     if($('rs15MonthIncome')) $('rs15MonthIncome').textContent=money(cur.income);
     if($('rs15MonthProfit')) $('rs15MonthProfit').textContent=money(cur.profit);
     if($('rs15MonthCost')) $('rs15MonthCost').textContent=money(cur.cost);
-    const W=1200,H=360,pad={l:86,r:32,t:18,b:50}; let maxY=300; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.cost)maxY=Math.max(maxY,r.cost);if(v.profit)maxY=Math.max(maxY,r.profit);if(v.combined)maxY=Math.max(maxY,r.combined);}); maxY=Math.ceil(maxY*1.15/100)*100;
+    const W=1200,H=360,pad={l:86,r:32,t:18,b:50}; let maxY=300; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.cost)maxY=Math.max(maxY,r.cost);if(v.profit)maxY=Math.max(maxY,r.profit);}); maxY=Math.ceil(maxY*1.15/100)*100;
     const accent=css('--accent','#38bdf8'), red=css('--red','#ef4444'), green=css('--green','#22c55e'), yellow=css('--yellow','#fbbf24'), text=css('--text','#e5e7eb');
     let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-label="Monthly Profit View chart">'+gridSvg(W,H,pad,maxY);
     const min=rows[0].date.getTime(), max=rows[rows.length-1].date.getTime(), span=Math.max(1,max-min);
@@ -25195,7 +25484,6 @@ body.skin-dreamtrip .chart-wrap{
     if(v.income) svg+='<path d="'+path(rows,'income',W,H,pad,maxY)+'" fill="none" stroke="'+esc(accent)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
     if(v.cost) svg+='<path d="'+path(rows,'cost',W,H,pad,maxY)+'" fill="none" stroke="'+esc(red)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
     if(v.profit) svg+='<path d="'+path(rows,'profit',W,H,pad,maxY)+'" fill="none" stroke="'+esc(green)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
-    if(v.combined) svg+='<path d="'+path(rows,'combined',W,H,pad,maxY)+'" fill="none" stroke="'+esc(yellow)+'" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="10 7"/>';
     if(v.goal){ const y=H-pad.b-(300/maxY)*(H-pad.t-pad.b); svg+='<line x1="'+pad.l+'" y1="'+y+'" x2="'+(W-pad.r)+'" y2="'+y+'" stroke="'+esc(yellow)+'" stroke-width="4" stroke-dasharray="10 8"/>'; }
     mount.innerHTML=svg+'</svg>';
   }
@@ -25204,9 +25492,9 @@ body.skin-dreamtrip .chart-wrap{
 
   document.addEventListener('click',function(e){
     const g=e.target.closest&&e.target.closest('[data-rs28-growth]');
-    if(g){const v=vis(G_VIS,{income:true,profit:true,combined:true}); const k=g.getAttribute('data-rs28-growth'); v[k]=!v[k]; if(!v.income&&!v.profit&&!v.combined)v[k]=true; setVis(G_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
+    if(g){const v=vis(G_VIS,{income:true,profit:true}); const k=g.getAttribute('data-rs28-growth'); v[k]=!v[k]; if(!v.income&&!v.profit)v[k]=true; setVis(G_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
     const m=e.target.closest&&e.target.closest('[data-rs28-monthly]');
-    if(m){const v=vis(M_VIS,{income:true,cost:true,profit:true,combined:true,goal:true}); const k=m.getAttribute('data-rs28-monthly'); v[k]=!v[k]; if(!v.income&&!v.cost&&!v.profit&&!v.combined&&!v.goal)v[k]=true; setVis(M_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
+    if(m){const v=vis(M_VIS,{income:true,cost:true,profit:true,goal:true}); const k=m.getAttribute('data-rs28-monthly'); v[k]=!v[k]; if(!v.income&&!v.cost&&!v.profit&&!v.goal)v[k]=true; setVis(M_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
     if(e.target.closest&&e.target.closest('[data-rs15-range]')) schedule(120);
   },true);
   // v29: do not redraw charts on every input/slider move; it caused flicker.
