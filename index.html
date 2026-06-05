@@ -9924,78 +9924,7 @@ button[aria-label*="eBay"] img{
 
 
 
-<style id="inventoryActionCellTrueTwoRows">
-td.action-cell{
-  display:grid !important;
-  grid-template-columns: repeat(3, 18px) !important;
-  grid-template-rows: repeat(2, 18px) !important;
-  column-gap:10px !important;
-  row-gap:6px !important;
-  justify-content:end !important;
-  align-items:center !important;
-  justify-items:center !important;
-  width:118px !important;
-  min-width:118px !important;
-  white-space:nowrap !important;
-  padding-right:10px !important;
-}
 
-td.action-cell > *{
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  width:18px !important;
-  height:18px !important;
-  min-width:18px !important;
-  min-height:18px !important;
-  margin:0 !important;
-  padding:0 !important;
-  line-height:1 !important;
-}
-
-/* TOP ROW: pencil then comps */
-td.action-cell > .edit{
-  grid-column:1 !important;
-  grid-row:1 !important;
-}
-
-td.action-cell > .ebay-comps-action{
-  grid-column:2 !important;
-  grid-row:1 !important;
-  cursor:pointer !important;
-}
-
-/* BOTTOM ROW: sold, holds, delete */
-td.action-cell > .soldbtn{
-  grid-column:1 !important;
-  grid-row:2 !important;
-}
-
-td.action-cell > .holdbtn,
-td.action-cell > .blue{
-  grid-column:2 !important;
-  grid-row:2 !important;
-}
-
-td.action-cell > .trash{
-  grid-column:3 !important;
-  grid-row:2 !important;
-}
-
-/* make arrow clearly clickable */
-td.action-cell > .ebay-comps-action:hover{
-  transform:translateY(-1px) !important;
-  opacity:1 !important;
-}
-
-td.action-cell > .ebay-comps-action svg{
-  width:15px !important;
-  height:15px !important;
-  stroke:#111 !important;
-  pointer-events:none !important;
-  filter:drop-shadow(0 0 1px rgba(255,255,255,.65));
-}
-</style>
 
 
 
@@ -24548,423 +24477,80 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
-<!-- ===== v82: Final inventory single actions menu + Cost+Profit chart line ===== -->
-<style id="rs-v82-final-actions-menu-costprofit">
-  #activeTableBody td.action-cell,
-  #activeTableBody .action-cell{
-    width:74px !important;
-    min-width:74px !important;
-    max-width:74px !important;
-    padding:6px 8px !important;
-    text-align:center !important;
-    white-space:nowrap !important;
-    display:table-cell !important;
-    vertical-align:middle !important;
-  }
-  #activeTableBody .action-cell > :not(.rs-actions-menu-btn){
-    display:none !important;
-  }
-  .rs-actions-menu-btn{
-    width:44px !important;
-    height:34px !important;
-    min-width:44px !important;
-    padding:0 !important;
-    margin:0 auto !important;
-    display:inline-flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    border-radius:12px !important;
-    font-size:22px !important;
-    line-height:1 !important;
-    font-weight:900 !important;
-    color:var(--accent) !important;
-    border:1px solid color-mix(in srgb, var(--accent) 35%, transparent) !important;
-    background:rgba(2,6,23,.45) !important;
-    cursor:pointer !important;
-    user-select:none !important;
-  }
-  .rs-actions-menu-btn:hover{
-    transform:translateY(-1px) !important;
-    background:color-mix(in srgb, var(--accent) 14%, transparent) !important;
-  }
-  #rsActionsMenu{
-    position:fixed;
-    z-index:100000;
-    display:none;
-    min-width:210px;
-    padding:8px;
-    border-radius:16px;
-    border:1px solid var(--border);
-    background:rgba(8,12,20,.96);
-    box-shadow:0 18px 55px rgba(0,0,0,.45);
-    backdrop-filter:blur(12px);
-    -webkit-backdrop-filter:blur(12px);
-  }
-  #rsActionsMenu.open{display:block;}
-  #rsActionsMenu button{
-    width:100% !important;
-    display:flex !important;
-    align-items:center !important;
-    gap:10px !important;
-    padding:10px 12px !important;
-    margin:0 !important;
-    border:0 !important;
-    border-radius:12px !important;
-    background:transparent !important;
-    color:var(--text) !important;
-    text-align:left !important;
-    font-size:13px !important;
-  }
-  #rsActionsMenu button:hover{
-    background:color-mix(in srgb, var(--accent) 14%, transparent) !important;
-    box-shadow:none !important;
-    transform:none !important;
-  }
-  #rsActionsMenu button.danger{color:var(--red) !important;}
+<style id="rs-v84-stable-actions-graphs">
+#activeTableBody td.action-cell,#activeTableBody .action-cell{width:70px!important;min-width:70px!important;max-width:70px!important;padding:6px 8px!important;text-align:center!important;white-space:nowrap!important;vertical-align:middle!important}
+#activeTableBody .action-cell>:not(.rs-actions-menu-btn){display:none!important}
+.rs-actions-menu-btn{width:42px!important;height:34px!important;min-width:42px!important;padding:0!important;margin:0 auto!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:12px!important;font-size:22px!important;line-height:1!important;font-weight:900!important;color:var(--accent)!important;border:1px solid color-mix(in srgb,var(--accent) 38%,transparent)!important;background:rgba(2,6,23,.55)!important;cursor:pointer!important}
+#rsActionsMenu{position:fixed;z-index:100000;display:none;min-width:220px;padding:8px;border-radius:16px;border:1px solid var(--border);background:rgba(8,12,20,.96);box-shadow:0 18px 55px rgba(0,0,0,.45);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#rsActionsMenu.open{display:block}
+#rsActionsMenu button{width:100%!important;display:flex!important;align-items:center!important;gap:10px!important;padding:10px 12px!important;margin:0!important;border:0!important;border-radius:12px!important;background:transparent!important;color:var(--text)!important;text-align:left!important;font-size:13px!important;box-shadow:none!important;transform:none!important}
+#rsActionsMenu button:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)!important;box-shadow:none!important;transform:none!important}
+#rsActionsMenu button.danger{color:var(--red)!important}
 </style>
-<script id="rs-v82-final-actions-menu-costprofit-js">
+<script id="rs-v84-stable-actions-graphs-js">
 (function(){
-  if(window.__rsV82FinalActionsMenuCostProfit) return;
-  window.__rsV82FinalActionsMenuCostProfit = true;
-
-  const ACTIVE_KEY = "activeInventory";
-  const SOLD_KEY = "soldInventory";
-
-  function clean(v){ return String(v ?? "").trim(); }
-  function num(v){
-    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
-    return Number.isFinite(n) ? n : 0;
-  }
-  function money(n){
-    try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(n)||0);}
-    catch(e){return "$"+(Number(n)||0).toFixed(2);}
-  }
-  function readRows(key){
-    try{return JSON.parse(localStorage.getItem(key)||"[]")||[];}catch(e){return [];}
-  }
-  function readActive(){
-    try{ if(typeof window.readActive==="function") return window.readActive()||[]; }catch(e){}
-    return readRows(ACTIVE_KEY);
-  }
-  function readSold(){
-    try{ if(typeof window.readSold==="function") return window.readSold()||[]; }catch(e){}
-    return readRows(SOLD_KEY);
-  }
-  function rowItemFromTr(tr){
-    const cells = tr ? tr.querySelectorAll("td") : [];
-    return {
-      date: clean(cells[0] && cells[0].textContent),
-      item: clean(cells[1] && cells[1].textContent),
-      type: clean(cells[2] && cells[2].textContent),
-      platform: clean(cells[3] && cells[3].textContent)
-    };
-  }
-  function findActiveFromTr(tr){
-    const meta = rowItemFromTr(tr);
-    const rows = readActive();
-    return rows.find(r => clean(r.item||r.title||r.name) === meta.item && (!meta.date || clean(r.date) === meta.date))
-        || rows.find(r => clean(r.item||r.title||r.name) === meta.item)
-        || { item: meta.item, title: meta.item, date: meta.date, type: meta.type, platform: meta.platform };
-  }
-
-  function ensureMenu(){
-    let menu = document.getElementById("rsActionsMenu");
-    if(menu) return menu;
-    menu = document.createElement("div");
-    menu.id = "rsActionsMenu";
-    menu.innerHTML = `
-      <button type="button" data-action="edit">✏️ <span>Edit</span></button>
-      <button type="button" data-action="comps">📈 <span>View eBay Comps</span></button>
-      <button type="button" data-action="ebay">📝 <span>eBay Draft</span></button>
-      <button type="button" data-action="sold">💲 <span>Mark Sold</span></button>
-      <button type="button" data-action="holds">📥 <span>Move to Holds</span></button>
-      <button type="button" class="danger" data-action="delete">🗑️ <span>Delete</span></button>
-    `;
-    document.body.appendChild(menu);
-
-    menu.addEventListener("click", function(ev){
-      const btn = ev.target.closest("button[data-action]");
-      if(!btn || !menu.__row) return;
-      const r = menu.__row;
-      const action = btn.getAttribute("data-action");
-      closeMenu();
-      try{
-        if(action === "edit"){
-          if(window.openEditModal) window.openEditModal("active", r._id);
-        }else if(action === "comps"){
-          const q = encodeURIComponent(clean(r.item||r.title||r.name));
-          window.open(`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, "_blank", "noopener,noreferrer");
-        }else if(action === "ebay"){
-          if(window.resellrListOnEbay) window.resellrListOnEbay(r);
-          else window.open("https://www.ebay.com/sl/prelist?title="+encodeURIComponent(clean(r.item||r.title||r.name)), "_blank", "noopener,noreferrer");
-        }else if(action === "sold"){
-          if(window.openMarkSoldModal) window.openMarkSoldModal(r._id);
-        }else if(action === "holds"){
-          if(window.moveActiveToHolds) window.moveActiveToHolds(r._id);
-        }else if(action === "delete"){
-          if(window.deleteActiveById) window.deleteActiveById(r._id);
-        }
-      }catch(e){ console.warn("RESELLr action menu error", e); }
-    });
-    return menu;
-  }
-
-  function closeMenu(){
-    const menu = document.getElementById("rsActionsMenu");
-    if(menu){ menu.classList.remove("open"); menu.__row = null; }
-  }
-
-  function openMenu(button, row){
-    const menu = ensureMenu();
-    menu.__row = row;
-    const rect = button.getBoundingClientRect();
-    const menuWidth = 220;
-    const left = Math.max(8, Math.min(window.innerWidth - menuWidth - 8, rect.right - menuWidth));
-    const top = Math.max(8, Math.min(window.innerHeight - 250, rect.bottom + 6));
-    menu.style.left = left + "px";
-    menu.style.top = top + "px";
-    menu.classList.add("open");
-  }
-
-  function convertActiveActionCells(){
-    const tbody = document.getElementById("activeTableBody");
-    if(!tbody) return;
-    tbody.querySelectorAll("tr").forEach(tr=>{
-      const action = tr.querySelector("td.action-cell") || tr.lastElementChild;
-      if(!action || action.__rsV82Converted) return;
-      action.__rsV82Converted = true;
-      action.innerHTML = "";
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "rs-actions-menu-btn";
-      btn.title = "Actions";
-      btn.setAttribute("aria-label","Actions");
-      btn.textContent = "⋮";
-      btn.addEventListener("click", function(ev){
-        ev.preventDefault();
-        ev.stopPropagation();
-        openMenu(btn, findActiveFromTr(tr));
-      });
-      action.appendChild(btn);
-    });
-  }
-
-  document.addEventListener("click", function(ev){
-    if(!ev.target.closest("#rsActionsMenu") && !ev.target.closest(".rs-actions-menu-btn")) closeMenu();
-  }, true);
-  window.addEventListener("scroll", closeMenu, true);
-  window.addEventListener("resize", closeMenu);
-
-  const originalRenderActive = window.renderActive;
-  function renderActiveWrapped(){
-    try{
-      if(typeof originalRenderActive === "function") originalRenderActive.apply(this, arguments);
-    }catch(e){ console.warn(e); }
-    setTimeout(convertActiveActionCells, 0);
-  }
-
-  function installActionMenu(){
-    if(window.renderActive !== renderActiveWrapped){
-      const current = window.renderActive;
-      window.renderActive = function(){
-        try{ if(typeof current === "function") current.apply(this, arguments); }
-        catch(e){ console.warn(e); }
-        setTimeout(convertActiveActionCells, 0);
-      };
-    }
-    convertActiveActionCells();
-  }
-
-  function dOf(r){
-    const d = new Date(r.date || r.soldDate || r.createdAt || "");
-    return isNaN(d) ? null : d;
-  }
-  function saleOf(r){ return num(r.sale ?? r.salePrice ?? r.price ?? r.total ?? r.income); }
-  function costOf(r){ return num(r.cost ?? r.cogs ?? r.costOfSold); }
-  function profitOf(r){
-    if(r.profit !== undefined && r.profit !== null && r.profit !== "") return num(r.profit);
-    return saleOf(r) - costOf(r) - num(r.fees) - num(r.ship);
-  }
-  function addCostProfitToChart(canvasId, mode){
-    const canvas = document.getElementById(canvasId);
-    if(!canvas || !window.Chart || !Chart.getChart) return;
-    const chart = Chart.getChart(canvas);
-    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return;
-
-    const sold = readSold();
-    let rows = [];
-
-    if(mode === "growth"){
-      const byDay = new Map();
-      sold.forEach(r=>{
-        const d = dOf(r); if(!d) return;
-        const k = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-        if(!byDay.has(k)) byDay.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()), cost:0, profit:0});
-        const b = byDay.get(k);
-        b.cost += costOf(r);
-        b.profit += profitOf(r);
-      });
-      rows = [...byDay.values()].sort((a,b)=>a.date-b.date);
-      let running = 0;
-      rows = rows.map(x=>{ running += x.cost + x.profit; return {date:x.date, value:+running.toFixed(2)}; });
-    }else{
-      const byMonth = new Map();
-      sold.forEach(r=>{
-        const d = dOf(r); if(!d) return;
-        const k = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
-        if(!byMonth.has(k)) byMonth.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1), cost:0, profit:0});
-        const b = byMonth.get(k);
-        b.cost += costOf(r);
-        b.profit += profitOf(r);
-      });
-      rows = [...byMonth.values()].sort((a,b)=>a.date-b.date).slice(-12)
-        .map(x=>({date:x.date, value:+(x.cost+x.profit).toFixed(2)}));
-    }
-
-    const labels = rows.map(x => mode==="growth"
-      ? x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"})
-      : x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"}));
-
-    const data = rows.map(x=>x.value);
-    const existing = chart.data.datasets.find(ds => ds.label === "Cost + Profit");
-    if(existing){
-      existing.data = data;
-      existing.hidden = false;
-    }else{
-      chart.data.datasets.push({
-        label:"Cost + Profit",
-        data,
-        borderColor:"#a78bfa",
-        backgroundColor:"transparent",
-        borderWidth:2.5,
-        pointRadius: mode==="growth" ? 0 : 2,
-        tension:.25,
-        fill:false
-      });
-    }
-    if(labels.length && chart.data.labels && chart.data.labels.length === labels.length){
-      chart.data.labels = labels;
-    }
-    try{ chart.update("none"); }catch(e){ chart.update(); }
-  }
-
-  function patchCostProfitCharts(){
-    addCostProfitToChart("rs15GrowthChart","growth");
-    addCostProfitToChart("rs15MonthlyChart","monthly");
-  }
-
-  function start(){
-    installActionMenu();
-    setTimeout(installActionMenu, 250);
-    setTimeout(installActionMenu, 900);
-
-    patchCostProfitCharts();
-    setTimeout(patchCostProfitCharts, 500);
-    setTimeout(patchCostProfitCharts, 1200);
-
-    const activeBody = document.getElementById("activeTableBody");
-    if(activeBody && window.MutationObserver){
-      new MutationObserver(()=>setTimeout(convertActiveActionCells,0)).observe(activeBody,{childList:true,subtree:true});
-    }
-
-    if(window.MutationObserver){
-      new MutationObserver(()=>setTimeout(patchCostProfitCharts,80)).observe(document.body,{childList:true,subtree:true});
-    }
-  }
-
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
-  else start();
-})();
-</script>
-
-
-<!-- ===== v83: Correct Cost + Profit line to use same basis as Total Income ===== -->
-<script id="rs-v83-fix-cost-plus-profit-line">
-(function(){
-  if(window.__rsV83FixCostProfitLine) return;
-  window.__rsV83FixCostProfitLine = true;
-
-  function num(v){
-    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  function findIncomeDataset(chart){
-    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return null;
-    return chart.data.datasets.find(ds => /total\s*income|income/i.test(String(ds.label || ""))) || null;
-  }
-
-  function getIncomeAlignedData(chart){
-    // This makes Cost + Profit a math-check line using the exact same date/range basis
-    // as the Total Income line already drawn on that chart.
-    const income = findIncomeDataset(chart);
-    if(income && Array.isArray(income.data)){
-      return income.data.map(v => {
-        if(typeof v === "object" && v !== null && "y" in v) return num(v.y);
-        return num(v);
-      });
-    }
-    return null;
-  }
-
-  function upsertCostProfitLine(canvasId){
-    const canvas = document.getElementById(canvasId);
-    if(!canvas || !window.Chart || !Chart.getChart) return;
-    const chart = Chart.getChart(canvas);
-    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return;
-
-    const aligned = getIncomeAlignedData(chart);
-    if(!aligned || !aligned.length) return;
-
-    let ds = chart.data.datasets.find(d => String(d.label || "") === "Cost + Profit");
-    if(!ds){
-      ds = {
-        label: "Cost + Profit",
-        data: [],
-        borderColor: "#a78bfa",
-        backgroundColor: "transparent",
-        borderWidth: 2.5,
-        pointRadius: 0,
-        tension: 0.25,
-        fill: false
-      };
-      chart.data.datasets.push(ds);
-    }
-
-    ds.data = aligned;
-    ds.hidden = false;
-    ds.borderColor = "#a78bfa";
-    ds.backgroundColor = "transparent";
-    ds.borderWidth = 2.5;
-    ds.tension = 0.25;
-    ds.fill = false;
-
-    try{ chart.update("none"); }catch(e){ try{ chart.update(); }catch(err){} }
-  }
-
-  function patchAll(){
-    upsertCostProfitLine("rs15GrowthChart");
-    upsertCostProfitLine("rs15MonthlyChart");
-  }
-
-  function schedule(){ setTimeout(patchAll, 80); }
-
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", patchAll);
-  else patchAll();
-
-  [250, 900, 1800, 3000].forEach(t => setTimeout(patchAll, t));
-  document.addEventListener("click", schedule, true);
-  document.addEventListener("change", schedule, true);
-
-  if(window.Chart && Chart.prototype && !Chart.prototype.__rsV83CostProfitUpdatePatch){
-    const originalUpdate = Chart.prototype.update;
-    Chart.prototype.__rsV83CostProfitUpdatePatch = true;
-    Chart.prototype.update = function(){
-      const result = originalUpdate.apply(this, arguments);
-      setTimeout(patchAll, 0);
-      return result;
-    };
-  }
+ if(window.__rsV84StableActionsGraphs)return; window.__rsV84StableActionsGraphs=true;
+ const clean=v=>String(v??"").trim();
+ const num=v=>{const n=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)?n:0};
+ function readActive(){try{if(typeof window.readActive==="function")return window.readActive()||[]}catch(e){}try{return JSON.parse(localStorage.getItem("activeInventory")||"[]")||[]}catch(e){return[]}}
+ function findActiveForRow(tr){
+   const texts=[...tr.querySelectorAll("td")].map(td=>clean(td.textContent));
+   const active=readActive();
+   for(const t of texts){const hit=active.find(r=>clean(r.item||r.title||r.name)===t); if(hit)return hit}
+   return active[0]||{item:texts.find(Boolean)||"Inventory Item"};
+ }
+ function ensureMenu(){
+   let m=document.getElementById("rsActionsMenu"); if(m)return m;
+   m=document.createElement("div"); m.id="rsActionsMenu";
+   m.innerHTML='<button data-action="edit">✏️ <span>Edit</span></button><button data-action="comps">📈 <span>View eBay Comps</span></button><button data-action="ebay">📝 <span>eBay Draft</span></button><button data-action="sold">💲 <span>Mark Sold</span></button><button data-action="holds">📥 <span>Move to Holds</span></button><button class="danger" data-action="delete">🗑️ <span>Delete</span></button>';
+   document.body.appendChild(m);
+   m.addEventListener("click",ev=>{
+     const b=ev.target.closest("button[data-action]"); if(!b||!m.__row)return;
+     const r=m.__row,a=b.dataset.action; closeMenu();
+     try{
+       if(a==="edit"&&window.openEditModal)window.openEditModal("active",r._id||r.id);
+       else if(a==="comps")window.open("https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(clean(r.item||r.title||r.name||""))+"&LH_Sold=1&LH_Complete=1","_blank","noopener,noreferrer");
+       else if(a==="ebay"){ if(window.resellrListOnEbay)window.resellrListOnEbay(r); else window.open("https://www.ebay.com/sl/prelist?title="+encodeURIComponent(clean(r.item||r.title||r.name||"")),"_blank","noopener,noreferrer");}
+       else if(a==="sold"&&window.openMarkSoldModal)window.openMarkSoldModal(r._id||r.id);
+       else if(a==="holds"&&window.moveActiveToHolds)window.moveActiveToHolds(r._id||r.id);
+       else if(a==="delete"&&window.deleteActiveById)window.deleteActiveById(r._id||r.id);
+     }catch(e){console.warn(e)}
+   });
+   return m;
+ }
+ function closeMenu(){const m=document.getElementById("rsActionsMenu"); if(m){m.classList.remove("open");m.__row=null}}
+ function openMenu(btn,row){const m=ensureMenu();m.__row=row;const r=btn.getBoundingClientRect(),w=230;m.style.left=Math.max(8,Math.min(innerWidth-w-8,r.right-w))+"px";m.style.top=Math.max(8,Math.min(innerHeight-270,r.bottom+6))+"px";m.classList.add("open")}
+ function convertActions(){
+   const tb=document.getElementById("activeTableBody"); if(!tb)return;
+   tb.querySelectorAll("tr").forEach(tr=>{
+     const cells=tr.querySelectorAll("td"); if(!cells.length)return;
+     const cell=tr.querySelector("td.action-cell")||cells[cells.length-1]; cell.classList.add("action-cell");
+     cell.innerHTML="";
+     const btn=document.createElement("button"); btn.type="button"; btn.className="rs-actions-menu-btn"; btn.title="Actions"; btn.textContent="⋮";
+     btn.onclick=e=>{e.preventDefault();e.stopPropagation();openMenu(btn,findActiveForRow(tr))};
+     cell.appendChild(btn);
+   });
+ }
+ function chart(id){const c=document.getElementById(id);try{return c&&window.Chart&&Chart.getChart(c)}catch(e){return null}}
+ function syncLine(id){
+   const ch=chart(id); if(!ch||!ch.data||!Array.isArray(ch.data.datasets))return;
+   const inc=ch.data.datasets.find(ds=>/total\s*income|income/i.test(String(ds.label||""))); if(!inc||!Array.isArray(inc.data))return;
+   ch.data.datasets=ch.data.datasets.filter((ds,i,a)=>String(ds.label||"")!=="Cost + Profit"||i===a.findIndex(x=>String(x.label||"")==="Cost + Profit"));
+   let ds=ch.data.datasets.find(x=>String(x.label||"")==="Cost + Profit"); if(!ds){ds={label:"Cost + Profit"};ch.data.datasets.push(ds)}
+   ds.data=inc.data.map(v=>v&&typeof v==="object"&&"y"in v?num(v.y):num(v));
+   Object.assign(ds,{hidden:false,borderColor:"#a78bfa",backgroundColor:"transparent",borderWidth:2.5,pointRadius:0,tension:.25,fill:false});
+   try{ch.update("none")}catch(e){}
+ }
+ function patchGraphs(){syncLine("rs15GrowthChart");syncLine("rs15MonthlyChart")}
+ function start(){
+   convertActions(); patchGraphs();
+   const tb=document.getElementById("activeTableBody"); if(tb&&window.MutationObserver)new MutationObserver(()=>setTimeout(convertActions,20)).observe(tb,{childList:true,subtree:true});
+   [250,900,1500].forEach(t=>setTimeout(()=>{convertActions();patchGraphs()},t));
+   document.addEventListener("click",e=>{if(!e.target.closest("#rsActionsMenu")&&!e.target.closest(".rs-actions-menu-btn"))closeMenu();setTimeout(()=>{convertActions();patchGraphs()},80)},true);
+   document.addEventListener("change",()=>setTimeout(patchGraphs,120),true);
+   addEventListener("scroll",closeMenu,true); addEventListener("resize",closeMenu);
+ }
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start); else start();
 })();
 </script>
 
