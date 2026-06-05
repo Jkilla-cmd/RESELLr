@@ -9875,130 +9875,6 @@ button[aria-label*="eBay"] img{
 }
 
 </style>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<style id="inventoryFinalExactOrderFix">
-/* Exact inventory action order:
-   Top: Pencil, Comps
-   Bottom: Sold, Holds, Delete */
-td.action-cell{
-  display:grid !important;
-  grid-template-columns: repeat(3, 18px) !important;
-  grid-template-rows: repeat(2, 18px) !important;
-  column-gap:12px !important;
-  row-gap:7px !important;
-  justify-content:end !important;
-  align-items:center !important;
-  justify-items:center !important;
-  width:122px !important;
-  min-width:122px !important;
-  padding-right:10px !important;
-  white-space:nowrap !important;
-}
-
-td.action-cell > *{
-  width:18px !important;
-  height:18px !important;
-  min-width:18px !important;
-  min-height:18px !important;
-  max-width:18px !important;
-  max-height:18px !important;
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  margin:0 !important;
-  padding:0 !important;
-  line-height:1 !important;
-}
-
-/* actual DOM order is: edit, comps, sold, hold, delete */
-td.action-cell > *:nth-child(1){
-  grid-column:1 !important;
-  grid-row:1 !important;
-}
-
-td.action-cell > *:nth-child(2){
-  grid-column:2 !important;
-  grid-row:1 !important;
-  cursor:pointer !important;
-}
-
-td.action-cell > *:nth-child(3){
-  grid-column:1 !important;
-  grid-row:2 !important;
-}
-
-td.action-cell > *:nth-child(4){
-  grid-column:2 !important;
-  grid-row:2 !important;
-}
-
-td.action-cell > *:nth-child(5){
-  grid-column:3 !important;
-  grid-row:2 !important;
-}
-
-td.action-cell .ebay-comps-action svg{
-  width:15px !important;
-  height:15px !important;
-  stroke:#111 !important;
-  pointer-events:none !important;
-  filter:drop-shadow(0 0 1px rgba(255,255,255,.65));
-}
-</style>
-
-
 <style id="soldIconPatch">
 .sold-btn{
   width:18px !important;
@@ -23782,79 +23658,6 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 <!-- ===== v73: Inventory action buttons two-row layout + eBay Like New helper ===== -->
-<style id="rs-v73-ebay-two-row-actions-css">
-  /* Split Inventory action icons into two clean rows instead of one crowded line. */
-  #activeTableBody td.action-cell,
-  #activeTableBody .action-cell{
-    min-width:132px !important;
-    width:132px !important;
-    max-width:132px !important;
-    white-space:normal !important;
-    vertical-align:middle !important;
-    line-height:1 !important;
-  }
-
-  #activeTableBody td.action-cell,
-  #activeTableBody .action-cell{
-    display:flex !important;
-    flex-wrap:wrap !important;
-    align-items:center !important;
-    justify-content:center !important;
-    gap:7px 8px !important;
-    padding-top:10px !important;
-    padding-bottom:10px !important;
-  }
-
-  #activeTableBody .action-cell > span,
-  #activeTableBody .action-cell > button,
-  #activeTableBody .action-cell > a{
-    margin:0 !important;
-  }
-
-  #activeTableBody .action-cell .edit,
-  #activeTableBody .action-cell .soldbtn,
-  #activeTableBody .action-cell .trash,
-  #activeTableBody .action-cell .holdbtn,
-  #activeTableBody .action-cell .movehold,
-  #activeTableBody .action-cell .ebay-comps-action{
-    width:26px !important;
-    height:26px !important;
-    min-width:26px !important;
-    display:inline-flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    font-size:18px !important;
-    line-height:1 !important;
-  }
-
-  #activeTableBody .action-cell .ebay-list-action{
-    width:56px !important;
-    min-width:56px !important;
-    max-width:56px !important;
-    height:26px !important;
-    padding:0 6px !important;
-    margin:0 !important;
-    display:inline-flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    gap:4px !important;
-    border-radius:10px !important;
-    font-size:10px !important;
-    font-weight:800 !important;
-    line-height:1 !important;
-  }
-
-  #activeTableBody .action-cell .ebay-list-action .rs-ebay-pencil{
-    font-size:11px !important;
-    line-height:1 !important;
-  }
-
-  #activeTableBody .action-cell .ebay-list-action .rs-ebay-label{
-    font-size:10px !important;
-    line-height:1 !important;
-  }
-</style>
-
 <script id="rs-v73-ebay-like-new-helper-js">
 (function(){
   /* Keep the draft helper simple and safe. eBay's public draft URL does not reliably accept
@@ -23923,637 +23726,8 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 <!-- ===== v74: Inventory action spacing hard fix - compact 2-row grid ===== -->
-<style id="rs-v74-inventory-actions-grid-css">
-  /* Give the actions column enough room and stop the icons from running off-screen. */
-  #secInventory table th:last-child,
-  #secInventory table td:last-child,
-  #activeTableBody td.action-cell,
-  #activeTableBody .action-cell{
-    width: 168px !important;
-    min-width: 168px !important;
-    max-width: 168px !important;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
-    vertical-align: middle !important;
-    white-space: normal !important;
-    overflow: visible !important;
-  }
-
-  #activeTableBody .inventory-action-grid{
-    display: grid !important;
-    grid-template-columns: repeat(3, 42px) !important;
-    grid-auto-rows: 34px !important;
-    gap: 7px 8px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-    min-width: 142px !important;
-    margin: 0 auto !important;
-    padding: 2px 0 !important;
-  }
-
-  #activeTableBody .inventory-action-grid > *,
-  #activeTableBody .action-cell > .edit,
-  #activeTableBody .action-cell > .soldbtn,
-  #activeTableBody .action-cell > .trash,
-  #activeTableBody .action-cell > button,
-  #activeTableBody .action-cell > a,
-  #activeTableBody .action-cell > span{
-    box-sizing: border-box !important;
-    width: 42px !important;
-    height: 34px !important;
-    min-width: 42px !important;
-    max-width: 42px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 11px !important;
-    line-height: 1 !important;
-    font-size: 18px !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: clip !important;
-  }
-
-  /* eBay button gets the full second-row style without squeezing text. */
-  #activeTableBody .inventory-action-grid .ebay-list-action{
-    width: 58px !important;
-    min-width: 58px !important;
-    max-width: 58px !important;
-    grid-column: span 1 !important;
-    height: 34px !important;
-    gap: 3px !important;
-    padding: 0 5px !important;
-    font-size: 10px !important;
-  }
-
-  #activeTableBody .inventory-action-grid .ebay-list-action .rs-ebay-pencil{
-    font-size: 12px !important;
-  }
-  #activeTableBody .inventory-action-grid .ebay-list-action .rs-ebay-label{
-    display: inline-block !important;
-    font-size: 10px !important;
-    line-height: 1 !important;
-  }
-
-  /* Remove old vertical bar separators if the old render used them. */
-  #activeTableBody .action-cell .rs-action-separator,
-  #activeTableBody .inventory-action-grid .rs-action-separator{
-    display:none !important;
-  }
-
-  @media (max-width: 800px){
-    #secInventory table th:last-child,
-    #secInventory table td:last-child,
-    #activeTableBody td.action-cell,
-    #activeTableBody .action-cell{
-      width: 148px !important;
-      min-width: 148px !important;
-      max-width: 148px !important;
-    }
-    #activeTableBody .inventory-action-grid{
-      grid-template-columns: repeat(3, 38px) !important;
-      grid-auto-rows: 32px !important;
-      gap: 6px !important;
-      min-width: 126px !important;
-    }
-    #activeTableBody .inventory-action-grid > *,
-    #activeTableBody .action-cell > .edit,
-    #activeTableBody .action-cell > .soldbtn,
-    #activeTableBody .action-cell > .trash,
-    #activeTableBody .action-cell > button,
-    #activeTableBody .action-cell > a,
-    #activeTableBody .action-cell > span{
-      width: 38px !important;
-      height: 32px !important;
-      min-width: 38px !important;
-      max-width: 38px !important;
-      font-size: 17px !important;
-    }
-    #activeTableBody .inventory-action-grid .ebay-list-action{
-      width: 52px !important;
-      min-width: 52px !important;
-      max-width: 52px !important;
-      font-size: 9px !important;
-    }
-  }
-</style>
-<script id="rs-v74-inventory-actions-grid-js">
-(function(){
-  if(window.__rsV74InventoryActionGrid) return;
-  window.__rsV74InventoryActionGrid = true;
-
-  function isActionNode(el){
-    if(!el || el.nodeType !== 1) return false;
-    if(el.classList && el.classList.contains('inventory-action-grid')) return false;
-    const tag = el.tagName ? el.tagName.toLowerCase() : '';
-    if(['button','a','span'].includes(tag)) return true;
-    return false;
-  }
-
-  function cleanupTextNodes(cell){
-    Array.from(cell.childNodes).forEach(function(n){
-      if(n.nodeType === 3 && String(n.textContent || '').trim()){
-        // Old action cells sometimes left pipe separators. Remove them.
-        if(String(n.textContent).replace(/[|\s]/g,'') === '') n.remove();
-        else n.textContent = '';
-      }
-    });
-  }
-
-  function normalizeActionLabels(el){
-    if(!el || !el.setAttribute) return;
-    const txt = (el.textContent || '').trim().toLowerCase();
-    if(el.classList && el.classList.contains('ebay-list-action')) return;
-    if(txt.includes('delete') || txt === '🗑️' || txt === '🗑'){
-      el.title = el.title || 'Delete';
-    }
-    if(txt.includes('hold')){
-      el.title = el.title || 'Move to Holds';
-    }
-    if(txt.includes('sold') || txt.includes('$')){
-      el.title = el.title || 'Mark Sold';
-    }
-  }
-
-  function gridOneCell(cell){
-    if(!cell) return;
-    if(cell.querySelector(':scope > .inventory-action-grid')) return;
-
-    cleanupTextNodes(cell);
-
-    const kids = Array.from(cell.children).filter(isActionNode);
-    if(kids.length < 2) return;
-
-    const grid = document.createElement('div');
-    grid.className = 'inventory-action-grid';
-    kids.forEach(function(k){
-      normalizeActionLabels(k);
-      grid.appendChild(k);
-    });
-    cell.appendChild(grid);
-    cell.classList.add('action-cell');
-  }
-
-  function fixInventoryActionGrid(){
-    const tbody = document.getElementById('activeTableBody');
-    if(!tbody) return;
-    Array.from(tbody.querySelectorAll('tr')).forEach(function(tr){
-      const cell = tr.querySelector('td.action-cell') || tr.lastElementChild;
-      gridOneCell(cell);
-    });
-  }
-
-  window.resellrFixInventoryActionGrid = fixInventoryActionGrid;
-
-  function schedule(){
-    clearTimeout(window.__rsV74ActionGridTimer);
-    window.__rsV74ActionGridTimer = setTimeout(fixInventoryActionGrid, 70);
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    setTimeout(fixInventoryActionGrid, 100);
-    setTimeout(fixInventoryActionGrid, 500);
-    setTimeout(fixInventoryActionGrid, 1200);
-    try{
-      const mo = new MutationObserver(schedule);
-      mo.observe(document.body, {childList:true, subtree:true});
-    }catch(e){}
-  });
-  document.addEventListener('click', function(){ setTimeout(fixInventoryActionGrid, 80); }, true);
-})();
-</script>
-
-
 <!-- ===== v76 FINAL: Inventory action column fixed 2-row layout (no image) ===== -->
-<style id="rs-v76-final-inventory-actions-css">
-  #secInventory .table-wrap{
-    overflow-x:auto !important;
-  }
-
-  #secInventory table{
-    table-layout:auto !important;
-  }
-
-  #secInventory table th:last-child,
-  #secInventory table td:last-child,
-  #activeTableBody td.action-cell,
-  #activeTableBody .action-cell{
-    display:table-cell !important;
-    width:158px !important;
-    min-width:158px !important;
-    max-width:158px !important;
-    padding:6px 8px !important;
-    white-space:normal !important;
-    overflow:visible !important;
-    vertical-align:middle !important;
-    text-align:center !important;
-  }
-
-  #activeTableBody .rs-action-grid-v76{
-    display:grid !important;
-    grid-template-columns:40px 40px 54px !important;
-    grid-template-rows:32px 32px !important;
-    gap:6px !important;
-    align-items:center !important;
-    justify-content:center !important;
-    justify-items:center !important;
-    width:146px !important;
-    min-width:146px !important;
-    max-width:146px !important;
-    margin:0 auto !important;
-    padding:0 !important;
-  }
-
-  #activeTableBody .rs-action-grid-v76 > *,
-  #activeTableBody .rs-action-grid-v76 .edit,
-  #activeTableBody .rs-action-grid-v76 .soldbtn,
-  #activeTableBody .rs-action-grid-v76 .sold-btn,
-  #activeTableBody .rs-action-grid-v76 .holdbtn,
-  #activeTableBody .rs-action-grid-v76 .movehold,
-  #activeTableBody .rs-action-grid-v76 .trash,
-  #activeTableBody .rs-action-grid-v76 .ebay-comps-action{
-    box-sizing:border-box !important;
-    width:40px !important;
-    height:32px !important;
-    min-width:40px !important;
-    max-width:40px !important;
-    min-height:32px !important;
-    max-height:32px !important;
-    margin:0 !important;
-    padding:0 !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    border-radius:10px !important;
-    line-height:1 !important;
-    font-size:18px !important;
-    text-align:center !important;
-    overflow:hidden !important;
-    white-space:nowrap !important;
-  }
-
-  #activeTableBody .rs-action-grid-v76 .ebay-list-action{
-    width:54px !important;
-    min-width:54px !important;
-    max-width:54px !important;
-    height:32px !important;
-    min-height:32px !important;
-    max-height:32px !important;
-    margin:0 !important;
-    padding:0 4px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    gap:2px !important;
-    border-radius:10px !important;
-    line-height:1 !important;
-    font-size:10px !important;
-    font-weight:800 !important;
-    white-space:nowrap !important;
-    overflow:hidden !important;
-  }
-
-  #activeTableBody .rs-action-grid-v76 .ebay-list-action .rs-ebay-pencil{font-size:11px !important; line-height:1 !important;}
-  #activeTableBody .rs-action-grid-v76 .ebay-list-action .rs-ebay-label{font-size:10px !important; line-height:1 !important; display:inline-block !important;}
-
-  #activeTableBody .rs-action-grid-v76 .rs-action-empty{
-    opacity:0 !important;
-    pointer-events:none !important;
-  }
-
-  #activeTableBody .action-cell .rs-action-separator,
-  #activeTableBody .rs-action-grid-v76 .rs-action-separator{
-    display:none !important;
-  }
-</style>
-<script id="rs-v76-final-inventory-actions-js">
-(function(){
-  if(window.__rsV76FinalInventoryActions) return;
-  window.__rsV76FinalInventoryActions = true;
-
-  function text(el){ return ((el && (el.getAttribute('title') || el.getAttribute('aria-label') || el.textContent)) || '').toLowerCase(); }
-  function has(el, cls){ return el && el.classList && el.classList.contains(cls); }
-  function pick(list, fn){
-    const i=list.findIndex(fn);
-    return i>=0 ? list.splice(i,1)[0] : null;
-  }
-  function isRealAction(el){
-    if(!el || el.nodeType!==1) return false;
-    if(has(el,'rs-action-grid-v76') || has(el,'inventory-action-grid')) return false;
-    const tag=(el.tagName||'').toLowerCase();
-    if(!['span','button','a','div'].includes(tag)) return false;
-    const t=text(el);
-    return has(el,'edit') || has(el,'soldbtn') || has(el,'sold-btn') || has(el,'holdbtn') || has(el,'movehold') || has(el,'trash') || has(el,'ebay-comps-action') || has(el,'ebay-list-action') || t.includes('ebay') || t.includes('hold') || t.includes('delete') || t.includes('sold') || t.includes('mark') || t.includes('comps') || t.includes('edit') || t.includes('$') || t.includes('🗑') || t.includes('📝');
-  }
-  function flattenActions(cell){
-    const nodes=[];
-    Array.from(cell.children).forEach(ch=>{
-      if(has(ch,'rs-action-grid-v76') || has(ch,'inventory-action-grid')){
-        Array.from(ch.children).forEach(k=>{ if(isRealAction(k)) nodes.push(k); });
-      }else if(isRealAction(ch)) nodes.push(ch);
-    });
-    return nodes;
-  }
-  function empty(){
-    const s=document.createElement('span');
-    s.className='rs-action-empty';
-    s.setAttribute('aria-hidden','true');
-    return s;
-  }
-  function normalize(cell){
-    if(!cell) return;
-    cell.classList.add('action-cell');
-    const actions=flattenActions(cell);
-    if(actions.length<2) return;
-
-    const edit=pick(actions, el=>has(el,'edit') || text(el).includes('edit') || text(el).includes('pencil'));
-    const comps=pick(actions, el=>has(el,'ebay-comps-action') || text(el).includes('comps') || text(el).includes('price') || text(el).includes('trend'));
-    const ebay=pick(actions, el=>has(el,'ebay-list-action') || text(el).includes('ebay'));
-    const sold=pick(actions, el=>has(el,'soldbtn') || has(el,'sold-btn') || text(el).includes('sold') || text(el).includes('mark') || text(el).includes('$'));
-    const hold=pick(actions, el=>has(el,'holdbtn') || has(el,'movehold') || text(el).includes('hold'));
-    const del=pick(actions, el=>has(el,'trash') || text(el).includes('delete') || text(el).includes('trash') || text(el).includes('🗑'));
-    const ordered=[edit, comps, ebay, sold, hold, del];
-
-    cell.innerHTML='';
-    const grid=document.createElement('div');
-    grid.className='rs-action-grid-v76';
-    ordered.forEach(el=>grid.appendChild(el || empty()));
-    actions.forEach(el=>grid.appendChild(el));
-    cell.appendChild(grid);
-  }
-  function run(){
-    const tbody=document.getElementById('activeTableBody');
-    if(!tbody) return;
-    Array.from(tbody.querySelectorAll('tr')).forEach(tr=>normalize(tr.querySelector('td.action-cell') || tr.lastElementChild));
-  }
-  function schedule(){ clearTimeout(window.__rsV76ActionTimer); window.__rsV76ActionTimer=setTimeout(run,60); }
-  document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(run,80); setTimeout(run,300); setTimeout(run,900); });
-  document.addEventListener('click', ()=>setTimeout(run,80), true);
-  document.addEventListener('change', ()=>setTimeout(run,80), true);
-  try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
-  window.resellrFixInventoryActionGrid = run;
-})();
-</script>
-
-
 <!-- ===== v77 REAL FIX: compact inventory actions that fit narrow screens ===== -->
-<style id="rs-v77-compact-inventory-actions-css">
-  /* Final override: keep the Inventory action column compact enough to fit on small screens. */
-  #secInventory table th:last-child,
-  #secInventory table td:last-child,
-  #activeTableBody td.action-cell,
-  #activeTableBody .action-cell{
-    width:112px !important;
-    min-width:112px !important;
-    max-width:112px !important;
-    padding:4px !important;
-    text-align:center !important;
-    vertical-align:middle !important;
-    white-space:normal !important;
-    overflow:visible !important;
-  }
-
-  #activeTableBody .rs-action-grid-v77{
-    display:grid !important;
-    grid-template-columns:28px 28px 42px !important;
-    grid-template-rows:28px 28px !important;
-    gap:4px !important;
-    width:106px !important;
-    min-width:106px !important;
-    max-width:106px !important;
-    margin:0 auto !important;
-    padding:0 !important;
-    align-items:center !important;
-    justify-content:center !important;
-    justify-items:center !important;
-  }
-
-  #activeTableBody .rs-action-grid-v77 > *,
-  #activeTableBody .rs-action-grid-v77 .edit,
-  #activeTableBody .rs-action-grid-v77 .soldbtn,
-  #activeTableBody .rs-action-grid-v77 .sold-btn,
-  #activeTableBody .rs-action-grid-v77 .holdbtn,
-  #activeTableBody .rs-action-grid-v77 .movehold,
-  #activeTableBody .rs-action-grid-v77 .trash,
-  #activeTableBody .rs-action-grid-v77 .ebay-comps-action,
-  #activeTableBody .rs-action-grid-v77 .ebay-list-action{
-    box-sizing:border-box !important;
-    margin:0 !important;
-    padding:0 !important;
-    height:28px !important;
-    min-height:28px !important;
-    max-height:28px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    border-radius:9px !important;
-    line-height:1 !important;
-    overflow:hidden !important;
-    white-space:nowrap !important;
-    text-align:center !important;
-  }
-
-  #activeTableBody .rs-action-grid-v77 > *:not(.ebay-list-action),
-  #activeTableBody .rs-action-grid-v77 .edit,
-  #activeTableBody .rs-action-grid-v77 .soldbtn,
-  #activeTableBody .rs-action-grid-v77 .sold-btn,
-  #activeTableBody .rs-action-grid-v77 .holdbtn,
-  #activeTableBody .rs-action-grid-v77 .movehold,
-  #activeTableBody .rs-action-grid-v77 .trash,
-  #activeTableBody .rs-action-grid-v77 .ebay-comps-action{
-    width:28px !important;
-    min-width:28px !important;
-    max-width:28px !important;
-    font-size:16px !important;
-  }
-
-  #activeTableBody .rs-action-grid-v77 .ebay-list-action{
-    width:42px !important;
-    min-width:42px !important;
-    max-width:42px !important;
-    gap:1px !important;
-    font-size:8px !important;
-    font-weight:800 !important;
-    letter-spacing:0 !important;
-  }
-
-  #activeTableBody .rs-action-grid-v77 .ebay-list-action .rs-ebay-pencil{
-    font-size:9px !important;
-    line-height:1 !important;
-  }
-  #activeTableBody .rs-action-grid-v77 .ebay-list-action .rs-ebay-label{
-    font-size:8px !important;
-    line-height:1 !important;
-    display:inline-block !important;
-    max-width:25px !important;
-    overflow:hidden !important;
-  }
-
-  #activeTableBody .rs-action-grid-v77 svg{
-    width:17px !important;
-    height:17px !important;
-  }
-
-  #activeTableBody .rs-action-grid-v77 .rs-action-empty{
-    opacity:0 !important;
-    pointer-events:none !important;
-  }
-
-  #activeTableBody .action-cell > :not(.rs-action-grid-v77){
-    margin:0 !important;
-  }
-
-  #activeTableBody .action-cell .rs-action-separator,
-  #activeTableBody .rs-action-grid-v77 .rs-action-separator{
-    display:none !important;
-  }
-</style>
-<script id="rs-v77-compact-inventory-actions-js">
-(function(){
-  function has(el,cls){ return !!(el && el.classList && el.classList.contains(cls)); }
-  function label(el){ return String((el && (el.getAttribute('title') || el.getAttribute('aria-label') || el.textContent)) || '').toLowerCase(); }
-  function isAction(el){
-    if(!el || el.nodeType !== 1) return false;
-    if(has(el,'rs-action-grid-v77') || has(el,'rs-action-grid-v76') || has(el,'inventory-action-grid')) return false;
-    const tag=(el.tagName||'').toLowerCase();
-    if(!['span','button','a','div'].includes(tag)) return false;
-    const t=label(el);
-    return has(el,'edit') || has(el,'soldbtn') || has(el,'sold-btn') || has(el,'holdbtn') || has(el,'movehold') || has(el,'trash') || has(el,'ebay-comps-action') || has(el,'ebay-list-action') || t.includes('edit') || t.includes('ebay') || t.includes('comps') || t.includes('sold') || t.includes('hold') || t.includes('delete') || t.includes('trash') || t.includes('🗑') || t.includes('💲') || t.includes('📝');
-  }
-  function collect(cell){
-    const out=[];
-    Array.from(cell.children).forEach(ch=>{
-      if(has(ch,'rs-action-grid-v77') || has(ch,'rs-action-grid-v76') || has(ch,'inventory-action-grid')){
-        Array.from(ch.children).forEach(k=>{ if(isAction(k)) out.push(k); });
-      }else if(isAction(ch)) out.push(ch);
-    });
-    return out;
-  }
-  function take(arr,fn){ const i=arr.findIndex(fn); return i>-1 ? arr.splice(i,1)[0] : null; }
-  function empty(){ const s=document.createElement('span'); s.className='rs-action-empty'; s.setAttribute('aria-hidden','true'); return s; }
-  function compactEbay(btn){
-    if(!btn) return btn;
-    btn.classList.add('ebay-list-action');
-    if(!btn.querySelector('.rs-ebay-label')){
-      btn.innerHTML='<span class="rs-ebay-pencil">📝</span><span class="rs-ebay-label">eBay</span>';
-    }
-    btn.title = btn.title || 'List on eBay draft';
-    return btn;
-  }
-  function normalizeCell(cell){
-    if(!cell) return;
-    cell.classList.add('action-cell');
-    const actions=collect(cell);
-    if(actions.length<2) return;
-
-    const edit=take(actions, el=>has(el,'edit') || label(el).includes('edit'));
-    const comps=take(actions, el=>has(el,'ebay-comps-action') || label(el).includes('comps') || label(el).includes('price') || label(el).includes('trend'));
-    const ebay=compactEbay(take(actions, el=>has(el,'ebay-list-action') || label(el).includes('ebay')));
-    const sold=take(actions, el=>has(el,'soldbtn') || has(el,'sold-btn') || label(el).includes('sold') || label(el).includes('mark') || label(el).includes('$') || label(el).includes('💲'));
-    const hold=take(actions, el=>has(el,'holdbtn') || has(el,'movehold') || label(el).includes('hold') || label(el).includes('ice'));
-    const del=take(actions, el=>has(el,'trash') || label(el).includes('delete') || label(el).includes('trash') || label(el).includes('🗑'));
-
-    cell.innerHTML='';
-    const grid=document.createElement('div');
-    grid.className='rs-action-grid-v77';
-    [edit, comps, ebay, sold, hold, del].forEach(el=>grid.appendChild(el || empty()));
-    cell.appendChild(grid);
-  }
-  function run(){
-    const tbody=document.getElementById('activeTableBody');
-    if(!tbody) return;
-    Array.from(tbody.querySelectorAll('tr')).forEach(tr=>normalizeCell(tr.querySelector('td.action-cell') || tr.lastElementChild));
-  }
-  window.resellrFixInventoryActionGrid = run;
-  function schedule(){ clearTimeout(window.__rsV77ActionGridTimer); window.__rsV77ActionGridTimer=setTimeout(run,40); }
-  document.addEventListener('DOMContentLoaded',()=>{ setTimeout(run,80); setTimeout(run,350); setTimeout(run,1000); });
-  document.addEventListener('click',()=>setTimeout(run,70),true);
-  document.addEventListener('change',()=>setTimeout(run,70),true);
-  try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
-})();
-</script>
-
-<style id="rs-v84-stable-actions-graphs">
-#activeTableBody td.action-cell,#activeTableBody .action-cell{width:70px!important;min-width:70px!important;max-width:70px!important;padding:6px 8px!important;text-align:center!important;white-space:nowrap!important;vertical-align:middle!important}
-#activeTableBody .action-cell>:not(.rs-actions-menu-btn){display:none!important}
-.rs-actions-menu-btn{width:42px!important;height:34px!important;min-width:42px!important;padding:0!important;margin:0 auto!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:12px!important;font-size:22px!important;line-height:1!important;font-weight:900!important;color:var(--accent)!important;border:1px solid color-mix(in srgb,var(--accent) 38%,transparent)!important;background:rgba(2,6,23,.55)!important;cursor:pointer!important}
-#rsActionsMenu{position:fixed;z-index:100000;display:none;min-width:220px;padding:8px;border-radius:16px;border:1px solid var(--border);background:rgba(8,12,20,.96);box-shadow:0 18px 55px rgba(0,0,0,.45);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-#rsActionsMenu.open{display:block}
-#rsActionsMenu button{width:100%!important;display:flex!important;align-items:center!important;gap:10px!important;padding:10px 12px!important;margin:0!important;border:0!important;border-radius:12px!important;background:transparent!important;color:var(--text)!important;text-align:left!important;font-size:13px!important;box-shadow:none!important;transform:none!important}
-#rsActionsMenu button:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)!important;box-shadow:none!important;transform:none!important}
-#rsActionsMenu button.danger{color:var(--red)!important}
-</style>
-<script id="rs-v84-stable-actions-graphs-js">
-(function(){
- if(window.__rsV84StableActionsGraphs)return; window.__rsV84StableActionsGraphs=true;
- const clean=v=>String(v??"").trim();
- const num=v=>{const n=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)?n:0};
- function readActive(){try{if(typeof window.readActive==="function")return window.readActive()||[]}catch(e){}try{return JSON.parse(localStorage.getItem("activeInventory")||"[]")||[]}catch(e){return[]}}
- function findActiveForRow(tr){
-   const texts=[...tr.querySelectorAll("td")].map(td=>clean(td.textContent));
-   const active=readActive();
-   for(const t of texts){const hit=active.find(r=>clean(r.item||r.title||r.name)===t); if(hit)return hit}
-   return active[0]||{item:texts.find(Boolean)||"Inventory Item"};
- }
- function ensureMenu(){
-   let m=document.getElementById("rsActionsMenu"); if(m)return m;
-   m=document.createElement("div"); m.id="rsActionsMenu";
-   m.innerHTML='<button data-action="edit">✏️ <span>Edit</span></button><button data-action="comps">📈 <span>View eBay Comps</span></button><button data-action="ebay">📝 <span>eBay Draft</span></button><button data-action="sold">💲 <span>Mark Sold</span></button><button data-action="holds">📥 <span>Move to Holds</span></button><button class="danger" data-action="delete">🗑️ <span>Delete</span></button>';
-   document.body.appendChild(m);
-   m.addEventListener("click",ev=>{
-     const b=ev.target.closest("button[data-action]"); if(!b||!m.__row)return;
-     const r=m.__row,a=b.dataset.action; closeMenu();
-     try{
-       if(a==="edit"&&window.openEditModal)window.openEditModal("active",r._id||r.id);
-       else if(a==="comps")window.open("https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(clean(r.item||r.title||r.name||""))+"&LH_Sold=1&LH_Complete=1","_blank","noopener,noreferrer");
-       else if(a==="ebay"){ if(window.resellrListOnEbay)window.resellrListOnEbay(r); else window.open("https://www.ebay.com/sl/prelist?title="+encodeURIComponent(clean(r.item||r.title||r.name||"")),"_blank","noopener,noreferrer");}
-       else if(a==="sold"&&window.openMarkSoldModal)window.openMarkSoldModal(r._id||r.id);
-       else if(a==="holds"&&window.moveActiveToHolds)window.moveActiveToHolds(r._id||r.id);
-       else if(a==="delete"&&window.deleteActiveById)window.deleteActiveById(r._id||r.id);
-     }catch(e){console.warn(e)}
-   });
-   return m;
- }
- function closeMenu(){const m=document.getElementById("rsActionsMenu"); if(m){m.classList.remove("open");m.__row=null}}
- function openMenu(btn,row){const m=ensureMenu();m.__row=row;const r=btn.getBoundingClientRect(),w=230;m.style.left=Math.max(8,Math.min(innerWidth-w-8,r.right-w))+"px";m.style.top=Math.max(8,Math.min(innerHeight-270,r.bottom+6))+"px";m.classList.add("open")}
- function convertActions(){
-   const tb=document.getElementById("activeTableBody"); if(!tb)return;
-   tb.querySelectorAll("tr").forEach(tr=>{
-     const cells=tr.querySelectorAll("td"); if(!cells.length)return;
-     const cell=tr.querySelector("td.action-cell")||cells[cells.length-1]; cell.classList.add("action-cell");
-     cell.innerHTML="";
-     const btn=document.createElement("button"); btn.type="button"; btn.className="rs-actions-menu-btn"; btn.title="Actions"; btn.textContent="⋮";
-     btn.onclick=e=>{e.preventDefault();e.stopPropagation();openMenu(btn,findActiveForRow(tr))};
-     cell.appendChild(btn);
-   });
- }
- function chart(id){const c=document.getElementById(id);try{return c&&window.Chart&&Chart.getChart(c)}catch(e){return null}}
- function syncLine(id){
-   const ch=chart(id); if(!ch||!ch.data||!Array.isArray(ch.data.datasets))return;
-   const inc=ch.data.datasets.find(ds=>/total\s*income|income/i.test(String(ds.label||""))); if(!inc||!Array.isArray(inc.data))return;
-   ch.data.datasets=ch.data.datasets.filter((ds,i,a)=>String(ds.label||"")!=="Cost + Profit"||i===a.findIndex(x=>String(x.label||"")==="Cost + Profit"));
-   let ds=ch.data.datasets.find(x=>String(x.label||"")==="Cost + Profit"); if(!ds){ds={label:"Cost + Profit"};ch.data.datasets.push(ds)}
-   ds.data=inc.data.map(v=>v&&typeof v==="object"&&"y"in v?num(v.y):num(v));
-   Object.assign(ds,{hidden:false,borderColor:"#a78bfa",backgroundColor:"transparent",borderWidth:2.5,pointRadius:0,tension:.25,fill:false});
-   try{ch.update("none")}catch(e){}
- }
- function patchGraphs(){syncLine("rs15GrowthChart");syncLine("rs15MonthlyChart")}
- function start(){
-   convertActions(); patchGraphs();
-   const tb=document.getElementById("activeTableBody"); if(tb&&window.MutationObserver)new MutationObserver(()=>setTimeout(convertActions,20)).observe(tb,{childList:true,subtree:true});
-   [250,900,1500].forEach(t=>setTimeout(()=>{convertActions();patchGraphs()},t));
-   document.addEventListener("click",e=>{if(!e.target.closest("#rsActionsMenu")&&!e.target.closest(".rs-actions-menu-btn"))closeMenu();setTimeout(()=>{convertActions();patchGraphs()},80)},true);
-   document.addEventListener("change",()=>setTimeout(patchGraphs,120),true);
-   addEventListener("scroll",closeMenu,true); addEventListener("resize",closeMenu);
- }
- if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start); else start();
-})();
-</script>
-
 </body>
 </html>
 
@@ -25015,182 +24189,6 @@ body.skin-dreamtrip .chart-wrap{
 
 
 <!-- ===== v28: Stable SVG charts - no stacked Chart.js redraws on click ===== -->
-<style id="resellr-v28-stable-svg-charts-css">
-  #secDashboard .rs28-chartbox{
-    display:block !important;
-    width:100% !important;
-    height:360px !important;
-    min-height:360px !important;
-    overflow:hidden !important;
-    position:relative !important;
-    background:transparent !important;
-  }
-  #secDashboard .rs28-chartbox svg{
-    display:block !important;
-    width:100% !important;
-    height:100% !important;
-    overflow:visible !important;
-  }
-  #secDashboard .rs28-legend{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    gap:10px !important;
-    flex-wrap:wrap !important;
-    margin:8px 0 10px !important;
-  }
-  #secDashboard .rs28-legend button{
-    width:auto !important;
-    min-width:0 !important;
-    display:inline-flex !important;
-    align-items:center !important;
-    gap:6px !important;
-    padding:5px 10px !important;
-    border-radius:999px !important;
-    border:1px solid var(--border) !important;
-    color:var(--text) !important;
-    background:color-mix(in srgb, var(--panel) 82%, transparent) !important;
-    font-size:12px !important;
-    line-height:1.1 !important;
-    box-shadow:none !important;
-  }
-  #secDashboard .rs28-legend button.rs28-off{ opacity:.38 !important; }
-  #secDashboard .rs28-dot{ width:10px; height:10px; display:inline-block; border-radius:3px; }
-  #secDashboard .rs28-empty{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);border:1px dashed var(--border);border-radius:16px;}
-  #secDashboard .rs28-chartbox text{ font-family:inherit; paint-order:stroke; stroke:rgba(0,0,0,.35); stroke-width:2px; stroke-linejoin:round; }
-</style>
-<script id="resellr-v28-stable-svg-charts">
-(function(){
-  if(window.__resellrV28StableSvgCharts) return;
-  window.__resellrV28StableSvgCharts = true;
-
-  const G_VIS='resellrGrowthSvgVisibleV28';
-  const M_VIS='resellrMonthlySvgVisibleV28';
-  let drawing=false;
-  let scheduled=0;
-  function $(id){return document.getElementById(id);} 
-  function qsa(sel,root=document){return Array.from(root.querySelectorAll(sel));}
-  function css(name, fallback){try{return getComputedStyle(document.documentElement).getPropertyValue(name).trim()||fallback;}catch(e){return fallback;}}
-  function num(v){const n=Number(String(v??'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?n:0;}
-  function money(v){return '$'+(Number(v)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
-  function esc(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
-  function readArray(key){try{const a=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}}
-  function soldRows(){try{return typeof window.readSold==='function'?window.readSold():readArray('soldInventory');}catch(e){return readArray('soldInventory');}}
-  function dateOf(r){const raw=r&&(r.date||r.soldDate||r.Date||r['Sold Date']||r.saleDate||r.completedDate||r.createdAt);const d=raw?new Date(raw):null;return d&&!isNaN(d)?d:null;}
-  function saleOf(r){return num(r&&(r.sale??r.sales??r.price??r.salePrice??r.soldPrice??r.revenue??r.income??r.amount??r.totalIncome??r.total));}
-  function costOf(r){return num(r&&(r.cost??r.Cost??r.itemCost??r.cogs??r.costOfSold??r['Cost of Sold']));}
-  function feeOf(r){return num(r&&(r.fees??r.fee??r.Fees??r.platformFees??r.sellingFees));}
-  function shipOf(r){return num(r&&(r.ship??r.shipping??r.Shipping??r.shippingCost??r.postage));}
-  function profitOf(r){const p=r&&(r.profit??r.netProfit??r.totalProfit);return (p!==undefined&&p!==null&&String(p).trim()!=='')?num(p):saleOf(r)-costOf(r)-feeOf(r)-shipOf(r);}
-  function getRange(){const a=document.querySelector('[data-rs15-range].active,[data-rs15-range].is-active,[data-rs15-range][aria-pressed="true"]');return (a&&a.getAttribute('data-rs15-range'))||localStorage.getItem('rs15Range')||'ALL';}
-  function rangeStart(){const r=getRange(),n=new Date();if(r==='YTD')return new Date(n.getFullYear(),0,1);if(r==='3M')return new Date(n.getFullYear(),n.getMonth()-3,n.getDate());if(r==='1M')return new Date(n.getFullYear(),n.getMonth()-1,n.getDate());return null;}
-  function dayKey(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate()).toISOString().slice(0,10);} 
-  function monthKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
-  function vis(key,def){try{return Object.assign({},def,JSON.parse(localStorage.getItem(key)||'{}'));}catch(e){return Object.assign({},def);}}
-  function setVis(key,v){try{localStorage.setItem(key,JSON.stringify(v));}catch(e){}}
-
-  function findPanel(title){
-    return qsa('#secDashboard .rs15-panel,#secDashboard .panel,#secDashboard section').find(p=>{
-      const h=p.querySelector('h1,h2,h3'); return h && new RegExp(title,'i').test(h.textContent||'');
-    })||null;
-  }
-  function setChartBox(panel, kind, legendHtml){
-    if(!panel) return null;
-    let box=panel.querySelector('.rs15-chart,.chart-wrap') || panel.querySelector('canvas')?.parentElement;
-    if(!box){box=document.createElement('div');box.className='rs15-chart';panel.appendChild(box);} 
-    // If already correct, do not rebuild on ordinary chart clicks.
-    const mountId='rs28'+kind+'Mount';
-    if(!box.querySelector('#'+mountId)){
-      box.innerHTML='<div class="rs28-legend">'+legendHtml+'</div><div class="rs28-chartbox" id="'+mountId+'"></div>';
-    }
-    return $(mountId);
-  }
-  function path(rows,key,W,H,pad,maxY){
-    if(!rows.length) return '';
-    const min=rows[0].date.getTime(), max=rows[rows.length-1].date.getTime(), span=Math.max(1,max-min);
-    return rows.map((r,i)=>{const x=pad.l+((r.date.getTime()-min)/span)*(W-pad.l-pad.r);const y=H-pad.b-(Math.max(0,r[key])/maxY)*(H-pad.t-pad.b);return (i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);}).join(' ');
-  }
-  function labelRows(rows,count){const out=[];if(!rows.length)return out;count=Math.min(count,rows.length);const used=new Set();for(let i=0;i<count;i++){let idx=Math.round(i*(rows.length-1)/Math.max(1,count-1));while(used.has(idx)&&idx<rows.length-1)idx++;used.add(idx);out.push(rows[idx]);}return out;}
-  function gridSvg(W,H,pad,maxY){
-    const muted=css('--muted','#94a3b8'), text=css('--text','#e5e7eb');
-    let svg=''; const step=Math.max(100,Math.ceil(maxY/5/100)*100);
-    for(let v=0; v<=maxY+1; v+=step){const y=H-pad.b-(v/maxY)*(H-pad.t-pad.b);svg+='<line x1="'+pad.l+'" y1="'+y+'" x2="'+(W-pad.r)+'" y2="'+y+'" stroke="rgba(255,255,255,.14)"/><text x="'+(pad.l-10)+'" y="'+(y+4)+'" text-anchor="end" fill="'+esc(muted)+'" font-size="13">'+esc(money(v))+'</text>';}
-    return svg;
-  }
-  function renderGrowth(){
-    const panel=findPanel('Business\\s+Growth');
-    const v=vis(G_VIS,{income:true,profit:true});
-    const mount=setChartBox(panel,'Growth','<button type="button" data-rs28-growth="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-growth="profit"><span class="rs28-dot" style="background:var(--green)"></span>Total Profit</button>');
-    if(!mount) return;
-    qsa('[data-rs28-growth="income"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v.income));
-    qsa('[data-rs28-growth="profit"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v.profit));
-    const start=rangeStart(), daily=new Map(), all=soldRows();
-    let allInc=0, allProf=0; all.forEach(r=>{allInc+=saleOf(r);allProf+=profitOf(r);});
-    if($('rs15GrowthIncome')) $('rs15GrowthIncome').textContent=money(allInc);
-    if($('rs15GrowthProfit')) $('rs15GrowthProfit').textContent=money(allProf);
-    if($('rs15GrowthItems')) $('rs15GrowthItems').textContent=(all.length||0).toLocaleString('en-US');
-    all.forEach(r=>{const d=dateOf(r); if(!d||(start&&d<start))return; const k=dayKey(d); if(!daily.has(k))daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0}); const x=daily.get(k); x.income+=saleOf(r); x.profit+=profitOf(r);});
-    let inc=0,prof=0; const rows=Array.from(daily.values()).sort((a,b)=>a.date-b.date).map(x=>{inc+=x.income;prof+=x.profit;return {date:x.date,income:inc,profit:prof};});
-    if(!rows.length){mount.innerHTML='<div class="rs28-empty">No sold data found for this range.</div>';return;}
-    const W=1200,H=360,pad={l:86,r:32,t:18,b:56}; let maxY=100; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.profit)maxY=Math.max(maxY,r.profit);}); maxY=Math.ceil(maxY*1.12/100)*100;
-    const accent=css('--accent','#38bdf8'), green=css('--green','#22c55e'), text=css('--text','#e5e7eb'), muted=css('--muted','#94a3b8');
-    let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-label="Business Growth chart">'+gridSvg(W,H,pad,maxY);
-    const min=rows[0].date.getTime(), max=rows[rows.length-1].date.getTime(), span=Math.max(1,max-min);
-    labelRows(rows,5).forEach(r=>{const x=pad.l+((r.date.getTime()-min)/span)*(W-pad.l-pad.r); const main=r.date.toLocaleDateString('en-US',{month:'short',day:'numeric'}); const yr=String(r.date.getFullYear()); svg+='<line x1="'+x+'" y1="'+pad.t+'" x2="'+x+'" y2="'+(H-pad.b)+'" stroke="rgba(255,255,255,.10)"/><text x="'+x+'" y="'+(H-31)+'" text-anchor="middle" fill="'+esc(text)+'" font-size="13" font-weight="700">'+esc(main)+'</text><text x="'+x+'" y="'+(H-12)+'" text-anchor="middle" fill="'+esc(muted)+'" font-size="12">'+esc(yr)+'</text>';});
-    if(v.income) svg+='<path d="'+path(rows,'income',W,H,pad,maxY)+'" fill="none" stroke="'+esc(accent)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
-    if(v.profit) svg+='<path d="'+path(rows,'profit',W,H,pad,maxY)+'" fill="none" stroke="'+esc(green)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
-    mount.innerHTML=svg+'</svg>';
-  }
-  function renderMonthly(){
-    const panel=findPanel('Monthly\\s+Profit\\s+View');
-    const v=vis(M_VIS,{income:true,cost:true,profit:true,goal:true});
-    const mount=setChartBox(panel,'Monthly','<button type="button" data-rs28-monthly="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-monthly="cost"><span class="rs28-dot" style="background:var(--red)"></span>Cost of Sold</button><button type="button" data-rs28-monthly="profit"><span class="rs28-dot" style="background:var(--green)"></span>Profit</button><button type="button" data-rs28-monthly="goal"><span class="rs28-dot" style="background:var(--yellow)"></span>$300 Goal</button>');
-    if(!mount)return;
-    Object.keys(v).forEach(k=>qsa('[data-rs28-monthly="'+k+'"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v[k])));
-    const map=new Map(); soldRows().forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!map.has(k))map.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const x=map.get(k); x.income+=saleOf(r); x.cost+=costOf(r); x.profit+=profitOf(r);});
-    const rows=Array.from(map.values()).sort((a,b)=>a.date-b.date); if(!rows.length){mount.innerHTML='<div class="rs28-empty">No sold data found.</div>';return;}
-    const now=new Date(), thisK=monthKey(now), cur=map.get(thisK)||{income:0,cost:0,profit:0};
-    if($('rs15MonthIncome')) $('rs15MonthIncome').textContent=money(cur.income);
-    if($('rs15MonthProfit')) $('rs15MonthProfit').textContent=money(cur.profit);
-    if($('rs15MonthCost')) $('rs15MonthCost').textContent=money(cur.cost);
-    const W=1200,H=360,pad={l:86,r:32,t:18,b:50}; let maxY=300; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.cost)maxY=Math.max(maxY,r.cost);if(v.profit)maxY=Math.max(maxY,r.profit);}); maxY=Math.ceil(maxY*1.15/100)*100;
-    const accent=css('--accent','#38bdf8'), red=css('--red','#ef4444'), green=css('--green','#22c55e'), yellow=css('--yellow','#fbbf24'), text=css('--text','#e5e7eb');
-    let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-label="Monthly Profit View chart">'+gridSvg(W,H,pad,maxY);
-    const min=rows[0].date.getTime(), max=rows[rows.length-1].date.getTime(), span=Math.max(1,max-min);
-    labelRows(rows,6).forEach(r=>{const x=pad.l+((r.date.getTime()-min)/span)*(W-pad.l-pad.r); svg+='<line x1="'+x+'" y1="'+pad.t+'" x2="'+x+'" y2="'+(H-pad.b)+'" stroke="rgba(255,255,255,.10)"/><text x="'+x+'" y="'+(H-14)+'" text-anchor="middle" fill="'+esc(text)+'" font-size="12" font-weight="700">'+esc(r.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'}))+'</text>';});
-    if(v.income) svg+='<path d="'+path(rows,'income',W,H,pad,maxY)+'" fill="none" stroke="'+esc(accent)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
-    if(v.cost) svg+='<path d="'+path(rows,'cost',W,H,pad,maxY)+'" fill="none" stroke="'+esc(red)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
-    if(v.profit) svg+='<path d="'+path(rows,'profit',W,H,pad,maxY)+'" fill="none" stroke="'+esc(green)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
-    if(v.goal){ const y=H-pad.b-(300/maxY)*(H-pad.t-pad.b); svg+='<line x1="'+pad.l+'" y1="'+y+'" x2="'+(W-pad.r)+'" y2="'+y+'" stroke="'+esc(yellow)+'" stroke-width="4" stroke-dasharray="10 8"/>'; }
-    mount.innerHTML=svg+'</svg>';
-  }
-  function render(){ if(drawing)return; drawing=true; try{renderGrowth();renderMonthly();} finally{drawing=false;} }
-  function schedule(ms=80){ clearTimeout(scheduled); scheduled=setTimeout(render,ms); }
-
-  document.addEventListener('click',function(e){
-    const g=e.target.closest&&e.target.closest('[data-rs28-growth]');
-    if(g){const v=vis(G_VIS,{income:true,profit:true}); const k=g.getAttribute('data-rs28-growth'); v[k]=!v[k]; if(!v.income&&!v.profit)v[k]=true; setVis(G_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
-    const m=e.target.closest&&e.target.closest('[data-rs28-monthly]');
-    if(m){const v=vis(M_VIS,{income:true,cost:true,profit:true,goal:true}); const k=m.getAttribute('data-rs28-monthly'); v[k]=!v[k]; if(!v.income&&!v.cost&&!v.profit&&!v.goal)v[k]=true; setVis(M_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
-    if(e.target.closest&&e.target.closest('[data-rs15-range]')) schedule(120);
-  },true);
-  // v29: do not redraw charts on every input/slider move; it caused flicker.
-  document.addEventListener('change',function(e){
-    const t=e.target;
-    // Sold Snapshot year should update only its own snapshot cards. Do not redraw the graph layer.
-    if(t && t.id === 'rs15SnapshotYear') return;
-    if(t && (t.id==='rs15Reinvest' || t.id==='rs15BudgetMode')) return;
-    schedule(180);
-  },true);
-  window.addEventListener('resize',()=>schedule(180));
-  window.addEventListener('load',()=>schedule(250));
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>schedule(250)); else schedule(250);
-  // One delayed pass in case dashboard is rebuilt after startup, but no redraw on normal graph clicks.
-  setTimeout(render,1200);
-})();
-</script>
-
-
 <!-- ===== v29: Stop graph flicker when moving reinvest slider ===== -->
 <script id="resellr-v29-budget-slider-no-chart-flicker">
 (function(){
@@ -27741,407 +26739,300 @@ body.skin-dreamtrip .chart-wrap{
 
 
 <!-- ===== v75: HARD FIX Inventory action spacing - rebuild each row into one clean 2-row grid ===== -->
-<style id="rs-v75-inventory-actions-hardfix-css">
-  /* Make the Inventory table wide enough so the action column is not squeezed at the edge. */
-  #secInventory .table-wrap{
-    overflow-x: auto !important;
-  }
-  #secInventory table{
-    min-width: 1240px !important;
-    table-layout: auto !important;
-  }
+<!-- ===== v78: Inventory action grid row-height fix ===== -->
 
-  #secInventory table th:last-child,
-  #secInventory table td:last-child,
+
+<!-- ===== v85 CLEAN: only one Inventory Actions controller + one Cost+Profit controller ===== -->
+<style id="rs-v85-clean-actions-graphs-css">
+  /* Inventory: use one compact Actions button only */
   #activeTableBody td.action-cell,
   #activeTableBody .action-cell{
-    width: 210px !important;
-    min-width: 210px !important;
-    max-width: 210px !important;
-    padding: 8px 10px !important;
-    white-space: normal !important;
-    overflow: visible !important;
-    vertical-align: middle !important;
-    text-align: center !important;
+    width:72px !important;
+    min-width:72px !important;
+    max-width:72px !important;
+    height:auto !important;
+    min-height:0 !important;
+    padding:6px 8px !important;
+    text-align:center !important;
+    vertical-align:middle !important;
+    white-space:nowrap !important;
+    overflow:visible !important;
   }
 
-  #activeTableBody .rs75-action-grid{
-    display: grid !important;
-    grid-template-columns: repeat(3, 54px) !important;
-    grid-template-rows: repeat(2, 38px) !important;
-    gap: 7px 8px !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 178px !important;
-    margin: 0 auto !important;
-    padding: 2px 0 !important;
-  }
-
-  #activeTableBody .rs75-action-grid > .rs75-act,
-  #activeTableBody .rs75-action-grid > span,
-  #activeTableBody .rs75-action-grid > button,
-  #activeTableBody .rs75-action-grid > a{
-    width: 54px !important;
-    height: 38px !important;
-    min-width: 54px !important;
-    max-width: 54px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 12px !important;
-    border: 1px solid rgba(255,255,255,.16) !important;
-    background: rgba(2,8,18,.42) !important;
-    color: var(--text) !important;
-    box-sizing: border-box !important;
-    font-size: 18px !important;
-    line-height: 1 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: clip !important;
-    cursor: pointer !important;
-    transform: none !important;
-    vertical-align: middle !important;
-  }
-
-  #activeTableBody .rs75-action-grid > .rs75-act:hover{
-    border-color: color-mix(in srgb, var(--accent) 48%, transparent) !important;
-    background: color-mix(in srgb, var(--accent) 14%, transparent) !important;
-    transform: translateY(-1px) !important;
-  }
-
-  #activeTableBody .rs75-action-grid .rs75-edit{ color:#ff914d !important; }
-  #activeTableBody .rs75-action-grid .rs75-comps svg{ width:22px !important; height:22px !important; stroke: currentColor !important; }
-  #activeTableBody .rs75-action-grid .rs75-ebay{
-    color:#38bdf8 !important;
-    font-size: 12px !important;
-    font-weight: 900 !important;
-    letter-spacing: -.03em !important;
-    font-family: Arial, sans-serif !important;
-  }
-  #activeTableBody .rs75-action-grid .rs75-sold{ color:#4ade80 !important; font-size:22px !important; }
-  #activeTableBody .rs75-action-grid .rs75-hold{ color:#7dd3fc !important; }
-  #activeTableBody .rs75-action-grid .rs75-delete{ color:#e5e7eb !important; }
-
-  /* Hide old eBay helper label pieces so it does not stretch the grid. */
-  #activeTableBody .rs75-action-grid .ebay-list-action .rs-ebay-pencil{ display:none !important; }
-  #activeTableBody .rs75-action-grid .ebay-list-action .rs-ebay-label{ display:inline !important; font-size:12px !important; }
-
-  /* Remove any leftover separators/pipes from older patches. */
-  #activeTableBody .action-cell .rs-action-separator,
-  #activeTableBody .action-cell .separator{
+  #activeTableBody td.action-cell > :not(.rs-actions-menu-btn),
+  #activeTableBody .action-cell > :not(.rs-actions-menu-btn){
     display:none !important;
   }
 
-  @media (max-width: 800px){
-    #secInventory table{ min-width: 1180px !important; }
-    #secInventory table th:last-child,
-    #secInventory table td:last-child,
-    #activeTableBody td.action-cell,
-    #activeTableBody .action-cell{
-      width: 190px !important;
-      min-width: 190px !important;
-      max-width: 190px !important;
-      padding-left: 8px !important;
-      padding-right: 8px !important;
-    }
-    #activeTableBody .rs75-action-grid{
-      grid-template-columns: repeat(3, 48px) !important;
-      grid-template-rows: repeat(2, 36px) !important;
-      width: 160px !important;
-      gap: 6px !important;
-    }
-    #activeTableBody .rs75-action-grid > .rs75-act,
-    #activeTableBody .rs75-action-grid > span,
-    #activeTableBody .rs75-action-grid > button,
-    #activeTableBody .rs75-action-grid > a{
-      width: 48px !important;
-      height: 36px !important;
-      min-width: 48px !important;
-      max-width: 48px !important;
-    }
+  .rs-actions-menu-btn{
+    width:42px !important;
+    height:34px !important;
+    min-width:42px !important;
+    max-width:42px !important;
+    padding:0 !important;
+    margin:0 auto !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:12px !important;
+    font-size:22px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    color:var(--accent) !important;
+    border:1px solid color-mix(in srgb, var(--accent) 38%, transparent) !important;
+    background:rgba(2,6,23,.55) !important;
+    cursor:pointer !important;
+    box-shadow:none !important;
+    transform:none !important;
   }
+
+  .rs-actions-menu-btn:hover{
+    background:color-mix(in srgb, var(--accent) 14%, transparent) !important;
+    box-shadow:none !important;
+    transform:none !important;
+  }
+
+  #rsActionsMenu{
+    position:fixed;
+    z-index:100000;
+    display:none;
+    min-width:220px;
+    padding:8px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:rgba(8,12,20,.96);
+    box-shadow:0 18px 55px rgba(0,0,0,.45);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+
+  #rsActionsMenu.open{ display:block; }
+
+  #rsActionsMenu button{
+    width:100% !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:10px !important;
+    padding:10px 12px !important;
+    margin:0 !important;
+    border:0 !important;
+    border-radius:12px !important;
+    background:transparent !important;
+    color:var(--text) !important;
+    text-align:left !important;
+    font-size:13px !important;
+    box-shadow:none !important;
+    transform:none !important;
+  }
+
+  #rsActionsMenu button:hover{
+    background:color-mix(in srgb, var(--accent) 14%, transparent) !important;
+    box-shadow:none !important;
+    transform:none !important;
+  }
+
+  #rsActionsMenu button.danger{ color:var(--red) !important; }
 </style>
-<script id="rs-v75-inventory-actions-hardfix-js">
+
+<script id="rs-v85-clean-actions-graphs-js">
 (function(){
-  if(window.__rsV75InventoryActionsHardFix) return;
-  window.__rsV75InventoryActionsHardFix = true;
+  if(window.__rsV85CleanActionsGraphs) return;
+  window.__rsV85CleanActionsGraphs = true;
 
-  function money(v){ return String(v || '').replace(/[^0-9.]/g,''); }
-  function rowItemFromTr(tr){
-    const cells = tr ? tr.querySelectorAll('td') : [];
-    return {
-      date: cells[0] ? cells[0].textContent.trim() : '',
-      item: cells[1] ? cells[1].textContent.trim() : '',
-      type: cells[2] ? cells[2].textContent.trim() : '',
-      platform: cells[3] ? cells[3].textContent.trim() : '',
-      cost: cells[4] ? money(cells[4].textContent) : '',
-      list: cells[5] ? money(cells[5].textContent) : '',
-      qty: cells[6] ? cells[6].textContent.trim() : '',
-      notes: cells[7] ? cells[7].textContent.trim() : ''
-    };
+  const clean = v => String(v ?? "").trim();
+  const num = v => {
+    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  function readActive(){
+    try{ if(typeof window.readActive === "function") return window.readActive() || []; }catch(e){}
+    try{ return JSON.parse(localStorage.getItem("activeInventory") || "[]") || []; }catch(e){ return []; }
   }
 
-  function pick(cell, selector){
-    const el = cell.querySelector(selector);
-    return el || null;
-  }
+  function findActiveForRow(tr){
+    const texts = Array.from(tr.querySelectorAll("td")).map(td => clean(td.textContent));
+    const active = readActive();
 
-  function classifyAndPrep(el, cls, icon, title){
-    if(!el) return null;
-    el.classList.add('rs75-act', cls);
-    el.style.margin = '0';
-    el.style.marginLeft = '0';
-    el.style.marginRight = '0';
-    el.title = title || el.title || '';
-    el.setAttribute('aria-label', title || el.getAttribute('aria-label') || 'Action');
-    if(cls !== 'rs75-comps'){
-      if(cls === 'rs75-ebay'){
-        el.innerHTML = '<span class="rs-ebay-label">eBay</span>';
-      }else{
-        el.textContent = icon;
-      }
+    for(const t of texts){
+      const hit = active.find(r => clean(r.item || r.title || r.name) === t);
+      if(hit) return hit;
     }
-    return el;
+
+    return active[0] || { item: texts.find(Boolean) || "Inventory Item" };
   }
 
-  function makeEbayIfMissing(tr, cell){
-    let ebay = pick(cell, '.ebay-list-action');
-    if(ebay) return ebay;
-    try{
-      if(typeof window.resellrMakeEbayListButton === 'function'){
-        ebay = window.resellrMakeEbayListButton(rowItemFromTr(tr));
-        return ebay;
+  function ensureMenu(){
+    let m = document.getElementById("rsActionsMenu");
+    if(m) return m;
+
+    m = document.createElement("div");
+    m.id = "rsActionsMenu";
+    m.innerHTML = `
+      <button type="button" data-action="edit">✏️ <span>Edit</span></button>
+      <button type="button" data-action="comps">📈 <span>View eBay Comps</span></button>
+      <button type="button" data-action="ebay">📝 <span>eBay Draft</span></button>
+      <button type="button" data-action="sold">💲 <span>Mark Sold</span></button>
+      <button type="button" data-action="holds">📥 <span>Move to Holds</span></button>
+      <button type="button" class="danger" data-action="delete">🗑️ <span>Delete</span></button>
+    `;
+    document.body.appendChild(m);
+
+    m.addEventListener("click", ev => {
+      const b = ev.target.closest("button[data-action]");
+      if(!b || !m.__row) return;
+
+      const r = m.__row;
+      const a = b.dataset.action;
+      closeMenu();
+
+      try{
+        if(a === "edit" && window.openEditModal) window.openEditModal("active", r._id || r.id);
+        else if(a === "comps"){
+          window.open("https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(clean(r.item || r.title || r.name || "")) + "&LH_Sold=1&LH_Complete=1", "_blank", "noopener,noreferrer");
+        }
+        else if(a === "ebay"){
+          if(window.resellrListOnEbay) window.resellrListOnEbay(r);
+          else window.open("https://www.ebay.com/sl/prelist?title=" + encodeURIComponent(clean(r.item || r.title || r.name || "")), "_blank", "noopener,noreferrer");
+        }
+        else if(a === "sold" && window.openMarkSoldModal) window.openMarkSoldModal(r._id || r.id);
+        else if(a === "holds" && window.moveActiveToHolds) window.moveActiveToHolds(r._id || r.id);
+        else if(a === "delete" && window.deleteActiveById) window.deleteActiveById(r._id || r.id);
+      }catch(e){
+        console.warn("RESELLr Actions menu error:", e);
       }
-    }catch(e){}
-    return null;
+    });
+
+    return m;
   }
 
-  function rebuildCell(tr){
-    if(!tr) return;
-    const cell = tr.querySelector('td.action-cell') || tr.lastElementChild;
-    if(!cell) return;
-
-    // Prevent recursive rebuilding from our own DOM changes.
-    if(cell.__rs75Busy) return;
-    cell.__rs75Busy = true;
-
-    try{
-      // Flatten any older action grid first.
-      Array.from(cell.querySelectorAll('.inventory-action-grid, .rs75-action-grid')).forEach(function(grid){
-        while(grid.firstChild) cell.appendChild(grid.firstChild);
-        grid.remove();
-      });
-
-      // Remove text separators left by older renderers.
-      Array.from(cell.childNodes).forEach(function(n){
-        if(n.nodeType === 3) n.remove();
-      });
-
-      const edit = pick(cell, '.edit');
-      const comps = pick(cell, '.ebay-comps-action');
-      const ebay = makeEbayIfMissing(tr, cell);
-      const sold = pick(cell, '.soldbtn');
-      // The holds action is normally a yellow span with Move to Holds title.
-      let hold = Array.from(cell.querySelectorAll('span,button,a')).find(function(x){
-        const t = ((x.title || '') + ' ' + (x.textContent || '')).toLowerCase();
-        return !x.classList.contains('soldbtn') && !x.classList.contains('trash') && !x.classList.contains('edit') && !x.classList.contains('ebay-list-action') && !x.classList.contains('ebay-comps-action') && (t.includes('hold') || t.includes('🧊'));
-      });
-      const del = pick(cell, '.trash');
-
-      const ordered = [
-        classifyAndPrep(edit, 'rs75-edit', '✏️', 'Edit'),
-        classifyAndPrep(comps, 'rs75-comps', '', 'Search eBay sold comps'),
-        classifyAndPrep(ebay, 'rs75-ebay', 'eBay', 'List on eBay draft'),
-        classifyAndPrep(sold, 'rs75-sold', '$', 'Mark Sold'),
-        classifyAndPrep(hold, 'rs75-hold', '⬇️', 'Move to Holds'),
-        classifyAndPrep(del, 'rs75-delete', '🗑️', 'Delete')
-      ].filter(Boolean);
-
-      // Remove duplicates of same action type left behind by earlier patches.
-      const seen = new Set();
-      const unique = [];
-      ordered.forEach(function(el){
-        let key = 'other';
-        if(el.classList.contains('rs75-edit')) key='edit';
-        else if(el.classList.contains('rs75-comps')) key='comps';
-        else if(el.classList.contains('rs75-ebay')) key='ebay';
-        else if(el.classList.contains('rs75-sold')) key='sold';
-        else if(el.classList.contains('rs75-hold')) key='hold';
-        else if(el.classList.contains('rs75-delete')) key='delete';
-        if(seen.has(key)) return;
-        seen.add(key);
-        unique.push(el);
-      });
-
-      cell.innerHTML = '';
-      const grid = document.createElement('div');
-      grid.className = 'rs75-action-grid';
-      unique.forEach(function(el){ grid.appendChild(el); });
-      cell.appendChild(grid);
-      cell.classList.add('action-cell');
-    }catch(e){
-      console.warn('RESELLr action grid fix failed', e);
-    }finally{
-      cell.__rs75Busy = false;
+  function closeMenu(){
+    const m = document.getElementById("rsActionsMenu");
+    if(m){
+      m.classList.remove("open");
+      m.__row = null;
     }
   }
 
-  function fixAll(){
-    const tbody = document.getElementById('activeTableBody');
-    if(!tbody) return;
-    Array.from(tbody.querySelectorAll('tr')).forEach(rebuildCell);
+  function openMenu(btn, row){
+    const m = ensureMenu();
+    m.__row = row;
+
+    const r = btn.getBoundingClientRect();
+    const w = 230;
+    m.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + "px";
+    m.style.top = Math.max(8, Math.min(innerHeight - 270, r.bottom + 6)) + "px";
+    m.classList.add("open");
   }
 
-  window.resellrFixInventoryActionSpacing = fixAll;
+  function convertActions(){
+    const tb = document.getElementById("activeTableBody");
+    if(!tb) return;
 
-  let t;
-  function schedule(){
-    clearTimeout(t);
-    t = setTimeout(fixAll, 90);
+    tb.querySelectorAll("tr").forEach(tr => {
+      const cells = tr.querySelectorAll("td");
+      if(!cells.length) return;
+
+      const cell = tr.querySelector("td.action-cell") || cells[cells.length - 1];
+      cell.classList.add("action-cell");
+
+      // Hard rewrite each time so old icons cannot return.
+      cell.innerHTML = "";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "rs-actions-menu-btn";
+      btn.title = "Actions";
+      btn.setAttribute("aria-label", "Actions");
+      btn.textContent = "⋮";
+      btn.addEventListener("click", ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        openMenu(btn, findActiveForRow(tr));
+      });
+
+      cell.appendChild(btn);
+    });
   }
 
-  document.addEventListener('DOMContentLoaded', function(){
-    setTimeout(fixAll, 100);
-    setTimeout(fixAll, 500);
-    setTimeout(fixAll, 1200);
-    try{
-      const tbody = document.getElementById('activeTableBody') || document.body;
-      const mo = new MutationObserver(schedule);
-      mo.observe(tbody, {childList:true, subtree:true});
-    }catch(e){}
-  });
-  document.addEventListener('click', function(){ setTimeout(fixAll, 100); }, true);
-  document.addEventListener('input', function(){ setTimeout(fixAll, 120); }, true);
-})();
-</script>
+  // Make old forced action rebuilders call this clean version instead.
+  window.resellrFixInventoryActionSpacing = convertActions;
 
-<!-- ===== v78: Inventory action grid row-height fix ===== -->
-<style id="rs-v78-inventory-action-row-height-fix">
-  /* The action buttons were fitting horizontally, but the table rows were too short.
-     This forces each Inventory row to reserve enough vertical room for the 2-row action grid. */
-  #secInventory .table-wrap{
-    overflow-x:auto !important;
-    overflow-y:visible !important;
+  function chartFromCanvas(id){
+    const c = document.getElementById(id);
+    try{ return c && window.Chart && Chart.getChart(c); }catch(e){ return null; }
   }
 
-  #secInventory table{
-    table-layout: fixed !important;
-    min-width: 1240px !important;
-    width: 1240px !important;
+  function syncCostProfitLine(id){
+    const ch = chartFromCanvas(id);
+    if(!ch || !ch.data || !Array.isArray(ch.data.datasets)) return;
+
+    const income = ch.data.datasets.find(ds => /total\s*income|income/i.test(String(ds.label || "")));
+    if(!income || !Array.isArray(income.data)) return;
+
+    // Remove any duplicate Cost + Profit lines.
+    ch.data.datasets = ch.data.datasets.filter((ds, i, arr) => {
+      if(String(ds.label || "") !== "Cost + Profit") return true;
+      return i === arr.findIndex(x => String(x.label || "") === "Cost + Profit");
+    });
+
+    let ds = ch.data.datasets.find(x => String(x.label || "") === "Cost + Profit");
+    if(!ds){
+      ds = { label:"Cost + Profit" };
+      ch.data.datasets.push(ds);
+    }
+
+    // Math-check line: should match Income exactly.
+    ds.data = income.data.map(v => (v && typeof v === "object" && "y" in v) ? num(v.y) : num(v));
+    ds.hidden = false;
+    ds.borderColor = "#a78bfa";
+    ds.backgroundColor = "transparent";
+    ds.borderWidth = 2.5;
+    ds.pointRadius = 0;
+    ds.tension = 0.25;
+    ds.fill = false;
+
+    try{ ch.update("none"); }catch(e){}
   }
 
-  #secInventory table th:nth-child(1),
-  #secInventory table td:nth-child(1){ width: 110px !important; }
-  #secInventory table th:nth-child(2),
-  #secInventory table td:nth-child(2){ width: 260px !important; }
-  #secInventory table th:nth-child(3),
-  #secInventory table td:nth-child(3){ width: 110px !important; }
-  #secInventory table th:nth-child(4),
-  #secInventory table td:nth-child(4){ width: 130px !important; }
-  #secInventory table th:nth-child(5),
-  #secInventory table td:nth-child(5){ width: 90px !important; }
-  #secInventory table th:nth-child(6),
-  #secInventory table td:nth-child(6){ width: 90px !important; }
-  #secInventory table th:nth-child(7),
-  #secInventory table td:nth-child(7){ width: 70px !important; }
-  #secInventory table th:nth-child(8),
-  #secInventory table td:nth-child(8){ width: 170px !important; }
-  #secInventory table th:last-child,
-  #secInventory table td:last-child{
-    width: 210px !important;
-    min-width: 210px !important;
-    max-width: 210px !important;
+  function patchGraphs(){
+    syncCostProfitLine("rs15GrowthChart");
+    syncCostProfitLine("rs15MonthlyChart");
   }
 
-  #activeTableBody tr{
-    min-height: 96px !important;
-    height: 96px !important;
+  let graphTimer = null;
+  function scheduleGraphs(){
+    clearTimeout(graphTimer);
+    graphTimer = setTimeout(patchGraphs, 160);
   }
 
-  #activeTableBody td{
-    height: 96px !important;
-    vertical-align: middle !important;
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
-    overflow: hidden !important;
+  function start(){
+    convertActions();
+    patchGraphs();
+
+    const tb = document.getElementById("activeTableBody");
+    if(tb && window.MutationObserver){
+      new MutationObserver(() => setTimeout(convertActions, 20)).observe(tb, { childList:true, subtree:true });
+    }
+
+    [100, 300, 800, 1500].forEach(t => setTimeout(() => {
+      convertActions();
+      patchGraphs();
+    }, t));
+
+    document.addEventListener("click", ev => {
+      if(!ev.target.closest("#rsActionsMenu") && !ev.target.closest(".rs-actions-menu-btn")) closeMenu();
+      setTimeout(convertActions, 180);
+      scheduleGraphs();
+    }, true);
+
+    document.addEventListener("input", () => setTimeout(convertActions, 180), true);
+    document.addEventListener("change", scheduleGraphs, true);
+    window.addEventListener("resize", closeMenu);
+    window.addEventListener("scroll", closeMenu, true);
   }
 
-  #activeTableBody td.action-cell{
-    height: 96px !important;
-    width: 210px !important;
-    min-width: 210px !important;
-    max-width: 210px !important;
-    padding: 8px 10px !important;
-    overflow: visible !important;
-    white-space: normal !important;
-    vertical-align: middle !important;
-    text-align: center !important;
-  }
-
-  #activeTableBody .rs75-action-grid,
-  #activeTableBody .inventory-action-grid,
-  #activeTableBody .rs-v76-action-grid{
-    display: grid !important;
-    grid-template-columns: repeat(3, 54px) !important;
-    grid-template-rows: repeat(2, 36px) !important;
-    gap: 6px !important;
-    width: 174px !important;
-    height: 78px !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    align-items: center !important;
-    justify-content: center !important;
-    overflow: visible !important;
-  }
-
-  #activeTableBody .rs75-action-grid > *,
-  #activeTableBody .inventory-action-grid > *,
-  #activeTableBody .rs-v76-action-grid > *,
-  #activeTableBody td.action-cell .rs75-act,
-  #activeTableBody td.action-cell .edit,
-  #activeTableBody td.action-cell .soldbtn,
-  #activeTableBody td.action-cell .trash,
-  #activeTableBody td.action-cell .yellow,
-  #activeTableBody td.action-cell .ebay-comps-action,
-  #activeTableBody td.action-cell .ebay-list-action{
-    width: 54px !important;
-    height: 36px !important;
-    min-width: 54px !important;
-    max-width: 54px !important;
-    min-height: 36px !important;
-    max-height: 36px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
-    border-radius: 12px !important;
-    line-height: 1 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    flex: 0 0 54px !important;
-  }
-
-  #activeTableBody td.action-cell .ebay-list-action{
-    font-size: 12px !important;
-    font-weight: 900 !important;
-    letter-spacing: -0.03em !important;
-  }
-
-  /* If old loose icons remain outside the grid for any reason, make them stop adding phantom spacing. */
-  #activeTableBody td.action-cell > span:not(.rs75-action-grid):not(.inventory-action-grid):not(.rs-v76-action-grid),
-  #activeTableBody td.action-cell > button:not(.rs75-action-grid):not(.inventory-action-grid):not(.rs-v76-action-grid){
-    margin-left: 0 !important;
-  }
-</style>
-<script id="rs-v78-force-action-refresh">
-(function(){
-  function run(){ try{ if(window.resellrFixInventoryActionSpacing) window.resellrFixInventoryActionSpacing(); }catch(e){} }
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(run,80); setTimeout(run,400); setTimeout(run,1200); });
-  document.addEventListener('click', function(){ setTimeout(run,120); }, true);
-  document.addEventListener('input', function(){ setTimeout(run,160); }, true);
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
 })();
 </script>
