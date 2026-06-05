@@ -9924,78 +9924,27 @@ button[aria-label*="eBay"] img{
 
 
 
+
 <style id="inventoryActionCellTrueTwoRows">
 td.action-cell{
-  display:grid !important;
-  grid-template-columns: repeat(3, 18px) !important;
-  grid-template-rows: repeat(2, 18px) !important;
-  column-gap:10px !important;
-  row-gap:6px !important;
-  justify-content:end !important;
-  align-items:center !important;
-  justify-items:center !important;
-  width:118px !important;
-  min-width:118px !important;
+  width:170px !important;
+  min-width:170px !important;
   white-space:nowrap !important;
-  padding-right:10px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:10px !important;
+  padding-right:12px !important;
 }
-
 td.action-cell > *{
+  position:static !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
-  width:18px !important;
-  height:18px !important;
-  min-width:18px !important;
-  min-height:18px !important;
   margin:0 !important;
-  padding:0 !important;
-  line-height:1 !important;
-}
-
-/* TOP ROW: pencil then comps */
-td.action-cell > .edit{
-  grid-column:1 !important;
-  grid-row:1 !important;
-}
-
-td.action-cell > .ebay-comps-action{
-  grid-column:2 !important;
-  grid-row:1 !important;
-  cursor:pointer !important;
-}
-
-/* BOTTOM ROW: sold, holds, delete */
-td.action-cell > .soldbtn{
-  grid-column:1 !important;
-  grid-row:2 !important;
-}
-
-td.action-cell > .holdbtn,
-td.action-cell > .blue{
-  grid-column:2 !important;
-  grid-row:2 !important;
-}
-
-td.action-cell > .trash{
-  grid-column:3 !important;
-  grid-row:2 !important;
-}
-
-/* make arrow clearly clickable */
-td.action-cell > .ebay-comps-action:hover{
-  transform:translateY(-1px) !important;
-  opacity:1 !important;
-}
-
-td.action-cell > .ebay-comps-action svg{
-  width:15px !important;
-  height:15px !important;
-  stroke:#111 !important;
-  pointer-events:none !important;
-  filter:drop-shadow(0 0 1px rgba(255,255,255,.65));
 }
 </style>
+
 
 
 
