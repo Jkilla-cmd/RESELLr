@@ -9924,27 +9924,78 @@ button[aria-label*="eBay"] img{
 
 
 
-
 <style id="inventoryActionCellTrueTwoRows">
 td.action-cell{
-  width:170px !important;
-  min-width:170px !important;
-  white-space:nowrap !important;
-  display:flex !important;
+  display:grid !important;
+  grid-template-columns: repeat(3, 18px) !important;
+  grid-template-rows: repeat(2, 18px) !important;
+  column-gap:10px !important;
+  row-gap:6px !important;
+  justify-content:end !important;
   align-items:center !important;
-  justify-content:flex-end !important;
-  gap:10px !important;
-  padding-right:12px !important;
+  justify-items:center !important;
+  width:118px !important;
+  min-width:118px !important;
+  white-space:nowrap !important;
+  padding-right:10px !important;
 }
+
 td.action-cell > *{
-  position:static !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
+  width:18px !important;
+  height:18px !important;
+  min-width:18px !important;
+  min-height:18px !important;
   margin:0 !important;
+  padding:0 !important;
+  line-height:1 !important;
+}
+
+/* TOP ROW: pencil then comps */
+td.action-cell > .edit{
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+
+td.action-cell > .ebay-comps-action{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  cursor:pointer !important;
+}
+
+/* BOTTOM ROW: sold, holds, delete */
+td.action-cell > .soldbtn{
+  grid-column:1 !important;
+  grid-row:2 !important;
+}
+
+td.action-cell > .holdbtn,
+td.action-cell > .blue{
+  grid-column:2 !important;
+  grid-row:2 !important;
+}
+
+td.action-cell > .trash{
+  grid-column:3 !important;
+  grid-row:2 !important;
+}
+
+/* make arrow clearly clickable */
+td.action-cell > .ebay-comps-action:hover{
+  transform:translateY(-1px) !important;
+  opacity:1 !important;
+}
+
+td.action-cell > .ebay-comps-action svg{
+  width:15px !important;
+  height:15px !important;
+  stroke:#111 !important;
+  pointer-events:none !important;
+  filter:drop-shadow(0 0 1px rgba(255,255,255,.65));
 }
 </style>
-
 
 
 
@@ -13077,52 +13128,50 @@ function renderActive() {
     const tdNotes = document.createElement("td"); tdNotes.textContent = r.notes || ""; tr.appendChild(tdNotes);
 
     const action = document.createElement("td");
-    action.className = "action-cell";
+    action.className = "action-cell action-menu-cell";
 
-    const e = document.createElement("span");
-    e.className = "edit";
-    e.title = "Edit";
-    e.textContent = "✏️";
-    e.onclick = () => openEditModal("active", r._id);
+    const menuBtn = document.createElement("button");
+    menuBtn.type = "button";
+    menuBtn.className = "row-actions-trigger";
+    menuBtn.title = "Actions";
+    menuBtn.setAttribute("aria-label", "Inventory actions");
+    menuBtn.textContent = "⋮";
 
-    const sbtn = document.createElement("span");
-    sbtn.className = "soldbtn";
-    sbtn.title = "Mark Sold";
-    sbtn.textContent = "✅";
-    
-    sbtn.onclick = () => openMarkSoldModal(r._id);
-
-    const hbtn = document.createElement("span");
-    hbtn.className = "yellow";
-    hbtn.title = "Move to Holds";
-    hbtn.textContent = "🧊";
-    
-    hbtn.style.cursor = "pointer";
-    hbtn.onclick = () => moveActiveToHolds(r._id);
-
-    const d = document.createElement("span");
-    d.className = "trash";
-    d.title = "Delete";
-    d.textContent = "🗑";
-    
-    d.onclick = () => deleteActiveById(r._id);
-
-    
-    const comps = document.createElement("span");
-    comps.className = "ebay-comps-action";
-    comps.title = "Search eBay sold comps";
-    comps.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><path d="M3 16.5 L8.5 10.8 L13 14.1 L21 5.5" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.2 5.5 H21 V10.3" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    comps.onclick = () => {
-      const q = encodeURIComponent(r.item || "");
-      window.open(`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, "_blank", "noopener,noreferrer");
+    menuBtn.onclick = (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      document.querySelectorAll(".row-actions-menu.open").forEach(m => m.classList.remove("open"));
+      menu.classList.toggle("open");
     };
 
-    action.appendChild(e);
-    action.appendChild(comps);
-    if (window.resellrMakeEbayListButton) action.appendChild(window.resellrMakeEbayListButton(r));
-    action.appendChild(sbtn);
-    action.appendChild(hbtn);
-    action.appendChild(d);
+    const menu = document.createElement("div");
+    menu.className = "row-actions-menu";
+
+    const addMenuAction = (label, icon, fn, danger=false) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = danger ? "row-action-item danger" : "row-action-item";
+      b.innerHTML = `<span class="row-action-icon">${icon}</span><span>${label}</span>`;
+      b.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); menu.classList.remove("open"); fn(); };
+      menu.appendChild(b);
+    };
+
+    addMenuAction("Edit", "✏️", () => openEditModal("active", r._id));
+    addMenuAction("View eBay Comps", "📈", () => {
+      const q = encodeURIComponent(r.item || "");
+      window.open(`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, "_blank", "noopener,noreferrer");
+    });
+    addMenuAction("eBay Draft", "📝", () => {
+      if (window.resellrOpenEbayDraft) return window.resellrOpenEbayDraft(r);
+      const title = encodeURIComponent(r.item || "");
+      window.open(`https://www.ebay.com/sl/prelist?title=${title}`, "_blank", "noopener,noreferrer");
+    });
+    addMenuAction("Mark Sold", "💲", () => openMarkSoldModal(r._id));
+    addMenuAction("Move to Holds", "📥", () => moveActiveToHolds(r._id));
+    addMenuAction("Delete", "🗑️", () => deleteActiveById(r._id), true);
+
+    action.appendChild(menuBtn);
+    action.appendChild(menu);
     tr.appendChild(action);
 
     tbody.appendChild(tr);
@@ -19518,7 +19567,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     let ci=0, cp=0; const dayRows=[...daily.values()].sort((a,b)=>a.date-b.date).map(x=>{ci+=x.income; cp+=x.profit; return {...x,income:ci,profit:cp};});
     const gc=destroy('rs15GrowthChart'); if(gc){ new Chart(gc,{type:'line',data:{labels:dayRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',day:'numeric'})),datasets:[{label:'Total Income',data:dayRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false},{label:'Total Profit',data:dayRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'12%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
     const monthly=new Map(); data.sold.forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!monthly.has(k)) monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const b=monthly.get(k); b.income+=saleOf(r); b.cost+=costOf(r); b.profit+=profitOf(r);}); const monRows=[...monthly.values()].sort((a,b)=>a.date-b.date).slice(-12);
-    const mc=destroy('rs15MonthlyChart'); if(mc){ new Chart(mc,{type:'line',data:{labels:monRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'})),datasets:[{label:'Total Income',data:monRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost of Sold',data:monRows.map(x=>+x.cost.toFixed(2)),borderColor:css('--red','#ef4444'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Profit',data:monRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'$300 Goal',data:monRows.map(()=>300),borderColor:css('--yellow','#fbbf24'),backgroundColor:'transparent',borderWidth:2,borderDash:[6,5],pointRadius:0,tension:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'14%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
+    const mc=destroy('rs15MonthlyChart'); if(mc){ new Chart(mc,{type:'line',data:{labels:monRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'})),datasets:[{label:'Total Income',data:monRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost of Sold',data:monRows.map(x=>+x.cost.toFixed(2)),borderColor:css('--red','#ef4444'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Profit',data:monRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost + Profit',data:monRows.map(x=>+(x.cost+x.profit).toFixed(2)),borderColor:css('--accent-2','#8d7dff'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'$300 Goal',data:monRows.map(()=>300),borderColor:css('--yellow','#fbbf24'),backgroundColor:'transparent',borderWidth:2,borderDash:[6,5],pointRadius:0,tension:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'14%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
     const ic=destroy('rs15InventoryChart'); if(ic){ new Chart(ic,{type:'doughnut',data:{labels:['Inventory Cost','Unrealized Gain','Realized Profit','Holds Value'],datasets:[{data:[Math.max(data.invCost,0),Math.max(data.invValue-data.invCost,0),Math.max(data.allProfit,0),Math.max(data.holdValue,0)],backgroundColor:[css('--accent','#38bdf8'),css('--green','#22c55e'),css('--yellow','#fbbf24'),css('--red','#ef4444')],borderColor:css('--panel','#0a1018'),borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}}); }
   }
 
@@ -24496,6 +24545,14 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   try{ new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
 })();
 </script>
+
+<script id="rs-v80-actions-menu-close">
+document.addEventListener('click', function(e){
+  if(!e.target.closest || !e.target.closest('.action-menu-cell')){
+    document.querySelectorAll('.row-actions-menu.open').forEach(m => m.classList.remove('open'));
+  }
+}, true);
+</script>
 </body>
 </html>
 
@@ -25085,24 +25142,25 @@ body.skin-dreamtrip .chart-wrap{
   }
   function renderMonthly(){
     const panel=findPanel('Monthly\\s+Profit\\s+View');
-    const v=vis(M_VIS,{income:true,cost:true,profit:true,goal:true});
-    const mount=setChartBox(panel,'Monthly','<button type="button" data-rs28-monthly="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-monthly="cost"><span class="rs28-dot" style="background:var(--red)"></span>Cost of Sold</button><button type="button" data-rs28-monthly="profit"><span class="rs28-dot" style="background:var(--green)"></span>Profit</button><button type="button" data-rs28-monthly="goal"><span class="rs28-dot" style="background:var(--yellow)"></span>$300 Goal</button>');
+    const v=vis(M_VIS,{income:true,cost:true,profit:true,combined:true,goal:true});
+    const mount=setChartBox(panel,'Monthly','<button type="button" data-rs28-monthly="income"><span class="rs28-dot" style="background:var(--accent)"></span>Total Income</button><button type="button" data-rs28-monthly="cost"><span class="rs28-dot" style="background:var(--red)"></span>Cost of Sold</button><button type="button" data-rs28-monthly="profit"><span class="rs28-dot" style="background:var(--green)"></span>Profit</button><button type="button" data-rs28-monthly="combined"><span class="rs28-dot" style="background:var(--accent-2)"></span>Cost + Profit</button><button type="button" data-rs28-monthly="goal"><span class="rs28-dot" style="background:var(--yellow)"></span>$300 Goal</button>');
     if(!mount)return;
     Object.keys(v).forEach(k=>qsa('[data-rs28-monthly="'+k+'"]',panel).forEach(b=>b.classList.toggle('rs28-off',!v[k])));
-    const map=new Map(); soldRows().forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!map.has(k))map.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const x=map.get(k); x.income+=saleOf(r); x.cost+=costOf(r); x.profit+=profitOf(r);});
+    const map=new Map(); soldRows().forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!map.has(k))map.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const x=map.get(k); x.income+=saleOf(r); x.cost+=costOf(r); x.profit+=profitOf(r); x.combined=x.cost+x.profit;});
     const rows=Array.from(map.values()).sort((a,b)=>a.date-b.date); if(!rows.length){mount.innerHTML='<div class="rs28-empty">No sold data found.</div>';return;}
     const now=new Date(), thisK=monthKey(now), cur=map.get(thisK)||{income:0,cost:0,profit:0};
     if($('rs15MonthIncome')) $('rs15MonthIncome').textContent=money(cur.income);
     if($('rs15MonthProfit')) $('rs15MonthProfit').textContent=money(cur.profit);
     if($('rs15MonthCost')) $('rs15MonthCost').textContent=money(cur.cost);
-    const W=1200,H=360,pad={l:86,r:32,t:18,b:50}; let maxY=300; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.cost)maxY=Math.max(maxY,r.cost);if(v.profit)maxY=Math.max(maxY,r.profit);}); maxY=Math.ceil(maxY*1.15/100)*100;
-    const accent=css('--accent','#38bdf8'), red=css('--red','#ef4444'), green=css('--green','#22c55e'), yellow=css('--yellow','#fbbf24'), text=css('--text','#e5e7eb');
+    const W=1200,H=360,pad={l:86,r:32,t:18,b:50}; let maxY=300; rows.forEach(r=>{if(v.income)maxY=Math.max(maxY,r.income);if(v.cost)maxY=Math.max(maxY,r.cost);if(v.profit)maxY=Math.max(maxY,r.profit); if(v.combined)maxY=Math.max(maxY,(r.cost+r.profit));}); maxY=Math.ceil(maxY*1.15/100)*100;
+    const accent=css('--accent','#38bdf8'), red=css('--red','#ef4444'), green=css('--green','#22c55e'), purple=css('--accent-2','#8d7dff'), yellow=css('--yellow','#fbbf24'), text=css('--text','#e5e7eb');
     let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-label="Monthly Profit View chart">'+gridSvg(W,H,pad,maxY);
     const min=rows[0].date.getTime(), max=rows[rows.length-1].date.getTime(), span=Math.max(1,max-min);
     labelRows(rows,6).forEach(r=>{const x=pad.l+((r.date.getTime()-min)/span)*(W-pad.l-pad.r); svg+='<line x1="'+x+'" y1="'+pad.t+'" x2="'+x+'" y2="'+(H-pad.b)+'" stroke="rgba(255,255,255,.10)"/><text x="'+x+'" y="'+(H-14)+'" text-anchor="middle" fill="'+esc(text)+'" font-size="12" font-weight="700">'+esc(r.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'}))+'</text>';});
     if(v.income) svg+='<path d="'+path(rows,'income',W,H,pad,maxY)+'" fill="none" stroke="'+esc(accent)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
     if(v.cost) svg+='<path d="'+path(rows,'cost',W,H,pad,maxY)+'" fill="none" stroke="'+esc(red)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
     if(v.profit) svg+='<path d="'+path(rows,'profit',W,H,pad,maxY)+'" fill="none" stroke="'+esc(green)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
+    if(v.combined){ const combinedRows=rows.map(r=>Object.assign({},r,{combined:(r.cost+r.profit)})); svg+='<path d="'+path(combinedRows,'combined',W,H,pad,maxY)+'" fill="none" stroke="'+esc(purple)+'" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>'; }
     if(v.goal){ const y=H-pad.b-(300/maxY)*(H-pad.t-pad.b); svg+='<line x1="'+pad.l+'" y1="'+y+'" x2="'+(W-pad.r)+'" y2="'+y+'" stroke="'+esc(yellow)+'" stroke-width="4" stroke-dasharray="10 8"/>'; }
     mount.innerHTML=svg+'</svg>';
   }
@@ -25113,7 +25171,7 @@ body.skin-dreamtrip .chart-wrap{
     const g=e.target.closest&&e.target.closest('[data-rs28-growth]');
     if(g){const v=vis(G_VIS,{income:true,profit:true}); const k=g.getAttribute('data-rs28-growth'); v[k]=!v[k]; if(!v.income&&!v.profit)v[k]=true; setVis(G_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
     const m=e.target.closest&&e.target.closest('[data-rs28-monthly]');
-    if(m){const v=vis(M_VIS,{income:true,cost:true,profit:true,goal:true}); const k=m.getAttribute('data-rs28-monthly'); v[k]=!v[k]; if(!v.income&&!v.cost&&!v.profit&&!v.goal)v[k]=true; setVis(M_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
+    if(m){const v=vis(M_VIS,{income:true,cost:true,profit:true,combined:true,goal:true}); const k=m.getAttribute('data-rs28-monthly'); v[k]=!v[k]; if(!v.income&&!v.cost&&!v.profit&&!v.combined&&!v.goal)v[k]=true; setVis(M_VIS,v); e.preventDefault(); e.stopPropagation(); schedule(0); return;}
     if(e.target.closest&&e.target.closest('[data-rs15-range]')) schedule(120);
   },true);
   // v29: do not redraw charts on every input/slider move; it caused flicker.
@@ -28078,6 +28136,75 @@ body.skin-dreamtrip .chart-wrap{
   #activeTableBody td.action-cell > button:not(.rs75-action-grid):not(.inventory-action-grid):not(.rs-v76-action-grid){
     margin-left: 0 !important;
   }
+
+
+/* === v80 Inventory single Actions menu fix === */
+#activeTableBody td.action-cell.action-menu-cell{
+  width: 74px !important;
+  min-width: 74px !important;
+  max-width: 74px !important;
+  display: table-cell !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  position: relative !important;
+  padding: 8px !important;
+  overflow: visible !important;
+}
+#activeTableBody .row-actions-trigger{
+  width: 44px !important;
+  height: 36px !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 26px !important;
+  line-height: 1 !important;
+  border-radius: 12px !important;
+  color: var(--text) !important;
+  background: rgba(255,255,255,.055) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+}
+#activeTableBody .row-actions-menu{
+  display: none;
+  position: absolute;
+  right: 8px;
+  top: 44px;
+  z-index: 99999;
+  width: 210px;
+  padding: 8px;
+  border-radius: 14px;
+  background: rgba(8,12,20,.96);
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+#activeTableBody .row-actions-menu.open{ display: grid !important; gap: 6px; }
+#activeTableBody .row-action-item{
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  padding: 9px 10px !important;
+  font-size: 13px !important;
+  color: var(--text) !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  text-align: left !important;
+}
+#activeTableBody .row-action-item:hover{
+  background: color-mix(in srgb, var(--accent) 14%, transparent) !important;
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent) !important;
+  transform: none !important;
+}
+#activeTableBody .row-action-item.danger{ color: var(--red) !important; }
+#activeTableBody .row-action-icon{ width: 22px; text-align: center; display: inline-block; }
+.table-wrap{ overflow: visible !important; }
+#activeTableBody tr, #activeTableBody td{ overflow: visible !important; }
 </style>
 <script id="rs-v78-force-action-refresh">
 (function(){
