@@ -24877,6 +24877,97 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+<!-- ===== v83: Correct Cost + Profit line to use same basis as Total Income ===== -->
+<script id="rs-v83-fix-cost-plus-profit-line">
+(function(){
+  if(window.__rsV83FixCostProfitLine) return;
+  window.__rsV83FixCostProfitLine = true;
+
+  function num(v){
+    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function findIncomeDataset(chart){
+    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return null;
+    return chart.data.datasets.find(ds => /total\s*income|income/i.test(String(ds.label || ""))) || null;
+  }
+
+  function getIncomeAlignedData(chart){
+    // This makes Cost + Profit a math-check line using the exact same date/range basis
+    // as the Total Income line already drawn on that chart.
+    const income = findIncomeDataset(chart);
+    if(income && Array.isArray(income.data)){
+      return income.data.map(v => {
+        if(typeof v === "object" && v !== null && "y" in v) return num(v.y);
+        return num(v);
+      });
+    }
+    return null;
+  }
+
+  function upsertCostProfitLine(canvasId){
+    const canvas = document.getElementById(canvasId);
+    if(!canvas || !window.Chart || !Chart.getChart) return;
+    const chart = Chart.getChart(canvas);
+    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return;
+
+    const aligned = getIncomeAlignedData(chart);
+    if(!aligned || !aligned.length) return;
+
+    let ds = chart.data.datasets.find(d => String(d.label || "") === "Cost + Profit");
+    if(!ds){
+      ds = {
+        label: "Cost + Profit",
+        data: [],
+        borderColor: "#a78bfa",
+        backgroundColor: "transparent",
+        borderWidth: 2.5,
+        pointRadius: 0,
+        tension: 0.25,
+        fill: false
+      };
+      chart.data.datasets.push(ds);
+    }
+
+    ds.data = aligned;
+    ds.hidden = false;
+    ds.borderColor = "#a78bfa";
+    ds.backgroundColor = "transparent";
+    ds.borderWidth = 2.5;
+    ds.tension = 0.25;
+    ds.fill = false;
+
+    try{ chart.update("none"); }catch(e){ try{ chart.update(); }catch(err){} }
+  }
+
+  function patchAll(){
+    upsertCostProfitLine("rs15GrowthChart");
+    upsertCostProfitLine("rs15MonthlyChart");
+  }
+
+  function schedule(){ setTimeout(patchAll, 80); }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", patchAll);
+  else patchAll();
+
+  [250, 900, 1800, 3000].forEach(t => setTimeout(patchAll, t));
+  document.addEventListener("click", schedule, true);
+  document.addEventListener("change", schedule, true);
+
+  if(window.Chart && Chart.prototype && !Chart.prototype.__rsV83CostProfitUpdatePatch){
+    const originalUpdate = Chart.prototype.update;
+    Chart.prototype.__rsV83CostProfitUpdatePatch = true;
+    Chart.prototype.update = function(){
+      const result = originalUpdate.apply(this, arguments);
+      setTimeout(patchAll, 0);
+      return result;
+    };
+  }
+})();
+</script>
+
 </body>
 </html>
 
