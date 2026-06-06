@@ -26742,16 +26742,13 @@ body.skin-dreamtrip .chart-wrap{
 <!-- ===== v78: Inventory action grid row-height fix ===== -->
 
 
-<!-- ===== v85 CLEAN: only one Inventory Actions controller + one Cost+Profit controller ===== -->
-<style id="rs-v85-clean-actions-graphs-css">
-  /* Inventory: use one compact Actions button only */
+<!-- ===== v86: no-flicker inventory action menu + stable Cost+Profit line ===== -->
+<style id="rs-v86-no-flicker-actions-css">
   #activeTableBody td.action-cell,
   #activeTableBody .action-cell{
-    width:72px !important;
-    min-width:72px !important;
-    max-width:72px !important;
-    height:auto !important;
-    min-height:0 !important;
+    width:66px !important;
+    min-width:66px !important;
+    max-width:66px !important;
     padding:6px 8px !important;
     text-align:center !important;
     vertical-align:middle !important;
@@ -26759,37 +26756,42 @@ body.skin-dreamtrip .chart-wrap{
     overflow:visible !important;
   }
 
-  #activeTableBody td.action-cell > :not(.rs-actions-menu-btn),
-  #activeTableBody .action-cell > :not(.rs-actions-menu-btn){
+  #activeTableBody .action-cell > :not(.rs-menu-action-button){
     display:none !important;
   }
 
-  .rs-actions-menu-btn{
-    width:42px !important;
-    height:34px !important;
-    min-width:42px !important;
-    max-width:42px !important;
-    padding:0 !important;
+  .rs-menu-action-button{
+    all:unset !important;
+    box-sizing:border-box !important;
+    width:38px !important;
+    height:32px !important;
+    min-width:38px !important;
+    max-width:38px !important;
     margin:0 auto !important;
     display:inline-flex !important;
     align-items:center !important;
     justify-content:center !important;
-    border-radius:12px !important;
+    border-radius:11px !important;
     font-size:22px !important;
     line-height:1 !important;
     font-weight:900 !important;
     color:var(--accent) !important;
-    border:1px solid color-mix(in srgb, var(--accent) 38%, transparent) !important;
-    background:rgba(2,6,23,.55) !important;
+    border:1px solid color-mix(in srgb, var(--accent) 35%, transparent) !important;
+    background:rgba(2,6,23,.45) !important;
     cursor:pointer !important;
-    box-shadow:none !important;
+    user-select:none !important;
     transform:none !important;
+    box-shadow:none !important;
+    transition:background .12s ease, border-color .12s ease !important;
   }
 
-  .rs-actions-menu-btn:hover{
-    background:color-mix(in srgb, var(--accent) 14%, transparent) !important;
-    box-shadow:none !important;
+  .rs-menu-action-button:hover,
+  .rs-menu-action-button:focus,
+  .rs-menu-action-button:active{
     transform:none !important;
+    box-shadow:none !important;
+    background:rgba(56,189,248,.12) !important;
+    border-color:color-mix(in srgb, var(--accent) 55%, transparent) !important;
   }
 
   #rsActionsMenu{
@@ -26800,7 +26802,7 @@ body.skin-dreamtrip .chart-wrap{
     padding:8px;
     border-radius:16px;
     border:1px solid var(--border);
-    background:rgba(8,12,20,.96);
+    background:rgba(8,12,20,.97);
     box-shadow:0 18px 55px rgba(0,0,0,.45);
     backdrop-filter:blur(12px);
     -webkit-backdrop-filter:blur(12px);
@@ -26809,35 +26811,32 @@ body.skin-dreamtrip .chart-wrap{
   #rsActionsMenu.open{ display:block; }
 
   #rsActionsMenu button{
+    all:unset !important;
+    box-sizing:border-box !important;
     width:100% !important;
     display:flex !important;
     align-items:center !important;
     gap:10px !important;
     padding:10px 12px !important;
     margin:0 !important;
-    border:0 !important;
     border-radius:12px !important;
-    background:transparent !important;
     color:var(--text) !important;
     text-align:left !important;
     font-size:13px !important;
-    box-shadow:none !important;
-    transform:none !important;
+    cursor:pointer !important;
   }
 
   #rsActionsMenu button:hover{
     background:color-mix(in srgb, var(--accent) 14%, transparent) !important;
-    box-shadow:none !important;
-    transform:none !important;
   }
 
   #rsActionsMenu button.danger{ color:var(--red) !important; }
 </style>
 
-<script id="rs-v85-clean-actions-graphs-js">
+<script id="rs-v86-no-flicker-actions-js">
 (function(){
-  if(window.__rsV85CleanActionsGraphs) return;
-  window.__rsV85CleanActionsGraphs = true;
+  if(window.__rsV86NoFlickerActions) return;
+  window.__rsV86NoFlickerActions = true;
 
   const clean = v => String(v ?? "").trim();
   const num = v => {
@@ -26858,17 +26857,16 @@ body.skin-dreamtrip .chart-wrap{
       const hit = active.find(r => clean(r.item || r.title || r.name) === t);
       if(hit) return hit;
     }
-
     return active[0] || { item: texts.find(Boolean) || "Inventory Item" };
   }
 
   function ensureMenu(){
-    let m = document.getElementById("rsActionsMenu");
-    if(m) return m;
+    let menu = document.getElementById("rsActionsMenu");
+    if(menu) return menu;
 
-    m = document.createElement("div");
-    m.id = "rsActionsMenu";
-    m.innerHTML = `
+    menu = document.createElement("div");
+    menu.id = "rsActionsMenu";
+    menu.innerHTML = `
       <button type="button" data-action="edit">✏️ <span>Edit</span></button>
       <button type="button" data-action="comps">📈 <span>View eBay Comps</span></button>
       <button type="button" data-action="ebay">📝 <span>eBay Draft</span></button>
@@ -26876,72 +26874,69 @@ body.skin-dreamtrip .chart-wrap{
       <button type="button" data-action="holds">📥 <span>Move to Holds</span></button>
       <button type="button" class="danger" data-action="delete">🗑️ <span>Delete</span></button>
     `;
-    document.body.appendChild(m);
+    document.body.appendChild(menu);
 
-    m.addEventListener("click", ev => {
-      const b = ev.target.closest("button[data-action]");
-      if(!b || !m.__row) return;
+    menu.addEventListener("click", ev => {
+      const btn = ev.target.closest("button[data-action]");
+      if(!btn || !menu.__row) return;
 
-      const r = m.__row;
-      const a = b.dataset.action;
+      const r = menu.__row;
+      const action = btn.dataset.action;
       closeMenu();
 
       try{
-        if(a === "edit" && window.openEditModal) window.openEditModal("active", r._id || r.id);
-        else if(a === "comps"){
+        if(action === "edit" && window.openEditModal) window.openEditModal("active", r._id || r.id);
+        else if(action === "comps"){
           window.open("https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(clean(r.item || r.title || r.name || "")) + "&LH_Sold=1&LH_Complete=1", "_blank", "noopener,noreferrer");
-        }
-        else if(a === "ebay"){
+        }else if(action === "ebay"){
           if(window.resellrListOnEbay) window.resellrListOnEbay(r);
           else window.open("https://www.ebay.com/sl/prelist?title=" + encodeURIComponent(clean(r.item || r.title || r.name || "")), "_blank", "noopener,noreferrer");
-        }
-        else if(a === "sold" && window.openMarkSoldModal) window.openMarkSoldModal(r._id || r.id);
-        else if(a === "holds" && window.moveActiveToHolds) window.moveActiveToHolds(r._id || r.id);
-        else if(a === "delete" && window.deleteActiveById) window.deleteActiveById(r._id || r.id);
-      }catch(e){
-        console.warn("RESELLr Actions menu error:", e);
-      }
+        }else if(action === "sold" && window.openMarkSoldModal) window.openMarkSoldModal(r._id || r.id);
+        else if(action === "holds" && window.moveActiveToHolds) window.moveActiveToHolds(r._id || r.id);
+        else if(action === "delete" && window.deleteActiveById) window.deleteActiveById(r._id || r.id);
+      }catch(e){ console.warn("RESELLr Actions menu error:", e); }
     });
 
-    return m;
+    return menu;
   }
 
   function closeMenu(){
-    const m = document.getElementById("rsActionsMenu");
-    if(m){
-      m.classList.remove("open");
-      m.__row = null;
+    const menu = document.getElementById("rsActionsMenu");
+    if(menu){
+      menu.classList.remove("open");
+      menu.__row = null;
     }
   }
 
   function openMenu(btn, row){
-    const m = ensureMenu();
-    m.__row = row;
+    const menu = ensureMenu();
+    menu.__row = row;
 
-    const r = btn.getBoundingClientRect();
-    const w = 230;
-    m.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + "px";
-    m.style.top = Math.max(8, Math.min(innerHeight - 270, r.bottom + 6)) + "px";
-    m.classList.add("open");
+    const rect = btn.getBoundingClientRect();
+    const menuWidth = 230;
+    menu.style.left = Math.max(8, Math.min(window.innerWidth - menuWidth - 8, rect.right - menuWidth)) + "px";
+    menu.style.top = Math.max(8, Math.min(window.innerHeight - 270, rect.bottom + 6)) + "px";
+    menu.classList.add("open");
   }
 
   function convertActions(){
-    const tb = document.getElementById("activeTableBody");
-    if(!tb) return;
+    const tbody = document.getElementById("activeTableBody");
+    if(!tbody) return;
 
-    tb.querySelectorAll("tr").forEach(tr => {
+    tbody.querySelectorAll("tr").forEach(tr => {
       const cells = tr.querySelectorAll("td");
       if(!cells.length) return;
 
       const cell = tr.querySelector("td.action-cell") || cells[cells.length - 1];
       cell.classList.add("action-cell");
 
-      // Hard rewrite each time so old icons cannot return.
-      cell.innerHTML = "";
+      const existing = cell.querySelector(".rs-menu-action-button");
+      if(existing && cell.children.length === 1) return;
 
+      cell.innerHTML = "";
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "rs-actions-menu-btn";
+      btn.className = "rs-menu-action-button";
       btn.title = "Actions";
       btn.setAttribute("aria-label", "Actions");
       btn.textContent = "⋮";
@@ -26950,13 +26945,18 @@ body.skin-dreamtrip .chart-wrap{
         ev.stopPropagation();
         openMenu(btn, findActiveForRow(tr));
       });
-
       cell.appendChild(btn);
     });
   }
 
-  // Make old forced action rebuilders call this clean version instead.
+  // Override common old repair function name if it exists.
   window.resellrFixInventoryActionSpacing = convertActions;
+
+  let convertTimer = null;
+  function scheduleConvert(){
+    clearTimeout(convertTimer);
+    convertTimer = setTimeout(convertActions, 60);
+  }
 
   function chartFromCanvas(id){
     const c = document.getElementById(id);
@@ -26964,25 +26964,23 @@ body.skin-dreamtrip .chart-wrap{
   }
 
   function syncCostProfitLine(id){
-    const ch = chartFromCanvas(id);
-    if(!ch || !ch.data || !Array.isArray(ch.data.datasets)) return;
+    const chart = chartFromCanvas(id);
+    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return;
 
-    const income = ch.data.datasets.find(ds => /total\s*income|income/i.test(String(ds.label || "")));
+    const income = chart.data.datasets.find(ds => /total\s*income|income/i.test(String(ds.label || "")));
     if(!income || !Array.isArray(income.data)) return;
 
-    // Remove any duplicate Cost + Profit lines.
-    ch.data.datasets = ch.data.datasets.filter((ds, i, arr) => {
+    chart.data.datasets = chart.data.datasets.filter((ds, index, arr) => {
       if(String(ds.label || "") !== "Cost + Profit") return true;
-      return i === arr.findIndex(x => String(x.label || "") === "Cost + Profit");
+      return index === arr.findIndex(x => String(x.label || "") === "Cost + Profit");
     });
 
-    let ds = ch.data.datasets.find(x => String(x.label || "") === "Cost + Profit");
+    let ds = chart.data.datasets.find(x => String(x.label || "") === "Cost + Profit");
     if(!ds){
       ds = { label:"Cost + Profit" };
-      ch.data.datasets.push(ds);
+      chart.data.datasets.push(ds);
     }
 
-    // Math-check line: should match Income exactly.
     ds.data = income.data.map(v => (v && typeof v === "object" && "y" in v) ? num(v.y) : num(v));
     ds.hidden = false;
     ds.borderColor = "#a78bfa";
@@ -26992,7 +26990,7 @@ body.skin-dreamtrip .chart-wrap{
     ds.tension = 0.25;
     ds.fill = false;
 
-    try{ ch.update("none"); }catch(e){}
+    try{ chart.update("none"); }catch(e){}
   }
 
   function patchGraphs(){
@@ -27003,33 +27001,41 @@ body.skin-dreamtrip .chart-wrap{
   let graphTimer = null;
   function scheduleGraphs(){
     clearTimeout(graphTimer);
-    graphTimer = setTimeout(patchGraphs, 160);
+    graphTimer = setTimeout(patchGraphs, 180);
   }
 
   function start(){
     convertActions();
     patchGraphs();
 
-    const tb = document.getElementById("activeTableBody");
-    if(tb && window.MutationObserver){
-      new MutationObserver(() => setTimeout(convertActions, 20)).observe(tb, { childList:true, subtree:true });
+    const tbody = document.getElementById("activeTableBody");
+    if(tbody && window.MutationObserver){
+      new MutationObserver(scheduleConvert).observe(tbody, { childList:true, subtree:true });
     }
 
-    [100, 300, 800, 1500].forEach(t => setTimeout(() => {
-      convertActions();
-      patchGraphs();
-    }, t));
-
-    document.addEventListener("click", ev => {
-      if(!ev.target.closest("#rsActionsMenu") && !ev.target.closest(".rs-actions-menu-btn")) closeMenu();
-      setTimeout(convertActions, 180);
-      scheduleGraphs();
+    // Only table-changing events, not hover/mousemove.
+    document.addEventListener("input", ev => {
+      if(ev.target && /search|filter/i.test(ev.target.id || "")) scheduleConvert();
     }, true);
 
-    document.addEventListener("input", () => setTimeout(convertActions, 180), true);
+    document.addEventListener("click", ev => {
+      if(!ev.target.closest("#rsActionsMenu") && !ev.target.closest(".rs-menu-action-button")) closeMenu();
+
+      // Only after actual table/nav/pagination clicks, not hover.
+      if(ev.target.closest("button") || ev.target.closest(".nav")){
+        scheduleConvert();
+        scheduleGraphs();
+      }
+    }, true);
+
     document.addEventListener("change", scheduleGraphs, true);
     window.addEventListener("resize", closeMenu);
     window.addEventListener("scroll", closeMenu, true);
+
+    [200, 800, 1600].forEach(t => setTimeout(() => {
+      convertActions();
+      patchGraphs();
+    }, t));
   }
 
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
