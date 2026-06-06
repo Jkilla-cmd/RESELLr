@@ -23651,69 +23651,38 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 <!-- ===== v76 FINAL: Inventory action column fixed 2-row layout (no image) ===== -->
 <!-- ===== v77 REAL FIX: compact inventory actions that fit narrow screens ===== -->
 
-<!-- ===== v90: hold character real PNG path only ===== -->
-<script id="rs-v90-real-hold-character">
-(function(){
-  if(window.__rsV90RealHoldCharacter) return;
-  window.__rsV90RealHoldCharacter = true;
-
-  const preferred = [
-    "assets/images/holds-character.png",
-    "assets/images/hold-character.png",
-    "assets/images/hold.png",
-    "assets/holds-character.png",
-    "assets/hold-character.png",
-    "assets/hold.png"
-  ];
-
-  function tryPath(src, cb){
-    const img = new Image();
-    img.onload = () => cb(src);
-    img.onerror = () => cb(null);
-    img.src = src + "?v=" + Date.now();
-  }
-
-  function findPath(i, cb){
-    if(i >= preferred.length) return cb(null);
-    tryPath(preferred[i], found => found ? cb(found) : findPath(i + 1, cb));
-  }
-
-  function apply(src){
-    const wrap = document.querySelector("#holdsDashboardPanel .holds-easter-wrap");
-    if(!wrap) return;
-
-    let img = wrap.querySelector("img.holds-easter-figure");
-    if(!img){
-      img = document.createElement("img");
-      img.className = "holds-easter-figure";
-      img.alt = "Hold character";
-      wrap.appendChild(img);
-    }
-
-    if(src){
-      img.src = src;
-      img.style.display = "block";
-      img.style.visibility = "visible";
-      img.style.opacity = "";
-      img.style.objectFit = "contain";
-    }else{
-      console.warn("RESELLr: Hold character image not found. Use assets/images/holds-character.png or assets/images/hold-character.png next to the HTML file.");
-    }
-  }
-
-  function start(){
-    findPath(0, apply);
-  }
-
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
-  else start();
-
-  // Re-apply after dashboard rebuilds.
-  document.addEventListener("click", e => {
-    if(e.target.closest(".nav") || e.target.closest("button")){
-      setTimeout(start, 250);
-    }
-  }, true);
+<style id="rs-v91-action-menu-only-css">
+#activeTableBody td.action-cell,#activeTableBody .action-cell{width:66px!important;min-width:66px!important;max-width:66px!important;padding:6px 8px!important;text-align:center!important;vertical-align:middle!important;white-space:nowrap!important;overflow:visible!important}
+#activeTableBody .action-cell>:not(.rs-menu-action-button){display:none!important}
+.rs-menu-action-button{all:unset!important;box-sizing:border-box!important;width:38px!important;height:32px!important;min-width:38px!important;max-width:38px!important;margin:0 auto!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:11px!important;font-size:22px!important;line-height:1!important;font-weight:900!important;color:var(--accent)!important;border:1px solid color-mix(in srgb,var(--accent) 35%,transparent)!important;background:rgba(2,6,23,.45)!important;cursor:pointer!important;user-select:none!important;transform:none!important;box-shadow:none!important;transition:background .12s ease,border-color .12s ease!important}
+.rs-menu-action-button:hover,.rs-menu-action-button:focus,.rs-menu-action-button:active{transform:none!important;box-shadow:none!important;background:rgba(56,189,248,.12)!important;border-color:color-mix(in srgb,var(--accent) 55%,transparent)!important}
+#rsActionsMenu{position:fixed;z-index:100000;display:none;min-width:220px;padding:8px;border-radius:16px;border:1px solid var(--border);background:rgba(8,12,20,.97);box-shadow:0 18px 55px rgba(0,0,0,.45);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#rsActionsMenu.open{display:block}
+#rsActionsMenu button{all:unset!important;box-sizing:border-box!important;width:100%!important;display:flex!important;align-items:center!important;gap:10px!important;padding:10px 12px!important;margin:0!important;border-radius:12px!important;color:var(--text)!important;text-align:left!important;font-size:13px!important;cursor:pointer!important}
+#rsActionsMenu button:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)!important}
+#rsActionsMenu button.danger{color:var(--red)!important}
+</style>
+<script id="rs-v91-action-menu-only-js">
+(function(){if(window.__rsV91ActionMenuOnly)return;window.__rsV91ActionMenuOnly=true;
+const clean=v=>String(v??"").trim();
+function readActive(){try{if(typeof window.readActive==="function")return window.readActive()||[]}catch(e){}try{return JSON.parse(localStorage.getItem("activeInventory")||"[]")||[]}catch(e){return[]}}
+function findActiveForRow(tr){const texts=[...tr.querySelectorAll("td")].map(td=>clean(td.textContent));const active=readActive();for(const t of texts){const hit=active.find(r=>clean(r.item||r.title||r.name)===t);if(hit)return hit}return active[0]||{item:texts.find(Boolean)||"Inventory Item"}}
+function ensureMenu(){let menu=document.getElementById("rsActionsMenu");if(menu)return menu;menu=document.createElement("div");menu.id="rsActionsMenu";menu.innerHTML='<button type="button" data-action="edit">✏️ <span>Edit</span></button><button type="button" data-action="comps">📈 <span>View eBay Comps</span></button><button type="button" data-action="ebay">📝 <span>eBay Draft</span></button><button type="button" data-action="sold">💲 <span>Mark Sold</span></button><button type="button" data-action="holds">📥 <span>Move to Holds</span></button><button type="button" class="danger" data-action="delete">🗑️ <span>Delete</span></button>';document.body.appendChild(menu);menu.addEventListener("click",ev=>{const btn=ev.target.closest("button[data-action]");if(!btn||!menu.__row)return;const r=menu.__row,a=btn.dataset.action;closeMenu();try{if(a==="edit"&&window.openEditModal)window.openEditModal("active",r._id||r.id);else if(a==="comps")window.open("https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(clean(r.item||r.title||r.name||""))+"&LH_Sold=1&LH_Complete=1","_blank","noopener,noreferrer");else if(a==="ebay"){if(window.resellrListOnEbay)window.resellrListOnEbay(r);else window.open("https://www.ebay.com/sl/prelist?title="+encodeURIComponent(clean(r.item||r.title||r.name||"")),"_blank","noopener,noreferrer")}else if(a==="sold"&&window.openMarkSoldModal)window.openMarkSoldModal(r._id||r.id);else if(a==="holds"&&window.moveActiveToHolds)window.moveActiveToHolds(r._id||r.id);else if(a==="delete"&&window.deleteActiveById)window.deleteActiveById(r._id||r.id)}catch(e){console.warn("RESELLr Actions menu error:",e)}});return menu}
+function closeMenu(){const menu=document.getElementById("rsActionsMenu");if(menu){menu.classList.remove("open");menu.__row=null}}
+function openMenu(btn,row){const menu=ensureMenu();menu.__row=row;const rect=btn.getBoundingClientRect(),mw=230;menu.style.left=Math.max(8,Math.min(window.innerWidth-mw-8,rect.right-mw))+"px";menu.style.top=Math.max(8,Math.min(window.innerHeight-270,rect.bottom+6))+"px";menu.classList.add("open")}
+function convertActions(){const tbody=document.getElementById("activeTableBody");if(!tbody)return;tbody.querySelectorAll("tr").forEach(tr=>{const cells=tr.querySelectorAll("td");if(!cells.length)return;const cell=tr.querySelector("td.action-cell")||cells[cells.length-1];cell.classList.add("action-cell");const existing=cell.querySelector(".rs-menu-action-button");if(existing&&cell.children.length===1)return;cell.innerHTML="";const btn=document.createElement("button");btn.type="button";btn.className="rs-menu-action-button";btn.title="Actions";btn.setAttribute("aria-label","Actions");btn.textContent="⋮";btn.addEventListener("click",ev=>{ev.preventDefault();ev.stopPropagation();openMenu(btn,findActiveForRow(tr))});cell.appendChild(btn)})}
+window.resellrFixInventoryActionSpacing=convertActions;let t=null;function schedule(){clearTimeout(t);t=setTimeout(convertActions,60)}
+function start(){convertActions();const tbody=document.getElementById("activeTableBody");if(tbody&&window.MutationObserver)new MutationObserver(schedule).observe(tbody,{childList:true,subtree:true});document.addEventListener("input",ev=>{if(ev.target&&/search|filter/i.test(ev.target.id||""))schedule()},true);document.addEventListener("click",ev=>{if(!ev.target.closest("#rsActionsMenu")&&!ev.target.closest(".rs-menu-action-button"))closeMenu();if(ev.target.closest("button")||ev.target.closest(".nav"))schedule()},true);window.addEventListener("resize",closeMenu);window.addEventListener("scroll",closeMenu,true);[200,800,1600].forEach(x=>setTimeout(convertActions,x))}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();})();
+</script>
+<script id="rs-v91-real-hold-character">
+(function(){if(window.__rsV91RealHoldCharacter)return;window.__rsV91RealHoldCharacter=true;
+const preferred=["assets/images/holds-character.png","assets/images/hold-character.png","assets/images/hold.png","assets/holds-character.png","assets/hold-character.png","assets/hold.png"];
+function tryPath(src,cb){const img=new Image();img.onload=()=>cb(src);img.onerror=()=>cb(null);img.src=src+"?v="+Date.now()}
+function findPath(i,cb){if(i>=preferred.length)return cb(null);tryPath(preferred[i],found=>found?cb(found):findPath(i+1,cb))}
+function apply(src){const wrap=document.querySelector("#holdsDashboardPanel .holds-easter-wrap");if(!wrap)return;let img=wrap.querySelector("img.holds-easter-figure");if(!img){img=document.createElement("img");img.className="holds-easter-figure";img.alt="Hold character";wrap.appendChild(img)}if(src){img.src=src;img.style.display="block";img.style.visibility="visible";img.style.opacity="";img.style.objectFit="contain"}else{console.warn("RESELLr: Hold character not found. Put it at assets/images/holds-character.png or assets/images/hold-character.png")}}
+function start(){findPath(0,apply)}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();document.addEventListener("click",e=>{if(e.target.closest(".nav")||e.target.closest("button"))setTimeout(start,250)},true);
 })();
 </script>
 
@@ -26729,305 +26698,3 @@ body.skin-dreamtrip .chart-wrap{
 
 <!-- ===== v75: HARD FIX Inventory action spacing - rebuild each row into one clean 2-row grid ===== -->
 <!-- ===== v78: Inventory action grid row-height fix ===== -->
-
-
-<!-- ===== v86: no-flicker inventory action menu + stable Cost+Profit line ===== -->
-<style id="rs-v86-no-flicker-actions-css">
-  #activeTableBody td.action-cell,
-  #activeTableBody .action-cell{
-    width:66px !important;
-    min-width:66px !important;
-    max-width:66px !important;
-    padding:6px 8px !important;
-    text-align:center !important;
-    vertical-align:middle !important;
-    white-space:nowrap !important;
-    overflow:visible !important;
-  }
-
-  #activeTableBody .action-cell > :not(.rs-menu-action-button){
-    display:none !important;
-  }
-
-  .rs-menu-action-button{
-    all:unset !important;
-    box-sizing:border-box !important;
-    width:38px !important;
-    height:32px !important;
-    min-width:38px !important;
-    max-width:38px !important;
-    margin:0 auto !important;
-    display:inline-flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    border-radius:11px !important;
-    font-size:22px !important;
-    line-height:1 !important;
-    font-weight:900 !important;
-    color:var(--accent) !important;
-    border:1px solid color-mix(in srgb, var(--accent) 35%, transparent) !important;
-    background:rgba(2,6,23,.45) !important;
-    cursor:pointer !important;
-    user-select:none !important;
-    transform:none !important;
-    box-shadow:none !important;
-    transition:background .12s ease, border-color .12s ease !important;
-  }
-
-  .rs-menu-action-button:hover,
-  .rs-menu-action-button:focus,
-  .rs-menu-action-button:active{
-    transform:none !important;
-    box-shadow:none !important;
-    background:rgba(56,189,248,.12) !important;
-    border-color:color-mix(in srgb, var(--accent) 55%, transparent) !important;
-  }
-
-  #rsActionsMenu{
-    position:fixed;
-    z-index:100000;
-    display:none;
-    min-width:220px;
-    padding:8px;
-    border-radius:16px;
-    border:1px solid var(--border);
-    background:rgba(8,12,20,.97);
-    box-shadow:0 18px 55px rgba(0,0,0,.45);
-    backdrop-filter:blur(12px);
-    -webkit-backdrop-filter:blur(12px);
-  }
-
-  #rsActionsMenu.open{ display:block; }
-
-  #rsActionsMenu button{
-    all:unset !important;
-    box-sizing:border-box !important;
-    width:100% !important;
-    display:flex !important;
-    align-items:center !important;
-    gap:10px !important;
-    padding:10px 12px !important;
-    margin:0 !important;
-    border-radius:12px !important;
-    color:var(--text) !important;
-    text-align:left !important;
-    font-size:13px !important;
-    cursor:pointer !important;
-  }
-
-  #rsActionsMenu button:hover{
-    background:color-mix(in srgb, var(--accent) 14%, transparent) !important;
-  }
-
-  #rsActionsMenu button.danger{ color:var(--red) !important; }
-</style>
-
-<script id="rs-v86-no-flicker-actions-js">
-(function(){
-  if(window.__rsV86NoFlickerActions) return;
-  window.__rsV86NoFlickerActions = true;
-
-  const clean = v => String(v ?? "").trim();
-  const num = v => {
-    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
-    return Number.isFinite(n) ? n : 0;
-  };
-
-  function readActive(){
-    try{ if(typeof window.readActive === "function") return window.readActive() || []; }catch(e){}
-    try{ return JSON.parse(localStorage.getItem("activeInventory") || "[]") || []; }catch(e){ return []; }
-  }
-
-  function findActiveForRow(tr){
-    const texts = Array.from(tr.querySelectorAll("td")).map(td => clean(td.textContent));
-    const active = readActive();
-
-    for(const t of texts){
-      const hit = active.find(r => clean(r.item || r.title || r.name) === t);
-      if(hit) return hit;
-    }
-    return active[0] || { item: texts.find(Boolean) || "Inventory Item" };
-  }
-
-  function ensureMenu(){
-    let menu = document.getElementById("rsActionsMenu");
-    if(menu) return menu;
-
-    menu = document.createElement("div");
-    menu.id = "rsActionsMenu";
-    menu.innerHTML = `
-      <button type="button" data-action="edit">✏️ <span>Edit</span></button>
-      <button type="button" data-action="comps">📈 <span>View eBay Comps</span></button>
-      <button type="button" data-action="ebay">📝 <span>eBay Draft</span></button>
-      <button type="button" data-action="sold">💲 <span>Mark Sold</span></button>
-      <button type="button" data-action="holds">📥 <span>Move to Holds</span></button>
-      <button type="button" class="danger" data-action="delete">🗑️ <span>Delete</span></button>
-    `;
-    document.body.appendChild(menu);
-
-    menu.addEventListener("click", ev => {
-      const btn = ev.target.closest("button[data-action]");
-      if(!btn || !menu.__row) return;
-
-      const r = menu.__row;
-      const action = btn.dataset.action;
-      closeMenu();
-
-      try{
-        if(action === "edit" && window.openEditModal) window.openEditModal("active", r._id || r.id);
-        else if(action === "comps"){
-          window.open("https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(clean(r.item || r.title || r.name || "")) + "&LH_Sold=1&LH_Complete=1", "_blank", "noopener,noreferrer");
-        }else if(action === "ebay"){
-          if(window.resellrListOnEbay) window.resellrListOnEbay(r);
-          else window.open("https://www.ebay.com/sl/prelist?title=" + encodeURIComponent(clean(r.item || r.title || r.name || "")), "_blank", "noopener,noreferrer");
-        }else if(action === "sold" && window.openMarkSoldModal) window.openMarkSoldModal(r._id || r.id);
-        else if(action === "holds" && window.moveActiveToHolds) window.moveActiveToHolds(r._id || r.id);
-        else if(action === "delete" && window.deleteActiveById) window.deleteActiveById(r._id || r.id);
-      }catch(e){ console.warn("RESELLr Actions menu error:", e); }
-    });
-
-    return menu;
-  }
-
-  function closeMenu(){
-    const menu = document.getElementById("rsActionsMenu");
-    if(menu){
-      menu.classList.remove("open");
-      menu.__row = null;
-    }
-  }
-
-  function openMenu(btn, row){
-    const menu = ensureMenu();
-    menu.__row = row;
-
-    const rect = btn.getBoundingClientRect();
-    const menuWidth = 230;
-    menu.style.left = Math.max(8, Math.min(window.innerWidth - menuWidth - 8, rect.right - menuWidth)) + "px";
-    menu.style.top = Math.max(8, Math.min(window.innerHeight - 270, rect.bottom + 6)) + "px";
-    menu.classList.add("open");
-  }
-
-  function convertActions(){
-    const tbody = document.getElementById("activeTableBody");
-    if(!tbody) return;
-
-    tbody.querySelectorAll("tr").forEach(tr => {
-      const cells = tr.querySelectorAll("td");
-      if(!cells.length) return;
-
-      const cell = tr.querySelector("td.action-cell") || cells[cells.length - 1];
-      cell.classList.add("action-cell");
-
-      const existing = cell.querySelector(".rs-menu-action-button");
-      if(existing && cell.children.length === 1) return;
-
-      cell.innerHTML = "";
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "rs-menu-action-button";
-      btn.title = "Actions";
-      btn.setAttribute("aria-label", "Actions");
-      btn.textContent = "⋮";
-      btn.addEventListener("click", ev => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        openMenu(btn, findActiveForRow(tr));
-      });
-      cell.appendChild(btn);
-    });
-  }
-
-  // Override common old repair function name if it exists.
-  window.resellrFixInventoryActionSpacing = convertActions;
-
-  let convertTimer = null;
-  function scheduleConvert(){
-    clearTimeout(convertTimer);
-    convertTimer = setTimeout(convertActions, 60);
-  }
-
-  function chartFromCanvas(id){
-    const c = document.getElementById(id);
-    try{ return c && window.Chart && Chart.getChart(c); }catch(e){ return null; }
-  }
-
-  function syncCostProfitLine(id){
-    const chart = chartFromCanvas(id);
-    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return;
-
-    const income = chart.data.datasets.find(ds => /total\s*income|income/i.test(String(ds.label || "")));
-    if(!income || !Array.isArray(income.data)) return;
-
-    chart.data.datasets = chart.data.datasets.filter((ds, index, arr) => {
-      if(String(ds.label || "") !== "Cost + Profit") return true;
-      return index === arr.findIndex(x => String(x.label || "") === "Cost + Profit");
-    });
-
-    let ds = chart.data.datasets.find(x => String(x.label || "") === "Cost + Profit");
-    if(!ds){
-      ds = { label:"Cost + Profit" };
-      chart.data.datasets.push(ds);
-    }
-
-    ds.data = income.data.map(v => (v && typeof v === "object" && "y" in v) ? num(v.y) : num(v));
-    ds.hidden = false;
-    ds.borderColor = "#a78bfa";
-    ds.backgroundColor = "transparent";
-    ds.borderWidth = 2.5;
-    ds.pointRadius = 0;
-    ds.tension = 0.25;
-    ds.fill = false;
-
-    try{ chart.update("none"); }catch(e){}
-  }
-
-  function patchGraphs(){
-    syncCostProfitLine("rs15GrowthChart");
-    syncCostProfitLine("rs15MonthlyChart");
-  }
-
-  let graphTimer = null;
-  function scheduleGraphs(){
-    clearTimeout(graphTimer);
-    graphTimer = setTimeout(patchGraphs, 180);
-  }
-
-  function start(){
-    convertActions();
-    patchGraphs();
-
-    const tbody = document.getElementById("activeTableBody");
-    if(tbody && window.MutationObserver){
-      new MutationObserver(scheduleConvert).observe(tbody, { childList:true, subtree:true });
-    }
-
-    // Only table-changing events, not hover/mousemove.
-    document.addEventListener("input", ev => {
-      if(ev.target && /search|filter/i.test(ev.target.id || "")) scheduleConvert();
-    }, true);
-
-    document.addEventListener("click", ev => {
-      if(!ev.target.closest("#rsActionsMenu") && !ev.target.closest(".rs-menu-action-button")) closeMenu();
-
-      // Only after actual table/nav/pagination clicks, not hover.
-      if(ev.target.closest("button") || ev.target.closest(".nav")){
-        scheduleConvert();
-        scheduleGraphs();
-      }
-    }, true);
-
-    document.addEventListener("change", scheduleGraphs, true);
-    window.addEventListener("resize", closeMenu);
-    window.addEventListener("scroll", closeMenu, true);
-
-    [200, 800, 1600].forEach(t => setTimeout(() => {
-      convertActions();
-      patchGraphs();
-    }, t));
-  }
-
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
-  else start();
-})();
-</script>
