@@ -26967,362 +26967,52 @@ body.skin-dreamtrip .chart-wrap{
 
 
 <!-- ===== v97 FINAL WINNER: runs after every other script ===== -->
-<style id="rs-v97-final-winner-css">
-  #rs15GrowthChart,
-  #rs15MonthlyChart{
-    display:none !important;
-  }
-  .rs-v97-chart{
-    width:100%;
-    height:320px;
-    min-height:320px;
-    margin-top:4px;
-  }
-  .rs-v97-chart svg{
-    width:100%;
-    height:100%;
-    display:block;
-  }
-  .rs-v97-legend{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:12px;
-    font-size:12px;
-    margin:2px 0 8px;
-    color:var(--text);
-  }
-  .rs-v97-legend span{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-  }
-  .rs-v97-legend i{
-    display:inline-block;
-    width:22px;
-    height:4px;
-    border-radius:999px;
-  }
-  #holdCharacter,
-  .holds-easter-figure{
-    content:url("https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png") !important;
-  }
-  #holdsDashboardPanel .holds-easter-wrap{
-    display:none !important;
-  }
-  #rsRealHoldCharacter{
-    position:fixed;
-    right:18px;
-    bottom:18px;
-    width:118px;
-    height:auto;
-    z-index:100000;
-    display:none;
-    object-fit:contain;
-    filter:drop-shadow(0 12px 18px rgba(0,0,0,.45));
-    pointer-events:none;
-  }
-  #rsRealHoldCharacter.show{
-    display:block !important;
-  }
-  @media(max-width:900px){
-    #rsRealHoldCharacter{width:88px;right:10px;bottom:10px;}
-  }
+
+
+<style id="rs-v98-final-adjust-css">
+#rs15GrowthChart,#rs15MonthlyChart{display:none!important}
+.rs-v98-chart{width:100%;height:320px;min-height:320px;margin-top:4px}
+.rs-v98-chart svg{width:100%;height:100%;display:block}
+.rs-v98-legend{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:12px;font-size:12px;margin:2px 0 8px;color:var(--text)}
+.rs-v98-legend span{display:inline-flex;align-items:center;gap:6px}
+.rs-v98-legend i{display:inline-block;width:22px;height:4px;border-radius:999px}
+#holdsDashboardPanel .holds-easter-wrap,#holdsDashboardPanel .holds-easter-figure,img.holds-easter-figure{display:none!important;opacity:0!important;visibility:hidden!important}
+#holdCharacter{content:url("https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png")!important;width:118px!important;height:auto!important;object-fit:contain!important;filter:drop-shadow(0 12px 18px rgba(0,0,0,.45))!important}
+#rsRealHoldCharacter{position:fixed;right:18px;bottom:18px;width:118px;height:auto;z-index:100000;display:none;object-fit:contain;filter:drop-shadow(0 12px 18px rgba(0,0,0,.45));pointer-events:none}
+#rsRealHoldCharacter.show{display:block!important}
+@media(max-width:900px){#rsRealHoldCharacter,#holdCharacter{width:88px!important;right:10px;bottom:10px}}
 </style>
-
-<script id="rs-v97-final-winner-js">
+<script id="rs-v98-final-adjust-js">
 (function(){
-  if(window.__rsV97FinalWinner) return;
-  window.__rsV97FinalWinner = true;
-
-  console.log("RESELLr v97 final winner loaded");
-
-  const HOLD_SRC = "https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png";
-
-  function num(v){
-    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  function money(n){
-    try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(n)||0);}
-    catch(e){return "$"+(Number(n)||0).toFixed(2);}
-  }
-
-  function readRawSold(){
-    try{return JSON.parse(localStorage.getItem("soldInventory") || "[]") || [];}catch(e){return [];}
-  }
-
-  function readHolds(){
-    try{return JSON.parse(localStorage.getItem("inventoryHolds") || "[]") || [];}catch(e){return [];}
-  }
-
-  function val(r, keys){
-    for(const k of keys){
-      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
-    }
-    return 0;
-  }
-
-  function saleOf(r){
-    return val(r, ["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"]);
-  }
-
-  function costOf(r){
-    return val(r, ["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","Cost of Sold","buyCost","purchasePrice"]);
-  }
-
-  function feeOf(r){
-    return val(r, ["fees","fee","Fees","platformFees","platformFee","sellingFees","sellingFee","sellerFees","sellerFee","transactionFee","transactionFees","ebayFee","mercariFee"]);
-  }
-
-  function shipOf(r){
-    return val(r, ["ship","shipping","Shipping","shippingCost","shipping_cost","shipCost","postage","postageCost","labelCost","shippingLabel"]);
-  }
-
-  function profitOf(r){
-    // Prefer the stored profit field exactly if it exists.
-    for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){
-      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
-    }
-    return saleOf(r) - costOf(r) - feeOf(r) - shipOf(r);
-  }
-
-  function costProfitOf(r){
-    return costOf(r) + profitOf(r);
-  }
-
-  function dateOf(r){
-    const raw = r && (r.date || r.soldDate || r.Date || r["Sold Date"] || r.sold_date || r.saleDate);
-    const d = new Date(raw || "");
-    return isNaN(d) ? null : d;
-  }
-
-  function dayKey(d){
-    return d ? d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") : "";
-  }
-
-  function monthKey(d){
-    return d ? d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0") : "";
-  }
-
-  function esc(s){
-    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  function activeRange(){
-    const b = document.querySelector("[data-rs15-range].active");
-    return b ? b.dataset.rs15Range : (localStorage.getItem("rs15Range") || "ALL");
-  }
-
-  function rangeStart(){
-    const r = activeRange();
-    const now = new Date();
-    if(r === "YTD") return new Date(now.getFullYear(),0,1);
-    if(r === "3M") return new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
-    if(r === "1M") return new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
-    return null;
-  }
-
-  function buildGrowth(){
-    const start = rangeStart();
-    const daily = new Map();
-
-    readRawSold().forEach(r=>{
-      const d = dateOf(r);
-      if(!d || (start && d < start)) return;
-      const k = dayKey(d);
-      if(!daily.has(k)) daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()), income:0, profit:0, costProfit:0});
-      const b = daily.get(k);
-      b.income += saleOf(r);
-      b.profit += profitOf(r);
-      b.costProfit += costProfitOf(r);
-    });
-
-    let ri=0, rp=0, rcp=0;
-    return [...daily.values()].sort((a,b)=>a.date-b.date).map(x=>{
-      ri += x.income;
-      rp += x.profit;
-      rcp += x.costProfit;
-      return {
-        label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),
-        income:+ri.toFixed(2),
-        profit:+rp.toFixed(2),
-        costProfit:+rcp.toFixed(2)
-      };
-    });
-  }
-
-  function buildMonthly(){
-    const monthly = new Map();
-
-    readRawSold().forEach(r=>{
-      const d = dateOf(r);
-      if(!d) return;
-      const k = monthKey(d);
-      if(!monthly.has(k)) monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1), income:0, cost:0, profit:0, costProfit:0});
-      const b = monthly.get(k);
-      b.income += saleOf(r);
-      b.cost += costOf(r);
-      b.profit += profitOf(r);
-      b.costProfit += costProfitOf(r);
-    });
-
-    return [...monthly.values()].sort((a,b)=>a.date-b.date).slice(-12).map(x=>({
-      label:x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"}),
-      income:+x.income.toFixed(2),
-      cost:+x.cost.toFixed(2),
-      profit:+x.profit.toFixed(2),
-      costProfit:+x.costProfit.toFixed(2),
-      goal:300
-    }));
-  }
-
-  function path(vals, x0, y0, w, h, maxY){
-    if(!vals.length) return "";
-    maxY = Math.max(10, maxY);
-    return vals.map((v,i)=>{
-      const x = x0 + (vals.length === 1 ? w : (i/(vals.length-1))*w);
-      const y = y0 + h - (num(v)/maxY)*h;
-      return (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
-    }).join(" ");
-  }
-
-  function renderChart(canvasId, rows, series){
-    const canvas = document.getElementById(canvasId);
-    if(!canvas) return;
-    const wrap = canvas.parentElement;
-    if(!wrap) return;
-
-    let box = document.getElementById("rs-v97-" + canvasId);
-    if(!box){
-      box = document.createElement("div");
-      box.id = "rs-v97-" + canvasId;
-      box.className = "rs-v97-chart";
-      wrap.appendChild(box);
-    }
-
-    const W=920,H=300,x0=64,y0=24,w=810,h=214;
-    let maxY=10;
-    series.forEach(s=>s.values.forEach(v=>{maxY=Math.max(maxY,num(v));}));
-
-    const grid = [0,.25,.5,.75,1].map(p=>{
-      const y = y0+h-p*h, val=maxY*p;
-      return `<line x1="${x0}" y1="${y}" x2="${x0+w}" y2="${y}" stroke="rgba(255,255,255,.12)"/><text x="${x0-10}" y="${y+4}" text-anchor="end" fill="rgba(229,231,235,.75)" font-size="11">${esc(money(val))}</text>`;
-    }).join("");
-
-    const lines = series.map(s=>`<path d="${path(s.values,x0,y0,w,h,maxY)}" fill="none" stroke="${s.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`).join("");
-
-    const picks = rows.length ? [...new Set([0, Math.floor(rows.length*.25), Math.floor(rows.length*.5), Math.floor(rows.length*.75), rows.length-1])] : [];
-    const xlabels = picks.map(i=>{
-      const x = x0 + (rows.length === 1 ? w : (i/(rows.length-1))*w);
-      return `<text x="${x}" y="${y0+h+28}" text-anchor="middle" fill="rgba(229,231,235,.82)" font-size="12">${esc(rows[i].label)}</text>`;
-    }).join("");
-
-    const legend = series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join("");
-
-    box.innerHTML = `
-      <div class="rs-v97-legend">${legend}</div>
-      <svg viewBox="0 0 ${W} ${H}" aria-label="RESELLr chart">
-        ${grid}
-        <line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/>
-        <line x1="${x0}" y1="${y0}" x2="${x0}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/>
-        ${lines}
-        ${xlabels}
-      </svg>
-    `;
-  }
-
-  function renderAll(){
-    const g = buildGrowth();
-    renderChart("rs15GrowthChart", g, [
-      {label:"Total Income", color:"#38bdf8", values:g.map(x=>x.income)},
-      {label:"Total Profit", color:"#22c55e", values:g.map(x=>x.profit)},
-      {label:"Cost + Profit", color:"#a78bfa", values:g.map(x=>x.costProfit)}
-    ]);
-
-    const m = buildMonthly();
-    renderChart("rs15MonthlyChart", m, [
-      {label:"Total Income", color:"#38bdf8", values:m.map(x=>x.income)},
-      {label:"Cost of Sold", color:"#ef4444", values:m.map(x=>x.cost)},
-      {label:"Profit", color:"#22c55e", values:m.map(x=>x.profit)},
-      {label:"Cost + Profit", color:"#a78bfa", values:m.map(x=>x.costProfit)},
-      {label:"$300 Goal", color:"#fbbf24", values:m.map(x=>x.goal)}
-    ]);
-
-    const kpi = document.getElementById("rs15GrowthCostProfit");
-    if(kpi){
-      const total = readRawSold().reduce((s,r)=>s+costProfitOf(r),0);
-      kpi.textContent = money(total);
-    }
-  }
-
-  function forceRealHoldImage(){
-    document.querySelectorAll("img#holdCharacter, img.holds-easter-figure, img[src*='holds-character'], img[src*='toasty']").forEach(img=>{
-      img.onerror = null;
-      img.src = HOLD_SRC;
-    });
-  }
-
-  function ensureHoldToast(){
-    let img = document.getElementById("rsRealHoldCharacter");
-    if(!img){
-      img = document.createElement("img");
-      img.id = "rsRealHoldCharacter";
-      img.alt = "Hold character";
-      img.src = HOLD_SRC;
-      document.body.appendChild(img);
-    }
-    return img;
-  }
-
-  let lastHoldCount = null;
-  let hideTimer = null;
-
-  function checkHoldIncrease(){
-    const count = readHolds().length;
-    if(lastHoldCount === null){
-      lastHoldCount = count;
-      return;
-    }
-    if(count > lastHoldCount){
-      const img = ensureHoldToast();
-      img.src = HOLD_SRC;
-      img.classList.add("show");
-      clearTimeout(hideTimer);
-      hideTimer = setTimeout(()=>img.classList.remove("show"), 3200);
-    }
-    lastHoldCount = count;
-  }
-
-  function start(){
-    forceRealHoldImage();
-    ensureHoldToast();
-    renderAll();
-    checkHoldIncrease();
-
-    setTimeout(renderAll, 500);
-    setTimeout(renderAll, 1500);
-    setTimeout(renderAll, 3000);
-
-    setInterval(()=>{
-      forceRealHoldImage();
-      renderAll();
-      checkHoldIncrease();
-    }, 2000);
-
-    document.addEventListener("click", e=>{
-      if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
-        setTimeout(renderAll, 200);
-        setTimeout(checkHoldIncrease, 250);
-      }
-    }, true);
-
-    document.addEventListener("change", ()=>setTimeout(renderAll, 200), true);
-  }
-
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
-  else start();
+if(window.__rsV98FinalAdjust)return;window.__rsV98FinalAdjust=true;
+const HOLD_SRC="https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png";
+function num(v){const n=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)?n:0}
+function money(n){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(n)||0)}catch(e){return "$"+(Number(n)||0).toFixed(2)}}
+function readSold(){try{if(typeof window.readSold==="function")return window.readSold()||[]}catch(e){}try{return JSON.parse(localStorage.getItem("soldInventory")||"[]")||[]}catch(e){return[]}}
+function readHolds(){try{if(typeof window.readHolds==="function")return window.readHolds()||[]}catch(e){}try{return JSON.parse(localStorage.getItem("inventoryHolds")||"[]")||[]}catch(e){return[]}}
+function val(r,keys){for(const k of keys){if(r&&r[k]!==undefined&&r[k]!==null&&String(r[k]).trim()!=="")return num(r[k])}return 0}
+function saleOf(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
+function costOf(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","Cost of Sold","buyCost","purchasePrice"])}
+function feeOf(r){return val(r,["fees","fee","Fees","platformFees","platformFee","sellingFees","sellingFee","sellerFees","sellerFee","transactionFee","transactionFees","ebayFee","mercariFee"])}
+function shipOf(r){return val(r,["ship","shipping","Shipping","shippingCost","shipping_cost","shipCost","postage","postageCost","labelCost","shippingLabel"])}
+function profitOf(r){for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!==undefined&&r[k]!==null&&String(r[k]).trim()!=="")return num(r[k])}return saleOf(r)-costOf(r)-feeOf(r)-shipOf(r)}
+function costProfitOf(r){return costOf(r)+profitOf(r)}
+function dateOf(r){const raw=r&&(r.date||r.soldDate||r.Date||r["Sold Date"]||r.sold_date||r.saleDate);const d=new Date(raw||"");return isNaN(d)?null:d}
+function dayKey(d){return d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"):""}
+function monthKey(d){return d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"):""}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function activeRange(){const b=document.querySelector("[data-rs15-range].active");return b?b.dataset.rs15Range:(localStorage.getItem("rs15Range")||"ALL")}
+function rangeStart(){const r=activeRange(),now=new Date();if(r==="YTD")return new Date(now.getFullYear(),0,1);if(r==="3M")return new Date(now.getFullYear(),now.getMonth()-3,now.getDate());if(r==="1M")return new Date(now.getFullYear(),now.getMonth()-1,now.getDate());return null}
+function buildGrowth(){const start=rangeStart(),daily=new Map();readSold().forEach(r=>{const d=dateOf(r);if(!d||(start&&d<start))return;const k=dayKey(d);if(!daily.has(k))daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0});const b=daily.get(k);b.income+=saleOf(r);b.profit+=profitOf(r);b.costProfit+=costProfitOf(r)});let ri=0,rp=0,rcp=0;return[...daily.values()].sort((a,b)=>a.date-b.date).map(x=>{ri+=x.income;rp+=x.profit;rcp+=x.costProfit;return{label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),income:+ri.toFixed(2),profit:+rp.toFixed(2),costProfit:+rcp.toFixed(2)}})}
+function buildMonthly(){const monthly=new Map();readSold().forEach(r=>{const d=dateOf(r);if(!d)return;const k=monthKey(d);if(!monthly.has(k))monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0,costProfit:0});const b=monthly.get(k);b.income+=saleOf(r);b.cost+=costOf(r);b.profit+=profitOf(r);b.costProfit+=costProfitOf(r)});return[...monthly.values()].sort((a,b)=>a.date-b.date).slice(-12).map(x=>({label:x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"}),income:+x.income.toFixed(2),cost:+x.cost.toFixed(2),profit:+x.profit.toFixed(2),costProfit:+x.costProfit.toFixed(2),goal:300}))}
+function path(vals,x0,y0,w,h,maxY){if(!vals.length)return"";maxY=Math.max(10,maxY);return vals.map((v,i)=>{const x=x0+(vals.length===1?w:(i/(vals.length-1))*w),y=y0+h-(num(v)/maxY)*h;return(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)}).join(" ")}
+function renderChart(canvasId,rows,series){const canvas=document.getElementById(canvasId);if(!canvas)return;const wrap=canvas.parentElement;if(!wrap)return;let box=document.getElementById("rs-v98-"+canvasId);if(!box){box=document.createElement("div");box.id="rs-v98-"+canvasId;box.className="rs-v98-chart";wrap.appendChild(box)}const W=920,H=300,x0=64,y0=24,w=810,h=214;let maxY=10;series.forEach(s=>s.values.forEach(v=>{maxY=Math.max(maxY,num(v))}));const grid=[0,.25,.5,.75,1].map(p=>{const y=y0+h-p*h,val=maxY*p;return `<line x1="${x0}" y1="${y}" x2="${x0+w}" y2="${y}" stroke="rgba(255,255,255,.12)"/><text x="${x0-10}" y="${y+4}" text-anchor="end" fill="rgba(229,231,235,.75)" font-size="11">${esc(money(val))}</text>`}).join("");const lines=series.map(s=>`<path d="${path(s.values,x0,y0,w,h,maxY)}" fill="none" stroke="${s.color}" stroke-width="${s.width||3}" stroke-dasharray="${s.dash||""}" stroke-linecap="round" stroke-linejoin="round"/>`).join("");const picks=rows.length?[...new Set([0,Math.floor(rows.length*.25),Math.floor(rows.length*.5),Math.floor(rows.length*.75),rows.length-1])]:[];const xlabels=picks.map(i=>{const x=x0+(rows.length===1?w:(i/(rows.length-1))*w);return `<text x="${x}" y="${y0+h+28}" text-anchor="middle" fill="rgba(229,231,235,.82)" font-size="12">${esc(rows[i].label)}</text>`}).join("");const legend=series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join("");box.innerHTML=`<div class="rs-v98-legend">${legend}</div><svg viewBox="0 0 ${W} ${H}" aria-label="RESELLr chart">${grid}<line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/><line x1="${x0}" y1="${y0}" x2="${x0}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/>${lines}${xlabels}</svg>`}
+function renderAll(){const g=buildGrowth();renderChart("rs15GrowthChart",g,[{label:"Total Income",color:"#38bdf8",values:g.map(x=>x.income)},{label:"Total Profit",color:"#22c55e",values:g.map(x=>x.profit)},{label:"Cost + Profit",color:"#a78bfa",width:5,values:g.map(x=>x.costProfit)}]);const m=buildMonthly();renderChart("rs15MonthlyChart",m,[{label:"Total Income",color:"#38bdf8",values:m.map(x=>x.income)},{label:"Cost of Sold",color:"#ef4444",values:m.map(x=>x.cost)},{label:"Profit",color:"#22c55e",values:m.map(x=>x.profit)},{label:"Cost + Profit",color:"#a78bfa",width:5,values:m.map(x=>x.costProfit)},{label:"$300 Goal",color:"#fbbf24",dash:"7 6",values:m.map(x=>x.goal)}]);const kpi=document.getElementById("rs15GrowthCostProfit");if(kpi){const total=readSold().reduce((s,r)=>s+costProfitOf(r),0);kpi.textContent=money(total)}}
+function forceRealHoldImage(){document.querySelectorAll("#holdsDashboardPanel .holds-easter-wrap,img.holds-easter-figure").forEach(el=>el.remove());document.querySelectorAll("img#holdCharacter,img[src*='toasty'],img[src*='holds-character']").forEach(img=>{img.onerror=null;img.src=HOLD_SRC;img.style.objectFit="contain"})}
+function ensureHoldToast(){let img=document.getElementById("rsRealHoldCharacter");if(!img){img=document.createElement("img");img.id="rsRealHoldCharacter";img.alt="Hold character";img.src=HOLD_SRC;document.body.appendChild(img)}return img}
+let lastHoldCount=null,hideTimer=null;function showBigHold(){const img=ensureHoldToast();img.src=HOLD_SRC;img.classList.add("show");clearTimeout(hideTimer);hideTimer=setTimeout(()=>img.classList.remove("show"),3200)}
+function checkHoldIncrease(){const count=readHolds().length;if(lastHoldCount===null){lastHoldCount=count;return}if(count>lastHoldCount)showBigHold();lastHoldCount=count}
+function start(){forceRealHoldImage();ensureHoldToast();renderAll();checkHoldIncrease();setTimeout(renderAll,500);setTimeout(renderAll,1500);setTimeout(renderAll,3000);setInterval(()=>{forceRealHoldImage();renderAll();checkHoldIncrease()},2000);document.addEventListener("click",e=>{const label=String((e.target&&(e.target.title||e.target.ariaLabel||e.target.textContent))||"").toLowerCase();if(label.includes("toasty"))setTimeout(()=>{forceRealHoldImage();showBigHold()},50);if(e.target.closest("[data-rs15-range]")||e.target.closest(".nav")||e.target.closest("button")){setTimeout(renderAll,200);setTimeout(checkHoldIncrease,250)}},true);document.addEventListener("change",()=>setTimeout(renderAll,200),true)}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();
 </script>
