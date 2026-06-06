@@ -19315,7 +19315,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
         </section>
         <div class="rs15-layout">
           <main class="rs15-main">
-            <section class="rs15-panel"><div class="rs15-head"><div><h3>Business Growth</h3><p class="rs15-sub">Total income and profit over time.</p></div><div class="rs15-controls"><button class="rs15-pill" data-rs15-range="ALL">ALL</button><button class="rs15-pill" data-rs15-range="YTD">YTD</button><button class="rs15-pill" data-rs15-range="3M">3M</button><button class="rs15-pill" data-rs15-range="1M">1M</button></div></div><div class="rs15-kpis four"><div class="rs15-kpi"><div class="rs15-label">Total Income</div><div class="rs15-value" id="rs15GrowthIncome">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Total Profit</div><div class="rs15-value" id="rs15GrowthProfit">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Cost + Profit</div><div class="rs15-value" id="rs15GrowthCostProfit">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Items Sold</div><div class="rs15-value" id="rs15GrowthItems">0</div></div></div><div class="rs15-chart"><canvas id="rs15GrowthChart"></canvas></div></section>
+            <section class="rs15-panel"><div class="rs15-head"><div><h3>Business Growth</h3><p class="rs15-sub">Total income and profit over time.</p></div><div class="rs15-controls"><button class="rs15-pill" data-rs15-range="ALL">ALL</button><button class="rs15-pill" data-rs15-range="YTD">YTD</button><button class="rs15-pill" data-rs15-range="3M">3M</button><button class="rs15-pill" data-rs15-range="1M">1M</button></div></div><div class="rs15-kpis"><div class="rs15-kpi"><div class="rs15-label">Total Income</div><div class="rs15-value" id="rs15GrowthIncome">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Total Profit</div><div class="rs15-value" id="rs15GrowthProfit">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Items Sold</div><div class="rs15-value" id="rs15GrowthItems">0</div></div></div><div class="rs15-chart"><canvas id="rs15GrowthChart"></canvas></div></section>
             <section class="rs15-panel"><div class="rs15-head"><div><h3>Monthly Profit View</h3><p class="rs15-sub">Monthly income, cost of sold, profit, and dotted $300 profit goal.</p></div></div><div class="rs15-kpis four"><div class="rs15-kpi"><div class="rs15-label">This Month Income</div><div class="rs15-value" id="rs15MonthIncome">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">This Month Profit</div><div class="rs15-value" id="rs15MonthProfit">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">This Month Cost</div><div class="rs15-value" id="rs15MonthCost">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Goal</div><div class="rs15-value">$300.00</div></div></div><div class="rs15-chart"><canvas id="rs15MonthlyChart"></canvas></div></section>
             <section class="rs15-panel"><div class="rs15-head"><div><h3>Next Month Inventory Budget</h3><p class="rs15-sub">Spend guardrail based on this month’s pace.</p></div><span class="rs15-pill" id="rs15BudgetMonth">Next month</span></div><div class="rs15-kpis four"><div class="rs15-kpi"><div class="rs15-label">MTD Sales</div><div class="rs15-value" id="rs15MtdSales">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">MTD Profit</div><div class="rs15-value" id="rs15MtdProfit">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Projected Sales</div><div class="rs15-value" id="rs15ProjectedSales">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Next Budget</div><div class="rs15-value" id="rs15NextBudget">$0.00</div></div></div><div class="rs15-budget-tools"><label>Reinvest <input type="range" id="rs15Reinvest" min="0" max="100" value="50"><b id="rs15ReinvestVal">50%</b></label><label>Mode <select id="rs15BudgetMode"><option value="projected">Projected</option><option value="mtd">If month ended today</option></select></label></div><div class="rs15-progress"><span id="rs15MonthProgress"></span></div><div class="rs15-note" id="rs15BudgetNote"></div></section>
             <section class="rs15-panel"><div class="rs15-head"><div><h3>Inventory Health</h3><p class="rs15-sub">Cost, listed value, and profit spread.</p></div></div><div class="rs15-kpis four"><div class="rs15-kpi"><div class="rs15-label">Inventory Cost</div><div class="rs15-value" id="rs15InvCost">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Inventory Value</div><div class="rs15-value" id="rs15InvValue">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Unrealized Gain</div><div class="rs15-value" id="rs15Unrealized">$0.00</div></div><div class="rs15-kpi"><div class="rs15-label">Realized Profit</div><div class="rs15-value" id="rs15Realized">$0.00</div></div></div><div class="rs15-chart rs15-donut"><canvas id="rs15InventoryChart"></canvas></div></section>
@@ -19353,7 +19353,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     set('rs15SevenSales',money(sevenRows.reduce((s,r)=>s+saleOf(r),0))); set('rs15SevenCount',`${whole(sevenRows.length)} item${sevenRows.length===1?'':'s'} sold`);
     set('rs15ActiveListings',whole(active.reduce((s,r)=>s+qtyOf(r),0))); set('rs15InventoryValueNote',`${money(invValue)} listed value`);
     set('rs15AvgProfit',money(avgProfit)); set('rs15AvgMargin',`${margin.toFixed(1)}% margin`); set('rs15SellThrough',`${sellThrough.toFixed(1)}%`);
-    set('rs15GrowthIncome',money(allIncome)); set('rs15GrowthProfit',money(allProfit)); set('rs15GrowthCostProfit',money(allCost+allProfit)); set('rs15GrowthItems',whole(sold.length));
+    set('rs15GrowthIncome',money(allIncome)); set('rs15GrowthProfit',money(allProfit)); set('rs15GrowthItems',whole(sold.length));
     set('rs15YtdIncome',money(yIncome)); set('rs15YtdCost',money(yCost)); set('rs15YtdProfit',money(yProfit)); set('rs15YtdItems',whole(ytd.length)); set('rs15SnapYear',snapshotLabel);
     set('rs15InvCost',money(invCost)); set('rs15InvValue',money(invValue)); set('rs15Unrealized',money(invValue-invCost)); set('rs15Realized',money(allProfit)); set('rs15NetWorth',money(invValue+allProfit));
     const curMonthKey=monthKey(now); const curRows=sold.filter(r=>monthKey(dateOf(r))===curMonthKey);
@@ -19370,11 +19370,11 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     if(!window.Chart) return; chartDefaults();
     const range=localStorage.getItem('rs15Range')||'ALL'; document.querySelectorAll('[data-rs15-range]').forEach(b=>b.classList.toggle('active',b.dataset.rs15Range===range));
     const now=new Date(); let start=null; if(range==='YTD') start=new Date(now.getFullYear(),0,1); if(range==='3M') start=new Date(now.getFullYear(),now.getMonth()-3,now.getDate()); if(range==='1M') start=new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
-    const daily=new Map(); data.sold.forEach(r=>{const d=dateOf(r); if(!d||(start&&d<start)) return; const k=dayKey(d); if(!daily.has(k)) daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0}); const b=daily.get(k); b.income+=saleOf(r); b.profit+=profitOf(r); b.costProfit+=costOf(r)+profitOf(r);});
-    let ci=0, cp=0, ccp=0; const dayRows=[...daily.values()].sort((a,b)=>a.date-b.date).map(x=>{ci+=x.income; cp+=x.profit; ccp+=x.costProfit; return {...x,income:ci,profit:cp,costProfit:ccp};});
-    const gc=destroy('rs15GrowthChart'); if(gc){ new Chart(gc,{type:'line',data:{labels:dayRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',day:'numeric'})),datasets:[{label:'Total Income',data:dayRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false},{label:'Total Profit',data:dayRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false},{label:'Cost + Profit',data:dayRows.map(x=>+x.costProfit.toFixed(2)),borderColor:'#a78bfa',backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'12%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
-    const monthly=new Map(); data.sold.forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!monthly.has(k)) monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0,costProfit:0}); const b=monthly.get(k); b.income+=saleOf(r); b.cost+=costOf(r); b.profit+=profitOf(r); b.costProfit+=costOf(r)+profitOf(r);}); const monRows=[...monthly.values()].sort((a,b)=>a.date-b.date).slice(-12);
-    const mc=destroy('rs15MonthlyChart'); if(mc){ new Chart(mc,{type:'line',data:{labels:monRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'})),datasets:[{label:'Total Income',data:monRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost of Sold',data:monRows.map(x=>+x.cost.toFixed(2)),borderColor:css('--red','#ef4444'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Profit',data:monRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost + Profit',data:monRows.map(x=>+x.costProfit.toFixed(2)),borderColor:'#a78bfa',backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'$300 Goal',data:monRows.map(()=>300),borderColor:css('--yellow','#fbbf24'),backgroundColor:'transparent',borderWidth:2,borderDash:[6,5],pointRadius:0,tension:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'14%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
+    const daily=new Map(); data.sold.forEach(r=>{const d=dateOf(r); if(!d||(start&&d<start)) return; const k=dayKey(d); if(!daily.has(k)) daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0}); const b=daily.get(k); b.income+=saleOf(r); b.profit+=profitOf(r);});
+    let ci=0, cp=0; const dayRows=[...daily.values()].sort((a,b)=>a.date-b.date).map(x=>{ci+=x.income; cp+=x.profit; return {...x,income:ci,profit:cp};});
+    const gc=destroy('rs15GrowthChart'); if(gc){ new Chart(gc,{type:'line',data:{labels:dayRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',day:'numeric'})),datasets:[{label:'Total Income',data:dayRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false},{label:'Total Profit',data:dayRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'12%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
+    const monthly=new Map(); data.sold.forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!monthly.has(k)) monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const b=monthly.get(k); b.income+=saleOf(r); b.cost+=costOf(r); b.profit+=profitOf(r);}); const monRows=[...monthly.values()].sort((a,b)=>a.date-b.date).slice(-12);
+    const mc=destroy('rs15MonthlyChart'); if(mc){ new Chart(mc,{type:'line',data:{labels:monRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'})),datasets:[{label:'Total Income',data:monRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost of Sold',data:monRows.map(x=>+x.cost.toFixed(2)),borderColor:css('--red','#ef4444'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Profit',data:monRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'$300 Goal',data:monRows.map(()=>300),borderColor:css('--yellow','#fbbf24'),backgroundColor:'transparent',borderWidth:2,borderDash:[6,5],pointRadius:0,tension:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'14%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
     const ic=destroy('rs15InventoryChart'); if(ic){ new Chart(ic,{type:'doughnut',data:{labels:['Inventory Cost','Unrealized Gain','Realized Profit','Holds Value'],datasets:[{data:[Math.max(data.invCost,0),Math.max(data.invValue-data.invCost,0),Math.max(data.allProfit,0),Math.max(data.holdValue,0)],backgroundColor:[css('--accent','#38bdf8'),css('--green','#22c55e'),css('--yellow','#fbbf24'),css('--red','#ef4444')],borderColor:css('--panel','#0a1018'),borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}}); }
   }
 
@@ -23651,77 +23651,258 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 <!-- ===== v76 FINAL: Inventory action column fixed 2-row layout (no image) ===== -->
 <!-- ===== v77 REAL FIX: compact inventory actions that fit narrow screens ===== -->
 
-<!-- ===== v92: real hold character panel injected because #holdsDashboardPanel was missing ===== -->
-<style id="rs-v92-hold-character-panel-css">
-  .rs-hold-character-card{
-    position:relative;
-    overflow:hidden;
-    min-height:140px;
-  }
-  .rs-hold-character-img{
-    position:absolute;
-    right:8px;
-    bottom:0;
+<!-- ===== v93: stable dashboard chart override + fixed hold character ===== -->
+<style id="rs-v93-stable-dashboard-override-css">
+  #rsHoldCornerCharacter{
+    position:fixed;
+    right:18px;
+    bottom:18px;
     width:118px;
-    max-width:42%;
     height:auto;
+    z-index:9996;
+    display:block;
     object-fit:contain;
-    filter:drop-shadow(0 12px 18px rgba(0,0,0,.35));
-    transition:transform .25s ease, opacity .2s ease;
+    filter:drop-shadow(0 12px 18px rgba(0,0,0,.45));
+    pointer-events:none;
   }
-  .rs-hold-character-card:hover .rs-hold-character-img{
-    transform:translateY(-4px) scale(1.03);
+  @media(max-width:900px){
+    #rsHoldCornerCharacter{width:88px;right:10px;bottom:10px;}
   }
 </style>
-<script id="rs-v92-hold-character-panel-js">
+
+<script id="rs-v93-stable-dashboard-override-js">
 (function(){
-  if(window.__rsV92HoldCharacterPanel) return;
-  window.__rsV92HoldCharacterPanel = true;
+  if(window.__rsV93StableDashboardOverride) return;
+  window.__rsV93StableDashboardOverride = true;
 
-  const SRC = "assets/images/hold-character.png";
+  const HOLD_SRC = "https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png";
 
-  function moneyText(){
-    try{
-      const rows = JSON.parse(localStorage.getItem("inventoryHolds") || "[]") || [];
-      return rows.length + " item" + (rows.length === 1 ? "" : "s") + " on hold";
-    }catch(e){ return "Inventory holds"; }
+  function num(v){
+    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
+    return Number.isFinite(n) ? n : 0;
   }
 
-  function inject(){
-    if(document.getElementById("rsHoldCharacterCard")) return;
+  function money(n){
+    try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(n)||0);}
+    catch(e){return "$"+(Number(n)||0).toFixed(2);}
+  }
 
-    const dashboard = document.getElementById("secDashboard") || document.querySelector(".section.active") || document.body;
-    const grid = dashboard.querySelector(".grid") || dashboard.querySelector(".rs15-grid") || dashboard;
+  function readSoldRows(){
+    try{
+      if(typeof window.readSold === "function") return window.readSold() || [];
+    }catch(e){}
+    try{return JSON.parse(localStorage.getItem("soldInventory") || "[]") || [];}catch(e){return [];}
+  }
 
-    const card = document.createElement("div");
-    card.id = "rsHoldCharacterCard";
-    card.className = "panel rs-hold-character-card";
-    card.innerHTML = `
-      <h3>Inventory Holds</h3>
-      <div class="muted" id="rsHoldCharacterNote">${moneyText()}</div>
-      <img class="rs-hold-character-img" src="${SRC}" alt="Hold character">
-    `;
-    grid.appendChild(card);
+  function dateOf(r){
+    const raw = r && (r.date || r.soldDate || r.Date || r["Sold Date"] || r.sold_date);
+    const d = new Date(raw || "");
+    return isNaN(d) ? null : d;
+  }
+
+  function saleOf(r){
+    return num(r && (r.sale ?? r.price ?? r.salePrice ?? r.soldPrice ?? r.revenue ?? r.income ?? r.amount));
+  }
+
+  function costOf(r){
+    return num(r && (r.cost ?? r.Cost ?? r.itemCost ?? r.cogs ?? r.costOfSold ?? r["Cost of Sold"]));
+  }
+
+  function feeOf(r){
+    return num(r && (r.fees ?? r.fee ?? r.Fees ?? r.platformFees ?? r.sellingFees));
+  }
+
+  function shipOf(r){
+    return num(r && (r.ship ?? r.shipping ?? r.Shipping ?? r.shippingCost ?? r.postage));
+  }
+
+  function profitOf(r){
+    const raw = r && (r.profit ?? r.netProfit ?? r.totalProfit);
+    if(raw !== undefined && raw !== null && String(raw).trim() !== "") return num(raw);
+    return saleOf(r) - costOf(r) - feeOf(r) - shipOf(r);
+  }
+
+  function costProfitOf(r){
+    return costOf(r) + profitOf(r);
+  }
+
+  function dayKey(d){
+    return d ? d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") : "";
+  }
+
+  function monthKey(d){
+    return d ? d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0") : "";
+  }
+
+  function cssVar(name,fallback){
+    try{return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;}catch(e){return fallback;}
+  }
+
+  function destroyChart(canvas){
+    if(!canvas || !window.Chart || !Chart.getChart) return;
+    try{ const old = Chart.getChart(canvas); if(old) old.destroy(); }catch(e){}
+  }
+
+  function currentRangeStart(){
+    const active = document.querySelector("[data-rs15-range].active");
+    const range = active ? active.dataset.rs15Range : (localStorage.getItem("rs15Range") || "ALL");
+    const now = new Date();
+    if(range === "YTD") return new Date(now.getFullYear(),0,1);
+    if(range === "3M") return new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
+    if(range === "1M") return new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
+    return null;
+  }
+
+  function rebuildBusinessGrowth(){
+    const canvas = document.getElementById("rs15GrowthChart");
+    if(!canvas || !window.Chart) return false;
+
+    const start = currentRangeStart();
+    const daily = new Map();
+
+    readSoldRows().forEach(r=>{
+      const d = dateOf(r);
+      if(!d || (start && d < start)) return;
+      const k = dayKey(d);
+      if(!daily.has(k)) daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()), income:0, profit:0, costProfit:0});
+      const b = daily.get(k);
+      b.income += saleOf(r);
+      b.profit += profitOf(r);
+      b.costProfit += costProfitOf(r);
+    });
+
+    const rows = Array.from(daily.values()).sort((a,b)=>a.date-b.date);
+    let ri=0, rp=0, rcp=0;
+    const data = rows.map(x=>{
+      ri += x.income;
+      rp += x.profit;
+      rcp += x.costProfit;
+      return {date:x.date, income:+ri.toFixed(2), profit:+rp.toFixed(2), costProfit:+rcp.toFixed(2)};
+    });
+
+    destroyChart(canvas);
+    canvas.style.display = "block";
+    canvas.style.visibility = "visible";
+    canvas.style.opacity = "1";
+
+    new Chart(canvas,{
+      type:"line",
+      data:{
+        labels:data.map(x=>x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"})),
+        datasets:[
+          {label:"Total Income",data:data.map(x=>x.income),borderColor:cssVar("--accent","#38bdf8"),backgroundColor:"transparent",borderWidth:2.5,pointRadius:0,tension:.25,fill:false},
+          {label:"Total Profit",data:data.map(x=>x.profit),borderColor:cssVar("--green","#22c55e"),backgroundColor:"transparent",borderWidth:2.5,pointRadius:0,tension:.25,fill:false},
+          {label:"Cost + Profit",data:data.map(x=>x.costProfit),borderColor:"#a78bfa",backgroundColor:"transparent",borderWidth:2.5,pointRadius:0,tension:.25,fill:false}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:false,
+        interaction:{mode:"index",intersect:false},
+        plugins:{legend:{position:"top"},tooltip:{callbacks:{label:x=>" "+x.dataset.label+": "+money(x.parsed.y)}}},
+        scales:{
+          x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.10)"}},
+          y:{beginAtZero:true,grace:"12%",ticks:{callback:v=>money(v)},grid:{color:"rgba(255,255,255,.12)"}}
+        }
+      }
+    });
+
+    const totalCostProfit = readSoldRows().reduce((s,r)=>s+costProfitOf(r),0);
+    const kpi = document.getElementById("rs15GrowthCostProfit");
+    if(kpi) kpi.textContent = money(totalCostProfit);
+
+    return true;
+  }
+
+  function rebuildMonthlyProfit(){
+    const canvas = document.getElementById("rs15MonthlyChart");
+    if(!canvas || !window.Chart) return false;
+
+    const monthly = new Map();
+
+    readSoldRows().forEach(r=>{
+      const d = dateOf(r);
+      if(!d) return;
+      const k = monthKey(d);
+      if(!monthly.has(k)) monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0,costProfit:0});
+      const b = monthly.get(k);
+      b.income += saleOf(r);
+      b.cost += costOf(r);
+      b.profit += profitOf(r);
+      b.costProfit += costProfitOf(r);
+    });
+
+    const rows = Array.from(monthly.values()).sort((a,b)=>a.date-b.date).slice(-12);
+
+    destroyChart(canvas);
+    canvas.style.display = "block";
+    canvas.style.visibility = "visible";
+    canvas.style.opacity = "1";
+
+    new Chart(canvas,{
+      type:"line",
+      data:{
+        labels:rows.map(x=>x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"})),
+        datasets:[
+          {label:"Total Income",data:rows.map(x=>+x.income.toFixed(2)),borderColor:cssVar("--accent","#38bdf8"),backgroundColor:"transparent",borderWidth:2.5,pointRadius:2,tension:.25,fill:false},
+          {label:"Cost of Sold",data:rows.map(x=>+x.cost.toFixed(2)),borderColor:cssVar("--red","#ef4444"),backgroundColor:"transparent",borderWidth:2.5,pointRadius:2,tension:.25,fill:false},
+          {label:"Profit",data:rows.map(x=>+x.profit.toFixed(2)),borderColor:cssVar("--green","#22c55e"),backgroundColor:"transparent",borderWidth:2.5,pointRadius:2,tension:.25,fill:false},
+          {label:"Cost + Profit",data:rows.map(x=>+x.costProfit.toFixed(2)),borderColor:"#a78bfa",backgroundColor:"transparent",borderWidth:2.5,pointRadius:2,tension:.25,fill:false},
+          {label:"$300 Goal",data:rows.map(()=>300),borderColor:cssVar("--yellow","#fbbf24"),backgroundColor:"transparent",borderWidth:2,borderDash:[6,5],pointRadius:0,tension:0,fill:false}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:false,
+        interaction:{mode:"index",intersect:false},
+        plugins:{legend:{position:"top"},tooltip:{callbacks:{label:x=>" "+x.dataset.label+": "+money(x.parsed.y)}}},
+        scales:{
+          x:{grid:{color:"rgba(255,255,255,.10)"}},
+          y:{beginAtZero:true,grace:"14%",ticks:{callback:v=>money(v)},grid:{color:"rgba(255,255,255,.12)"}}
+        }
+      }
+    });
+
+    return true;
+  }
+
+  let scheduled = null;
+  function rebuildDashboardCharts(){
+    clearTimeout(scheduled);
+    scheduled = setTimeout(()=>{
+      try{ rebuildBusinessGrowth(); }catch(e){ console.warn("Business Growth rebuild failed", e); }
+      try{ rebuildMonthlyProfit(); }catch(e){ console.warn("Monthly Profit rebuild failed", e); }
+    },120);
+  }
+
+  function injectHoldCharacter(){
+    let img = document.getElementById("rsHoldCornerCharacter");
+    if(!img){
+      img = document.createElement("img");
+      img.id = "rsHoldCornerCharacter";
+      img.alt = "Hold character";
+      document.body.appendChild(img);
+    }
+    img.src = HOLD_SRC + "?v=3";
   }
 
   function start(){
-    const img = new Image();
-    img.onload = inject;
-    img.onerror = function(){
-      console.warn("RESELLr: hold-character.png did not load from", SRC);
-      inject();
-    };
-    img.src = SRC + "?v=" + Date.now();
+    injectHoldCharacter();
+    rebuildDashboardCharts();
+    setTimeout(rebuildDashboardCharts,500);
+    setTimeout(rebuildDashboardCharts,1500);
+    setTimeout(rebuildDashboardCharts,3000);
+
+    document.addEventListener("click",e=>{
+      if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
+        rebuildDashboardCharts();
+        setTimeout(injectHoldCharacter,200);
+      }
+    },true);
+
+    document.addEventListener("change",rebuildDashboardCharts,true);
   }
 
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",start);
   else start();
-
-  document.addEventListener("click", e => {
-    if(e.target.closest(".nav") || e.target.closest("button")){
-      setTimeout(start, 250);
-    }
-  }, true);
 })();
 </script>
 
