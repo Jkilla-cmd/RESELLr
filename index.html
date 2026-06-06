@@ -23651,8 +23651,45 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 <!-- ===== v76 FINAL: Inventory action column fixed 2-row layout (no image) ===== -->
 <!-- ===== v77 REAL FIX: compact inventory actions that fit narrow screens ===== -->
 
-<!-- ===== v95: safe cost+profit dataset + real hold character only ===== -->
-<style id="rs-v95-safe-costprofit-hold-css">
+<!-- ===== v96: stable SVG dashboard graphs + real hold character only ===== -->
+<style id="rs-v96-stable-svg-dashboard-hold-css">
+  #rs15GrowthChart,
+  #rs15MonthlyChart{
+    display:none !important;
+  }
+  .rs-stable-chart{
+    width:100%;
+    height:320px;
+    min-height:320px;
+    position:relative;
+  }
+  .rs-stable-chart svg{
+    width:100%;
+    height:100%;
+    display:block;
+    overflow:visible;
+  }
+  .rs-stable-legend{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    margin:4px 0 8px;
+    font-size:12px;
+    color:var(--text);
+  }
+  .rs-stable-legend span{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .rs-stable-legend i{
+    width:24px;
+    height:4px;
+    border-radius:999px;
+    display:inline-block;
+  }
   #rsHoldCharacterToast{
     position:fixed;
     right:18px;
@@ -23666,15 +23703,16 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     pointer-events:none;
   }
   #rsHoldCharacterToast.show{display:block;}
+  #holdsDashboardPanel .holds-easter-wrap{display:none !important;}
   @media(max-width:900px){
     #rsHoldCharacterToast{width:88px;right:10px;bottom:10px;}
   }
 </style>
 
-<script id="rs-v95-safe-costprofit-hold-js">
+<script id="rs-v96-stable-svg-dashboard-hold-js">
 (function(){
-  if(window.__rsV95SafeCostProfitHold) return;
-  window.__rsV95SafeCostProfitHold = true;
+  if(window.__rsV96StableSvgDashboardHold) return;
+  window.__rsV96StableSvgDashboardHold = true;
 
   const HOLD_SRC = "https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png";
 
@@ -23693,133 +23731,201 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     try{ return JSON.parse(localStorage.getItem("soldInventory") || "[]") || []; }catch(e){ return []; }
   }
 
+  function readHolds(){
+    try{ if(typeof window.readHolds === "function") return window.readHolds() || []; }catch(e){}
+    try{ return JSON.parse(localStorage.getItem("inventoryHolds") || "[]") || []; }catch(e){ return []; }
+  }
+
+  function saleOf(r){
+    return num(r && (r.sale ?? r.price ?? r.salePrice ?? r.soldPrice ?? r.revenue ?? r.income ?? r.amount));
+  }
   function costOf(r){
     return num(r && (r.cost ?? r.Cost ?? r.itemCost ?? r.cogs ?? r.costOfSold ?? r["Cost of Sold"]));
   }
-
+  function feeOf(r){
+    return num(r && (r.fees ?? r.fee ?? r.Fees ?? r.platformFees ?? r.sellingFees));
+  }
+  function shipOf(r){
+    return num(r && (r.ship ?? r.shipping ?? r.Shipping ?? r.shippingCost ?? r.postage));
+  }
   function profitOf(r){
     const raw = r && (r.profit ?? r.netProfit ?? r.totalProfit);
     if(raw !== undefined && raw !== null && String(raw).trim() !== "") return num(raw);
-    const sale = num(r && (r.sale ?? r.price ?? r.salePrice ?? r.soldPrice ?? r.revenue ?? r.income ?? r.amount));
-    const fees = num(r && (r.fees ?? r.fee ?? r.Fees ?? r.platformFees ?? r.sellingFees));
-    const ship = num(r && (r.ship ?? r.shipping ?? r.Shipping ?? r.shippingCost ?? r.postage));
-    return sale - costOf(r) - fees - ship;
+    return saleOf(r) - costOf(r) - feeOf(r) - shipOf(r);
   }
-
+  function costProfitOf(r){
+    return costOf(r) + profitOf(r);
+  }
   function dateOf(r){
     const raw = r && (r.date || r.soldDate || r.Date || r["Sold Date"] || r.sold_date);
     const d = new Date(raw || "");
     return isNaN(d) ? null : d;
   }
-
-  function monthLabelKey(label){
-    const d = new Date(label);
-    if(!isNaN(d)) return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
-    const months = {jan:0,january:0,feb:1,february:1,mar:2,march:2,apr:3,april:3,may:4,jun:5,june:5,jul:6,july:6,aug:7,august:7,sep:8,sept:8,september:8,oct:9,october:9,nov:10,november:10,dec:11,december:11};
-    const parts = String(label||"").toLowerCase().replace(/[,'’]/g," ").split(/\s+/).filter(Boolean);
-    let m=null,y=null;
-    parts.forEach(p=>{
-      if(months[p] !== undefined) m = months[p];
-      const n = Number(p);
-      if(Number.isFinite(n)){
-        if(n > 1900) y = n;
-        else if(n >= 0 && n < 100) y = 2000+n;
-      }
-    });
-    if(m === null) return null;
-    if(y === null) y = new Date().getFullYear();
-    return y+"-"+String(m+1).padStart(2,"0");
+  function dayKey(d){
+    return d ? d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") : "";
+  }
+  function monthKey(d){
+    return d ? d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0") : "";
+  }
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  function chart(id){
-    const c = document.getElementById(id);
-    if(!c || !window.Chart || !Chart.getChart) return null;
-    try{return Chart.getChart(c);}catch(e){return null;}
+  function activeRange(){
+    const active = document.querySelector("[data-rs15-range].active");
+    return active ? active.dataset.rs15Range : (localStorage.getItem("rs15Range") || "ALL");
   }
 
-  function addDatasetNoLoop(ch, data, pointRadius){
-    if(!ch || !ch.data || !Array.isArray(ch.data.datasets)) return;
-    ch.data.datasets = ch.data.datasets.filter(ds => String(ds.label||"") !== "Cost + Profit");
-    ch.data.datasets.push({
-      label:"Cost + Profit",
-      data:data,
-      borderColor:"#a78bfa",
-      backgroundColor:"transparent",
-      borderWidth:2.5,
-      pointRadius:pointRadius,
-      tension:.25,
-      fill:false,
-      hidden:false
-    });
-    // Critical: draw only, no update(), to avoid recursion and disappearing graphs.
-    try{ ch.draw(); }catch(e){}
+  function rangeStart(){
+    const range = activeRange();
+    const now = new Date();
+    if(range === "YTD") return new Date(now.getFullYear(),0,1);
+    if(range === "3M") return new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
+    if(range === "1M") return new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
+    return null;
   }
 
-  function patchMonthlyCostProfit(){
-    const ch = chart("rs15MonthlyChart");
-    if(!ch || !ch.data || !Array.isArray(ch.data.labels)) return;
-
-    // Best source of truth: the chart's own Cost of Sold + Profit datasets.
-    const costDs = ch.data.datasets.find(ds => /cost\s*of\s*sold|cost/i.test(String(ds.label||"")));
-    const profitDs = ch.data.datasets.find(ds => /^profit$/i.test(String(ds.label||"")) || /total\s*profit/i.test(String(ds.label||"")));
-    if(!costDs || !profitDs) return;
-
-    const values = ch.data.labels.map((_,i)=> num(costDs.data[i]) + num(profitDs.data[i]));
-    addDatasetNoLoop(ch, values.map(v=>+v.toFixed(2)), 2);
+  function pathFor(values, x0, y0, w, h, minY, maxY){
+    if(!values.length) return "";
+    const span = Math.max(1, maxY - minY);
+    return values.map((v,i) => {
+      const x = x0 + (values.length === 1 ? w : (i/(values.length-1))*w);
+      const y = y0 + h - ((v - minY)/span)*h;
+      return (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+    }).join(" ");
   }
 
-  function patchGrowthCostProfit(){
-    const ch = chart("rs15GrowthChart");
-    if(!ch || !ch.data || !Array.isArray(ch.data.labels)) return;
+  function renderLineChart(targetId, title, rows, series){
+    const target = document.getElementById(targetId);
+    if(!target) return;
 
-    // Business Growth has no cost line, so calculate cumulative cost+profit from sold records.
-    const sold = readSold().map(r => ({d:dateOf(r), cp:costOf(r)+profitOf(r)})).filter(x=>x.d).sort((a,b)=>a.d-b.d);
-    if(!sold.length) return;
+    const canvas = target.tagName === "CANVAS" ? target : null;
+    const wrap = canvas ? canvas.parentElement : target;
+    if(!wrap) return;
 
-    const first = sold[0].d;
-    const last = sold[sold.length-1].d;
-    const span = Math.max(1, last-first);
-
-    const values = ch.data.labels.map((lbl,idx)=>{
-      let d = new Date(lbl);
-      if(isNaN(d)){
-        const ratio = ch.data.labels.length <= 1 ? 1 : idx/(ch.data.labels.length-1);
-        d = new Date(first.getTime() + span*ratio);
-      }
-      const cutoff = new Date(d.getFullYear(),d.getMonth(),d.getDate(),23,59,59,999);
-      let total = 0;
-      sold.forEach(x=>{ if(x.d <= cutoff) total += x.cp; });
-      return +total.toFixed(2);
-    });
-
-    addDatasetNoLoop(ch, values, 0);
-
-    const kpi = document.getElementById("rs15GrowthCostProfit");
-    if(kpi){
-      const total = readSold().reduce((s,r)=>s+costOf(r)+profitOf(r),0);
-      kpi.textContent = money(total);
+    let box = wrap.querySelector(".rs-stable-chart[data-for='"+targetId+"']");
+    if(!box){
+      box = document.createElement("div");
+      box.className = "rs-stable-chart";
+      box.dataset.for = targetId;
+      wrap.appendChild(box);
     }
+
+    const width = 920, height = 300, x0 = 64, y0 = 26, w = 810, h = 214;
+    const all = [];
+    series.forEach(s => s.values.forEach(v => all.push(num(v))));
+    const maxY = Math.max(10, ...all);
+    const minY = 0;
+
+    const grid = [0,.25,.5,.75,1].map(p => {
+      const y = y0 + h - p*h;
+      const val = minY + (maxY-minY)*p;
+      return `<line x1="${x0}" y1="${y}" x2="${x0+w}" y2="${y}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><text x="${x0-10}" y="${y+4}" text-anchor="end" fill="rgba(229,231,235,.75)" font-size="11">${esc(money(val))}</text>`;
+    }).join("");
+
+    const xLabels = [];
+    if(rows.length){
+      const picks = [0, Math.floor(rows.length*.25), Math.floor(rows.length*.5), Math.floor(rows.length*.75), rows.length-1];
+      [...new Set(picks)].forEach(i => {
+        const x = x0 + (rows.length === 1 ? w : (i/(rows.length-1))*w);
+        xLabels.push(`<text x="${x}" y="${y0+h+28}" text-anchor="middle" fill="rgba(229,231,235,.82)" font-size="12">${esc(rows[i].label)}</text>`);
+      });
+    }
+
+    const lines = series.map(s => {
+      const p = pathFor(s.values, x0, y0, w, h, minY, maxY);
+      return `<path d="${p}" fill="none" stroke="${s.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+    }).join("");
+
+    const legends = series.map(s => `<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join("");
+
+    box.innerHTML = `
+      <div class="rs-stable-legend">${legends}</div>
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(title)}">
+        ${grid}
+        <line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" stroke="rgba(255,255,255,.18)" stroke-width="1"/>
+        <line x1="${x0}" y1="${y0}" x2="${x0}" y2="${y0+h}" stroke="rgba(255,255,255,.18)" stroke-width="1"/>
+        ${lines}
+        ${xLabels.join("")}
+      </svg>
+    `;
   }
 
-  function patchCharts(){
-    patchGrowthCostProfit();
-    patchMonthlyCostProfit();
+  function buildGrowthRows(){
+    const start = rangeStart();
+    const daily = new Map();
+    readSold().forEach(r => {
+      const d = dateOf(r);
+      if(!d || (start && d < start)) return;
+      const k = dayKey(d);
+      if(!daily.has(k)) daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()), income:0, profit:0, costProfit:0});
+      const b = daily.get(k);
+      b.income += saleOf(r);
+      b.profit += profitOf(r);
+      b.costProfit += costProfitOf(r);
+    });
+    let ri=0, rp=0, rcp=0;
+    return Array.from(daily.values()).sort((a,b)=>a.date-b.date).map(x => {
+      ri += x.income; rp += x.profit; rcp += x.costProfit;
+      return {
+        label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),
+        income:+ri.toFixed(2),
+        profit:+rp.toFixed(2),
+        costProfit:+rcp.toFixed(2)
+      };
+    });
   }
 
-  let timer = null;
-  function schedulePatch(){
-    clearTimeout(timer);
-    timer = setTimeout(patchCharts, 180);
+  function buildMonthlyRows(){
+    const monthly = new Map();
+    readSold().forEach(r => {
+      const d = dateOf(r);
+      if(!d) return;
+      const k = monthKey(d);
+      if(!monthly.has(k)) monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1), income:0, cost:0, profit:0, costProfit:0});
+      const b = monthly.get(k);
+      b.income += saleOf(r);
+      b.cost += costOf(r);
+      b.profit += profitOf(r);
+      b.costProfit += costProfitOf(r);
+    });
+    return Array.from(monthly.values()).sort((a,b)=>a.date-b.date).slice(-12).map(x => ({
+      label:x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"}),
+      income:+x.income.toFixed(2),
+      cost:+x.cost.toFixed(2),
+      profit:+x.profit.toFixed(2),
+      costProfit:+x.costProfit.toFixed(2),
+      goal:300
+    }));
   }
 
-  function holdsCount(){
-    try{
-      const rows = JSON.parse(localStorage.getItem("inventoryHolds") || "[]") || [];
-      return Array.isArray(rows) ? rows.length : 0;
-    }catch(e){return 0;}
+  function updateKpis(){
+    const sold = readSold();
+    const totalCP = sold.reduce((s,r)=>s+costProfitOf(r),0);
+    const kpi = document.getElementById("rs15GrowthCostProfit");
+    if(kpi) kpi.textContent = money(totalCP);
   }
 
-  function ensureHoldImg(){
+  function renderStableCharts(){
+    const g = buildGrowthRows();
+    renderLineChart("rs15GrowthChart","Business Growth",g,[
+      {label:"Total Income",color:"#38bdf8",values:g.map(x=>x.income)},
+      {label:"Total Profit",color:"#22c55e",values:g.map(x=>x.profit)},
+      {label:"Cost + Profit",color:"#a78bfa",values:g.map(x=>x.costProfit)}
+    ]);
+
+    const m = buildMonthlyRows();
+    renderLineChart("rs15MonthlyChart","Monthly Profit View",m,[
+      {label:"Total Income",color:"#38bdf8",values:m.map(x=>x.income)},
+      {label:"Cost of Sold",color:"#ef4444",values:m.map(x=>x.cost)},
+      {label:"Profit",color:"#22c55e",values:m.map(x=>x.profit)},
+      {label:"Cost + Profit",color:"#a78bfa",values:m.map(x=>x.costProfit)},
+      {label:"$300 Goal",color:"#fbbf24",values:m.map(x=>x.goal)}
+    ]);
+    updateKpis();
+  }
+
+  function ensureHoldImage(){
     let img = document.getElementById("rsHoldCharacterToast");
     if(!img){
       img = document.createElement("img");
@@ -23831,43 +23937,44 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     return img;
   }
 
+  let lastHoldCount = null;
   let hideTimer = null;
-  function showHoldTemporary(){
-    if(holdsCount() <= 0) return;
-    const img = ensureHoldImg();
+
+  function showHold(){
+    const img = ensureHoldImage();
     img.src = HOLD_SRC;
     img.classList.add("show");
     clearTimeout(hideTimer);
-    hideTimer = setTimeout(()=>{
-      img.classList.remove("show");
-      hideTimer = null;
-    }, 3200);
+    hideTimer = setTimeout(() => img.classList.remove("show"), 3200);
   }
 
-  function hideHoldIfNeeded(){
-    const img = ensureHoldImg();
-    if(!hideTimer) img.classList.remove("show");
+  function checkHolds(){
+    const count = readHolds().length;
+    if(lastHoldCount === null){ lastHoldCount = count; return; }
+    if(count > lastHoldCount) showHold();
+    lastHoldCount = count;
   }
 
   function start(){
-    patchCharts();
-    setTimeout(patchCharts, 400);
-    setTimeout(patchCharts, 1200);
-    setTimeout(patchCharts, 2500);
+    ensureHoldImage();
+    renderStableCharts();
+    checkHolds();
 
-    ensureHoldImg();
-    hideHoldIfNeeded();
+    setTimeout(renderStableCharts,400);
+    setTimeout(renderStableCharts,1200);
+    setTimeout(renderStableCharts,2500);
 
-    document.addEventListener("click", e=>{
-      const label = String((e.target && (e.target.title || e.target.ariaLabel || e.target.textContent)) || "").toLowerCase();
-      if(label.includes("hold")) setTimeout(showHoldTemporary, 180);
-      if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")) schedulePatch();
+    document.addEventListener("click", e => {
+      if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
+        setTimeout(renderStableCharts,180);
+        setTimeout(checkHolds,220);
+      }
     }, true);
-
-    document.addEventListener("change", schedulePatch, true);
+    document.addEventListener("change", () => setTimeout(renderStableCharts,180), true);
+    setInterval(checkHolds,1000);
   }
 
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",start);
   else start();
 })();
 </script>
