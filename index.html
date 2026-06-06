@@ -23728,6 +23728,49 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 <!-- ===== v74: Inventory action spacing hard fix - compact 2-row grid ===== -->
 <!-- ===== v76 FINAL: Inventory action column fixed 2-row layout (no image) ===== -->
 <!-- ===== v77 REAL FIX: compact inventory actions that fit narrow screens ===== -->
+
+<style id="rs-v88-dashboard-costprofit-card-css">
+.rs-costprofit-mini-card{border:1px solid var(--border);background:var(--panel-2,rgba(255,255,255,.04));border-radius:14px;padding:12px 14px;margin:10px 0 12px}
+.rs-costprofit-mini-card .rs-label{color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:11px}
+.rs-costprofit-mini-card .rs-value{margin-top:4px;font-size:18px;font-weight:800;color:#a78bfa}
+</style>
+<script id="rs-v88-restore-graphs-costprofit-js">
+(function(){
+ if(window.__rsV88RestoreGraphsCostProfit)return; window.__rsV88RestoreGraphsCostProfit=true;
+ const MONTHS={jan:0,january:0,feb:1,february:1,mar:2,march:2,apr:3,april:3,may:4,jun:5,june:5,jul:6,july:6,aug:7,august:7,sep:8,sept:8,september:8,oct:9,october:9,nov:10,november:10,dec:11,december:11};
+ const num=v=>{const n=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)?n:0};
+ function money(n){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(n)||0)}catch(e){return "$"+(Number(n)||0).toFixed(2)}}
+ function readSold(){try{if(typeof window.readSold==="function")return window.readSold()||[]}catch(e){}try{return JSON.parse(localStorage.getItem("soldInventory")||"[]")||[]}catch(e){return[]}}
+ function rowDate(r){const d=new Date(r.date||r.soldDate||r.sold_date||r.createdAt||r.updatedAt||"");return isNaN(d)?null:d}
+ function grossIncome(r){return num(r.salePrice??r.sale_price??r.soldPrice??r.sold_price??r.sale??r.price??r.income??r.totalIncome??r.total)}
+ function costOfSold(r){return num(r.cost??r.costOfSold??r.cost_of_sold??r.cogs??r.buyCost??r.purchasePrice)}
+ function profitOf(r){if(r.profit!==undefined&&r.profit!==null&&String(r.profit).trim()!=="")return num(r.profit);return grossIncome(r)-costOfSold(r)}
+ function costPlusProfit(r){return costOfSold(r)+profitOf(r)}
+ function parseMonthKey(label){const s=String(label||"").toLowerCase().replace(/[,'’]/g," ").trim();const parts=s.split(/\s+/).filter(Boolean);let m=null,y=null;for(const p of parts){if(MONTHS[p]!==undefined)m=MONTHS[p];const n=Number(p);if(Number.isFinite(n)){if(n>1900)y=n;else if(n>=0&&n<100)y=2000+n}}if(m===null)return null;if(y===null)y=new Date().getFullYear();return y+"-"+String(m+1).padStart(2,"0")}
+ function chart(id){const c=document.getElementById(id);if(!c||!window.Chart||!Chart.getChart)return null;try{return Chart.getChart(c)}catch(e){return null}}
+ function showCanvas(id){const c=document.getElementById(id);if(!c)return;c.style.display="block";c.style.visibility="visible";c.style.opacity="1";const w=c.closest(".chart-wrap");if(w){w.style.display="block";w.style.visibility="visible";w.style.minHeight=w.style.minHeight||"300px"}}
+ function upsert(ch,label,data,opts){if(!ch||!ch.data||!Array.isArray(ch.data.datasets))return;ch.data.datasets=ch.data.datasets.filter((ds,i,arr)=>String(ds.label||"")!==label||i===arr.findIndex(x=>String(x.label||"")===label));let ds=ch.data.datasets.find(x=>String(x.label||"")===label);if(!ds){ds={label};ch.data.datasets.push(ds)}ds.data=data;Object.assign(ds,{hidden:false,fill:false,tension:.25,pointRadius:2,borderWidth:2.5,backgroundColor:"transparent"},opts||{})}
+ function monthlyMap(){const m=new Map();readSold().forEach(r=>{const d=rowDate(r);if(!d)return;const k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");if(!m.has(k))m.set(k,{income:0,cp:0});const b=m.get(k);b.income+=grossIncome(r);b.cp+=costPlusProfit(r)});return m}
+ function patchMonthly(){showCanvas("rs15MonthlyChart");const ch=chart("rs15MonthlyChart");if(!ch||!ch.data||!Array.isArray(ch.data.labels))return;const map=monthlyMap();const inc=[],cp=[];ch.data.labels.forEach(lbl=>{const b=map.get(parseMonthKey(lbl)||"");inc.push(+(b?b.income:0).toFixed(2));cp.push(+(b?b.cp:0).toFixed(2))});let ds=ch.data.datasets.find(x=>/total\s*income|income/i.test(String(x.label||"")));if(ds){ds.data=inc;ds.hidden=false}else upsert(ch,"Total Income",inc,{borderColor:"#38bdf8"});upsert(ch,"Cost + Profit",cp,{borderColor:"#a78bfa"});try{ch.update("none")}catch(e){try{ch.update()}catch(err){}}}
+ function patchGrowth(){showCanvas("rs15GrowthChart");const ch=chart("rs15GrowthChart");if(!ch||!ch.data||!Array.isArray(ch.data.labels))return;const sold=readSold().map(r=>({d:rowDate(r),income:grossIncome(r),cp:costPlusProfit(r)})).filter(x=>x.d).sort((a,b)=>a.d-b.d);if(!sold.length)return;const first=sold[0].d,last=sold[sold.length-1].d,span=Math.max(1,last-first);const inc=[],cp=[];ch.data.labels.forEach((lbl,idx)=>{let parsed=new Date(lbl);let cutoff;if(!isNaN(parsed))cutoff=parsed;else cutoff=new Date(first.getTime()+span*(ch.data.labels.length<=1?1:idx/(ch.data.labels.length-1)));cutoff=new Date(cutoff.getFullYear(),cutoff.getMonth(),cutoff.getDate(),23,59,59,999);let ti=0,tcp=0;sold.forEach(x=>{if(x.d<=cutoff){ti+=x.income;tcp+=x.cp}});inc.push(+ti.toFixed(2));cp.push(+tcp.toFixed(2))});let ds=ch.data.datasets.find(x=>/total\s*income|income/i.test(String(x.label||"")));if(ds){ds.data=inc;ds.hidden=false}else upsert(ch,"Total Income",inc,{borderColor:"#38bdf8",pointRadius:0});upsert(ch,"Cost + Profit",cp,{borderColor:"#a78bfa",pointRadius:0});try{ch.update("none")}catch(e){try{ch.update()}catch(err){}}}
+ function card(){const total=readSold().reduce((s,r)=>s+costPlusProfit(r),0);const canvas=document.getElementById("rs15GrowthChart");if(!canvas)return;const panel=canvas.closest(".panel");if(!panel)return;let c=panel.querySelector(".rs-costprofit-mini-card");if(!c){c=document.createElement("div");c.className="rs-costprofit-mini-card";c.innerHTML='<div class="rs-label">Cost + Profit</div><div class="rs-value"></div>';const h3=panel.querySelector("h3");if(h3&&h3.nextSibling)h3.parentNode.insertBefore(c,h3.nextSibling);else panel.insertBefore(c,panel.firstChild)}c.querySelector(".rs-value").textContent=money(total)}
+ let timer=null;function all(){clearTimeout(timer);timer=setTimeout(()=>{patchGrowth();patchMonthly();card()},120)}
+ function start(){all();[500,1500,3000].forEach(t=>setTimeout(all,t));document.addEventListener("change",all,true);document.addEventListener("click",e=>{if(e.target.closest(".nav")||e.target.closest("button"))all()},true)}
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
+})();
+</script>
+<script id="rs-v88-hold-character-fix">
+(function(){
+ if(window.__rsV88HoldCharacterFix)return; window.__rsV88HoldCharacterFix=true;
+ const paths=["assets/images/hold-character.png","assets/images/holds-character.png","assets/images/hold.png","assets/images/toasty.png","assets/hold-character.png","assets/holds-character.png","assets/toasty.png"];
+ function test(src,cb){const img=new Image();img.onload=()=>cb(src);img.onerror=()=>cb(null);img.src=src+"?v="+Date.now()}
+ function find(i,cb){if(i>=paths.length)return cb(null);test(paths[i],ok=>ok?cb(paths[i]):find(i+1,cb))}
+ function apply(src){if(!src)return;document.querySelectorAll(".holds-easter-figure,#holdsDashboardPanel img,img[src*='hold'],img[src*='toasty']").forEach(img=>{img.src=src;img.style.display="block";img.style.objectFit="contain"});const wrap=document.querySelector("#holdsDashboardPanel .holds-easter-wrap");if(wrap&&!wrap.querySelector(".holds-easter-figure")){const img=document.createElement("img");img.className="holds-easter-figure";img.alt="Hold character";img.src=src;wrap.appendChild(img)}}
+ function start(){find(0,apply)}
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
+})();
+</script>
+
 </body>
 </html>
 
