@@ -23946,121 +23946,350 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 <!-- ===== v102: Business Growth visible card + Toasty uses same hold character ===== -->
 
-<!-- ===== v103: remove extra Business Growth graph + Toasty matches inventory holds ===== -->
-<style id="rs-v103-clean-business-growth-toasty-css">
-  /* Remove any old extra overlay chart if it was already injected */
-  #rs-v102-growth-card,
-  #rs-v101-growth-chart,
-  #rs-v99-rs15GrowthChart,
-  #rs-v98-rs15GrowthChart,
-  #rs-v97-rs15GrowthChart{
-    display:none !important;
-    height:0 !important;
-    min-height:0 !important;
-    overflow:hidden !important;
-    margin:0 !important;
-    padding:0 !important;
-  }
-
-  /* Keep the native Business Growth chart visible */
+<!-- ===== v104: one Business Growth graph + Toasty matches inventory holds ===== -->
+<style id="rs-v104-single-growth-toasty-css">
+  /* Replace only the broken Business Growth canvas with one stable graph. */
   #rs15GrowthChart{
-    display:block !important;
-    visibility:visible !important;
-    opacity:1 !important;
+    display:none !important;
   }
 
-  /* Toasty should not show the word bubble */
-  .toasty-bubble{
+  #rs-v104-growth-card{
+    display:block !important;
+    width:100% !important;
+    height:330px !important;
+    min-height:330px !important;
+    margin-top:8px !important;
+    position:relative !important;
+  }
+
+  #rs-v104-growth-card svg{
+    width:100% !important;
+    height:100% !important;
+    display:block !important;
+    overflow:visible !important;
+  }
+
+  .rs-v104-legend{
+    display:flex !important;
+    justify-content:center !important;
+    align-items:center !important;
+    flex-wrap:wrap !important;
+    gap:12px !important;
+    font-size:12px !important;
+    margin:2px 0 8px !important;
+    color:var(--text,#e5e7eb) !important;
+  }
+
+  .rs-v104-legend span{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:6px !important;
+  }
+
+  .rs-v104-legend i{
+    display:inline-block !important;
+    width:24px !important;
+    height:5px !important;
+    border-radius:999px !important;
+  }
+
+  .rs-v104-empty{
+    height:280px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    color:var(--muted,#94a3b8) !important;
+  }
+
+  /* Remove all duplicate/small hold characters. */
+  #rsBigHoldCharacter,
+  #rsRealHoldCharacter,
+  #holdsDashboardPanel .holds-easter-wrap,
+  #holdsDashboardPanel .holds-easter-figure,
+  img.holds-easter-figure,
+  .toasty-side-pop{
     display:none !important;
     opacity:0 !important;
     visibility:hidden !important;
   }
 
-  /* Toasty uses the exact same real hold character look */
-  .toasty-side-pop{
-    width:210px !important;
-    height:210px !important;
-    z-index:220000 !important;
-    animation:toastySlideSideHold 3.2s ease-in-out forwards !important;
-  }
-
-  .toasty-side-pop img{
+  /* The only hold character allowed. */
+  #holdCharacter{
     content:url("https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png") !important;
     width:170px !important;
     height:auto !important;
     object-fit:contain !important;
     filter:drop-shadow(0 24px 34px rgba(0,0,0,.42)) !important;
+    z-index:200000 !important;
   }
 
-  @keyframes toastySlideSideHold{
-    0%{transform:translateX(120%);opacity:0;}
-    14%{transform:translateX(0);opacity:1;}
-    82%{transform:translateX(0);opacity:1;}
-    100%{transform:translateX(120%);opacity:0;}
+  @media(max-width:900px){
+    #holdCharacter{width:128px !important;}
   }
 </style>
 
-<script id="rs-v103-clean-business-growth-toasty-js">
+<script id="rs-v104-single-growth-toasty-js">
 (function(){
-  if(window.__rsV103CleanBusinessGrowthToasty) return;
-  window.__rsV103CleanBusinessGrowthToasty = true;
+  if(window.__rsV104SingleGrowthToasty) return;
+  window.__rsV104SingleGrowthToasty = true;
 
   const HOLD_SRC = "https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png";
 
-  function removeExtraGrowthGraphs(){
-    ["rs-v102-growth-card","rs-v101-growth-chart","rs-v99-rs15GrowthChart","rs-v98-rs15GrowthChart","rs-v97-rs15GrowthChart"].forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.remove();
+  function num(v){
+    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function money(n){
+    try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(n)||0);}
+    catch(e){return "$"+(Number(n)||0).toFixed(2);}
+  }
+
+  function readSold(){
+    try{ if(typeof window.readSold === "function") return window.readSold() || []; }catch(e){}
+    try{return JSON.parse(localStorage.getItem("soldInventory") || "[]") || [];}catch(e){return [];}
+  }
+
+  function val(r, keys){
+    for(const k of keys){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return 0;
+  }
+
+  function saleOf(r){
+    return val(r, ["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"]);
+  }
+
+  function costOf(r){
+    return val(r, ["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","Cost of Sold","buyCost","purchasePrice"]);
+  }
+
+  function feeOf(r){
+    return val(r, ["fees","fee","Fees","platformFees","platformFee","sellingFees","sellingFee","sellerFees","sellerFee","transactionFee","transactionFees","ebayFee","mercariFee"]);
+  }
+
+  function shipOf(r){
+    return val(r, ["ship","shipping","Shipping","shippingCost","shipping_cost","shipCost","postage","postageCost","labelCost","shippingLabel"]);
+  }
+
+  function profitOf(r){
+    const fee = feeOf(r);
+    const ship = shipOf(r);
+    if(fee || ship) return saleOf(r) - costOf(r) - fee - ship;
+
+    for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return saleOf(r) - costOf(r);
+  }
+
+  function costProfitOf(r){
+    return costOf(r) + profitOf(r);
+  }
+
+  function dateOf(r){
+    const raw = r && (r.date || r.soldDate || r.Date || r["Sold Date"] || r.sold_date || r.saleDate);
+    const d = new Date(raw || "");
+    return isNaN(d) ? null : d;
+  }
+
+  function dayKey(d){
+    return d ? d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") : "";
+  }
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function activeRange(){
+    const b = document.querySelector("[data-rs15-range].active");
+    return b ? b.dataset.rs15Range : (localStorage.getItem("rs15Range") || "ALL");
+  }
+
+  function rangeStart(){
+    const r = activeRange();
+    const now = new Date();
+    if(r === "YTD") return new Date(now.getFullYear(),0,1);
+    if(r === "3M") return new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
+    if(r === "1M") return new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
+    return null;
+  }
+
+  function buildRows(){
+    const start = rangeStart();
+    const daily = new Map();
+
+    readSold().forEach(r=>{
+      const d = dateOf(r);
+      if(!d || (start && d < start)) return;
+
+      const k = dayKey(d);
+      if(!daily.has(k)){
+        daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()), income:0, profit:0, costProfit:0});
+      }
+
+      const b = daily.get(k);
+      b.income += saleOf(r);
+      b.profit += profitOf(r);
+      b.costProfit += costProfitOf(r);
     });
 
-    const native = document.getElementById("rs15GrowthChart");
-    if(native){
-      native.style.display = "block";
-      native.style.visibility = "visible";
-      native.style.opacity = "1";
+    let income=0, profit=0, cp=0;
+    return Array.from(daily.values()).sort((a,b)=>a.date-b.date).map(x=>{
+      income += x.income;
+      profit += x.profit;
+      cp += x.costProfit;
+      return {
+        label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),
+        income:+income.toFixed(2),
+        profit:+profit.toFixed(2),
+        costProfit:+cp.toFixed(2)
+      };
+    });
+  }
+
+  function path(values,x0,y0,w,h,maxY,offset){
+    if(!values.length) return "";
+    maxY = Math.max(10,maxY);
+    return values.map((v,i)=>{
+      const x = x0 + (values.length === 1 ? w : (i/(values.length-1))*w);
+      const y = y0 + h - (num(v)/maxY)*h + (offset || 0);
+      return (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
+    }).join(" ");
+  }
+
+  function sameLine(a,b){
+    return a.length === b.length && a.every((v,i)=>Math.abs(num(v)-num(b[i])) < 0.01);
+  }
+
+  function renderGrowth(){
+    const canvas = document.getElementById("rs15GrowthChart");
+    if(!canvas) return;
+
+    const chartWrap = canvas.closest(".rs15-chart") || canvas.parentElement;
+    if(!chartWrap) return;
+
+    // Clear old overlay versions and make this the only business-growth graph.
+    ["rs-v102-growth-card","rs-v101-growth-chart","rs-v99-rs15GrowthChart","rs-v98-rs15GrowthChart","rs-v97-rs15GrowthChart"].forEach(id=>{
+      const old = document.getElementById(id);
+      if(old) old.remove();
+    });
+
+    let box = document.getElementById("rs-v104-growth-card");
+    if(!box){
+      box = document.createElement("div");
+      box.id = "rs-v104-growth-card";
+      chartWrap.appendChild(box);
+    }
+
+    const rows = buildRows();
+    if(!rows.length){
+      box.innerHTML = '<div class="rs-v104-empty">No sold data found for this range.</div>';
+      return;
+    }
+
+    const series = [
+      {label:"Total Income",color:"#38bdf8",values:rows.map(x=>x.income),width:3},
+      {label:"Total Profit",color:"#22c55e",values:rows.map(x=>x.profit),width:3},
+      {label:"Cost + Profit",color:"#a78bfa",values:rows.map(x=>x.costProfit),width:5}
+    ];
+
+    const W=920,H=310,x0=64,y0=26,w=810,h=220;
+    let maxY = 10;
+    series.forEach(s=>s.values.forEach(v=>{maxY=Math.max(maxY,num(v));}));
+
+    const grid = [0,.25,.5,.75,1].map(p=>{
+      const y = y0+h-p*h;
+      const val = maxY*p;
+      return `<line x1="${x0}" y1="${y}" x2="${x0+w}" y2="${y}" stroke="rgba(255,255,255,.12)"/><text x="${x0-10}" y="${y+4}" text-anchor="end" fill="rgba(229,231,235,.75)" font-size="11">${esc(money(val))}</text>`;
+    }).join("");
+
+    const incomeVals = series[0].values;
+    const costProfitVals = series[2].values;
+
+    const lines = series.map(s=>{
+      const offset = s.label === "Cost + Profit" && sameLine(incomeVals,costProfitVals) ? -5 : 0;
+      return `<path d="${path(s.values,x0,y0,w,h,maxY,offset)}" fill="none" stroke="${s.color}" stroke-width="${s.width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    }).join("");
+
+    const picks = [...new Set([0,Math.floor(rows.length*.25),Math.floor(rows.length*.5),Math.floor(rows.length*.75),rows.length-1])].filter(i=>i>=0);
+    const labels = picks.map(i=>{
+      const x = x0 + (rows.length === 1 ? w : (i/(rows.length-1))*w);
+      return `<text x="${x}" y="${y0+h+30}" text-anchor="middle" fill="rgba(229,231,235,.82)" font-size="12">${esc(rows[i].label)}</text>`;
+    }).join("");
+
+    const legend = series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join("");
+
+    box.innerHTML = `
+      <div class="rs-v104-legend">${legend}</div>
+      <svg viewBox="0 0 ${W} ${H}" aria-label="Business Growth chart">
+        ${grid}
+        <line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/>
+        <line x1="${x0}" y1="${y0}" x2="${x0}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/>
+        ${lines}
+        ${labels}
+      </svg>
+    `;
+
+    const kpi = document.getElementById("rs15GrowthCostProfit");
+    if(kpi){
+      const total = readSold().reduce((s,r)=>s+costProfitOf(r),0);
+      kpi.textContent = money(total);
     }
   }
 
-  function fixToasty(){
-    document.querySelectorAll(".toasty-bubble").forEach(el => el.remove());
+  function forceOneCharacter(){
+    document.querySelectorAll("#rsBigHoldCharacter,#rsRealHoldCharacter,#holdsDashboardPanel .holds-easter-wrap,img.holds-easter-figure,.toasty-side-pop").forEach(el=>el.remove());
 
-    document.querySelectorAll(".toasty-side-pop img").forEach(img => {
-      img.onerror = null;
-      img.src = HOLD_SRC;
-      img.style.objectFit = "contain";
-    });
+    let img = document.getElementById("holdCharacter");
+    if(!img){
+      img = document.createElement("img");
+      img.id = "holdCharacter";
+      img.alt = "Hold character";
+      document.body.appendChild(img);
+    }
+
+    img.onerror = null;
+    img.src = HOLD_SRC;
+    return img;
+  }
+
+  function showHoldCharacter(){
+    const img = forceOneCharacter();
+    img.classList.add("show");
+    setTimeout(()=>img.classList.remove("show"),3200);
   }
 
   function start(){
-    removeExtraGrowthGraphs();
-    fixToasty();
+    forceOneCharacter();
+    renderGrowth();
 
-    setTimeout(removeExtraGrowthGraphs, 300);
-    setTimeout(removeExtraGrowthGraphs, 1200);
-    setTimeout(fixToasty, 300);
+    setTimeout(renderGrowth,400);
+    setTimeout(renderGrowth,1200);
+    setTimeout(renderGrowth,2500);
 
-    document.addEventListener("click", e => {
+    setInterval(()=>{
+      forceOneCharacter();
+      renderGrowth();
+    },2000);
+
+    document.addEventListener("click",e=>{
       const label = String((e.target && (e.target.title || e.target.ariaLabel || e.target.textContent || e.target.id || e.target.className)) || "").toLowerCase();
 
-      if(label.includes("toasty")){
-        setTimeout(fixToasty, 20);
-        setTimeout(fixToasty, 120);
-        setTimeout(fixToasty, 300);
+      if(label.includes("toasty") || label.includes("holdcharacter") || label.includes("hold character")){
+        setTimeout(showHoldCharacter,50);
       }
 
       if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
-        setTimeout(removeExtraGrowthGraphs, 160);
+        setTimeout(renderGrowth,160);
       }
-    }, true);
+    },true);
 
-    const obs = new MutationObserver(() => {
-      removeExtraGrowthGraphs();
-      fixToasty();
-    });
-    obs.observe(document.body, {childList:true, subtree:true});
+    document.addEventListener("change",()=>setTimeout(renderGrowth,160),true);
   }
 
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",start);
   else start();
 })();
 </script>
