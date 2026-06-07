@@ -19353,7 +19353,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     set('rs15SevenSales',money(sevenRows.reduce((s,r)=>s+saleOf(r),0))); set('rs15SevenCount',`${whole(sevenRows.length)} item${sevenRows.length===1?'':'s'} sold`);
     set('rs15ActiveListings',whole(active.reduce((s,r)=>s+qtyOf(r),0))); set('rs15InventoryValueNote',`${money(invValue)} listed value`);
     set('rs15AvgProfit',money(avgProfit)); set('rs15AvgMargin',`${margin.toFixed(1)}% margin`); set('rs15SellThrough',`${sellThrough.toFixed(1)}%`);
-    set('rs15GrowthIncome',money(allIncome)); set('rs15GrowthProfit',money(allProfit)); set('rs15GrowthItems',whole(sold.length));
+    set('rs15GrowthIncome',money(allIncome)); set('rs15GrowthProfit',money(allProfit)); set('rs15GrowthCostProfit',money(allCost+allProfit)); set('rs15GrowthItems',whole(sold.length));
     set('rs15YtdIncome',money(yIncome)); set('rs15YtdCost',money(yCost)); set('rs15YtdProfit',money(yProfit)); set('rs15YtdItems',whole(ytd.length)); set('rs15SnapYear',snapshotLabel);
     set('rs15InvCost',money(invCost)); set('rs15InvValue',money(invValue)); set('rs15Unrealized',money(invValue-invCost)); set('rs15Realized',money(allProfit)); set('rs15NetWorth',money(invValue+allProfit));
     const curMonthKey=monthKey(now); const curRows=sold.filter(r=>monthKey(dateOf(r))===curMonthKey);
@@ -19370,11 +19370,11 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     if(!window.Chart) return; chartDefaults();
     const range=localStorage.getItem('rs15Range')||'ALL'; document.querySelectorAll('[data-rs15-range]').forEach(b=>b.classList.toggle('active',b.dataset.rs15Range===range));
     const now=new Date(); let start=null; if(range==='YTD') start=new Date(now.getFullYear(),0,1); if(range==='3M') start=new Date(now.getFullYear(),now.getMonth()-3,now.getDate()); if(range==='1M') start=new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
-    const daily=new Map(); data.sold.forEach(r=>{const d=dateOf(r); if(!d||(start&&d<start)) return; const k=dayKey(d); if(!daily.has(k)) daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0}); const b=daily.get(k); b.income+=saleOf(r); b.profit+=profitOf(r);});
-    let ci=0, cp=0; const dayRows=[...daily.values()].sort((a,b)=>a.date-b.date).map(x=>{ci+=x.income; cp+=x.profit; return {...x,income:ci,profit:cp};});
-    const gc=destroy('rs15GrowthChart'); if(gc){ new Chart(gc,{type:'line',data:{labels:dayRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',day:'numeric'})),datasets:[{label:'Total Income',data:dayRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false},{label:'Total Profit',data:dayRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'12%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
-    const monthly=new Map(); data.sold.forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!monthly.has(k)) monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0}); const b=monthly.get(k); b.income+=saleOf(r); b.cost+=costOf(r); b.profit+=profitOf(r);}); const monRows=[...monthly.values()].sort((a,b)=>a.date-b.date).slice(-12);
-    const mc=destroy('rs15MonthlyChart'); if(mc){ new Chart(mc,{type:'line',data:{labels:monRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'})),datasets:[{label:'Total Income',data:monRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost of Sold',data:monRows.map(x=>+x.cost.toFixed(2)),borderColor:css('--red','#ef4444'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Profit',data:monRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'$300 Goal',data:monRows.map(()=>300),borderColor:css('--yellow','#fbbf24'),backgroundColor:'transparent',borderWidth:2,borderDash:[6,5],pointRadius:0,tension:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'14%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
+    const daily=new Map(); data.sold.forEach(r=>{const d=dateOf(r); if(!d||(start&&d<start)) return; const k=dayKey(d); if(!daily.has(k)) daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0}); const b=daily.get(k); b.income+=saleOf(r); b.profit+=profitOf(r); b.costProfit+=costOf(r)+profitOf(r);});
+    let ci=0, cp=0, ccp=0; const dayRows=[...daily.values()].sort((a,b)=>a.date-b.date).map(x=>{ci+=x.income; cp+=x.profit; ccp+=x.costProfit; return {...x,income:ci,profit:cp,costProfit:ccp};});
+    const gc=destroy('rs15GrowthChart'); if(gc){ new Chart(gc,{type:'line',data:{labels:dayRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',day:'numeric'})),datasets:[{label:'Total Income',data:dayRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false},{label:'Total Profit',data:dayRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:.25,fill:false},{label:'Cost + Profit',data:dayRows.map(x=>+x.costProfit.toFixed(2)),borderColor:'#a78bfa',backgroundColor:'transparent',borderWidth:4,pointRadius:0,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'12%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
+    const monthly=new Map(); data.sold.forEach(r=>{const d=dateOf(r); if(!d)return; const k=monthKey(d); if(!monthly.has(k)) monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0,costProfit:0}); const b=monthly.get(k); b.income+=saleOf(r); b.cost+=costOf(r); b.profit+=profitOf(r); b.costProfit+=costOf(r)+profitOf(r);}); const monRows=[...monthly.values()].sort((a,b)=>a.date-b.date).slice(-12);
+    const mc=destroy('rs15MonthlyChart'); if(mc){ new Chart(mc,{type:'line',data:{labels:monRows.map(x=>x.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'})),datasets:[{label:'Total Income',data:monRows.map(x=>+x.income.toFixed(2)),borderColor:css('--accent','#38bdf8'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost of Sold',data:monRows.map(x=>+x.cost.toFixed(2)),borderColor:css('--red','#ef4444'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Profit',data:monRows.map(x=>+x.profit.toFixed(2)),borderColor:css('--green','#22c55e'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:2,tension:.25,fill:false},{label:'Cost + Profit',data:monRows.map(x=>+x.costProfit.toFixed(2)),borderColor:'#a78bfa',backgroundColor:'transparent',borderWidth:4,pointRadius:2,tension:.25,fill:false},{label:'$300 Goal',data:monRows.map(()=>300),borderColor:css('--yellow','#fbbf24'),backgroundColor:'transparent',borderWidth:2,borderDash:[6,5],pointRadius:0,tension:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,layout:{padding:{top:8,right:12,bottom:6,left:4}},interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top'},tooltip:{callbacks:{label:x=>' '+x.dataset.label+': '+money(x.parsed.y)}}},scales:{x:{grid:{color:'rgba(255,255,255,.10)'}},y:{beginAtZero:true,grace:'14%',ticks:{callback:v=>money(v)},grid:{color:'rgba(255,255,255,.12)'}}}}}); }
     const ic=destroy('rs15InventoryChart'); if(ic){ new Chart(ic,{type:'doughnut',data:{labels:['Inventory Cost','Unrealized Gain','Realized Profit','Holds Value'],datasets:[{data:[Math.max(data.invCost,0),Math.max(data.invValue-data.invCost,0),Math.max(data.allProfit,0),Math.max(data.holdValue,0)],backgroundColor:[css('--accent','#38bdf8'),css('--green','#22c55e'),css('--yellow','#fbbf24'),css('--red','#ef4444')],borderColor:css('--panel','#0a1018'),borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}}); }
   }
 
@@ -23650,6 +23650,297 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 <!-- ===== v74: Inventory action spacing hard fix - compact 2-row grid ===== -->
 <!-- ===== v76 FINAL: Inventory action column fixed 2-row layout (no image) ===== -->
 <!-- ===== v77 REAL FIX: compact inventory actions that fit narrow screens ===== -->
+
+<!-- ===== v100: native chart + one big hold + sold filters + no action flicker ===== -->
+<style id="rs-v100-native-final-css">
+  /* one big hold character only */
+  #holdsDashboardPanel .holds-easter-wrap,
+  #holdsDashboardPanel .holds-easter-figure,
+  img.holds-easter-figure,
+  .toasty-side-pop{
+    display:none !important;
+    opacity:0 !important;
+    visibility:hidden !important;
+  }
+  #holdCharacter,
+  #rsBigHoldCharacter{
+    content:url("https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png") !important;
+    width:170px !important;
+    height:auto !important;
+    object-fit:contain !important;
+    filter:drop-shadow(0 24px 34px rgba(0,0,0,.42)) !important;
+  }
+  #rsBigHoldCharacter{
+    position:fixed !important;
+    right:18px !important;
+    bottom:18px !important;
+    z-index:200000 !important;
+    display:none !important;
+    pointer-events:none !important;
+  }
+  #rsBigHoldCharacter.show{display:block !important;}
+
+  /* action menu no-flicker */
+  #activeTableBody td.action-cell,
+  #activeTableBody .action-cell{
+    width:66px !important;
+    min-width:66px !important;
+    max-width:66px !important;
+    padding:6px 8px !important;
+    text-align:center !important;
+    vertical-align:middle !important;
+    white-space:nowrap !important;
+    overflow:visible !important;
+  }
+  #activeTableBody .action-cell > :not(.rs-menu-action-button){display:none !important;}
+  .rs-menu-action-button{
+    all:unset !important;
+    box-sizing:border-box !important;
+    width:38px !important;
+    height:32px !important;
+    min-width:38px !important;
+    max-width:38px !important;
+    margin:0 auto !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:11px !important;
+    font-size:22px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    color:var(--accent) !important;
+    border:1px solid color-mix(in srgb,var(--accent) 35%,transparent) !important;
+    background:rgba(2,6,23,.45) !important;
+    cursor:pointer !important;
+    transform:none !important;
+    box-shadow:none !important;
+    transition:none !important;
+  }
+  .rs-menu-action-button:hover,
+  .rs-menu-action-button:focus,
+  .rs-menu-action-button:active{
+    transform:none !important;
+    box-shadow:none !important;
+    background:rgba(56,189,248,.12) !important;
+  }
+  #rsActionsMenu{
+    position:fixed;
+    z-index:100000;
+    display:none;
+    min-width:220px;
+    padding:8px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:rgba(8,12,20,.97);
+    box-shadow:0 18px 55px rgba(0,0,0,.45);
+  }
+  #rsActionsMenu.open{display:block;}
+  #rsActionsMenu button{
+    all:unset !important;
+    box-sizing:border-box !important;
+    width:100% !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:10px !important;
+    padding:10px 12px !important;
+    border-radius:12px !important;
+    color:var(--text) !important;
+    font-size:13px !important;
+    cursor:pointer !important;
+  }
+  #rsActionsMenu button:hover{background:color-mix(in srgb,var(--accent) 14%,transparent) !important;}
+  #rsActionsMenu button.danger{color:var(--red) !important;}
+</style>
+
+<script id="rs-v100-native-final-js">
+(function(){
+  if(window.__rsV100NativeFinal) return;
+  window.__rsV100NativeFinal = true;
+
+  const HOLD_SRC = "https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png";
+  const clean = v => String(v ?? "").trim();
+
+  function readRows(key){
+    try{return JSON.parse(localStorage.getItem(key)||"[]")||[];}catch(e){return [];}
+  }
+  function readActive(){
+    try{ if(typeof window.readActive==="function") return window.readActive()||[]; }catch(e){}
+    return readRows("activeInventory");
+  }
+  function readHolds(){
+    try{ if(typeof window.readHolds==="function") return window.readHolds()||[]; }catch(e){}
+    return readRows("inventoryHolds");
+  }
+
+  function findActiveForRow(tr){
+    const texts = Array.from(tr.querySelectorAll("td")).map(td=>clean(td.textContent));
+    const active = readActive();
+    for(const t of texts){
+      const hit = active.find(r => clean(r.item||r.title||r.name) === t);
+      if(hit) return hit;
+    }
+    return active[0] || {item:texts.find(Boolean)||"Inventory Item"};
+  }
+
+  function ensureMenu(){
+    let menu=document.getElementById("rsActionsMenu");
+    if(menu) return menu;
+    menu=document.createElement("div");
+    menu.id="rsActionsMenu";
+    menu.innerHTML='<button type="button" data-action="edit">✏️ <span>Edit</span></button><button type="button" data-action="comps">📈 <span>View eBay Comps</span></button><button type="button" data-action="ebay">📝 <span>eBay Draft</span></button><button type="button" data-action="sold">💲 <span>Mark Sold</span></button><button type="button" data-action="holds">📥 <span>Move to Holds</span></button><button type="button" class="danger" data-action="delete">🗑️ <span>Delete</span></button>';
+    document.body.appendChild(menu);
+    menu.addEventListener("click",ev=>{
+      const btn=ev.target.closest("button[data-action]");
+      if(!btn || !menu.__row) return;
+      const r=menu.__row, a=btn.dataset.action;
+      closeMenu();
+      try{
+        if(a==="edit" && window.openEditModal) window.openEditModal("active",r._id||r.id);
+        else if(a==="comps") window.open("https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(clean(r.item||r.title||r.name||""))+"&LH_Sold=1&LH_Complete=1","_blank","noopener,noreferrer");
+        else if(a==="ebay"){
+          if(window.resellrListOnEbay) window.resellrListOnEbay(r);
+          else window.open("https://www.ebay.com/sl/prelist?title="+encodeURIComponent(clean(r.item||r.title||r.name||"")),"_blank","noopener,noreferrer");
+        }
+        else if(a==="sold" && window.openMarkSoldModal) window.openMarkSoldModal(r._id||r.id);
+        else if(a==="holds" && window.moveActiveToHolds) window.moveActiveToHolds(r._id||r.id);
+        else if(a==="delete" && window.deleteActiveById) window.deleteActiveById(r._id||r.id);
+      }catch(e){console.warn(e);}
+    });
+    return menu;
+  }
+  function closeMenu(){
+    const menu=document.getElementById("rsActionsMenu");
+    if(menu){menu.classList.remove("open");menu.__row=null;}
+  }
+  function openMenu(btn,row){
+    const menu=ensureMenu();
+    menu.__row=row;
+    const rect=btn.getBoundingClientRect(), mw=230;
+    menu.style.left=Math.max(8,Math.min(window.innerWidth-mw-8,rect.right-mw))+"px";
+    menu.style.top=Math.max(8,Math.min(window.innerHeight-270,rect.bottom+6))+"px";
+    menu.classList.add("open");
+  }
+  let converting=false;
+  function convertActions(){
+    if(converting) return;
+    converting=true;
+    try{
+      const tbody=document.getElementById("activeTableBody");
+      if(!tbody) return;
+      tbody.querySelectorAll("tr").forEach(tr=>{
+        const cells=tr.querySelectorAll("td");
+        if(!cells.length) return;
+        const cell=tr.querySelector("td.action-cell") || cells[cells.length-1];
+        cell.classList.add("action-cell");
+        const existing=cell.querySelector(".rs-menu-action-button");
+        if(existing && cell.children.length===1) return;
+        cell.innerHTML="";
+        const btn=document.createElement("button");
+        btn.type="button";
+        btn.className="rs-menu-action-button";
+        btn.title="Actions";
+        btn.setAttribute("aria-label","Actions");
+        btn.textContent="⋮";
+        btn.addEventListener("click",ev=>{
+          ev.preventDefault();
+          ev.stopPropagation();
+          openMenu(btn,findActiveForRow(tr));
+        });
+        cell.appendChild(btn);
+      });
+    }finally{converting=false;}
+  }
+
+  function forceBigHoldOnly(){
+    document.querySelectorAll("#holdsDashboardPanel .holds-easter-wrap,img.holds-easter-figure,.toasty-side-pop").forEach(el=>el.remove());
+    document.querySelectorAll("img#holdCharacter,img[src*='toasty'],img[src*='holds-character']").forEach(img=>{
+      img.onerror=null;
+      img.src=HOLD_SRC;
+      img.style.objectFit="contain";
+    });
+  }
+
+  function ensureBigHold(){
+    let img=document.getElementById("rsBigHoldCharacter");
+    if(!img){
+      img=document.createElement("img");
+      img.id="rsBigHoldCharacter";
+      img.alt="Hold character";
+      img.src=HOLD_SRC;
+      document.body.appendChild(img);
+    }
+    return img;
+  }
+  let lastHoldCount=null, hideTimer=null;
+  function showBigHold(){
+    const img=ensureBigHold();
+    img.src=HOLD_SRC;
+    img.classList.add("show");
+    clearTimeout(hideTimer);
+    hideTimer=setTimeout(()=>img.classList.remove("show"),3200);
+  }
+  function checkHoldIncrease(){
+    const count=readHolds().length;
+    if(lastHoldCount===null){lastHoldCount=count;return;}
+    if(count>lastHoldCount) showBigHold();
+    lastHoldCount=count;
+  }
+
+  function fixSoldFilters(){
+    const all = (typeof window.readSold==="function") ? window.readSold() : readRows("soldInventory");
+    const year=document.getElementById("soldYearFilter")?.value||"ALL";
+    const month=document.getElementById("soldMonthFilter")?.value||"ALL";
+    const platform=document.getElementById("soldPlatformFilter")?.value||"ALL";
+    const type=document.getElementById("soldTypeFilter")?.value||"ALL";
+    if(typeof window.renderSold === "function"){
+      // Let the existing renderer run, then force the summary/chart updater too.
+      try{ window.renderSold(); }catch(e){}
+      try{ if(typeof window.otsUpdateSoldSummaryAndCharts==="function") window.otsUpdateSoldSummaryAndCharts(); }catch(e){}
+      try{ if(typeof window.updateSoldSnapshotYear==="function") window.updateSoldSnapshotYear(); }catch(e){}
+    }
+  }
+
+  function start(){
+    convertActions();
+    forceBigHoldOnly();
+    ensureBigHold();
+    checkHoldIncrease();
+
+    const tbody=document.getElementById("activeTableBody");
+    if(tbody && window.MutationObserver){
+      new MutationObserver(()=>setTimeout(convertActions,60)).observe(tbody,{childList:true,subtree:true});
+    }
+
+    document.addEventListener("click",e=>{
+      const label=String((e.target && (e.target.title||e.target.ariaLabel||e.target.textContent||e.target.id||e.target.className))||"").toLowerCase();
+      if(label.includes("toasty") || label.includes("holdcharacter")) setTimeout(showBigHold,50);
+      if(!e.target.closest("#rsActionsMenu") && !e.target.closest(".rs-menu-action-button")) closeMenu();
+      if(e.target.closest("button") || e.target.closest(".nav")){
+        setTimeout(convertActions,90);
+        setTimeout(checkHoldIncrease,200);
+        setTimeout(forceBigHoldOnly,220);
+      }
+    },true);
+
+    ["soldYearFilter","soldMonthFilter","soldPlatformFilter","soldTypeFilter"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.addEventListener("change",()=>setTimeout(fixSoldFilters,50));
+    });
+
+    document.addEventListener("change",e=>{
+      if(e.target && /^sold(Year|Month|Platform|Type)Filter$/.test(e.target.id || "")){
+        setTimeout(fixSoldFilters,50);
+      }
+    },true);
+
+    setInterval(()=>{forceBigHoldOnly();checkHoldIncrease();},1500);
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+})();
+</script>
+
 </body>
 </html>
 
@@ -26665,784 +26956,3 @@ body.skin-dreamtrip .chart-wrap{
 
 
 <!-- ===== v86: no-flicker inventory action menu + stable Cost+Profit line ===== -->
-<style id="rs-v86-no-flicker-actions-css">
-  #activeTableBody td.action-cell,
-  #activeTableBody .action-cell{
-    width:66px !important;
-    min-width:66px !important;
-    max-width:66px !important;
-    padding:6px 8px !important;
-    text-align:center !important;
-    vertical-align:middle !important;
-    white-space:nowrap !important;
-    overflow:visible !important;
-  }
-
-  #activeTableBody .action-cell > :not(.rs-menu-action-button){
-    display:none !important;
-  }
-
-  .rs-menu-action-button{
-    all:unset !important;
-    box-sizing:border-box !important;
-    width:38px !important;
-    height:32px !important;
-    min-width:38px !important;
-    max-width:38px !important;
-    margin:0 auto !important;
-    display:inline-flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    border-radius:11px !important;
-    font-size:22px !important;
-    line-height:1 !important;
-    font-weight:900 !important;
-    color:var(--accent) !important;
-    border:1px solid color-mix(in srgb, var(--accent) 35%, transparent) !important;
-    background:rgba(2,6,23,.45) !important;
-    cursor:pointer !important;
-    user-select:none !important;
-    transform:none !important;
-    box-shadow:none !important;
-    transition:background .12s ease, border-color .12s ease !important;
-  }
-
-  .rs-menu-action-button:hover,
-  .rs-menu-action-button:focus,
-  .rs-menu-action-button:active{
-    transform:none !important;
-    box-shadow:none !important;
-    background:rgba(56,189,248,.12) !important;
-    border-color:color-mix(in srgb, var(--accent) 55%, transparent) !important;
-  }
-
-  #rsActionsMenu{
-    position:fixed;
-    z-index:100000;
-    display:none;
-    min-width:220px;
-    padding:8px;
-    border-radius:16px;
-    border:1px solid var(--border);
-    background:rgba(8,12,20,.97);
-    box-shadow:0 18px 55px rgba(0,0,0,.45);
-    backdrop-filter:blur(12px);
-    -webkit-backdrop-filter:blur(12px);
-  }
-
-  #rsActionsMenu.open{ display:block; }
-
-  #rsActionsMenu button{
-    all:unset !important;
-    box-sizing:border-box !important;
-    width:100% !important;
-    display:flex !important;
-    align-items:center !important;
-    gap:10px !important;
-    padding:10px 12px !important;
-    margin:0 !important;
-    border-radius:12px !important;
-    color:var(--text) !important;
-    text-align:left !important;
-    font-size:13px !important;
-    cursor:pointer !important;
-  }
-
-  #rsActionsMenu button:hover{
-    background:color-mix(in srgb, var(--accent) 14%, transparent) !important;
-  }
-
-  #rsActionsMenu button.danger{ color:var(--red) !important; }
-</style>
-
-<script id="rs-v86-no-flicker-actions-js">
-(function(){
-  if(window.__rsV86NoFlickerActions) return;
-  window.__rsV86NoFlickerActions = true;
-
-  const clean = v => String(v ?? "").trim();
-  const num = v => {
-    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
-    return Number.isFinite(n) ? n : 0;
-  };
-
-  function readActive(){
-    try{ if(typeof window.readActive === "function") return window.readActive() || []; }catch(e){}
-    try{ return JSON.parse(localStorage.getItem("activeInventory") || "[]") || []; }catch(e){ return []; }
-  }
-
-  function findActiveForRow(tr){
-    const texts = Array.from(tr.querySelectorAll("td")).map(td => clean(td.textContent));
-    const active = readActive();
-
-    for(const t of texts){
-      const hit = active.find(r => clean(r.item || r.title || r.name) === t);
-      if(hit) return hit;
-    }
-    return active[0] || { item: texts.find(Boolean) || "Inventory Item" };
-  }
-
-  function ensureMenu(){
-    let menu = document.getElementById("rsActionsMenu");
-    if(menu) return menu;
-
-    menu = document.createElement("div");
-    menu.id = "rsActionsMenu";
-    menu.innerHTML = `
-      <button type="button" data-action="edit">✏️ <span>Edit</span></button>
-      <button type="button" data-action="comps">📈 <span>View eBay Comps</span></button>
-      <button type="button" data-action="ebay">📝 <span>eBay Draft</span></button>
-      <button type="button" data-action="sold">💲 <span>Mark Sold</span></button>
-      <button type="button" data-action="holds">📥 <span>Move to Holds</span></button>
-      <button type="button" class="danger" data-action="delete">🗑️ <span>Delete</span></button>
-    `;
-    document.body.appendChild(menu);
-
-    menu.addEventListener("click", ev => {
-      const btn = ev.target.closest("button[data-action]");
-      if(!btn || !menu.__row) return;
-
-      const r = menu.__row;
-      const action = btn.dataset.action;
-      closeMenu();
-
-      try{
-        if(action === "edit" && window.openEditModal) window.openEditModal("active", r._id || r.id);
-        else if(action === "comps"){
-          window.open("https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(clean(r.item || r.title || r.name || "")) + "&LH_Sold=1&LH_Complete=1", "_blank", "noopener,noreferrer");
-        }else if(action === "ebay"){
-          if(window.resellrListOnEbay) window.resellrListOnEbay(r);
-          else window.open("https://www.ebay.com/sl/prelist?title=" + encodeURIComponent(clean(r.item || r.title || r.name || "")), "_blank", "noopener,noreferrer");
-        }else if(action === "sold" && window.openMarkSoldModal) window.openMarkSoldModal(r._id || r.id);
-        else if(action === "holds" && window.moveActiveToHolds) window.moveActiveToHolds(r._id || r.id);
-        else if(action === "delete" && window.deleteActiveById) window.deleteActiveById(r._id || r.id);
-      }catch(e){ console.warn("RESELLr Actions menu error:", e); }
-    });
-
-    return menu;
-  }
-
-  function closeMenu(){
-    const menu = document.getElementById("rsActionsMenu");
-    if(menu){
-      menu.classList.remove("open");
-      menu.__row = null;
-    }
-  }
-
-  function openMenu(btn, row){
-    const menu = ensureMenu();
-    menu.__row = row;
-
-    const rect = btn.getBoundingClientRect();
-    const menuWidth = 230;
-    menu.style.left = Math.max(8, Math.min(window.innerWidth - menuWidth - 8, rect.right - menuWidth)) + "px";
-    menu.style.top = Math.max(8, Math.min(window.innerHeight - 270, rect.bottom + 6)) + "px";
-    menu.classList.add("open");
-  }
-
-  function convertActions(){
-    const tbody = document.getElementById("activeTableBody");
-    if(!tbody) return;
-
-    tbody.querySelectorAll("tr").forEach(tr => {
-      const cells = tr.querySelectorAll("td");
-      if(!cells.length) return;
-
-      const cell = tr.querySelector("td.action-cell") || cells[cells.length - 1];
-      cell.classList.add("action-cell");
-
-      const existing = cell.querySelector(".rs-menu-action-button");
-      if(existing && cell.children.length === 1) return;
-
-      cell.innerHTML = "";
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "rs-menu-action-button";
-      btn.title = "Actions";
-      btn.setAttribute("aria-label", "Actions");
-      btn.textContent = "⋮";
-      btn.addEventListener("click", ev => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        openMenu(btn, findActiveForRow(tr));
-      });
-      cell.appendChild(btn);
-    });
-  }
-
-  // Override common old repair function name if it exists.
-  window.resellrFixInventoryActionSpacing = convertActions;
-
-  let convertTimer = null;
-  function scheduleConvert(){
-    clearTimeout(convertTimer);
-    convertTimer = setTimeout(convertActions, 60);
-  }
-
-  function chartFromCanvas(id){
-    const c = document.getElementById(id);
-    try{ return c && window.Chart && Chart.getChart(c); }catch(e){ return null; }
-  }
-
-  function syncCostProfitLine(id){
-    const chart = chartFromCanvas(id);
-    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return;
-
-    const income = chart.data.datasets.find(ds => /total\s*income|income/i.test(String(ds.label || "")));
-    if(!income || !Array.isArray(income.data)) return;
-
-    chart.data.datasets = chart.data.datasets.filter((ds, index, arr) => {
-      if(String(ds.label || "") !== "Cost + Profit") return true;
-      return index === arr.findIndex(x => String(x.label || "") === "Cost + Profit");
-    });
-
-    let ds = chart.data.datasets.find(x => String(x.label || "") === "Cost + Profit");
-    if(!ds){
-      ds = { label:"Cost + Profit" };
-      chart.data.datasets.push(ds);
-    }
-
-    ds.data = income.data.map(v => (v && typeof v === "object" && "y" in v) ? num(v.y) : num(v));
-    ds.hidden = false;
-    ds.borderColor = "#a78bfa";
-    ds.backgroundColor = "transparent";
-    ds.borderWidth = 2.5;
-    ds.pointRadius = 0;
-    ds.tension = 0.25;
-    ds.fill = false;
-
-    try{ chart.update("none"); }catch(e){}
-  }
-
-  function patchGraphs(){
-    syncCostProfitLine("rs15GrowthChart");
-    syncCostProfitLine("rs15MonthlyChart");
-  }
-
-  let graphTimer = null;
-  function scheduleGraphs(){
-    clearTimeout(graphTimer);
-    graphTimer = setTimeout(patchGraphs, 180);
-  }
-
-  function start(){
-    convertActions();
-    patchGraphs();
-
-    const tbody = document.getElementById("activeTableBody");
-    if(tbody && window.MutationObserver){
-      new MutationObserver(scheduleConvert).observe(tbody, { childList:true, subtree:true });
-    }
-
-    // Only table-changing events, not hover/mousemove.
-    document.addEventListener("input", ev => {
-      if(ev.target && /search|filter/i.test(ev.target.id || "")) scheduleConvert();
-    }, true);
-
-    document.addEventListener("click", ev => {
-      if(!ev.target.closest("#rsActionsMenu") && !ev.target.closest(".rs-menu-action-button")) closeMenu();
-
-      // Only after actual table/nav/pagination clicks, not hover.
-      if(ev.target.closest("button") || ev.target.closest(".nav")){
-        scheduleConvert();
-        scheduleGraphs();
-      }
-    }, true);
-
-    document.addEventListener("change", scheduleGraphs, true);
-    window.addEventListener("resize", closeMenu);
-    window.addEventListener("scroll", closeMenu, true);
-
-    [200, 800, 1600].forEach(t => setTimeout(() => {
-      convertActions();
-      patchGraphs();
-    }, t));
-  }
-
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
-  else start();
-})();
-</script>
-
-
-<!-- ===== v97 FINAL WINNER: runs after every other script ===== -->
-
-
-<style id="rs-v98-final-adjust-css">
-#rs15GrowthChart,#rs15MonthlyChart{display:none!important}
-.rs-v98-chart{width:100%;height:320px;min-height:320px;margin-top:4px}
-.rs-v98-chart svg{width:100%;height:100%;display:block}
-.rs-v98-legend{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:12px;font-size:12px;margin:2px 0 8px;color:var(--text)}
-.rs-v98-legend span{display:inline-flex;align-items:center;gap:6px}
-.rs-v98-legend i{display:inline-block;width:22px;height:4px;border-radius:999px}
-#holdsDashboardPanel .holds-easter-wrap,#holdsDashboardPanel .holds-easter-figure,img.holds-easter-figure{display:none!important;opacity:0!important;visibility:hidden!important}
-#holdCharacter{content:url("https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png")!important;width:118px!important;height:auto!important;object-fit:contain!important;filter:drop-shadow(0 12px 18px rgba(0,0,0,.45))!important}
-#rsRealHoldCharacter{position:fixed;right:18px;bottom:18px;width:118px;height:auto;z-index:100000;display:none;object-fit:contain;filter:drop-shadow(0 12px 18px rgba(0,0,0,.45));pointer-events:none}
-#rsRealHoldCharacter.show{display:block!important}
-@media(max-width:900px){#rsRealHoldCharacter,#holdCharacter{width:88px!important;right:10px;bottom:10px}}
-</style>
-<script id="rs-v98-final-adjust-js">
-(function(){
-if(window.__rsV98FinalAdjust)return;window.__rsV98FinalAdjust=true;
-const HOLD_SRC="https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png";
-function num(v){const n=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)?n:0}
-function money(n){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(n)||0)}catch(e){return "$"+(Number(n)||0).toFixed(2)}}
-function readSold(){try{if(typeof window.readSold==="function")return window.readSold()||[]}catch(e){}try{return JSON.parse(localStorage.getItem("soldInventory")||"[]")||[]}catch(e){return[]}}
-function readHolds(){try{if(typeof window.readHolds==="function")return window.readHolds()||[]}catch(e){}try{return JSON.parse(localStorage.getItem("inventoryHolds")||"[]")||[]}catch(e){return[]}}
-function val(r,keys){for(const k of keys){if(r&&r[k]!==undefined&&r[k]!==null&&String(r[k]).trim()!=="")return num(r[k])}return 0}
-function saleOf(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
-function costOf(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","Cost of Sold","buyCost","purchasePrice"])}
-function feeOf(r){return val(r,["fees","fee","Fees","platformFees","platformFee","sellingFees","sellingFee","sellerFees","sellerFee","transactionFee","transactionFees","ebayFee","mercariFee"])}
-function shipOf(r){return val(r,["ship","shipping","Shipping","shippingCost","shipping_cost","shipCost","postage","postageCost","labelCost","shippingLabel"])}
-function profitOf(r){for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!==undefined&&r[k]!==null&&String(r[k]).trim()!=="")return num(r[k])}return saleOf(r)-costOf(r)-feeOf(r)-shipOf(r)}
-function costProfitOf(r){return costOf(r)+profitOf(r)}
-function dateOf(r){const raw=r&&(r.date||r.soldDate||r.Date||r["Sold Date"]||r.sold_date||r.saleDate);const d=new Date(raw||"");return isNaN(d)?null:d}
-function dayKey(d){return d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"):""}
-function monthKey(d){return d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"):""}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function activeRange(){const b=document.querySelector("[data-rs15-range].active");return b?b.dataset.rs15Range:(localStorage.getItem("rs15Range")||"ALL")}
-function rangeStart(){const r=activeRange(),now=new Date();if(r==="YTD")return new Date(now.getFullYear(),0,1);if(r==="3M")return new Date(now.getFullYear(),now.getMonth()-3,now.getDate());if(r==="1M")return new Date(now.getFullYear(),now.getMonth()-1,now.getDate());return null}
-function buildGrowth(){const start=rangeStart(),daily=new Map();readSold().forEach(r=>{const d=dateOf(r);if(!d||(start&&d<start))return;const k=dayKey(d);if(!daily.has(k))daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0});const b=daily.get(k);b.income+=saleOf(r);b.profit+=profitOf(r);b.costProfit+=costProfitOf(r)});let ri=0,rp=0,rcp=0;return[...daily.values()].sort((a,b)=>a.date-b.date).map(x=>{ri+=x.income;rp+=x.profit;rcp+=x.costProfit;return{label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),income:+ri.toFixed(2),profit:+rp.toFixed(2),costProfit:+rcp.toFixed(2)}})}
-function buildMonthly(){const monthly=new Map();readSold().forEach(r=>{const d=dateOf(r);if(!d)return;const k=monthKey(d);if(!monthly.has(k))monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,cost:0,profit:0,costProfit:0});const b=monthly.get(k);b.income+=saleOf(r);b.cost+=costOf(r);b.profit+=profitOf(r);b.costProfit+=costProfitOf(r)});return[...monthly.values()].sort((a,b)=>a.date-b.date).slice(-12).map(x=>({label:x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"}),income:+x.income.toFixed(2),cost:+x.cost.toFixed(2),profit:+x.profit.toFixed(2),costProfit:+x.costProfit.toFixed(2),goal:300}))}
-function path(vals,x0,y0,w,h,maxY){if(!vals.length)return"";maxY=Math.max(10,maxY);return vals.map((v,i)=>{const x=x0+(vals.length===1?w:(i/(vals.length-1))*w),y=y0+h-(num(v)/maxY)*h;return(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)}).join(" ")}
-function renderChart(canvasId,rows,series){const canvas=document.getElementById(canvasId);if(!canvas)return;const wrap=canvas.parentElement;if(!wrap)return;let box=document.getElementById("rs-v98-"+canvasId);if(!box){box=document.createElement("div");box.id="rs-v98-"+canvasId;box.className="rs-v98-chart";wrap.appendChild(box)}const W=920,H=300,x0=64,y0=24,w=810,h=214;let maxY=10;series.forEach(s=>s.values.forEach(v=>{maxY=Math.max(maxY,num(v))}));const grid=[0,.25,.5,.75,1].map(p=>{const y=y0+h-p*h,val=maxY*p;return `<line x1="${x0}" y1="${y}" x2="${x0+w}" y2="${y}" stroke="rgba(255,255,255,.12)"/><text x="${x0-10}" y="${y+4}" text-anchor="end" fill="rgba(229,231,235,.75)" font-size="11">${esc(money(val))}</text>`}).join("");const lines=series.map(s=>`<path d="${path(s.values,x0,y0,w,h,maxY)}" fill="none" stroke="${s.color}" stroke-width="${s.width||3}" stroke-dasharray="${s.dash||""}" stroke-linecap="round" stroke-linejoin="round"/>`).join("");const picks=rows.length?[...new Set([0,Math.floor(rows.length*.25),Math.floor(rows.length*.5),Math.floor(rows.length*.75),rows.length-1])]:[];const xlabels=picks.map(i=>{const x=x0+(rows.length===1?w:(i/(rows.length-1))*w);return `<text x="${x}" y="${y0+h+28}" text-anchor="middle" fill="rgba(229,231,235,.82)" font-size="12">${esc(rows[i].label)}</text>`}).join("");const legend=series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join("");box.innerHTML=`<div class="rs-v98-legend">${legend}</div><svg viewBox="0 0 ${W} ${H}" aria-label="RESELLr chart">${grid}<line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/><line x1="${x0}" y1="${y0}" x2="${x0}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/>${lines}${xlabels}</svg>`}
-function renderAll(){const g=buildGrowth();renderChart("rs15GrowthChart",g,[{label:"Total Income",color:"#38bdf8",values:g.map(x=>x.income)},{label:"Total Profit",color:"#22c55e",values:g.map(x=>x.profit)},{label:"Cost + Profit",color:"#a78bfa",width:5,values:g.map(x=>x.costProfit)}]);const m=buildMonthly();renderChart("rs15MonthlyChart",m,[{label:"Total Income",color:"#38bdf8",values:m.map(x=>x.income)},{label:"Cost of Sold",color:"#ef4444",values:m.map(x=>x.cost)},{label:"Profit",color:"#22c55e",values:m.map(x=>x.profit)},{label:"Cost + Profit",color:"#a78bfa",width:5,values:m.map(x=>x.costProfit)},{label:"$300 Goal",color:"#fbbf24",dash:"7 6",values:m.map(x=>x.goal)}]);const kpi=document.getElementById("rs15GrowthCostProfit");if(kpi){const total=readSold().reduce((s,r)=>s+costProfitOf(r),0);kpi.textContent=money(total)}}
-function forceRealHoldImage(){document.querySelectorAll("#holdsDashboardPanel .holds-easter-wrap,img.holds-easter-figure").forEach(el=>el.remove());document.querySelectorAll("img#holdCharacter,img[src*='toasty'],img[src*='holds-character']").forEach(img=>{img.onerror=null;img.src=HOLD_SRC;img.style.objectFit="contain"})}
-function ensureHoldToast(){let img=document.getElementById("rsRealHoldCharacter");if(!img){img=document.createElement("img");img.id="rsRealHoldCharacter";img.alt="Hold character";img.src=HOLD_SRC;document.body.appendChild(img)}return img}
-let lastHoldCount=null,hideTimer=null;function showBigHold(){const img=ensureHoldToast();img.src=HOLD_SRC;img.classList.add("show");clearTimeout(hideTimer);hideTimer=setTimeout(()=>img.classList.remove("show"),3200)}
-function checkHoldIncrease(){const count=readHolds().length;if(lastHoldCount===null){lastHoldCount=count;return}if(count>lastHoldCount)showBigHold();lastHoldCount=count}
-function start(){forceRealHoldImage();ensureHoldToast();renderAll();checkHoldIncrease();setTimeout(renderAll,500);setTimeout(renderAll,1500);setTimeout(renderAll,3000);setInterval(()=>{forceRealHoldImage();renderAll();checkHoldIncrease()},2000);document.addEventListener("click",e=>{const label=String((e.target&&(e.target.title||e.target.ariaLabel||e.target.textContent))||"").toLowerCase();if(label.includes("toasty"))setTimeout(()=>{forceRealHoldImage();showBigHold()},50);if(e.target.closest("[data-rs15-range]")||e.target.closest(".nav")||e.target.closest("button")){setTimeout(renderAll,200);setTimeout(checkHoldIncrease,250)}},true);document.addEventListener("change",()=>setTimeout(renderAll,200),true)}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
-})();
-</script>
-
-
-<!-- ===== v99: force visible graphs + one big hold character/toasty ===== -->
-<style id="rs-v99-final-force-css">
-  #rs15GrowthChart,
-  #rs15MonthlyChart{
-    display:none !important;
-  }
-
-  .rs-v99-chart{
-    display:block !important;
-    width:100% !important;
-    height:330px !important;
-    min-height:330px !important;
-    margin-top:8px !important;
-    position:relative !important;
-  }
-
-  .rs-v99-chart svg{
-    width:100% !important;
-    height:100% !important;
-    display:block !important;
-    overflow:visible !important;
-  }
-
-  .rs-v99-legend{
-    display:flex !important;
-    justify-content:center !important;
-    align-items:center !important;
-    flex-wrap:wrap !important;
-    gap:12px !important;
-    font-size:12px !important;
-    margin:2px 0 8px !important;
-    color:var(--text,#e5e7eb) !important;
-  }
-
-  .rs-v99-legend span{
-    display:inline-flex !important;
-    align-items:center !important;
-    gap:6px !important;
-  }
-
-  .rs-v99-legend i{
-    display:inline-block !important;
-    width:24px !important;
-    height:5px !important;
-    border-radius:999px !important;
-  }
-
-  /* Kill all smaller duplicate hold/toasty characters */
-  #holdsDashboardPanel .holds-easter-wrap,
-  #holdsDashboardPanel .holds-easter-figure,
-  img.holds-easter-figure,
-  .toasty-side-pop{
-    display:none !important;
-    opacity:0 !important;
-    visibility:hidden !important;
-  }
-
-  /* Use one big character everywhere */
-  #holdCharacter,
-  #rsRealHoldCharacter,
-  #rsBigHoldCharacter{
-    content:url("https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png") !important;
-    width:170px !important;
-    height:auto !important;
-    object-fit:contain !important;
-    filter:drop-shadow(0 24px 34px rgba(0,0,0,.42)) !important;
-  }
-
-  #rsBigHoldCharacter{
-    position:fixed !important;
-    right:18px !important;
-    bottom:18px !important;
-    z-index:200000 !important;
-    display:none !important;
-    pointer-events:none !important;
-  }
-
-  #rsBigHoldCharacter.show{
-    display:block !important;
-  }
-
-  @media(max-width:900px){
-    #holdCharacter,
-    #rsRealHoldCharacter,
-    #rsBigHoldCharacter{
-      width:128px !important;
-      right:10px !important;
-      bottom:10px !important;
-    }
-  }
-</style>
-
-<script id="rs-v99-final-force-js">
-(function(){
-  if(window.__rsV99FinalForce) return;
-  window.__rsV99FinalForce = true;
-
-  console.log("RESELLr v99 final force loaded");
-
-  const HOLD_SRC = "https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png";
-
-  function num(v){
-    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  function money(n){
-    try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(n)||0);}
-    catch(e){return "$"+(Number(n)||0).toFixed(2);}
-  }
-
-  function readSold(){
-    try{ if(typeof window.readSold === "function") return window.readSold() || []; }catch(e){}
-    try{ return JSON.parse(localStorage.getItem("soldInventory") || "[]") || []; }catch(e){ return []; }
-  }
-
-  function readHolds(){
-    try{ if(typeof window.readHolds === "function") return window.readHolds() || []; }catch(e){}
-    try{ return JSON.parse(localStorage.getItem("inventoryHolds") || "[]") || []; }catch(e){ return []; }
-  }
-
-  function val(r, keys){
-    for(const k of keys){
-      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
-    }
-    return 0;
-  }
-
-  function saleOf(r){
-    return val(r, ["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"]);
-  }
-
-  function costOf(r){
-    return val(r, ["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","Cost of Sold","buyCost","purchasePrice"]);
-  }
-
-  function feeOf(r){
-    return val(r, ["fees","fee","Fees","platformFees","platformFee","sellingFees","sellingFee","sellerFees","sellerFee","transactionFee","transactionFees","ebayFee","mercariFee"]);
-  }
-
-  function shipOf(r){
-    return val(r, ["ship","shipping","Shipping","shippingCost","shipping_cost","shipCost","postage","postageCost","labelCost","shippingLabel"]);
-  }
-
-  function profitOf(r){
-    // Recalculate net profit when fees/shipping exist.
-    const fee = feeOf(r);
-    const ship = shipOf(r);
-    if(fee || ship) return saleOf(r) - costOf(r) - fee - ship;
-
-    // Otherwise use stored profit.
-    for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){
-      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
-    }
-
-    return saleOf(r) - costOf(r);
-  }
-
-  function costProfitOf(r){
-    // Cost + Profit should equal cost of sold + net profit.
-    return costOf(r) + profitOf(r);
-  }
-
-  function dateOf(r){
-    const raw = r && (r.date || r.soldDate || r.Date || r["Sold Date"] || r.sold_date || r.saleDate);
-    const d = new Date(raw || "");
-    return isNaN(d) ? null : d;
-  }
-
-  function dayKey(d){
-    return d ? d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") : "";
-  }
-
-  function monthKey(d){
-    return d ? d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0") : "";
-  }
-
-  function esc(s){
-    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  function activeRange(){
-    const b = document.querySelector("[data-rs15-range].active");
-    return b ? b.dataset.rs15Range : (localStorage.getItem("rs15Range") || "ALL");
-  }
-
-  function rangeStart(){
-    const r = activeRange();
-    const now = new Date();
-    if(r === "YTD") return new Date(now.getFullYear(),0,1);
-    if(r === "3M") return new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
-    if(r === "1M") return new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
-    return null;
-  }
-
-  function buildGrowth(){
-    const start = rangeStart();
-    const daily = new Map();
-
-    readSold().forEach(r=>{
-      const d = dateOf(r);
-      if(!d || (start && d < start)) return;
-      const k = dayKey(d);
-      if(!daily.has(k)){
-        daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()), income:0, profit:0, costProfit:0});
-      }
-      const b = daily.get(k);
-      b.income += saleOf(r);
-      b.profit += profitOf(r);
-      b.costProfit += costProfitOf(r);
-    });
-
-    let ri=0, rp=0, rcp=0;
-    return Array.from(daily.values()).sort((a,b)=>a.date-b.date).map(x=>{
-      ri += x.income;
-      rp += x.profit;
-      rcp += x.costProfit;
-      return {
-        label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),
-        income:+ri.toFixed(2),
-        profit:+rp.toFixed(2),
-        costProfit:+rcp.toFixed(2)
-      };
-    });
-  }
-
-  function buildMonthly(){
-    const monthly = new Map();
-
-    readSold().forEach(r=>{
-      const d = dateOf(r);
-      if(!d) return;
-      const k = monthKey(d);
-      if(!monthly.has(k)){
-        monthly.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1), income:0, cost:0, profit:0, costProfit:0});
-      }
-      const b = monthly.get(k);
-      b.income += saleOf(r);
-      b.cost += costOf(r);
-      b.profit += profitOf(r);
-      b.costProfit += costProfitOf(r);
-    });
-
-    return Array.from(monthly.values()).sort((a,b)=>a.date-b.date).slice(-12).map(x=>({
-      label:x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"}),
-      income:+x.income.toFixed(2),
-      cost:+x.cost.toFixed(2),
-      profit:+x.profit.toFixed(2),
-      costProfit:+x.costProfit.toFixed(2),
-      goal:300
-    }));
-  }
-
-  function path(vals,x0,y0,w,h,maxY,offset){
-    if(!vals.length) return "";
-    maxY = Math.max(10,maxY);
-    return vals.map((v,i)=>{
-      const x = x0 + (vals.length === 1 ? w : (i/(vals.length-1))*w);
-      const y = y0 + h - (num(v)/maxY)*h + (offset || 0);
-      return (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
-    }).join(" ");
-  }
-
-  function renderChart(canvasId, rows, series){
-    const canvas = document.getElementById(canvasId);
-    if(!canvas) return;
-
-    const panel = canvas.closest(".rs15-panel,.panel,section") || canvas.parentElement;
-    const wrap = canvas.parentElement || panel;
-    if(!wrap) return;
-
-    let box = document.getElementById("rs-v99-" + canvasId);
-    if(!box){
-      box = document.createElement("div");
-      box.id = "rs-v99-" + canvasId;
-      box.className = "rs-v99-chart";
-      wrap.appendChild(box);
-    }
-
-    const W=920,H=310,x0=64,y0=26,w=810,h=220;
-    let maxY=10;
-    series.forEach(s=>s.values.forEach(v=>{maxY = Math.max(maxY,num(v));}));
-
-    const grid = [0,.25,.5,.75,1].map(p=>{
-      const y = y0+h-p*h, val = maxY*p;
-      return `<line x1="${x0}" y1="${y}" x2="${x0+w}" y2="${y}" stroke="rgba(255,255,255,.12)"/><text x="${x0-10}" y="${y+4}" text-anchor="end" fill="rgba(229,231,235,.75)" font-size="11">${esc(money(val))}</text>`;
-    }).join("");
-
-    const lines = series.map(s=>{
-      const p = path(s.values,x0,y0,w,h,maxY,s.offset || 0);
-      return `<path d="${p}" fill="none" stroke="${s.color}" stroke-width="${s.width || 3}" stroke-dasharray="${s.dash || ""}" stroke-linecap="round" stroke-linejoin="round"/>`;
-    }).join("");
-
-    const picks = rows.length ? [...new Set([0,Math.floor(rows.length*.25),Math.floor(rows.length*.5),Math.floor(rows.length*.75),rows.length-1])] : [];
-    const xlabels = picks.map(i=>{
-      const x = x0 + (rows.length === 1 ? w : (i/(rows.length-1))*w);
-      return `<text x="${x}" y="${y0+h+30}" text-anchor="middle" fill="rgba(229,231,235,.82)" font-size="12">${esc(rows[i].label)}</text>`;
-    }).join("");
-
-    const legend = series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join("");
-
-    box.innerHTML = `
-      <div class="rs-v99-legend">${legend}</div>
-      <svg viewBox="0 0 ${W} ${H}" aria-label="RESELLr chart">
-        ${grid}
-        <line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/>
-        <line x1="${x0}" y1="${y0}" x2="${x0}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/>
-        ${lines}
-        ${xlabels}
-      </svg>
-    `;
-  }
-
-  function arraysEqual(a,b){
-    if(!a || !b || a.length !== b.length) return false;
-    return a.every((v,i)=>Math.abs(num(v)-num(b[i])) < 0.01);
-  }
-
-  function renderAll(){
-    const g = buildGrowth();
-    const gIncome = g.map(x=>x.income);
-    const gCostProfit = g.map(x=>x.costProfit);
-
-    renderChart("rs15GrowthChart", g, [
-      {label:"Total Income",color:"#38bdf8",values:gIncome},
-      {label:"Total Profit",color:"#22c55e",values:g.map(x=>x.profit)},
-      {label:"Cost + Profit",color:"#a78bfa",width:5,offset:arraysEqual(gIncome,gCostProfit)?-4:0,values:gCostProfit}
-    ]);
-
-    const m = buildMonthly();
-    const mIncome = m.map(x=>x.income);
-    const mCostProfit = m.map(x=>x.costProfit);
-
-    renderChart("rs15MonthlyChart", m, [
-      {label:"Total Income",color:"#38bdf8",values:mIncome},
-      {label:"Cost of Sold",color:"#ef4444",values:m.map(x=>x.cost)},
-      {label:"Profit",color:"#22c55e",values:m.map(x=>x.profit)},
-      {label:"Cost + Profit",color:"#a78bfa",width:5,offset:arraysEqual(mIncome,mCostProfit)?-4:0,values:mCostProfit},
-      {label:"$300 Goal",color:"#fbbf24",dash:"7 6",values:m.map(x=>x.goal)}
-    ]);
-
-    const kpi = document.getElementById("rs15GrowthCostProfit");
-    if(kpi){
-      const total = readSold().reduce((s,r)=>s+costProfitOf(r),0);
-      kpi.textContent = money(total);
-    }
-  }
-
-  function forceRealHoldImage(){
-    // Remove the smaller duplicate sources completely.
-    document.querySelectorAll("#holdsDashboardPanel .holds-easter-wrap,img.holds-easter-figure,.toasty-side-pop").forEach(el=>el.remove());
-
-    // Convert any dashboard hold/toasty image to the same big hold character.
-    document.querySelectorAll("img#holdCharacter,img[src*='toasty'],img[src*='holds-character']").forEach(img=>{
-      img.onerror = null;
-      img.src = HOLD_SRC;
-      img.style.objectFit = "contain";
-    });
-  }
-
-  function ensureBigHold(){
-    let img = document.getElementById("rsBigHoldCharacter");
-    if(!img){
-      img = document.createElement("img");
-      img.id = "rsBigHoldCharacter";
-      img.alt = "Hold character";
-      img.src = HOLD_SRC;
-      document.body.appendChild(img);
-    }
-    return img;
-  }
-
-  let lastHoldCount = null;
-  let hideTimer = null;
-
-  function showBigHold(){
-    const img = ensureBigHold();
-    img.src = HOLD_SRC;
-    img.classList.add("show");
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(()=>img.classList.remove("show"),3200);
-  }
-
-  function checkHoldIncrease(){
-    const count = readHolds().length;
-    if(lastHoldCount === null){
-      lastHoldCount = count;
-      return;
-    }
-    if(count > lastHoldCount) showBigHold();
-    lastHoldCount = count;
-  }
-
-  function start(){
-    forceRealHoldImage();
-    ensureBigHold();
-    renderAll();
-    checkHoldIncrease();
-
-    setTimeout(renderAll,500);
-    setTimeout(renderAll,1500);
-    setTimeout(renderAll,3000);
-
-    setInterval(()=>{
-      forceRealHoldImage();
-      renderAll();
-      checkHoldIncrease();
-    },2000);
-
-    // Restore dashboard Toasty behavior using the same big character.
-    document.addEventListener("click",e=>{
-      const label = String((e.target && (e.target.title || e.target.ariaLabel || e.target.textContent || e.target.id || e.target.className)) || "").toLowerCase();
-      if(label.includes("toasty") || label.includes("holdcharacter")){
-        setTimeout(showBigHold,50);
-      }
-      if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
-        setTimeout(renderAll,200);
-        setTimeout(checkHoldIncrease,250);
-      }
-    },true);
-
-    document.addEventListener("change",()=>setTimeout(renderAll,200),true);
-  }
-
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",start);
-  else start();
-})();
-</script>
