@@ -10650,7 +10650,7 @@ button[aria-label*="eBay"] img{
           <div class="stat muted" id="holdsAvgValueStat">AVG VALUE/ITEM: $0.00</div>
           <div class="holds-easter-wrap" aria-hidden="true">
             <div class="holds-easter-trigger"></div>
-            <img class="holds-easter-figure" src="assets/images/holds-character.png" alt="">
+            <img class="holds-easter-figure" src="assets/images/hold-character.png" alt="">
           </div>
         </div>
 
@@ -14567,7 +14567,7 @@ function triggerSoldCelebration(amount){
 </script>
 
 
-<img id="holdCharacter" src="assets/images/holds-character.png" alt="Hold character">
+<img id="holdCharacter" src="assets/images/hold-character.png" alt="Hold character">
 
 <script>
 function triggerHoldCharacter(){
@@ -19129,7 +19129,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     pop.className = "toasty-side-pop";
     pop.innerHTML = `
       <div class="toasty-bubble">TOASTY!</div>
-      <img src="assets/images/holds-character.png" alt="" aria-hidden="true">
+      <img src="assets/images/hold-character.png" alt="" aria-hidden="true">
     `;
     document.body.appendChild(pop);
     setTimeout(()=>pop.remove(), 1550);
@@ -23943,26 +23943,30 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 <!-- ===== v101: restore Business Growth graph + one hold character only ===== -->
-<style id="rs-v101-growth-onehold-css">
-  /* Business Growth canvas is failing in some builds, so draw one stable overlay only there. */
+
+<!-- ===== v102: Business Growth visible card + Toasty uses same hold character ===== -->
+<style id="rs-v102-growth-toasty-css">
+  /* Do not hide the original monthly chart. Only replace the broken Business Growth canvas. */
   #rs15GrowthChart{
     display:none !important;
   }
-  #rs-v101-growth-chart{
+
+  #rs-v102-growth-card{
     display:block !important;
     width:100% !important;
-    height:330px !important;
     min-height:330px !important;
-    margin-top:8px !important;
+    margin-top:10px !important;
     position:relative !important;
   }
-  #rs-v101-growth-chart svg{
+
+  #rs-v102-growth-card svg{
     width:100% !important;
-    height:100% !important;
+    height:330px !important;
     display:block !important;
     overflow:visible !important;
   }
-  .rs-v101-legend{
+
+  .rs-v102-legend{
     display:flex !important;
     justify-content:center !important;
     align-items:center !important;
@@ -23972,25 +23976,34 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     margin:2px 0 8px !important;
     color:var(--text,#e5e7eb) !important;
   }
-  .rs-v101-legend span{
+
+  .rs-v102-legend span{
     display:inline-flex !important;
     align-items:center !important;
     gap:6px !important;
   }
-  .rs-v101-legend i{
-    display:inline-block !important;
+
+  .rs-v102-legend i{
     width:24px !important;
     height:5px !important;
     border-radius:999px !important;
+    display:inline-block !important;
   }
 
-  /* Only one hold character: use the app's #holdCharacter as the single big one. */
+  .rs-v102-empty{
+    min-height:260px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    color:var(--muted,#94a3b8) !important;
+  }
+
+  /* Keep only the app's big hold character for inventory holds. */
   #rsBigHoldCharacter,
   #rsRealHoldCharacter,
   #holdsDashboardPanel .holds-easter-wrap,
   #holdsDashboardPanel .holds-easter-figure,
-  img.holds-easter-figure,
-  .toasty-side-pop{
+  img.holds-easter-figure{
     display:none !important;
     opacity:0 !important;
     visibility:hidden !important;
@@ -24005,15 +24018,36 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     z-index:200000 !important;
   }
 
+  /* Toasty dashboard pop-up now uses the same bigger hold character. */
+  .toasty-side-pop{
+    display:block !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    width:210px !important;
+    height:190px !important;
+    z-index:220000 !important;
+  }
+
+  .toasty-side-pop img{
+    content:url("https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png") !important;
+    width:170px !important;
+    height:auto !important;
+    object-fit:contain !important;
+    filter:drop-shadow(0 24px 34px rgba(0,0,0,.42)) !important;
+  }
+
   @media(max-width:900px){
-    #holdCharacter{width:128px !important;}
+    #holdCharacter,
+    .toasty-side-pop img{
+      width:128px !important;
+    }
   }
 </style>
 
-<script id="rs-v101-growth-onehold-js">
+<script id="rs-v102-growth-toasty-js">
 (function(){
-  if(window.__rsV101GrowthOneHold) return;
-  window.__rsV101GrowthOneHold = true;
+  if(window.__rsV102GrowthToasty) return;
+  window.__rsV102GrowthToasty = true;
 
   const HOLD_SRC = "https://jkilla-cmd.github.io/RESELLr/assets/images/hold-character.png";
 
@@ -24056,8 +24090,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   }
 
   function profitOf(r){
-    const fee = feeOf(r);
-    const ship = shipOf(r);
+    const fee = feeOf(r), ship = shipOf(r);
     if(fee || ship) return saleOf(r) - costOf(r) - fee - ship;
 
     for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){
@@ -24098,107 +24131,124 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     return null;
   }
 
-  function buildGrowth(){
+  function buildRows(){
     const start = rangeStart();
     const daily = new Map();
 
-    readSold().forEach(r=>{
+    readSold().forEach(r => {
       const d = dateOf(r);
       if(!d || (start && d < start)) return;
+
       const k = dayKey(d);
       if(!daily.has(k)){
-        daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()), income:0, profit:0, costProfit:0});
+        daily.set(k, {
+          date:new Date(d.getFullYear(), d.getMonth(), d.getDate()),
+          income:0,
+          profit:0,
+          costProfit:0
+        });
       }
+
       const b = daily.get(k);
       b.income += saleOf(r);
       b.profit += profitOf(r);
       b.costProfit += costProfitOf(r);
     });
 
-    let ri=0, rp=0, rcp=0;
-    return Array.from(daily.values()).sort((a,b)=>a.date-b.date).map(x=>{
-      ri += x.income;
-      rp += x.profit;
-      rcp += x.costProfit;
+    let income = 0, profit = 0, cp = 0;
+    return Array.from(daily.values()).sort((a,b)=>a.date-b.date).map(x => {
+      income += x.income;
+      profit += x.profit;
+      cp += x.costProfit;
       return {
         label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),
-        income:+ri.toFixed(2),
-        profit:+rp.toFixed(2),
-        costProfit:+rcp.toFixed(2)
+        income:+income.toFixed(2),
+        profit:+profit.toFixed(2),
+        costProfit:+cp.toFixed(2)
       };
     });
   }
 
-  function path(vals,x0,y0,w,h,maxY,offset){
-    if(!vals.length) return "";
-    maxY = Math.max(10,maxY);
-    return vals.map((v,i)=>{
-      const x = x0 + (vals.length === 1 ? w : (i/(vals.length-1))*w);
+  function path(values, x0, y0, w, h, maxY, offset){
+    if(!values.length) return "";
+    maxY = Math.max(10, maxY);
+    return values.map((v,i) => {
+      const x = x0 + (values.length === 1 ? w : (i/(values.length-1))*w);
       const y = y0 + h - (num(v)/maxY)*h + (offset || 0);
       return (i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1);
     }).join(" ");
+  }
+
+  function sameLine(a,b){
+    return a.length === b.length && a.every((v,i)=>Math.abs(num(v)-num(b[i])) < 0.01);
   }
 
   function renderGrowth(){
     const canvas = document.getElementById("rs15GrowthChart");
     if(!canvas) return;
 
-    const wrap = canvas.parentElement || canvas.closest(".rs15-panel,.panel,section");
-    if(!wrap) return;
+    const panel = canvas.closest(".rs15-panel") || canvas.closest(".panel") || canvas.parentElement;
+    if(!panel) return;
 
-    let box = document.getElementById("rs-v101-growth-chart");
+    let box = document.getElementById("rs-v102-growth-card");
     if(!box){
       box = document.createElement("div");
-      box.id = "rs-v101-growth-chart";
-      wrap.appendChild(box);
+      box.id = "rs-v102-growth-card";
+
+      const chartWrap = canvas.closest(".rs15-chart") || canvas.parentElement;
+      if(chartWrap && chartWrap.parentElement){
+        chartWrap.parentElement.insertBefore(box, chartWrap.nextSibling);
+      }else{
+        panel.appendChild(box);
+      }
     }
 
-    const rows = buildGrowth();
-    const W=920,H=310,x0=64,y0=26,w=810,h=220;
+    const rows = buildRows();
+    if(!rows.length){
+      box.innerHTML = '<div class="rs-v102-empty">No sold data found for this range.</div>';
+      return;
+    }
 
     const series = [
-      {label:"Total Income",color:"#38bdf8",values:rows.map(x=>x.income)},
-      {label:"Total Profit",color:"#22c55e",values:rows.map(x=>x.profit)},
-      {label:"Cost + Profit",color:"#a78bfa",width:5,values:rows.map(x=>x.costProfit)}
+      {label:"Total Income", color:"#38bdf8", values:rows.map(x=>x.income), width:3},
+      {label:"Total Profit", color:"#22c55e", values:rows.map(x=>x.profit), width:3},
+      {label:"Cost + Profit", color:"#a78bfa", values:rows.map(x=>x.costProfit), width:5}
     ];
 
-    let maxY=10;
-    series.forEach(s=>s.values.forEach(v=>{maxY = Math.max(maxY,num(v));}));
+    const W=920, H=310, x0=64, y0=26, w=810, h=220;
+    let maxY = 10;
+    series.forEach(s => s.values.forEach(v => maxY = Math.max(maxY, num(v))));
 
-    const grid = [0,.25,.5,.75,1].map(p=>{
+    const grid = [0,.25,.5,.75,1].map(p => {
       const y = y0+h-p*h;
       const value = maxY*p;
       return `<line x1="${x0}" y1="${y}" x2="${x0+w}" y2="${y}" stroke="rgba(255,255,255,.12)"/><text x="${x0-10}" y="${y+4}" text-anchor="end" fill="rgba(229,231,235,.75)" font-size="11">${esc(money(value))}</text>`;
     }).join("");
 
-    function equal(a,b){
-      return a.length === b.length && a.every((v,i)=>Math.abs(num(v)-num(b[i])) < 0.01);
-    }
-
     const incomeVals = series[0].values;
-    const cpVals = series[2].values;
+    const costProfitVals = series[2].values;
 
-    const lines = series.map(s=>{
-      const off = s.label === "Cost + Profit" && equal(incomeVals,cpVals) ? -5 : 0;
-      return `<path d="${path(s.values,x0,y0,w,h,maxY,off)}" fill="none" stroke="${s.color}" stroke-width="${s.width || 3}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const lines = series.map(s => {
+      const offset = s.label === "Cost + Profit" && sameLine(incomeVals,costProfitVals) ? -5 : 0;
+      return `<path d="${path(s.values,x0,y0,w,h,maxY,offset)}" fill="none" stroke="${s.color}" stroke-width="${s.width}" stroke-linecap="round" stroke-linejoin="round"/>`;
     }).join("");
 
-    const picks = rows.length ? [...new Set([0,Math.floor(rows.length*.25),Math.floor(rows.length*.5),Math.floor(rows.length*.75),rows.length-1])] : [];
-    const xlabels = picks.map(i=>{
+    const picks = [...new Set([0, Math.floor(rows.length*.25), Math.floor(rows.length*.5), Math.floor(rows.length*.75), rows.length-1])].filter(i => i >= 0);
+    const labels = picks.map(i => {
       const x = x0 + (rows.length === 1 ? w : (i/(rows.length-1))*w);
       return `<text x="${x}" y="${y0+h+30}" text-anchor="middle" fill="rgba(229,231,235,.82)" font-size="12">${esc(rows[i].label)}</text>`;
     }).join("");
 
-    const legend = series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join("");
+    const legend = series.map(s => `<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join("");
 
     box.innerHTML = `
-      <div class="rs-v101-legend">${legend}</div>
+      <div class="rs-v102-legend">${legend}</div>
       <svg viewBox="0 0 ${W} ${H}" aria-label="Business Growth chart">
         ${grid}
         <line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/>
         <line x1="${x0}" y1="${y0}" x2="${x0}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/>
         ${lines}
-        ${xlabels}
+        ${labels}
       </svg>
     `;
 
@@ -24209,7 +24259,9 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     }
   }
 
-  function ensureHoldCharacter(){
+  function forceOneCharacter(){
+    document.querySelectorAll("#rsBigHoldCharacter,#rsRealHoldCharacter,#holdsDashboardPanel .holds-easter-wrap,img.holds-easter-figure").forEach(el=>el.remove());
+
     let img = document.getElementById("holdCharacter");
     if(!img){
       img = document.createElement("img");
@@ -24217,51 +24269,61 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
       img.alt = "Hold character";
       document.body.appendChild(img);
     }
+
     img.onerror = null;
     img.src = HOLD_SRC;
     return img;
   }
 
-  function forceOneHoldOnly(){
-    document.querySelectorAll("#rsBigHoldCharacter,#rsRealHoldCharacter,#holdsDashboardPanel .holds-easter-wrap,img.holds-easter-figure,.toasty-side-pop").forEach(el=>el.remove());
-    const img = ensureHoldCharacter();
-    img.src = HOLD_SRC;
+  function showHoldCharacter(){
+    const img = forceOneCharacter();
+    img.classList.add("show");
+    setTimeout(()=>img.classList.remove("show"), 3200);
   }
 
-  let hideTimer = null;
-  function showHoldCharacter(){
-    const img = ensureHoldCharacter();
-    img.classList.add("show");
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(()=>img.classList.remove("show"),3200);
+  function fixToastyImages(){
+    document.querySelectorAll(".toasty-side-pop img").forEach(img => {
+      img.onerror = null;
+      img.src = HOLD_SRC;
+    });
   }
 
   function start(){
-    forceOneHoldOnly();
+    forceOneCharacter();
     renderGrowth();
+    fixToastyImages();
 
     setTimeout(renderGrowth,400);
     setTimeout(renderGrowth,1200);
-    setTimeout(renderGrowth,2500);
+    setTimeout(renderGrowth,2600);
 
     setInterval(()=>{
-      forceOneHoldOnly();
+      forceOneCharacter();
       renderGrowth();
+      fixToastyImages();
     },2000);
 
-    document.addEventListener("click",e=>{
+    document.addEventListener("click", e => {
       const label = String((e.target && (e.target.title || e.target.ariaLabel || e.target.textContent || e.target.id || e.target.className)) || "").toLowerCase();
 
-      if(label.includes("toasty") || label.includes("holdcharacter")){
+      if(label.includes("toasty")){
+        setTimeout(showHoldCharacter,50);
+        setTimeout(fixToastyImages,80);
+      }
+
+      if(label.includes("holdcharacter") || label.includes("hold character")){
         setTimeout(showHoldCharacter,50);
       }
 
-      if(label.includes("hold") || e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
+      if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
         setTimeout(renderGrowth,160);
       }
     },true);
 
     document.addEventListener("change",()=>setTimeout(renderGrowth,160),true);
+
+    const obs = new MutationObserver(fixToastyImages);
+    obs.observe(document.body,{childList:true,subtree:true});
   }
 
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",start);
