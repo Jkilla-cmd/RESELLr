@@ -27489,9 +27489,9 @@ body.skin-dreamtrip .chart-wrap{
 </script>
 
 
-<!-- ===== v114: remove Business Growth blank gap ===== -->
-<style id="rs-v114-remove-growth-gap-css">
-  /* Collapse the old hidden native chart area that was leaving the big blank gap */
+<!-- ===== v115: move Business Growth chart out of hidden wrapper and remove gap safely ===== -->
+<style id="rs-v115-growth-gap-safe-css">
+  /* Hide the old broken canvas only, not the replacement graph */
   #rs15GrowthChart{
     display:none !important;
     height:0 !important;
@@ -27501,49 +27501,84 @@ body.skin-dreamtrip .chart-wrap{
     padding:0 !important;
   }
 
-  #rs15GrowthChartWrap,
-  .rs15-growth-chart-wrap,
-  .business-growth-chart-wrap{
-    height:0 !important;
-    min-height:0 !important;
-    max-height:0 !important;
-    margin:0 !important;
+  #rs-v113-growth-wrap{
+    display:block !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    height:360px !important;
+    min-height:360px !important;
+    margin:10px 0 0 0 !important;
     padding:0 !important;
-    overflow:hidden !important;
+    position:relative !important;
+    clear:both !important;
   }
 
-  #rs-v113-growth-wrap{
-    margin-top:10px !important;
+  #rs-v113-growth-canvas{
+    display:block !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    width:100% !important;
     height:340px !important;
-    min-height:340px !important;
   }
 </style>
 
-<script id="rs-v114-remove-growth-gap-js">
+<script id="rs-v115-growth-gap-safe-js">
 (function(){
-  if(window.__rsV114RemoveGrowthGap) return;
-  window.__rsV114RemoveGrowthGap = true;
+  if(window.__rsV115GrowthGapSafe) return;
+  window.__rsV115GrowthGapSafe = true;
 
   function findGrowthPanel(){
-    const headings = Array.from(document.querySelectorAll("h1,h2,h3,h4,.panel-title"));
-    const h = headings.find(el => /business\s+growth/i.test(el.textContent || ""));
+    const heads = Array.from(document.querySelectorAll("h1,h2,h3,h4,.panel-title"));
+    const h = heads.find(el => /business\s+growth/i.test(el.textContent || ""));
     if(h) return h.closest(".panel") || h.closest("section") || h.parentElement;
+
     const native = document.getElementById("rs15GrowthChart");
     return native ? (native.closest(".panel") || native.closest("section") || native.parentElement) : null;
   }
 
-  function fixGap(){
-    const canvas = document.getElementById("rs15GrowthChart");
-    if(canvas){
-      canvas.style.display = "none";
-      canvas.style.height = "0";
-      canvas.style.minHeight = "0";
-      canvas.style.maxHeight = "0";
-      canvas.style.margin = "0";
-      canvas.style.padding = "0";
+  function fixPlacement(){
+    const panel = findGrowthPanel();
+    const graph = document.getElementById("rs-v113-growth-wrap");
+    const native = document.getElementById("rs15GrowthChart");
+    if(!panel || !graph) return;
 
-      const oldWrap = canvas.closest(".chart-wrap") || canvas.parentElement;
-      if(oldWrap && oldWrap.id !== "rs-v113-growth-wrap"){
+    const kpis = panel.querySelector(".rs15-kpis");
+
+    // Critical: put the replacement graph OUTSIDE the old native chart wrapper.
+    if(kpis && kpis.nextSibling !== graph){
+      kpis.parentNode.insertBefore(graph, kpis.nextSibling);
+    }else if(!kpis && graph.parentElement !== panel){
+      panel.appendChild(graph);
+    }
+
+    graph.style.display = "block";
+    graph.style.visibility = "visible";
+    graph.style.opacity = "1";
+    graph.style.height = "360px";
+    graph.style.minHeight = "360px";
+    graph.style.margin = "10px 0 0 0";
+    graph.style.padding = "0";
+
+    const c = document.getElementById("rs-v113-growth-canvas");
+    if(c){
+      c.style.display = "block";
+      c.style.visibility = "visible";
+      c.style.opacity = "1";
+      c.style.height = "340px";
+      c.style.width = "100%";
+    }
+
+    // Now collapse only the old chart wrapper, but only if it does NOT contain the replacement graph.
+    if(native){
+      native.style.display = "none";
+      native.style.height = "0";
+      native.style.minHeight = "0";
+      native.style.maxHeight = "0";
+      native.style.margin = "0";
+      native.style.padding = "0";
+
+      const oldWrap = native.closest(".chart-wrap") || native.parentElement;
+      if(oldWrap && !oldWrap.contains(graph)){
         oldWrap.style.height = "0";
         oldWrap.style.minHeight = "0";
         oldWrap.style.maxHeight = "0";
@@ -27553,35 +27588,32 @@ body.skin-dreamtrip .chart-wrap{
       }
     }
 
-    const panel = findGrowthPanel();
-    const graph = document.getElementById("rs-v113-growth-wrap");
-    if(panel && graph){
-      const kpis = panel.querySelector(".rs15-kpis");
-      if(kpis && kpis.nextSibling !== graph){
-        kpis.parentNode.insertBefore(graph, kpis.nextSibling);
+    // Ask the replacement Chart.js graph to resize after being moved.
+    try{
+      if(window.Chart && Chart.getChart && c){
+        const ch = Chart.getChart(c);
+        if(ch){
+          ch.resize();
+          ch.update("none");
+        }
       }
-
-      graph.style.display = "block";
-      graph.style.visibility = "visible";
-      graph.style.opacity = "1";
-      graph.style.marginTop = "10px";
-      graph.style.height = "340px";
-      graph.style.minHeight = "340px";
-    }
+    }catch(e){}
   }
 
   function start(){
-    fixGap();
-    [200, 700, 1500, 3000].forEach(t => setTimeout(fixGap, t));
+    fixPlacement();
+    [200, 700, 1500, 3000, 5000].forEach(t => setTimeout(fixPlacement, t));
 
     document.addEventListener("click", e => {
       if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
-        setTimeout(fixGap, 180);
-        setTimeout(fixGap, 800);
+        setTimeout(fixPlacement, 180);
+        setTimeout(fixPlacement, 800);
       }
     }, true);
 
-    document.addEventListener("change", () => setTimeout(fixGap, 180), true);
+    document.addEventListener("change", () => setTimeout(fixPlacement, 180), true);
+
+    setInterval(fixPlacement, 1500);
   }
 
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
