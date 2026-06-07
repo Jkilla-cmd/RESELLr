@@ -27158,8 +27158,11 @@ body.skin-dreamtrip .chart-wrap{
 
 
 <!-- ===== v111: remove custom Business Growth overlay, keep native interactive chart ===== -->
-<style id="rs-v111-native-growth-only-css">
-  /* Permanently remove all custom SVG replacement graphs */
+
+
+<!-- ===== v112: rebuild only the native interactive Business Growth Chart.js graph ===== -->
+<style id="rs-v112-chartjs-growth-fix-css">
+  /* Remove all custom SVG replacement graphs */
   #rs-v108-growth-graph,
   #rs-v107-growth-graph,
   #rs-v105-growth-graph,
@@ -27178,81 +27181,264 @@ body.skin-dreamtrip .chart-wrap{
     padding:0 !important;
   }
 
-  /* Keep the original interactive Chart.js graph visible */
   #rs15GrowthChart{
     display:block !important;
     visibility:visible !important;
     opacity:1 !important;
+    width:100% !important;
+    height:340px !important;
     min-height:340px !important;
-  }
-
-  #rs15GrowthChart.chartjs-render-monitor{
-    display:block !important;
   }
 </style>
 
-<script id="rs-v111-native-growth-only-js">
+<script id="rs-v112-chartjs-growth-fix-js">
 (function(){
-  if(window.__rsV111NativeGrowthOnly) return;
-  window.__rsV111NativeGrowthOnly = true;
+  if(window.__rsV112ChartJsGrowthFix) return;
+  window.__rsV112ChartJsGrowthFix = true;
 
-  const customIds = [
-    "rs-v108-growth-graph",
-    "rs-v107-growth-graph",
-    "rs-v105-growth-graph",
-    "rs-v104-growth-card",
-    "rs-v102-growth-card",
-    "rs-v101-growth-chart",
-    "rs-v99-rs15GrowthChart",
-    "rs-v98-rs15GrowthChart",
-    "rs-v97-rs15GrowthChart"
-  ];
+  function num(v){
+    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
+    return Number.isFinite(n) ? n : 0;
+  }
 
-  function fixGrowth(){
-    customIds.forEach(id => {
+  function money(n){
+    try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(n)||0);}
+    catch(e){return "$"+(Number(n)||0).toFixed(2);}
+  }
+
+  function readSold(){
+    try{ if(typeof window.readSold === "function") return window.readSold() || []; }catch(e){}
+    try{return JSON.parse(localStorage.getItem("soldInventory") || "[]") || [];}catch(e){return [];}
+  }
+
+  function val(r, keys){
+    for(const k of keys){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return 0;
+  }
+
+  function saleOf(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"]);}
+  function costOf(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","Cost of Sold","buyCost","purchasePrice"]);}
+  function feeOf(r){return val(r,["fees","fee","Fees","platformFees","platformFee","sellingFees","sellingFee","sellerFees","sellerFee","transactionFee","transactionFees","ebayFee","mercariFee"]);}
+  function shipOf(r){return val(r,["ship","shipping","Shipping","shippingCost","shipping_cost","shipCost","postage","postageCost","labelCost","shippingLabel"]);}
+
+  function profitOf(r){
+    const fee = feeOf(r), ship = shipOf(r);
+    if(fee || ship) return saleOf(r) - costOf(r) - fee - ship;
+    for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return saleOf(r) - costOf(r);
+  }
+
+  function costProfitOf(r){return costOf(r) + profitOf(r);}
+
+  function dateOf(r){
+    const raw = r && (r.date || r.soldDate || r.Date || r["Sold Date"] || r.sold_date || r.saleDate);
+    const d = new Date(raw || "");
+    return isNaN(d) ? null : d;
+  }
+
+  function dayKey(d){
+    return d ? d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") : "";
+  }
+
+  function activeRange(){
+    const b = document.querySelector("[data-rs15-range].active");
+    return b ? b.dataset.rs15Range : (localStorage.getItem("rs15Range") || "ALL");
+  }
+
+  function rangeStart(){
+    const r = activeRange();
+    const now = new Date();
+    if(r === "YTD") return new Date(now.getFullYear(),0,1);
+    if(r === "3M") return new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
+    if(r === "1M") return new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
+    return null;
+  }
+
+  function buildRows(){
+    const start = rangeStart();
+    const daily = new Map();
+
+    readSold().forEach(r=>{
+      const d = dateOf(r);
+      if(!d || (start && d < start)) return;
+
+      const k = dayKey(d);
+      if(!daily.has(k)){
+        daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0});
+      }
+
+      const b = daily.get(k);
+      b.income += saleOf(r);
+      b.profit += profitOf(r);
+      b.costProfit += costProfitOf(r);
+    });
+
+    let income=0, profit=0, cp=0;
+    return Array.from(daily.values()).sort((a,b)=>a.date-b.date).map(x=>{
+      income += x.income;
+      profit += x.profit;
+      cp += x.costProfit;
+      return {
+        label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),
+        income:+income.toFixed(2),
+        profit:+profit.toFixed(2),
+        costProfit:+cp.toFixed(2)
+      };
+    });
+  }
+
+  function removeCustomGraphs(){
+    [
+      "rs-v108-growth-graph",
+      "rs-v107-growth-graph",
+      "rs-v105-growth-graph",
+      "rs-v104-growth-card",
+      "rs-v102-growth-card",
+      "rs-v101-growth-chart",
+      "rs-v99-rs15GrowthChart",
+      "rs-v98-rs15GrowthChart",
+      "rs-v97-rs15GrowthChart"
+    ].forEach(id=>{
       const el = document.getElementById(id);
       if(el) el.remove();
     });
+  }
 
-    const canvas = document.getElementById("rs15GrowthChart");
-    if(!canvas) return;
+  function css(name,fallback){
+    try{return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;}catch(e){return fallback;}
+  }
 
-    canvas.style.display = "block";
-    canvas.style.visibility = "visible";
-    canvas.style.opacity = "1";
-    canvas.style.minHeight = "340px";
-
-    const wrap = canvas.closest(".chart-wrap") || canvas.parentElement;
-    if(wrap){
-      wrap.style.display = "block";
-      wrap.style.visibility = "visible";
-      wrap.style.opacity = "1";
-      wrap.style.minHeight = "340px";
-    }
+  let building = false;
+  function rebuildGrowthChart(){
+    if(building) return;
+    building = true;
 
     try{
-      if(window.Chart && Chart.getChart){
-        const chart = Chart.getChart(canvas);
-        if(chart){
-          chart.resize();
-          chart.update("none");
-        }
+      removeCustomGraphs();
+
+      const canvas = document.getElementById("rs15GrowthChart");
+      if(!canvas || !window.Chart) return;
+
+      const wrap = canvas.closest(".chart-wrap") || canvas.parentElement;
+      if(wrap){
+        wrap.style.display = "block";
+        wrap.style.visibility = "visible";
+        wrap.style.opacity = "1";
+        wrap.style.minHeight = "340px";
+        wrap.style.height = "340px";
       }
-    }catch(e){}
+
+      canvas.style.display = "block";
+      canvas.style.visibility = "visible";
+      canvas.style.opacity = "1";
+      canvas.style.width = "100%";
+      canvas.style.height = "340px";
+      canvas.width = canvas.clientWidth || 900;
+      canvas.height = 340;
+
+      try{
+        const old = Chart.getChart ? Chart.getChart(canvas) : null;
+        if(old) old.destroy();
+      }catch(e){}
+
+      const rows = buildRows();
+
+      new Chart(canvas, {
+        type: "line",
+        data: {
+          labels: rows.map(x => x.label),
+          datasets: [
+            {
+              label: "Total Income",
+              data: rows.map(x => x.income),
+              borderColor: css("--accent","#38bdf8"),
+              backgroundColor: "transparent",
+              borderWidth: 3,
+              pointRadius: 0,
+              pointHoverRadius: 5,
+              tension: .25,
+              fill: false
+            },
+            {
+              label: "Total Profit",
+              data: rows.map(x => x.profit),
+              borderColor: css("--green","#22c55e"),
+              backgroundColor: "transparent",
+              borderWidth: 3,
+              pointRadius: 0,
+              pointHoverRadius: 5,
+              tension: .25,
+              fill: false
+            },
+            {
+              label: "Cost + Profit",
+              data: rows.map(x => x.costProfit),
+              borderColor: "#a78bfa",
+              backgroundColor: "transparent",
+              borderWidth: 4,
+              pointRadius: 0,
+              pointHoverRadius: 5,
+              tension: .25,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: {mode:"index",intersect:false},
+          plugins: {
+            legend: {position:"top"},
+            tooltip: {
+              callbacks: {
+                label: function(ctx){
+                  return " " + ctx.dataset.label + ": " + money(ctx.parsed.y);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {maxTicksLimit: 8},
+              grid: {color:"rgba(255,255,255,.12)"}
+            },
+            y: {
+              beginAtZero: true,
+              grace: "12%",
+              ticks: {callback: function(v){return money(v);}},
+              grid: {color:"rgba(255,255,255,.12)"}
+            }
+          }
+        }
+      });
+    } finally {
+      building = false;
+    }
+  }
+
+  let timer = null;
+  function schedule(){
+    clearTimeout(timer);
+    timer = setTimeout(rebuildGrowthChart, 120);
   }
 
   function start(){
-    fixGrowth();
-    [250, 700, 1500, 3000, 5000].forEach(t => setTimeout(fixGrowth, t));
+    rebuildGrowthChart();
+    [250,700,1500,3000,5000].forEach(t=>setTimeout(rebuildGrowthChart,t));
 
-    document.addEventListener("click", e => {
+    document.addEventListener("click", e=>{
       if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
-        setTimeout(fixGrowth, 200);
-        setTimeout(fixGrowth, 800);
+        schedule();
+        setTimeout(rebuildGrowthChart,700);
       }
     }, true);
 
-    document.addEventListener("change", () => setTimeout(fixGrowth, 200), true);
+    document.addEventListener("change", schedule, true);
   }
 
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
