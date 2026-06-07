@@ -27161,8 +27161,12 @@ body.skin-dreamtrip .chart-wrap{
 
 
 <!-- ===== v112: rebuild only the native interactive Business Growth Chart.js graph ===== -->
-<style id="rs-v112-chartjs-growth-fix-css">
-  /* Remove all custom SVG replacement graphs */
+
+
+<!-- ===== v113: own stable interactive Business Growth canvas ===== -->
+<style id="rs-v113-own-interactive-growth-css">
+  /* Hide the broken original and all old SVG replacements */
+  #rs15GrowthChart,
   #rs-v108-growth-graph,
   #rs-v107-growth-graph,
   #rs-v105-growth-graph,
@@ -27181,20 +27185,37 @@ body.skin-dreamtrip .chart-wrap{
     padding:0 !important;
   }
 
-  #rs15GrowthChart{
+  #rs-v113-growth-wrap{
     display:block !important;
+    width:100% !important;
+    height:360px !important;
+    min-height:360px !important;
+    margin:10px 0 0 0 !important;
+    padding:0 !important;
+    position:relative !important;
+    clear:both !important;
     visibility:visible !important;
     opacity:1 !important;
+  }
+
+  #rs-v113-growth-canvas{
+    display:block !important;
     width:100% !important;
     height:340px !important;
-    min-height:340px !important;
+    visibility:visible !important;
+    opacity:1 !important;
   }
 </style>
 
-<script id="rs-v112-chartjs-growth-fix-js">
+<script id="rs-v113-own-interactive-growth-js">
 (function(){
-  if(window.__rsV112ChartJsGrowthFix) return;
-  window.__rsV112ChartJsGrowthFix = true;
+  if(window.__rsV113OwnInteractiveGrowth) return;
+  window.__rsV113OwnInteractiveGrowth = true;
+
+  const oldIds = [
+    "rs-v108-growth-graph","rs-v107-growth-graph","rs-v105-growth-graph","rs-v104-growth-card",
+    "rs-v102-growth-card","rs-v101-growth-chart","rs-v99-rs15GrowthChart","rs-v98-rs15GrowthChart","rs-v97-rs15GrowthChart"
+  ];
 
   function num(v){
     const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
@@ -27265,12 +27286,10 @@ body.skin-dreamtrip .chart-wrap{
     readSold().forEach(r=>{
       const d = dateOf(r);
       if(!d || (start && d < start)) return;
-
       const k = dayKey(d);
       if(!daily.has(k)){
         daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0});
       }
-
       const b = daily.get(k);
       b.income += saleOf(r);
       b.profit += profitOf(r);
@@ -27291,128 +27310,144 @@ body.skin-dreamtrip .chart-wrap{
     });
   }
 
-  function removeCustomGraphs(){
-    [
-      "rs-v108-growth-graph",
-      "rs-v107-growth-graph",
-      "rs-v105-growth-graph",
-      "rs-v104-growth-card",
-      "rs-v102-growth-card",
-      "rs-v101-growth-chart",
-      "rs-v99-rs15GrowthChart",
-      "rs-v98-rs15GrowthChart",
-      "rs-v97-rs15GrowthChart"
-    ].forEach(id=>{
-      const el = document.getElementById(id);
-      if(el) el.remove();
-    });
-  }
-
   function css(name,fallback){
     try{return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;}catch(e){return fallback;}
   }
 
+  function findGrowthPanel(){
+    const headings = Array.from(document.querySelectorAll("h1,h2,h3,h4,.panel-title"));
+    const h = headings.find(el => /business\s+growth/i.test(el.textContent || ""));
+    if(h) return h.closest(".panel") || h.closest("section") || h.parentElement;
+    const native = document.getElementById("rs15GrowthChart");
+    return native ? (native.closest(".panel") || native.closest("section") || native.parentElement) : null;
+  }
+
+  function cleanupOld(){
+    oldIds.forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.remove();
+    });
+    const native = document.getElementById("rs15GrowthChart");
+    if(native){
+      native.style.display = "none";
+      native.style.height = "0";
+      native.style.minHeight = "0";
+    }
+  }
+
   let building = false;
-  function rebuildGrowthChart(){
-    if(building) return;
+  function ensureWrap(){
+    const panel = findGrowthPanel();
+    if(!panel) return null;
+
+    let wrap = document.getElementById("rs-v113-growth-wrap");
+    if(!wrap){
+      wrap = document.createElement("div");
+      wrap.id = "rs-v113-growth-wrap";
+      wrap.innerHTML = '<canvas id="rs-v113-growth-canvas"></canvas>';
+
+      const native = document.getElementById("rs15GrowthChart");
+      const nativeWrap = native ? (native.closest(".chart-wrap") || native.parentElement) : null;
+      if(nativeWrap && nativeWrap.parentElement){
+        nativeWrap.parentElement.insertBefore(wrap, nativeWrap.nextSibling);
+      }else{
+        const kpis = panel.querySelector(".rs15-kpis");
+        if(kpis && kpis.nextSibling) panel.insertBefore(wrap, kpis.nextSibling);
+        else panel.appendChild(wrap);
+      }
+    }
+
+    wrap.style.display = "block";
+    wrap.style.visibility = "visible";
+    wrap.style.opacity = "1";
+    wrap.style.height = "360px";
+    wrap.style.minHeight = "360px";
+
+    let canvas = document.getElementById("rs-v113-growth-canvas");
+    if(!canvas){
+      wrap.innerHTML = '<canvas id="rs-v113-growth-canvas"></canvas>';
+      canvas = document.getElementById("rs-v113-growth-canvas");
+    }
+    canvas.style.display = "block";
+    canvas.style.visibility = "visible";
+    canvas.style.opacity = "1";
+    canvas.style.width = "100%";
+    canvas.style.height = "340px";
+    canvas.height = 340;
+    canvas.width = canvas.clientWidth || wrap.clientWidth || 900;
+
+    return canvas;
+  }
+
+  function drawChart(){
+    if(building || !window.Chart) return;
     building = true;
 
     try{
-      removeCustomGraphs();
+      cleanupOld();
 
-      const canvas = document.getElementById("rs15GrowthChart");
-      if(!canvas || !window.Chart) return;
+      const canvas = ensureWrap();
+      if(!canvas) return;
 
-      const wrap = canvas.closest(".chart-wrap") || canvas.parentElement;
-      if(wrap){
-        wrap.style.display = "block";
-        wrap.style.visibility = "visible";
-        wrap.style.opacity = "1";
-        wrap.style.minHeight = "340px";
-        wrap.style.height = "340px";
-      }
-
-      canvas.style.display = "block";
-      canvas.style.visibility = "visible";
-      canvas.style.opacity = "1";
-      canvas.style.width = "100%";
-      canvas.style.height = "340px";
-      canvas.width = canvas.clientWidth || 900;
-      canvas.height = 340;
+      const rows = buildRows();
 
       try{
         const old = Chart.getChart ? Chart.getChart(canvas) : null;
         if(old) old.destroy();
       }catch(e){}
 
-      const rows = buildRows();
-
-      new Chart(canvas, {
-        type: "line",
-        data: {
-          labels: rows.map(x => x.label),
-          datasets: [
+      new Chart(canvas,{
+        type:"line",
+        data:{
+          labels:rows.map(x=>x.label),
+          datasets:[
             {
-              label: "Total Income",
-              data: rows.map(x => x.income),
-              borderColor: css("--accent","#38bdf8"),
-              backgroundColor: "transparent",
-              borderWidth: 3,
-              pointRadius: 0,
-              pointHoverRadius: 5,
-              tension: .25,
-              fill: false
+              label:"Total Income",
+              data:rows.map(x=>x.income),
+              borderColor:css("--accent","#38bdf8"),
+              backgroundColor:"transparent",
+              borderWidth:3,
+              pointRadius:0,
+              pointHoverRadius:5,
+              tension:.25,
+              fill:false
             },
             {
-              label: "Total Profit",
-              data: rows.map(x => x.profit),
-              borderColor: css("--green","#22c55e"),
-              backgroundColor: "transparent",
-              borderWidth: 3,
-              pointRadius: 0,
-              pointHoverRadius: 5,
-              tension: .25,
-              fill: false
+              label:"Total Profit",
+              data:rows.map(x=>x.profit),
+              borderColor:css("--green","#22c55e"),
+              backgroundColor:"transparent",
+              borderWidth:3,
+              pointRadius:0,
+              pointHoverRadius:5,
+              tension:.25,
+              fill:false
             },
             {
-              label: "Cost + Profit",
-              data: rows.map(x => x.costProfit),
-              borderColor: "#a78bfa",
-              backgroundColor: "transparent",
-              borderWidth: 4,
-              pointRadius: 0,
-              pointHoverRadius: 5,
-              tension: .25,
-              fill: false
+              label:"Cost + Profit",
+              data:rows.map(x=>x.costProfit),
+              borderColor:"#a78bfa",
+              backgroundColor:"transparent",
+              borderWidth:4,
+              pointRadius:0,
+              pointHoverRadius:5,
+              tension:.25,
+              fill:false
             }
           ]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false,
-          interaction: {mode:"index",intersect:false},
-          plugins: {
-            legend: {position:"top"},
-            tooltip: {
-              callbacks: {
-                label: function(ctx){
-                  return " " + ctx.dataset.label + ": " + money(ctx.parsed.y);
-                }
-              }
-            }
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          animation:false,
+          interaction:{mode:"index",intersect:false},
+          plugins:{
+            legend:{position:"top"},
+            tooltip:{callbacks:{label:function(ctx){return " " + ctx.dataset.label + ": " + money(ctx.parsed.y);}}}
           },
-          scales: {
-            x: {
-              ticks: {maxTicksLimit: 8},
-              grid: {color:"rgba(255,255,255,.12)"}
-            },
-            y: {
-              beginAtZero: true,
-              grace: "12%",
-              ticks: {callback: function(v){return money(v);}},
-              grid: {color:"rgba(255,255,255,.12)"}
-            }
+          scales:{
+            x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.12)"}},
+            y:{beginAtZero:true,grace:"12%",ticks:{callback:function(v){return money(v);}},grid:{color:"rgba(255,255,255,.12)"}}
           }
         }
       });
@@ -27424,24 +27459,31 @@ body.skin-dreamtrip .chart-wrap{
   let timer = null;
   function schedule(){
     clearTimeout(timer);
-    timer = setTimeout(rebuildGrowthChart, 120);
+    timer = setTimeout(drawChart,120);
   }
 
   function start(){
-    rebuildGrowthChart();
-    [250,700,1500,3000,5000].forEach(t=>setTimeout(rebuildGrowthChart,t));
+    drawChart();
+    [250,700,1500,3000,5000].forEach(t=>setTimeout(drawChart,t));
 
-    document.addEventListener("click", e=>{
+    document.addEventListener("click",e=>{
       if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
         schedule();
-        setTimeout(rebuildGrowthChart,700);
+        setTimeout(drawChart,700);
       }
-    }, true);
+    },true);
 
-    document.addEventListener("change", schedule, true);
+    document.addEventListener("change",schedule,true);
+
+    // Sticky keep-alive: if another script hides or removes it, redraw it.
+    setInterval(function(){
+      const wrap = document.getElementById("rs-v113-growth-wrap");
+      const visible = wrap && wrap.offsetHeight > 50 && getComputedStyle(wrap).display !== "none";
+      if(!visible) drawChart();
+    },1000);
   }
 
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
   else start();
 })();
 </script>
