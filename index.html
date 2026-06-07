@@ -24138,30 +24138,35 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
 
 <!-- ===== v107: restore Business Growth graph only, keep all other v106 fixes ===== -->
-<style id="rs-v107-growth-only-css">
-  /* Keep native broken canvas hidden, but draw one replacement inside the same blank area */
+
+<!-- ===== v108: sticky Business Growth graph that survives page load redraws ===== -->
+<style id="rs-v108-growth-sticky-css">
   #rs15GrowthChart{
     display:none !important;
   }
 
-  #rs-v107-growth-graph{
+  #rs-v108-growth-graph{
     display:block !important;
     width:100% !important;
     height:340px !important;
     min-height:340px !important;
-    margin:8px 0 0 0 !important;
+    margin:12px 0 0 0 !important;
     padding:0 !important;
     clear:both !important;
+    opacity:1 !important;
+    visibility:visible !important;
+    position:relative !important;
+    z-index:2 !important;
   }
 
-  #rs-v107-growth-graph svg{
+  #rs-v108-growth-graph svg{
     width:100% !important;
     height:100% !important;
     display:block !important;
     overflow:visible !important;
   }
 
-  .rs-v107-legend{
+  .rs-v108-legend{
     display:flex !important;
     justify-content:center !important;
     align-items:center !important;
@@ -24172,13 +24177,13 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     color:var(--text,#e5e7eb) !important;
   }
 
-  .rs-v107-legend span{
+  .rs-v108-legend span{
     display:inline-flex !important;
     align-items:center !important;
     gap:6px !important;
   }
 
-  .rs-v107-legend i{
+  .rs-v108-legend i{
     width:24px !important;
     height:5px !important;
     border-radius:999px !important;
@@ -24186,10 +24191,10 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
   }
 </style>
 
-<script id="rs-v107-growth-only-js">
+<script id="rs-v108-growth-sticky-js">
 (function(){
-  if(window.__rsV107GrowthOnly) return;
-  window.__rsV107GrowthOnly = true;
+  if(window.__rsV108GrowthSticky) return;
+  window.__rsV108GrowthSticky = true;
 
   function num(v){
     const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
@@ -24264,12 +24269,8 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     readSold().forEach(r=>{
       const d = dateOf(r);
       if(!d || (start && d < start)) return;
-
       const k = dayKey(d);
-      if(!daily.has(k)){
-        daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0});
-      }
-
+      if(!daily.has(k)) daily.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0});
       const b = daily.get(k);
       b.income += saleOf(r);
       b.profit += profitOf(r);
@@ -24290,6 +24291,15 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     });
   }
 
+  function findBusinessGrowthPanel(){
+    const headings = Array.from(document.querySelectorAll("h1,h2,h3,h4,.panel-title"));
+    const h = headings.find(el => /business\s+growth/i.test(el.textContent || ""));
+    if(h) return h.closest(".panel") || h.closest("section") || h.parentElement;
+
+    const canvas = document.getElementById("rs15GrowthChart");
+    return canvas ? (canvas.closest(".panel") || canvas.closest("section") || canvas.parentElement) : null;
+  }
+
   function path(values,x0,y0,w,h,maxY,offset){
     if(!values.length) return "";
     maxY = Math.max(10,maxY);
@@ -24304,27 +24314,33 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     return a.length === b.length && a.every((v,i)=>Math.abs(num(v)-num(b[i])) < 0.01);
   }
 
-  function findCanvasWrap(){
-    const canvas = document.getElementById("rs15GrowthChart");
-    if(!canvas) return null;
-    return canvas.closest(".chart-wrap") || canvas.parentElement;
-  }
-
   function renderGrowth(){
-    const wrap = findCanvasWrap();
-    if(!wrap) return;
+    const panel = findBusinessGrowthPanel();
+    if(!panel) return;
 
-    ["rs-v105-growth-graph","rs-v104-growth-card","rs-v102-growth-card","rs-v101-growth-chart","rs-v99-rs15GrowthChart","rs-v98-rs15GrowthChart","rs-v97-rs15GrowthChart"].forEach(id=>{
+    // Remove every older overlay but never remove v108.
+    ["rs-v107-growth-graph","rs-v105-growth-graph","rs-v104-growth-card","rs-v102-growth-card","rs-v101-growth-chart","rs-v99-rs15GrowthChart","rs-v98-rs15GrowthChart","rs-v97-rs15GrowthChart"].forEach(id=>{
       const old=document.getElementById(id);
       if(old) old.remove();
     });
 
-    let box = document.getElementById("rs-v107-growth-graph");
+    const canvas = document.getElementById("rs15GrowthChart");
+    if(canvas) canvas.style.display = "none";
+
+    let box = document.getElementById("rs-v108-growth-graph");
     if(!box){
       box = document.createElement("div");
-      box.id = "rs-v107-growth-graph";
-      wrap.appendChild(box);
+      box.id = "rs-v108-growth-graph";
+
+      // Put it after the KPI row so it occupies the current blank space and is not inside the chart wrapper that gets redrawn.
+      const kpis = panel.querySelector(".rs15-kpis");
+      if(kpis && kpis.nextSibling) panel.insertBefore(box, kpis.nextSibling);
+      else panel.appendChild(box);
     }
+
+    box.style.display = "block";
+    box.style.visibility = "visible";
+    box.style.opacity = "1";
 
     const rows = buildRows();
     if(!rows.length){
@@ -24362,7 +24378,7 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
     const legend=series.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join("");
 
     box.innerHTML=`
-      <div class="rs-v107-legend">${legend}</div>
+      <div class="rs-v108-legend">${legend}</div>
       <svg viewBox="0 0 ${W} ${H}" aria-label="Business Growth chart">
         ${grid}
         <line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" stroke="rgba(255,255,255,.18)"/>
@@ -24375,17 +24391,21 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 
   function start(){
     renderGrowth();
-    setTimeout(renderGrowth,300);
-    setTimeout(renderGrowth,1000);
-    setTimeout(renderGrowth,2400);
+
+    // Re-run after all the app's delayed dashboard scripts finish.
+    [250,600,1000,1800,3000,4500,6500].forEach(t=>setTimeout(renderGrowth,t));
 
     document.addEventListener("click",e=>{
       if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
-        setTimeout(renderGrowth,160);
+        setTimeout(renderGrowth,180);
+        setTimeout(renderGrowth,700);
       }
     },true);
 
-    document.addEventListener("change",()=>setTimeout(renderGrowth,160),true);
+    document.addEventListener("change",()=>setTimeout(renderGrowth,180),true);
+
+    // Sticky safety: if another script removes/hides it after load, put it back.
+    setInterval(renderGrowth,1200);
   }
 
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
