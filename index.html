@@ -10226,6 +10226,7 @@ button[aria-label*="eBay"] img{
   100%{ transform:rotate(-5deg) scale(.95); opacity:0; }
 }
 </style>
+
 </head>
 
 <body>
@@ -27156,9 +27157,9 @@ body.skin-dreamtrip .chart-wrap{
 <!-- ===== v86: no-flicker inventory action menu + stable Cost+Profit line ===== -->
 
 
-<!-- ===== v110: keep only native interactive Business Growth chart ===== -->
-<style id="rs-v110-keep-native-growth-only-css">
-  /* Remove all custom SVG replacement graphs */
+<!-- ===== v111: remove custom Business Growth overlay, keep native interactive chart ===== -->
+<style id="rs-v111-native-growth-only-css">
+  /* Permanently remove all custom SVG replacement graphs */
   #rs-v108-growth-graph,
   #rs-v107-growth-graph,
   #rs-v105-growth-graph,
@@ -27171,91 +27172,87 @@ body.skin-dreamtrip .chart-wrap{
     display:none !important;
     height:0 !important;
     min-height:0 !important;
+    max-height:0 !important;
     overflow:hidden !important;
     margin:0 !important;
     padding:0 !important;
   }
 
-  /* Keep the original interactive Chart.js canvas */
+  /* Keep the original interactive Chart.js graph visible */
   #rs15GrowthChart{
     display:block !important;
     visibility:visible !important;
     opacity:1 !important;
-    height:340px !important;
     min-height:340px !important;
   }
 
-  #rs15GrowthChart + *,
-  #rs15GrowthChart ~ #rs-v108-growth-graph,
-  #rs15GrowthChart ~ #rs-v107-growth-graph{
-    display:none !important;
+  #rs15GrowthChart.chartjs-render-monitor{
+    display:block !important;
   }
 </style>
 
-<script id="rs-v110-keep-native-growth-only-js">
+<script id="rs-v111-native-growth-only-js">
 (function(){
-  if(window.__rsV110KeepNativeGrowthOnly) return;
-  window.__rsV110KeepNativeGrowthOnly = true;
+  if(window.__rsV111NativeGrowthOnly) return;
+  window.__rsV111NativeGrowthOnly = true;
 
-  function removeCustomGrowthGraphs(){
-    [
-      "rs-v108-growth-graph",
-      "rs-v107-growth-graph",
-      "rs-v105-growth-graph",
-      "rs-v104-growth-card",
-      "rs-v102-growth-card",
-      "rs-v101-growth-chart",
-      "rs-v99-rs15GrowthChart",
-      "rs-v98-rs15GrowthChart",
-      "rs-v97-rs15GrowthChart"
-    ].forEach(id => {
+  const customIds = [
+    "rs-v108-growth-graph",
+    "rs-v107-growth-graph",
+    "rs-v105-growth-graph",
+    "rs-v104-growth-card",
+    "rs-v102-growth-card",
+    "rs-v101-growth-chart",
+    "rs-v99-rs15GrowthChart",
+    "rs-v98-rs15GrowthChart",
+    "rs-v97-rs15GrowthChart"
+  ];
+
+  function fixGrowth(){
+    customIds.forEach(id => {
       const el = document.getElementById(id);
       if(el) el.remove();
     });
 
-    const native = document.getElementById("rs15GrowthChart");
-    if(native){
-      native.style.display = "block";
-      native.style.visibility = "visible";
-      native.style.opacity = "1";
-      native.style.height = "340px";
-      native.style.minHeight = "340px";
+    const canvas = document.getElementById("rs15GrowthChart");
+    if(!canvas) return;
 
-      const wrap = native.closest(".chart-wrap") || native.parentElement;
-      if(wrap){
-        wrap.style.display = "block";
-        wrap.style.visibility = "visible";
-        wrap.style.opacity = "1";
-        wrap.style.minHeight = "340px";
-      }
+    canvas.style.display = "block";
+    canvas.style.visibility = "visible";
+    canvas.style.opacity = "1";
+    canvas.style.minHeight = "340px";
+
+    const wrap = canvas.closest(".chart-wrap") || canvas.parentElement;
+    if(wrap){
+      wrap.style.display = "block";
+      wrap.style.visibility = "visible";
+      wrap.style.opacity = "1";
+      wrap.style.minHeight = "340px";
     }
 
-    // Make sure the Chart.js instance redraws after being unhidden.
     try{
-      if(window.Chart && Chart.getChart && native){
-        const ch = Chart.getChart(native);
-        if(ch && typeof ch.resize === "function") ch.resize();
-        if(ch && typeof ch.update === "function") ch.update("none");
+      if(window.Chart && Chart.getChart){
+        const chart = Chart.getChart(canvas);
+        if(chart){
+          chart.resize();
+          chart.update("none");
+        }
       }
     }catch(e){}
   }
 
   function start(){
-    removeCustomGrowthGraphs();
-
-    [150,400,900,1600,3000,5000].forEach(t => setTimeout(removeCustomGrowthGraphs, t));
+    fixGrowth();
+    [250, 700, 1500, 3000, 5000].forEach(t => setTimeout(fixGrowth, t));
 
     document.addEventListener("click", e => {
       if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
-        setTimeout(removeCustomGrowthGraphs, 180);
-        setTimeout(removeCustomGrowthGraphs, 700);
+        setTimeout(fixGrowth, 200);
+        setTimeout(fixGrowth, 800);
       }
     }, true);
 
-    document.addEventListener("change", () => setTimeout(removeCustomGrowthGraphs, 180), true);
-
-    const obs = new MutationObserver(removeCustomGrowthGraphs);
-    obs.observe(document.body, {childList:true, subtree:true});
+    document.addEventListener("change", () => setTimeout(fixGrowth, 200), true);
   }
 
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
