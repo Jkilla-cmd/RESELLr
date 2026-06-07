@@ -27346,15 +27346,10 @@ body.skin-dreamtrip .chart-wrap{
       wrap.id = "rs-v113-growth-wrap";
       wrap.innerHTML = '<canvas id="rs-v113-growth-canvas"></canvas>';
 
-      const native = document.getElementById("rs15GrowthChart");
-      const nativeWrap = native ? (native.closest(".chart-wrap") || native.parentElement) : null;
-      if(nativeWrap && nativeWrap.parentElement){
-        nativeWrap.parentElement.insertBefore(wrap, nativeWrap.nextSibling);
-      }else{
-        const kpis = panel.querySelector(".rs15-kpis");
-        if(kpis && kpis.nextSibling) panel.insertBefore(wrap, kpis.nextSibling);
-        else panel.appendChild(wrap);
-      }
+      const kpis = panel.querySelector(".rs15-kpis");
+      if(kpis && kpis.nextSibling) panel.insertBefore(wrap, kpis.nextSibling);
+      else if(kpis) panel.appendChild(wrap);
+      else panel.appendChild(wrap);
     }
 
     wrap.style.display = "block";
@@ -27489,18 +27484,8 @@ body.skin-dreamtrip .chart-wrap{
 </script>
 
 
-<!-- ===== v115: move Business Growth chart out of hidden wrapper and remove gap safely ===== -->
-<style id="rs-v115-growth-gap-safe-css">
-  /* Hide the old broken canvas only, not the replacement graph */
-  #rs15GrowthChart{
-    display:none !important;
-    height:0 !important;
-    min-height:0 !important;
-    max-height:0 !important;
-    margin:0 !important;
-    padding:0 !important;
-  }
-
+<!-- ===== v116: keep visible v113 graph, remove only old blank chart gap ===== -->
+<style id="rs-v116-growth-placement-fix-css">
   #rs-v113-growth-wrap{
     display:block !important;
     visibility:visible !important;
@@ -27520,12 +27505,21 @@ body.skin-dreamtrip .chart-wrap{
     width:100% !important;
     height:340px !important;
   }
+
+  #rs15GrowthChart{
+    display:none !important;
+    height:0 !important;
+    min-height:0 !important;
+    max-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
 </style>
 
-<script id="rs-v115-growth-gap-safe-js">
+<script id="rs-v116-growth-placement-fix-js">
 (function(){
-  if(window.__rsV115GrowthGapSafe) return;
-  window.__rsV115GrowthGapSafe = true;
+  if(window.__rsV116GrowthPlacementFix) return;
+  window.__rsV116GrowthPlacementFix = true;
 
   function findGrowthPanel(){
     const heads = Array.from(document.querySelectorAll("h1,h2,h3,h4,.panel-title"));
@@ -27540,35 +27534,46 @@ body.skin-dreamtrip .chart-wrap{
     const panel = findGrowthPanel();
     const graph = document.getElementById("rs-v113-growth-wrap");
     const native = document.getElementById("rs15GrowthChart");
-    if(!panel || !graph) return;
 
-    const kpis = panel.querySelector(".rs15-kpis");
+    if(panel && graph){
+      const kpis = panel.querySelector(".rs15-kpis");
 
-    // Critical: put the replacement graph OUTSIDE the old native chart wrapper.
-    if(kpis && kpis.nextSibling !== graph){
-      kpis.parentNode.insertBefore(graph, kpis.nextSibling);
-    }else if(!kpis && graph.parentElement !== panel){
-      panel.appendChild(graph);
+      // Move graph directly below KPI cards, before any old chart wrapper.
+      if(kpis && kpis.nextSibling !== graph){
+        kpis.parentNode.insertBefore(graph, kpis.nextSibling);
+      }else if(!kpis && graph.parentElement !== panel){
+        panel.appendChild(graph);
+      }
+
+      graph.style.display = "block";
+      graph.style.visibility = "visible";
+      graph.style.opacity = "1";
+      graph.style.height = "360px";
+      graph.style.minHeight = "360px";
+      graph.style.margin = "10px 0 0 0";
+      graph.style.padding = "0";
+
+      const canvas = document.getElementById("rs-v113-growth-canvas");
+      if(canvas){
+        canvas.style.display = "block";
+        canvas.style.visibility = "visible";
+        canvas.style.opacity = "1";
+        canvas.style.width = "100%";
+        canvas.style.height = "340px";
+
+        try{
+          if(window.Chart && Chart.getChart){
+            const ch = Chart.getChart(canvas);
+            if(ch){
+              ch.resize();
+              ch.update("none");
+            }
+          }
+        }catch(e){}
+      }
     }
 
-    graph.style.display = "block";
-    graph.style.visibility = "visible";
-    graph.style.opacity = "1";
-    graph.style.height = "360px";
-    graph.style.minHeight = "360px";
-    graph.style.margin = "10px 0 0 0";
-    graph.style.padding = "0";
-
-    const c = document.getElementById("rs-v113-growth-canvas");
-    if(c){
-      c.style.display = "block";
-      c.style.visibility = "visible";
-      c.style.opacity = "1";
-      c.style.height = "340px";
-      c.style.width = "100%";
-    }
-
-    // Now collapse only the old chart wrapper, but only if it does NOT contain the replacement graph.
+    // Collapse only the old native chart/wrapper after the replacement is outside it.
     if(native){
       native.style.display = "none";
       native.style.height = "0";
@@ -27578,7 +27583,7 @@ body.skin-dreamtrip .chart-wrap{
       native.style.padding = "0";
 
       const oldWrap = native.closest(".chart-wrap") || native.parentElement;
-      if(oldWrap && !oldWrap.contains(graph)){
+      if(oldWrap && graph && !oldWrap.contains(graph)){
         oldWrap.style.height = "0";
         oldWrap.style.minHeight = "0";
         oldWrap.style.maxHeight = "0";
@@ -27587,22 +27592,11 @@ body.skin-dreamtrip .chart-wrap{
         oldWrap.style.overflow = "hidden";
       }
     }
-
-    // Ask the replacement Chart.js graph to resize after being moved.
-    try{
-      if(window.Chart && Chart.getChart && c){
-        const ch = Chart.getChart(c);
-        if(ch){
-          ch.resize();
-          ch.update("none");
-        }
-      }
-    }catch(e){}
   }
 
   function start(){
     fixPlacement();
-    [200, 700, 1500, 3000, 5000].forEach(t => setTimeout(fixPlacement, t));
+    [200,700,1500,3000,5000].forEach(t => setTimeout(fixPlacement, t));
 
     document.addEventListener("click", e => {
       if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
@@ -27611,9 +27605,8 @@ body.skin-dreamtrip .chart-wrap{
       }
     }, true);
 
-    document.addEventListener("change", () => setTimeout(fixPlacement, 180), true);
-
-    setInterval(fixPlacement, 1500);
+    document.addEventListener("change", () => setTimeout(fixPlacement,180), true);
+    setInterval(fixPlacement,1500);
   }
 
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
