@@ -28627,3 +28627,347 @@ body.skin-dreamtrip .chart-wrap{
   else start();
 })();
 </script>
+
+
+<!-- ===== v125: Sleeker minimal glass + dashboard background image restore ===== -->
+<style id="rs-v125-sleek-image-fix-css">
+  /*
+    v125 goal:
+    - restore uploaded Command View / dashboard top panel image
+    - make visual system cleaner and sleeker
+    - keep minimal future glass without noisy effects
+  */
+
+  :root{
+    --rs125-bg:#030712;
+    --rs125-panel:rgba(9,14,24,.68);
+    --rs125-panel-soft:rgba(9,14,24,.48);
+    --rs125-line:rgba(226,232,240,.115);
+    --rs125-line-hot:rgba(103,232,249,.24);
+    --rs125-text:#f8fafc;
+    --rs125-muted:rgba(203,213,225,.70);
+    --rs125-cyan:#67e8f9;
+  }
+
+  body{
+    background:
+      radial-gradient(circle at 16% 8%, rgba(56,189,248,.10), transparent 25%),
+      radial-gradient(circle at 82% 0%, rgba(167,139,250,.08), transparent 28%),
+      var(--rs125-bg) !important;
+  }
+
+  body::before{
+    opacity:.12 !important;
+    background-size:64px 64px !important;
+  }
+
+  body::after,
+  .rs123-aurora{
+    opacity:.06 !important;
+  }
+
+  #rsVisualToggle{
+    opacity:.55 !important;
+    transform:scale(.92) !important;
+  }
+
+  /* Cleaner cards: less glow, more premium glass */
+  .panel,
+  section,
+  .card,
+  .dashboard-card,
+  .rs15-panel,
+  .rs15-kpi,
+  .kpi,
+  .stat-card{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.016)),
+      var(--rs125-panel) !important;
+    border:1px solid var(--rs125-line) !important;
+    box-shadow:
+      0 14px 42px rgba(0,0,0,.24),
+      inset 0 1px 0 rgba(255,255,255,.055) !important;
+    backdrop-filter:blur(12px) saturate(1.04) !important;
+    -webkit-backdrop-filter:blur(12px) saturate(1.04) !important;
+  }
+
+  .panel::before,
+  section::before,
+  .card::before,
+  .dashboard-card::before,
+  .rs15-panel::before{
+    opacity:.16 !important;
+  }
+
+  .panel:hover,
+  section:hover,
+  .card:hover,
+  .dashboard-card:hover,
+  .rs15-panel:hover,
+  .rs15-kpi:hover{
+    border-color:rgba(226,232,240,.15) !important;
+    box-shadow:
+      0 16px 48px rgba(0,0,0,.26),
+      inset 0 1px 0 rgba(255,255,255,.065) !important;
+  }
+
+  h1,h2,h3,h4,.panel-title,.rs15-title{
+    text-shadow:none !important;
+    letter-spacing:.01em !important;
+  }
+
+  h1:first-child,
+  .page-title,
+  .dashboard-title{
+    background:none !important;
+    -webkit-background-clip:initial !important;
+    background-clip:initial !important;
+    color:var(--rs125-text) !important;
+  }
+
+  h1:first-child::after,
+  .page-title::after,
+  .dashboard-title::after{
+    opacity:.38 !important;
+    width:72px !important;
+  }
+
+  /* Restore dashboard top panel uploaded image */
+  #secDashboard #rs15CommandView.rs15-command,
+  #secDashboard .rs15-command{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.050), rgba(255,255,255,.018)),
+      rgba(8,13,24,.70) !important;
+    border:1px solid rgba(226,232,240,.12) !important;
+    border-radius:24px !important;
+    overflow:hidden !important;
+    position:relative !important;
+    isolation:isolate !important;
+    box-shadow:
+      0 18px 52px rgba(0,0,0,.28),
+      inset 0 1px 0 rgba(255,255,255,.06) !important;
+  }
+
+  #secDashboard #rs15CommandView.rs15-command::before,
+  #secDashboard .rs15-command::before{
+    content:"" !important;
+    display:block !important;
+    position:absolute !important;
+    inset:0 !important;
+    width:auto !important;
+    height:auto !important;
+    z-index:0 !important;
+    pointer-events:none !important;
+    background-image:var(--rs15-command-bg, var(--rs-shared-bg, none)) !important;
+    background-size:cover !important;
+    background-position:center center !important;
+    background-repeat:no-repeat !important;
+    opacity:.34 !important;
+    filter:saturate(1.02) contrast(1.02) !important;
+  }
+
+  #secDashboard #rs15CommandView.rs15-command::after,
+  #secDashboard .rs15-command::after{
+    content:"" !important;
+    display:block !important;
+    position:absolute !important;
+    inset:0 !important;
+    z-index:1 !important;
+    pointer-events:none !important;
+    background:
+      linear-gradient(90deg,
+        rgba(8,13,24,.96) 0%,
+        rgba(8,13,24,.84) 33%,
+        rgba(8,13,24,.54) 64%,
+        rgba(8,13,24,.28) 100%
+      ) !important;
+  }
+
+  #secDashboard #rs15CommandView.rs15-command.no-bg::before{
+    display:none !important;
+  }
+
+  #secDashboard #rs15CommandView.rs15-command.no-bg::after{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
+      rgba(8,13,24,.70) !important;
+  }
+
+  #secDashboard .rs15-command > *{
+    position:relative !important;
+    z-index:2 !important;
+  }
+
+  /* Make upload controls cleaner */
+  #secDashboard .rs15-bg-tools{
+    background:rgba(5,10,20,.58) !important;
+    border:1px solid rgba(226,232,240,.12) !important;
+    box-shadow:0 10px 26px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.05) !important;
+    backdrop-filter:blur(12px) !important;
+    -webkit-backdrop-filter:blur(12px) !important;
+  }
+
+  #secDashboard .rs15-bg-tools button{
+    background:rgba(255,255,255,.045) !important;
+    border:1px solid rgba(226,232,240,.12) !important;
+    color:rgba(226,232,240,.88) !important;
+  }
+
+  #secDashboard .rs15-bg-tools button:hover{
+    background:rgba(103,232,249,.10) !important;
+    border-color:rgba(103,232,249,.22) !important;
+  }
+
+  /* Sleeker inputs/buttons */
+  input,select,textarea{
+    background:rgba(2,6,23,.38) !important;
+    border:1px solid rgba(226,232,240,.105) !important;
+    border-radius:14px !important;
+  }
+
+  button,.btn,[role="button"]{
+    border-radius:14px !important;
+    box-shadow:none !important;
+  }
+
+  button::after,.btn::after{
+    opacity:.08 !important;
+  }
+
+  /* Remove excessive animated shine from cards */
+  .hero::after,
+  .dashboard-hero::after,
+  .rs15-hero::after,
+  header.hero::after{
+    opacity:.06 !important;
+  }
+
+  /* Cleaner tables */
+  table{
+    border-spacing:0 5px !important;
+  }
+
+  tbody tr{
+    background:rgba(15,23,42,.28) !important;
+    box-shadow:inset 0 0 0 1px rgba(226,232,240,.07) !important;
+  }
+
+  tbody tr:hover{
+    background:rgba(30,41,59,.36) !important;
+    box-shadow:inset 0 0 0 1px rgba(103,232,249,.13) !important;
+  }
+
+  /* Keep inventory action button glass correct */
+  .rs-menu-action-button{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.095), rgba(255,255,255,.030)),
+      rgba(15,23,42,.52) !important;
+    border:1px solid rgba(226,232,240,.145) !important;
+    color:rgba(226,232,240,.88) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.11),
+      0 8px 18px rgba(0,0,0,.16) !important;
+    backdrop-filter:blur(10px) saturate(1.04) !important;
+    -webkit-backdrop-filter:blur(10px) saturate(1.04) !important;
+  }
+
+  .rs-menu-action-button:hover{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.115), rgba(255,255,255,.035)),
+      rgba(15,23,42,.62) !important;
+    border-color:rgba(103,232,249,.22) !important;
+  }
+</style>
+
+<script id="rs-v125-sleek-image-fix-js">
+(function(){
+  if(window.__rsV125SleekImageFix) return;
+  window.__rsV125SleekImageFix = true;
+
+  const BG_KEY = "rs15CommandBg";
+
+  function applyBg(){
+    const box = document.getElementById("rs15CommandView") || document.querySelector("#secDashboard .rs15-command");
+    let bg = "";
+    try{ bg = localStorage.getItem(BG_KEY) || ""; }catch(e){}
+
+    if(bg && box){
+      const safe = String(bg).replace(/"/g,"%22");
+      box.classList.remove("no-bg");
+      box.style.setProperty("--rs15-command-bg", 'url("' + safe + '")');
+      document.documentElement.style.setProperty("--rs15-command-bg", 'url("' + safe + '")');
+      document.documentElement.style.setProperty("--rs-shared-bg", 'url("' + safe + '")');
+      document.documentElement.classList.add("rs-has-command-bg");
+    }else if(box){
+      box.classList.add("no-bg");
+      box.style.removeProperty("--rs15-command-bg");
+    }
+  }
+
+  function wireUpload(){
+    const btn = document.getElementById("rs15CommandBgBtn");
+    if(!btn || btn.dataset.rs125Wired) return;
+    btn.dataset.rs125Wired = "1";
+
+    btn.addEventListener("click", function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.style.position = "fixed";
+      input.style.left = "-9999px";
+      document.body.appendChild(input);
+
+      input.addEventListener("change", function(){
+        const file = input.files && input.files[0];
+        if(!file){ input.remove(); return; }
+        const reader = new FileReader();
+        reader.onload = function(){
+          try{
+            localStorage.setItem(BG_KEY, String(reader.result || ""));
+            applyBg();
+            if(typeof showToast === "function") showToast("Dashboard image saved");
+          }catch(err){
+            if(typeof showToast === "function") showToast("Image is too large to save");
+          }
+          input.remove();
+        };
+        reader.readAsDataURL(file);
+      }, {once:true});
+
+      input.click();
+    }, true);
+  }
+
+  function wireClear(){
+    const clear = document.getElementById("rs15CommandBgClear");
+    if(!clear || clear.dataset.rs125Wired) return;
+    clear.dataset.rs125Wired = "1";
+    clear.addEventListener("click", function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      try{ localStorage.removeItem(BG_KEY); }catch(err){}
+      applyBg();
+      if(typeof showToast === "function") showToast("Dashboard image cleared");
+    }, true);
+  }
+
+  function start(){
+    applyBg();
+    wireUpload();
+    wireClear();
+    [250,800,1600,3000].forEach(t=>setTimeout(()=>{applyBg();wireUpload();wireClear();},t));
+
+    document.addEventListener("click", e=>{
+      if(e.target.closest("[data-target='secDashboard'], #navDashboard, .nav button, button")){
+        setTimeout(()=>{applyBg();wireUpload();wireClear();},150);
+      }
+    }, true);
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+})();
+</script>
