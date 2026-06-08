@@ -27349,7 +27349,7 @@ body.skin-dreamtrip .chart-wrap{
       const native = document.getElementById("rs15GrowthChart");
       const nativeWrap = native ? (native.closest(".chart-wrap") || native.parentElement) : null;
       if(nativeWrap && nativeWrap.parentElement){
-        nativeWrap.parentElement.insertBefore(wrap, nativeWrap);
+        nativeWrap.parentElement.insertBefore(wrap, nativeWrap.nextSibling);
       }else{
         const kpis = panel.querySelector(".rs15-kpis");
         if(kpis && kpis.nextSibling) panel.insertBefore(wrap, kpis.nextSibling);
@@ -27489,21 +27489,35 @@ body.skin-dreamtrip .chart-wrap{
 </script>
 
 
-<!-- ===== v119: place visible graph before old blank chart wrapper ===== -->
-<style id="rs-v119-place-before-old-chart-css">
-  #rs-v113-growth-wrap{
+<!-- ===== v120: overlay stable Business Growth graph into the blank space ===== -->
+<style id="rs-v120-overlay-growth-css">
+  /*
+    Keep the stable v113 Chart.js graph, but place it over the old blank Business Growth chart area.
+    This avoids collapsing wrappers, which was making the graph disappear.
+  */
+  .rs-growth-panel-anchor{
+    position:relative !important;
+    min-height:570px !important;
+  }
+
+  .rs-growth-panel-anchor #rs-v113-growth-wrap{
+    position:absolute !important;
+    left:22px !important;
+    right:22px !important;
+    top:150px !important;
+    width:auto !important;
+    height:360px !important;
+    min-height:360px !important;
+    margin:0 !important;
+    padding:0 !important;
+    z-index:20 !important;
     display:block !important;
     visibility:visible !important;
     opacity:1 !important;
-    height:360px !important;
-    min-height:360px !important;
-    margin:10px 0 0 0 !important;
-    padding:0 !important;
-    position:relative !important;
-    clear:both !important;
+    pointer-events:auto !important;
   }
 
-  #rs-v113-growth-canvas{
+  .rs-growth-panel-anchor #rs-v113-growth-canvas{
     display:block !important;
     visibility:visible !important;
     opacity:1 !important;
@@ -27511,41 +27525,56 @@ body.skin-dreamtrip .chart-wrap{
     height:340px !important;
   }
 
+  /* Hide the broken old native canvas only, but DO NOT collapse its parent wrapper. */
   #rs15GrowthChart{
     display:none !important;
-    height:0 !important;
-    min-height:0 !important;
-    max-height:0 !important;
-    margin:0 !important;
-    padding:0 !important;
+    visibility:hidden !important;
+    opacity:0 !important;
   }
 </style>
 
-<script id="rs-v119-place-before-old-chart-js">
+<script id="rs-v120-overlay-growth-js">
 (function(){
-  if(window.__rsV119PlaceBeforeOldChart) return;
-  window.__rsV119PlaceBeforeOldChart = true;
+  if(window.__rsV120OverlayGrowth) return;
+  window.__rsV120OverlayGrowth = true;
 
-  function fixPlacement(){
+  function findGrowthPanel(){
+    const heads = Array.from(document.querySelectorAll("h1,h2,h3,h4,.panel-title"));
+    const h = heads.find(el => /business\s+growth/i.test(el.textContent || ""));
+    if(h) return h.closest(".panel") || h.closest("section") || h.parentElement;
+
+    const native = document.getElementById("rs15GrowthChart");
+    return native ? (native.closest(".panel") || native.closest("section") || native.parentElement) : null;
+  }
+
+  function overlayGraph(){
+    const panel = findGrowthPanel();
     const graph = document.getElementById("rs-v113-growth-wrap");
     const canvas = document.getElementById("rs-v113-growth-canvas");
-    const oldCanvas = document.getElementById("rs15GrowthChart");
-    if(!graph || !oldCanvas) return;
+    const old = document.getElementById("rs15GrowthChart");
 
-    const oldWrap = oldCanvas.closest(".chart-wrap") || oldCanvas.parentElement;
-
-    // Important: place graph BEFORE old chart wrapper, then collapse old wrapper.
-    if(oldWrap && oldWrap.parentElement && graph.nextSibling !== oldWrap){
-      oldWrap.parentElement.insertBefore(graph, oldWrap);
+    if(panel){
+      panel.classList.add("rs-growth-panel-anchor");
+      panel.style.position = "relative";
+      panel.style.minHeight = "570px";
     }
 
-    graph.style.display = "block";
-    graph.style.visibility = "visible";
-    graph.style.opacity = "1";
-    graph.style.height = "360px";
-    graph.style.minHeight = "360px";
-    graph.style.margin = "10px 0 0 0";
-    graph.style.padding = "0";
+    if(graph){
+      graph.style.position = "absolute";
+      graph.style.left = "22px";
+      graph.style.right = "22px";
+      graph.style.top = "150px";
+      graph.style.width = "auto";
+      graph.style.height = "360px";
+      graph.style.minHeight = "360px";
+      graph.style.margin = "0";
+      graph.style.padding = "0";
+      graph.style.zIndex = "20";
+      graph.style.display = "block";
+      graph.style.visibility = "visible";
+      graph.style.opacity = "1";
+      graph.style.pointerEvents = "auto";
+    }
 
     if(canvas){
       canvas.style.display = "block";
@@ -27553,6 +27582,7 @@ body.skin-dreamtrip .chart-wrap{
       canvas.style.opacity = "1";
       canvas.style.width = "100%";
       canvas.style.height = "340px";
+
       try{
         if(window.Chart && Chart.getChart){
           const ch = Chart.getChart(canvas);
@@ -27564,37 +27594,27 @@ body.skin-dreamtrip .chart-wrap{
       }catch(e){}
     }
 
-    oldCanvas.style.display = "none";
-    oldCanvas.style.height = "0";
-    oldCanvas.style.minHeight = "0";
-    oldCanvas.style.maxHeight = "0";
-    oldCanvas.style.margin = "0";
-    oldCanvas.style.padding = "0";
-
-    if(oldWrap && !oldWrap.contains(graph)){
-      oldWrap.style.display = "block";
-      oldWrap.style.height = "0";
-      oldWrap.style.minHeight = "0";
-      oldWrap.style.maxHeight = "0";
-      oldWrap.style.margin = "0";
-      oldWrap.style.padding = "0";
-      oldWrap.style.overflow = "hidden";
+    if(old){
+      old.style.display = "none";
+      old.style.visibility = "hidden";
+      old.style.opacity = "0";
     }
   }
 
   function start(){
-    fixPlacement();
-    [200,700,1500,3000,5000].forEach(t => setTimeout(fixPlacement,t));
+    overlayGraph();
+
+    [250,700,1500,3000,5000].forEach(t => setTimeout(overlayGraph, t));
 
     document.addEventListener("click", e => {
       if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
-        setTimeout(fixPlacement,180);
-        setTimeout(fixPlacement,800);
+        setTimeout(overlayGraph,180);
+        setTimeout(overlayGraph,800);
       }
     }, true);
 
-    document.addEventListener("change", () => setTimeout(fixPlacement,180), true);
-    setInterval(fixPlacement,1500);
+    document.addEventListener("change", () => setTimeout(overlayGraph,180), true);
+    setInterval(overlayGraph,2000);
   }
 
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
