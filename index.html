@@ -27489,23 +27489,19 @@ body.skin-dreamtrip .chart-wrap{
 </script>
 
 
-<!-- ===== v117: keep visible graph, pull it up into the blank space ===== -->
-<style id="rs-v117-pull-growth-up-css">
-  /*
-    v113 graph was stable but sat below a blank old-chart area.
-    Do NOT hide/collapse wrappers anymore because that made the graph disappear.
-    Instead, visually pull the stable graph upward into that blank area.
-  */
+<!-- ===== v118: restore full Business Growth graph, no squish/pull-up ===== -->
+<style id="rs-v118-growth-normal-visible-css">
   #rs-v113-growth-wrap{
     display:block !important;
     visibility:visible !important;
     opacity:1 !important;
     height:360px !important;
     min-height:360px !important;
-    margin-top:-315px !important;
-    margin-bottom:-300px !important;
+    margin-top:10px !important;
+    margin-bottom:0 !important;
     padding:0 !important;
     position:relative !important;
+    clear:both !important;
     z-index:5 !important;
   }
 
@@ -27516,14 +27512,18 @@ body.skin-dreamtrip .chart-wrap{
     width:100% !important;
     height:340px !important;
   }
+
+  #rs15GrowthChart{
+    display:none !important;
+  }
 </style>
 
-<script id="rs-v117-pull-growth-up-js">
+<script id="rs-v118-growth-normal-visible-js">
 (function(){
-  if(window.__rsV117PullGrowthUp) return;
-  window.__rsV117PullGrowthUp = true;
+  if(window.__rsV118GrowthNormalVisible) return;
+  window.__rsV118GrowthNormalVisible = true;
 
-  function keepGraphVisible(){
+  function fixGrowthSize(){
     const graph = document.getElementById("rs-v113-growth-wrap");
     const canvas = document.getElementById("rs-v113-growth-canvas");
 
@@ -27533,9 +27533,11 @@ body.skin-dreamtrip .chart-wrap{
       graph.style.opacity = "1";
       graph.style.height = "360px";
       graph.style.minHeight = "360px";
-      graph.style.marginTop = "-315px";
-      graph.style.marginBottom = "-300px";
+      graph.style.marginTop = "10px";
+      graph.style.marginBottom = "0";
+      graph.style.padding = "0";
       graph.style.position = "relative";
+      graph.style.clear = "both";
       graph.style.zIndex = "5";
     }
 
@@ -27556,21 +27558,28 @@ body.skin-dreamtrip .chart-wrap{
         }
       }catch(e){}
     }
+
+    const old = document.getElementById("rs15GrowthChart");
+    if(old){
+      old.style.display = "none";
+      old.style.visibility = "hidden";
+      old.style.opacity = "0";
+    }
   }
 
   function start(){
-    keepGraphVisible();
-    [250,700,1500,3000,5000].forEach(t => setTimeout(keepGraphVisible, t));
+    fixGrowthSize();
+    [250,700,1500,3000,5000].forEach(t => setTimeout(fixGrowthSize, t));
 
     document.addEventListener("click", e => {
       if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
-        setTimeout(keepGraphVisible, 180);
-        setTimeout(keepGraphVisible, 800);
+        setTimeout(fixGrowthSize, 180);
+        setTimeout(fixGrowthSize, 800);
       }
     }, true);
 
-    document.addEventListener("change", () => setTimeout(keepGraphVisible, 180), true);
-    setInterval(keepGraphVisible, 2000);
+    document.addEventListener("change", () => setTimeout(fixGrowthSize, 180), true);
+    setInterval(fixGrowthSize, 2000);
   }
 
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
