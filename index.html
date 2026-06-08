@@ -27346,10 +27346,15 @@ body.skin-dreamtrip .chart-wrap{
       wrap.id = "rs-v113-growth-wrap";
       wrap.innerHTML = '<canvas id="rs-v113-growth-canvas"></canvas>';
 
-      const kpis = panel.querySelector(".rs15-kpis");
-      if(kpis && kpis.nextSibling) panel.insertBefore(wrap, kpis.nextSibling);
-      else if(kpis) panel.appendChild(wrap);
-      else panel.appendChild(wrap);
+      const native = document.getElementById("rs15GrowthChart");
+      const nativeWrap = native ? (native.closest(".chart-wrap") || native.parentElement) : null;
+      if(nativeWrap && nativeWrap.parentElement){
+        nativeWrap.parentElement.insertBefore(wrap, nativeWrap.nextSibling);
+      }else{
+        const kpis = panel.querySelector(".rs15-kpis");
+        if(kpis && kpis.nextSibling) panel.insertBefore(wrap, kpis.nextSibling);
+        else panel.appendChild(wrap);
+      }
     }
 
     wrap.style.display = "block";
@@ -27484,18 +27489,24 @@ body.skin-dreamtrip .chart-wrap{
 </script>
 
 
-<!-- ===== v116: keep visible v113 graph, remove only old blank chart gap ===== -->
-<style id="rs-v116-growth-placement-fix-css">
+<!-- ===== v117: keep visible graph, pull it up into the blank space ===== -->
+<style id="rs-v117-pull-growth-up-css">
+  /*
+    v113 graph was stable but sat below a blank old-chart area.
+    Do NOT hide/collapse wrappers anymore because that made the graph disappear.
+    Instead, visually pull the stable graph upward into that blank area.
+  */
   #rs-v113-growth-wrap{
     display:block !important;
     visibility:visible !important;
     opacity:1 !important;
     height:360px !important;
     min-height:360px !important;
-    margin:10px 0 0 0 !important;
+    margin-top:-315px !important;
+    margin-bottom:-300px !important;
     padding:0 !important;
     position:relative !important;
-    clear:both !important;
+    z-index:5 !important;
   }
 
   #rs-v113-growth-canvas{
@@ -27505,108 +27516,61 @@ body.skin-dreamtrip .chart-wrap{
     width:100% !important;
     height:340px !important;
   }
-
-  #rs15GrowthChart{
-    display:none !important;
-    height:0 !important;
-    min-height:0 !important;
-    max-height:0 !important;
-    margin:0 !important;
-    padding:0 !important;
-  }
 </style>
 
-<script id="rs-v116-growth-placement-fix-js">
+<script id="rs-v117-pull-growth-up-js">
 (function(){
-  if(window.__rsV116GrowthPlacementFix) return;
-  window.__rsV116GrowthPlacementFix = true;
+  if(window.__rsV117PullGrowthUp) return;
+  window.__rsV117PullGrowthUp = true;
 
-  function findGrowthPanel(){
-    const heads = Array.from(document.querySelectorAll("h1,h2,h3,h4,.panel-title"));
-    const h = heads.find(el => /business\s+growth/i.test(el.textContent || ""));
-    if(h) return h.closest(".panel") || h.closest("section") || h.parentElement;
-
-    const native = document.getElementById("rs15GrowthChart");
-    return native ? (native.closest(".panel") || native.closest("section") || native.parentElement) : null;
-  }
-
-  function fixPlacement(){
-    const panel = findGrowthPanel();
+  function keepGraphVisible(){
     const graph = document.getElementById("rs-v113-growth-wrap");
-    const native = document.getElementById("rs15GrowthChart");
+    const canvas = document.getElementById("rs-v113-growth-canvas");
 
-    if(panel && graph){
-      const kpis = panel.querySelector(".rs15-kpis");
-
-      // Move graph directly below KPI cards, before any old chart wrapper.
-      if(kpis && kpis.nextSibling !== graph){
-        kpis.parentNode.insertBefore(graph, kpis.nextSibling);
-      }else if(!kpis && graph.parentElement !== panel){
-        panel.appendChild(graph);
-      }
-
+    if(graph){
       graph.style.display = "block";
       graph.style.visibility = "visible";
       graph.style.opacity = "1";
       graph.style.height = "360px";
       graph.style.minHeight = "360px";
-      graph.style.margin = "10px 0 0 0";
-      graph.style.padding = "0";
-
-      const canvas = document.getElementById("rs-v113-growth-canvas");
-      if(canvas){
-        canvas.style.display = "block";
-        canvas.style.visibility = "visible";
-        canvas.style.opacity = "1";
-        canvas.style.width = "100%";
-        canvas.style.height = "340px";
-
-        try{
-          if(window.Chart && Chart.getChart){
-            const ch = Chart.getChart(canvas);
-            if(ch){
-              ch.resize();
-              ch.update("none");
-            }
-          }
-        }catch(e){}
-      }
+      graph.style.marginTop = "-315px";
+      graph.style.marginBottom = "-300px";
+      graph.style.position = "relative";
+      graph.style.zIndex = "5";
     }
 
-    // Collapse only the old native chart/wrapper after the replacement is outside it.
-    if(native){
-      native.style.display = "none";
-      native.style.height = "0";
-      native.style.minHeight = "0";
-      native.style.maxHeight = "0";
-      native.style.margin = "0";
-      native.style.padding = "0";
+    if(canvas){
+      canvas.style.display = "block";
+      canvas.style.visibility = "visible";
+      canvas.style.opacity = "1";
+      canvas.style.width = "100%";
+      canvas.style.height = "340px";
 
-      const oldWrap = native.closest(".chart-wrap") || native.parentElement;
-      if(oldWrap && graph && !oldWrap.contains(graph)){
-        oldWrap.style.height = "0";
-        oldWrap.style.minHeight = "0";
-        oldWrap.style.maxHeight = "0";
-        oldWrap.style.margin = "0";
-        oldWrap.style.padding = "0";
-        oldWrap.style.overflow = "hidden";
-      }
+      try{
+        if(window.Chart && Chart.getChart){
+          const ch = Chart.getChart(canvas);
+          if(ch){
+            ch.resize();
+            ch.update("none");
+          }
+        }
+      }catch(e){}
     }
   }
 
   function start(){
-    fixPlacement();
-    [200,700,1500,3000,5000].forEach(t => setTimeout(fixPlacement, t));
+    keepGraphVisible();
+    [250,700,1500,3000,5000].forEach(t => setTimeout(keepGraphVisible, t));
 
     document.addEventListener("click", e => {
       if(e.target.closest("[data-rs15-range]") || e.target.closest(".nav") || e.target.closest("button")){
-        setTimeout(fixPlacement, 180);
-        setTimeout(fixPlacement, 800);
+        setTimeout(keepGraphVisible, 180);
+        setTimeout(keepGraphVisible, 800);
       }
     }, true);
 
-    document.addEventListener("change", () => setTimeout(fixPlacement,180), true);
-    setInterval(fixPlacement,1500);
+    document.addEventListener("change", () => setTimeout(keepGraphVisible, 180), true);
+    setInterval(keepGraphVisible, 2000);
   }
 
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
