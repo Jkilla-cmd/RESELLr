@@ -27623,45 +27623,351 @@ body.skin-dreamtrip .chart-wrap{
 </script>
 
 
-<style id="rs-v121-future-command-css">
-#rsFutureFab{position:fixed;right:18px;top:88px;z-index:260000;border:1px solid color-mix(in srgb,var(--accent,#38bdf8) 45%,transparent);background:rgba(8,12,20,.86);color:var(--text,#e5e7eb);border-radius:18px;padding:10px 14px;font-family:inherit;font-weight:900;cursor:pointer;box-shadow:0 16px 45px rgba(0,0,0,.42);backdrop-filter:blur(12px);display:flex;align-items:center;gap:9px}
-#rsFutureFab:hover{background:rgba(56,189,248,.14)}#rsFutureFab .pulse{width:10px;height:10px;border-radius:50%;background:var(--accent,#38bdf8);animation:rsFuturePulse 1.7s infinite}@keyframes rsFuturePulse{0%{box-shadow:0 0 0 0 rgba(56,189,248,.55)}70%{box-shadow:0 0 0 12px transparent}100%{box-shadow:0 0 0 0 transparent}}
-#rsFutureOverlay{position:fixed;inset:0;z-index:259999;display:none;background:rgba(2,6,23,.58);backdrop-filter:blur(8px)}#rsFutureOverlay.open{display:block}
-#rsFuturePanel{position:absolute;right:20px;top:72px;width:min(980px,calc(100vw - 40px));max-height:calc(100vh - 96px);overflow:auto;border-radius:28px;border:1px solid rgba(148,163,184,.24);background:radial-gradient(circle at 15% 10%,rgba(56,189,248,.20),transparent 28%),radial-gradient(circle at 85% 0%,rgba(167,139,250,.18),transparent 26%),rgba(7,10,18,.96);color:var(--text,#e5e7eb);box-shadow:0 28px 90px rgba(0,0,0,.62);padding:18px;font-family:inherit}
-.rsFutureHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:4px 4px 14px}.rsFutureTitle{font-size:22px;font-weight:1000;margin:0}.rsFutureSub{margin:5px 0 0;color:var(--muted,#94a3b8);font-size:13px}#rsFutureClose{border:1px solid rgba(148,163,184,.28);background:rgba(15,23,42,.8);color:var(--text,#e5e7eb);border-radius:14px;width:38px;height:38px;cursor:pointer;font-size:18px}
-.rsFutureSearch{display:flex;gap:10px;align-items:center;border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.72);border-radius:20px;padding:12px 14px;margin-bottom:12px}#rsFutureInput{all:unset;flex:1;color:var(--text,#e5e7eb);font-size:15px}.rsFutureCmd{border:1px solid rgba(148,163,184,.22);background:rgba(2,6,23,.45);color:var(--muted,#94a3b8);border-radius:999px;padding:6px 9px;font-size:12px}
-.rsFutureChips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}.rsFutureChips button{border:1px solid rgba(148,163,184,.24);background:rgba(15,23,42,.62);color:var(--text,#e5e7eb);border-radius:999px;padding:8px 11px;cursor:pointer;font-family:inherit;font-weight:800;font-size:12px}.rsFutureChips button:hover{background:rgba(56,189,248,.14)}
-.rsFutureGrid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}.rsFutureCard{border:1px solid rgba(148,163,184,.22);background:rgba(15,23,42,.58);border-radius:22px;padding:14px;min-width:0}.rsFutureCard h3{margin:0 0 10px;font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#94a3b8)}
-.rsFutureScoreWrap{display:flex;align-items:center;gap:16px}.rsFutureScore{width:116px;height:116px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent,#38bdf8) var(--score,50%),rgba(30,41,59,.82) 0);position:relative;flex:0 0 auto}.rsFutureScore:after{content:"";position:absolute;inset:10px;border-radius:50%;background:rgba(7,10,18,.96)}.rsFutureScore b{position:relative;z-index:1;font-size:30px}
-.rsFutureKpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;flex:1}.rsFutureKpi{border:1px solid rgba(148,163,184,.16);border-radius:16px;padding:10px;background:rgba(2,6,23,.36)}.rsFutureKpi span{display:block;color:var(--muted,#94a3b8);font-size:11px;text-transform:uppercase}.rsFutureKpi strong{display:block;margin-top:4px;font-size:18px}
-#rsFutureAnswer{font-size:14px;line-height:1.45}.rsFuturePlan{display:grid;gap:10px}.rsFuturePlanItem{border:1px solid rgba(148,163,184,.16);border-radius:16px;background:rgba(2,6,23,.36);padding:11px}.rsFuturePlanItem b{display:block;margin-bottom:4px}.rsFuturePlanItem p{margin:0;color:var(--muted,#94a3b8);font-size:13px;line-height:1.35}.rsFutureTinyChart{height:170px;display:flex;align-items:flex-end;gap:5px;padding-top:10px}.rsFutureBar{flex:1;min-width:8px;border-radius:10px 10px 3px 3px;background:linear-gradient(to top,rgba(56,189,248,.85),rgba(167,139,250,.9));position:relative}.rsFutureBar:hover:after{content:attr(data-label);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(2,6,23,.95);color:white;border:1px solid rgba(148,163,184,.24);padding:5px 7px;border-radius:9px;font-size:11px}
-@media(max-width:850px){#rsFuturePanel{left:10px;right:10px;width:auto;top:56px}.rsFutureGrid{grid-template-columns:1fr}.rsFutureScoreWrap{flex-direction:column;align-items:stretch}.rsFutureScore{align-self:center}}
+<!-- ===== v122: Future Look visual overhaul only ===== -->
+<style id="rs-v122-future-look-css">
+  :root{
+    --rs-neon-cyan:#5ee7ff;
+    --rs-neon-blue:#38bdf8;
+    --rs-neon-purple:#a78bfa;
+    --rs-neon-green:#7cff8b;
+    --rs-glass:rgba(9,14,25,.62);
+    --rs-glass-strong:rgba(10,16,28,.82);
+    --rs-line:rgba(148,163,184,.22);
+    --rs-soft:rgba(255,255,255,.075);
+  }
+
+  body{
+    background:
+      radial-gradient(circle at 18% 12%, rgba(56,189,248,.20), transparent 28%),
+      radial-gradient(circle at 82% 8%, rgba(167,139,250,.18), transparent 30%),
+      radial-gradient(circle at 50% 100%, rgba(34,197,94,.08), transparent 34%),
+      #030712 !important;
+  }
+
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:-1;
+    background-image:
+      linear-gradient(rgba(94,231,255,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(94,231,255,.045) 1px, transparent 1px);
+    background-size:42px 42px;
+    mask-image:radial-gradient(circle at center, black 0%, transparent 78%);
+  }
+
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:999999;
+    background:
+      linear-gradient(rgba(255,255,255,.025) 50%, rgba(0,0,0,.035) 50%);
+    background-size:100% 4px;
+    mix-blend-mode:soft-light;
+    opacity:.26;
+  }
+
+  .app,
+  main,
+  .main,
+  .content,
+  #app{
+    color:var(--text,#e5e7eb);
+  }
+
+  /* Left nav becomes a hologram rail */
+  .sidebar,
+  nav.sidebar,
+  .side-nav,
+  aside{
+    background:linear-gradient(180deg, rgba(8,13,24,.86), rgba(8,13,24,.48)) !important;
+    border-right:1px solid rgba(94,231,255,.16) !important;
+    box-shadow:12px 0 35px rgba(0,0,0,.28), inset -1px 0 0 rgba(255,255,255,.04) !important;
+    backdrop-filter:blur(14px) !important;
+  }
+
+  .sidebar button,
+  .side-nav button,
+  nav button,
+  aside button,
+  .nav button{
+    border-radius:16px !important;
+    transition:transform .16s ease, background .16s ease, box-shadow .16s ease !important;
+  }
+
+  .sidebar button:hover,
+  .side-nav button:hover,
+  nav button:hover,
+  aside button:hover,
+  .nav button:hover{
+    transform:translateY(-1px) scale(1.03) !important;
+    background:rgba(94,231,255,.12) !important;
+    box-shadow:0 0 24px rgba(94,231,255,.22) !important;
+  }
+
+  /* Futuristic logo/hero treatment */
+  .hero,
+  .dashboard-hero,
+  .rs15-hero,
+  header.hero{
+    border:1px solid rgba(94,231,255,.18) !important;
+    background:
+      linear-gradient(135deg, rgba(94,231,255,.12), transparent 34%),
+      linear-gradient(315deg, rgba(167,139,250,.13), transparent 34%),
+      rgba(8,13,24,.56) !important;
+    box-shadow:0 24px 70px rgba(0,0,0,.36), inset 0 0 0 1px rgba(255,255,255,.06) !important;
+    backdrop-filter:blur(16px) saturate(1.18) !important;
+    position:relative !important;
+    overflow:hidden !important;
+  }
+
+  .hero::after,
+  .dashboard-hero::after,
+  .rs15-hero::after,
+  header.hero::after{
+    content:"";
+    position:absolute;
+    inset:-2px;
+    pointer-events:none;
+    background:linear-gradient(115deg, transparent 0%, rgba(255,255,255,.10) 42%, transparent 56%);
+    transform:translateX(-120%);
+    animation:rsFutureSweep 8s ease-in-out infinite;
+  }
+
+  @keyframes rsFutureSweep{
+    0%,55%{transform:translateX(-120%);}
+    75%{transform:translateX(120%);}
+    100%{transform:translateX(120%);}
+  }
+
+  /* Panels/cards get depth and neon edges */
+  .panel,
+  .card,
+  section,
+  .rs15-panel,
+  .dashboard-card,
+  .stat-card,
+  .kpi,
+  .rs15-kpi,
+  .rs15-card{
+    border:1px solid var(--rs-line) !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018)),
+      var(--rs-glass) !important;
+    box-shadow:
+      0 22px 65px rgba(0,0,0,.32),
+      inset 0 0 0 1px rgba(255,255,255,.045) !important;
+    backdrop-filter:blur(15px) saturate(1.18) !important;
+  }
+
+  .panel:hover,
+  .card:hover,
+  .rs15-panel:hover,
+  .dashboard-card:hover,
+  .stat-card:hover,
+  .rs15-kpi:hover{
+    border-color:rgba(94,231,255,.32) !important;
+    box-shadow:
+      0 24px 70px rgba(0,0,0,.34),
+      0 0 34px rgba(56,189,248,.09),
+      inset 0 0 0 1px rgba(255,255,255,.055) !important;
+  }
+
+  .rs15-kpis,
+  .kpi-grid,
+  .stats-grid{
+    gap:12px !important;
+  }
+
+  .rs15-kpi,
+  .kpi,
+  .stat-card{
+    border-radius:18px !important;
+    position:relative !important;
+    overflow:hidden !important;
+  }
+
+  .rs15-kpi::before,
+  .kpi::before,
+  .stat-card::before{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    top:0;
+    height:2px;
+    background:linear-gradient(90deg, transparent, var(--rs-neon-cyan), var(--rs-neon-purple), transparent);
+    opacity:.78;
+  }
+
+  /* Headings / labels */
+  h1,h2,h3,h4,
+  .title,
+  .panel-title,
+  .rs15-title{
+    text-shadow:0 0 18px rgba(94,231,255,.18) !important;
+    letter-spacing:.02em !important;
+  }
+
+  .rs15-label,
+  .label,
+  small,
+  .muted{
+    color:rgba(203,213,225,.78) !important;
+  }
+
+  .rs15-value,
+  .value,
+  .amount,
+  .stat-value{
+    text-shadow:0 0 16px rgba(255,255,255,.14) !important;
+  }
+
+  /* Inputs and buttons */
+  input,
+  select,
+  textarea{
+    background:rgba(2,6,23,.54) !important;
+    border:1px solid rgba(148,163,184,.22) !important;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.035) !important;
+    backdrop-filter:blur(10px) !important;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus{
+    border-color:rgba(94,231,255,.52) !important;
+    box-shadow:0 0 0 3px rgba(94,231,255,.12), inset 0 0 0 1px rgba(255,255,255,.06) !important;
+    outline:none !important;
+  }
+
+  button,
+  .btn,
+  [role="button"]{
+    transition:transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease !important;
+  }
+
+  button:hover,
+  .btn:hover,
+  [role="button"]:hover{
+    transform:translateY(-1px) !important;
+  }
+
+  .active,
+  .selected,
+  button.active,
+  [data-rs15-range].active{
+    background:linear-gradient(135deg, rgba(94,231,255,.24), rgba(167,139,250,.20)) !important;
+    border-color:rgba(94,231,255,.52) !important;
+    box-shadow:0 0 26px rgba(56,189,248,.20) !important;
+  }
+
+  /* Tables feel like a command terminal */
+  table{
+    border-collapse:separate !important;
+    border-spacing:0 8px !important;
+  }
+
+  thead th{
+    color:rgba(203,213,225,.72) !important;
+    letter-spacing:.06em !important;
+    text-transform:uppercase !important;
+    font-size:11px !important;
+  }
+
+  tbody tr{
+    background:rgba(15,23,42,.42) !important;
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,.12) !important;
+    transition:transform .14s ease, box-shadow .14s ease, background .14s ease !important;
+  }
+
+  tbody tr:hover{
+    background:rgba(30,41,59,.56) !important;
+    transform:translateY(-1px) !important;
+    box-shadow:0 10px 28px rgba(0,0,0,.20), inset 0 0 0 1px rgba(94,231,255,.20) !important;
+  }
+
+  tbody td:first-child{border-radius:14px 0 0 14px !important;}
+  tbody td:last-child{border-radius:0 14px 14px 0 !important;}
+
+  /* Charts get hologram glass */
+  canvas,
+  .chart-wrap,
+  #rs-v113-growth-wrap,
+  #rs-v120-growth-graph{
+    border-radius:20px !important;
+  }
+
+  .chart-wrap,
+  #rs-v113-growth-wrap{
+    background:
+      linear-gradient(180deg, rgba(15,23,42,.20), rgba(2,6,23,.10)) !important;
+  }
+
+  /* Inventory action menu updated to match */
+  #rsActionsMenu{
+    border:1px solid rgba(94,231,255,.26) !important;
+    background:rgba(5,10,20,.96) !important;
+    box-shadow:0 26px 75px rgba(0,0,0,.55), 0 0 40px rgba(56,189,248,.12) !important;
+    backdrop-filter:blur(18px) !important;
+  }
+
+  #rsActionsMenu button:hover{
+    background:rgba(94,231,255,.12) !important;
+  }
+
+  /* Toasty/hold character sits in same future world */
+  #holdCharacter,
+  #rsDashboardToastyCharacter,
+  #rsToastyHoldClone{
+    filter:drop-shadow(0 24px 34px rgba(0,0,0,.42)) drop-shadow(0 0 22px rgba(94,231,255,.18)) !important;
+  }
+
+  /* Subtle futuristic scrollbar */
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:rgba(2,6,23,.42)}
+  ::-webkit-scrollbar-thumb{
+    background:linear-gradient(180deg, rgba(94,231,255,.55), rgba(167,139,250,.45));
+    border-radius:999px;
+    border:2px solid rgba(2,6,23,.70);
+  }
 </style>
 
+<script id="rs-v122-future-look-js">
+(function(){
+  if(window.__rsV122FutureLook) return;
+  window.__rsV122FutureLook = true;
 
-<script id="rs-v121-future-command-js">
-(function(){if(window.__rsV121FutureCommand)return;window.__rsV121FutureCommand=true;
-function n(v){const x=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(x)?x:0}
-function m(x){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(x)||0)}catch(e){return "$"+(Number(x)||0).toFixed(2)}}
-function arr(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
-function active(){try{if(typeof window.readActive==="function")return window.readActive()||[]}catch(e){}return arr("activeInventory")}
-function sold(){try{if(typeof window.readSold==="function")return window.readSold()||[]}catch(e){}return arr("soldInventory")}
-function holds(){try{if(typeof window.readHolds==="function")return window.readHolds()||[]}catch(e){}return arr("inventoryHolds")}
-function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return 0}
-function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total","list"])}
-function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice"])}
-function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
-function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"])}
-function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
-function profit(r){for(const k of["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
-function date(r){const raw=r&&(r.date||r.soldDate||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt);const d=new Date(raw||"");return isNaN(d)?null:d}
-function days(nm){const d=new Date();d.setDate(d.getDate()-nm);d.setHours(0,0,0,0);return d}
-function plat(r){return String(r.platform||r.marketplace||r.source||r.notes||"").toLowerCase()}
-function data(){const a=active(),s=sold(),h=holds(),l7=s.filter(r=>{const d=date(r);return d&&d>=days(7)}),l30=s.filter(r=>{const d=date(r);return d&&d>=days(30)}),p30=s.filter(r=>{const d=date(r);return d&&d>=days(60)&&d<days(30)});const av=a.reduce((x,r)=>x+list(r),0),ti=s.reduce((x,r)=>x+sale(r),0),tp=s.reduce((x,r)=>x+profit(r),0),ap=s.length?tp/s.length:0,l30p=l30.reduce((x,r)=>x+profit(r),0),p30p=p30.reduce((x,r)=>x+profit(r),0),vel=l30.length/30,st=a.length?l30.length/a.length*100:0,daysInv=vel?a.length/vel:999,mar=ti?tp/ti*100:0;let score=Math.round(Math.min(35,mar*.8)+Math.min(25,st*2.5)+Math.min(20,Math.max(0,l30p)/10)+Math.min(20,l7.length*6));score=Math.max(1,Math.min(100,score));const pf={mercari:0,ebay:0,private:0,other:0};s.forEach(r=>{const p=plat(r);if(p.includes("mercari"))pf.mercari+=sale(r);else if(p.includes("ebay"))pf.ebay+=sale(r);else if(p.includes("private"))pf.private+=sale(r);else pf.other+=sale(r)});const buckets={};s.forEach(r=>{const d=date(r);if(!d)return;const k=d.toLocaleDateString("en-US",{month:"short",year:"2-digit"});buckets[k]=(buckets[k]||0)+profit(r)});return{a,s,h,l7,l30,p30,av,ti,tp,ap,l30p,p30p,vel,st,daysInv,mar,score,pf,bars:Object.entries(buckets).slice(-10).map(([label,value])=>({label,value}))}}
-function answer(q,d){q=String(q||"").toLowerCase();const g=d.p30p?((d.l30p-d.p30p)/Math.abs(d.p30p))*100:0;if(q.includes("today")||q.includes("next")||q.includes("what should"))return `<strong>Today’s move:</strong> list 8–12 fresh items, relist 10 stale items, and prioritize anything that can clear ${m(Math.max(15,d.ap))}+ profit. Last 30 days: <strong>${d.l30.length}</strong> sales and <strong>${m(d.l30p)}</strong> profit.`;if(q.includes("slow")||q.includes("stuck")||q.includes("sell"))return `<strong>Inventory pressure:</strong> at about <strong>${d.vel.toFixed(2)} sales/day</strong>, your ${d.a.length} active listings equal about <strong>${Math.round(d.daysInv)} days</strong> of inventory. The future move is faster rotation, not just more buying.`;if(q.includes("profit")||q.includes("money"))return `<strong>Profit read:</strong> total profit is <strong>${m(d.tp)}</strong>, average profit per sale is <strong>${m(d.ap)}</strong>, margin is <strong>${d.mar.toFixed(1)}%</strong>. Last 30 days is <strong>${m(d.l30p)}</strong>${d.p30p?`, ${g>=0?"up":"down"} <strong>${Math.abs(g).toFixed(1)}%</strong> vs prior 30 days.`:"."}`;if(q.includes("platform")||q.includes("ebay")||q.includes("mercari"))return `<strong>Platform signal:</strong> Mercari ${m(d.pf.mercari)}, eBay ${m(d.pf.ebay)}, private ${m(d.pf.private)}, other ${m(d.pf.other)}. Cross-list the best margin items first.`;if(q.includes("hold"))return `<strong>Holds check:</strong> you have <strong>${d.h.length}</strong> items in holds. Review weekly: list, sell privately, or move back to active.`;return `<strong>Future read:</strong> store health is <strong>${d.score}/100</strong>. Active value about <strong>${m(d.av)}</strong>, <strong>${d.s.length}</strong> sold, and <strong>${m(d.tp)}</strong> total profit. Ask “What should I do today?” or tap a chip.`}
-function plan(d){return[(d.st<5?["Boost rotation",`30-day sell-through is ${d.st.toFixed(1)}%. Add a stale-item markdown/relist pass.`]:["Protect momentum",`Sell-through is moving. Keep listing fresh before buying too much backstock.`]),(d.ap<15?["Raise floor profit",`Average profit is ${m(d.ap)}. Aim for buys that clear $15+.`]:["Scale winners",`Average profit is ${m(d.ap)}. Source more like your recent sold winners.`]),(d.l7.length<2?["7-day push",`Only ${d.l7.length} sale(s) in 7 days. List fresh items and send offers.`]:["Keep machine warm",`${d.l7.length} sale(s) in 7 days. Keep weekend listing and cross-list best items.`])]}
-function render(){const d=data(),q=document.getElementById("rsFutureInput")?.value||"",sc=document.getElementById("rsFutureScore");if(sc){sc.style.setProperty("--score",d.score+"%");sc.querySelector("b").textContent=d.score}let k=document.getElementById("rsFutureKpis");if(k)k.innerHTML=`<div class="rsFutureKpi"><span>Active value</span><strong>${m(d.av)}</strong></div><div class="rsFutureKpi"><span>30-day sales</span><strong>${d.l30.length}</strong></div><div class="rsFutureKpi"><span>Avg profit</span><strong>${m(d.ap)}</strong></div><div class="rsFutureKpi"><span>Sell-through</span><strong>${d.st.toFixed(1)}%</strong></div>`;let a=document.getElementById("rsFutureAnswer");if(a)a.innerHTML=answer(q,d);let p=document.getElementById("rsFuturePlan");if(p)p.innerHTML=plan(d).map(x=>`<div class="rsFuturePlanItem"><b>${x[0]}</b><p>${x[1]}</p></div>`).join("");let b=document.getElementById("rsFutureBars");if(b){const max=Math.max(1,...d.bars.map(x=>Math.abs(x.value)));b.innerHTML=d.bars.map(x=>`<div class="rsFutureBar" style="height:${Math.max(8,Math.abs(x.value)/max*150)}px" data-label="${x.label}: ${m(x.value)}"></div>`).join("")}}
-function ensure(){if(document.getElementById("rsFutureFab"))return;const fab=document.createElement("button");fab.id="rsFutureFab";fab.type="button";fab.innerHTML='<span class="pulse"></span><span>Future Mode</span>';document.body.appendChild(fab);const ov=document.createElement("div");ov.id="rsFutureOverlay";ov.innerHTML=`<div id="rsFuturePanel"><div class="rsFutureHeader"><div><h2 class="rsFutureTitle">RESELLr Future Command Center</h2><p class="rsFutureSub">Ask your inventory what to do next. Built from active, sold, and hold data.</p></div><button id="rsFutureClose" type="button">×</button></div><div class="rsFutureSearch"><span>⌘</span><input id="rsFutureInput" placeholder="Ask: What should I do today? Am I buying slow inventory? Which platform is working?"/><span class="rsFutureCmd">Enter</span></div><div class="rsFutureChips"><button type="button" data-q="What should I do today?">Today’s move</button><button type="button" data-q="Am I stuck with slow inventory?">Inventory pressure</button><button type="button" data-q="How is my profit?">Profit read</button><button type="button" data-q="Which platform is working?">Platform signal</button><button type="button" data-q="How are my holds?">Holds check</button></div><div class="rsFutureGrid"><div class="rsFutureCard"><h3>Store health</h3><div class="rsFutureScoreWrap"><div class="rsFutureScore" id="rsFutureScore"><b>0</b></div><div class="rsFutureKpis" id="rsFutureKpis"></div></div></div><div class="rsFutureCard"><h3>Answer engine</h3><div id="rsFutureAnswer"></div></div><div class="rsFutureCard"><h3>Next best actions</h3><div class="rsFuturePlan" id="rsFuturePlan"></div></div><div class="rsFutureCard"><h3>Profit pulse</h3><div class="rsFutureTinyChart" id="rsFutureBars"></div></div></div></div>`;document.body.appendChild(ov);fab.addEventListener("click",()=>{ov.classList.add("open");render();setTimeout(()=>document.getElementById("rsFutureInput")?.focus(),80)});document.getElementById("rsFutureClose").addEventListener("click",()=>ov.classList.remove("open"));ov.addEventListener("click",e=>{if(e.target===ov)ov.classList.remove("open")});document.getElementById("rsFutureInput").addEventListener("keydown",e=>{if(e.key==="Enter")render()});ov.querySelectorAll("[data-q]").forEach(btn=>btn.addEventListener("click",()=>{document.getElementById("rsFutureInput").value=btn.dataset.q;render()}))}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",ensure);else ensure();
+  function tagDashboard(){
+    const heads = Array.from(document.querySelectorAll("h1,h2,h3,h4,.panel-title"));
+    heads.forEach(h=>{
+      const text = (h.textContent || "").toLowerCase();
+      const panel = h.closest(".panel") || h.closest("section") || h.parentElement;
+      if(!panel) return;
+      if(text.includes("business growth")) panel.classList.add("rs-future-business-panel");
+      if(text.includes("monthly profit")) panel.classList.add("rs-future-monthly-panel");
+      if(text.includes("inventory")) panel.classList.add("rs-future-inventory-panel");
+    });
+  }
+
+  function addGlowToMoney(){
+    document.querySelectorAll(".rs15-value,.value,.amount,.stat-value").forEach(el=>{
+      el.classList.add("rs-future-money");
+    });
+  }
+
+  function start(){
+    tagDashboard();
+    addGlowToMoney();
+    setTimeout(tagDashboard,600);
+    setTimeout(addGlowToMoney,600);
+    document.addEventListener("click",()=>setTimeout(()=>{tagDashboard();addGlowToMoney();},120),true);
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
 })();
 </script>
