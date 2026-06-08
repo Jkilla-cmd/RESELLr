@@ -28323,3 +28323,307 @@ body.skin-dreamtrip .chart-wrap{
   else start();
 })();
 </script>
+
+
+<!-- ===== v124: Minimal future glass + fixed inventory action button ===== -->
+<style id="rs-v124-minimal-glass-css">
+  /*
+    Minimal Future pass:
+    - tones down the heavy neon
+    - keeps the glass/future feel
+    - fixes inventory action button glass so it doesn't look broken/overdone
+  */
+
+  :root{
+    --rs124-glass-bg:rgba(10,16,28,.58);
+    --rs124-glass-bg-strong:rgba(10,16,28,.76);
+    --rs124-glass-line:rgba(226,232,240,.12);
+    --rs124-glass-line-hot:rgba(103,232,249,.22);
+    --rs124-cyan:#67e8f9;
+    --rs124-purple:#a78bfa;
+  }
+
+  /* Tone the background down: still futuristic, less noisy */
+  body{
+    background:
+      radial-gradient(circle at 18% 8%, rgba(56,189,248,.14), transparent 26%),
+      radial-gradient(circle at 82% 0%, rgba(167,139,250,.12), transparent 28%),
+      #030712 !important;
+  }
+
+  body::before{
+    opacity:.28 !important;
+    background-size:54px 54px !important;
+  }
+
+  body::after{
+    opacity:.12 !important;
+  }
+
+  .rs123-aurora{
+    opacity:.38 !important;
+    filter:blur(38px) !important;
+  }
+
+  /* Cleaner glass panels */
+  .panel,
+  section,
+  .card,
+  .dashboard-card,
+  .rs15-panel,
+  .rs15-kpi,
+  .kpi,
+  .stat-card{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.050), rgba(255,255,255,.018)),
+      var(--rs124-glass-bg) !important;
+    border:1px solid var(--rs124-glass-line) !important;
+    box-shadow:
+      0 18px 55px rgba(0,0,0,.28),
+      inset 0 1px 0 rgba(255,255,255,.06) !important;
+    backdrop-filter:blur(14px) saturate(1.08) !important;
+  }
+
+  .panel:hover,
+  section:hover,
+  .card:hover,
+  .dashboard-card:hover,
+  .rs15-panel:hover,
+  .rs15-kpi:hover,
+  .kpi:hover,
+  .stat-card:hover{
+    border-color:rgba(103,232,249,.20) !important;
+    box-shadow:
+      0 18px 55px rgba(0,0,0,.30),
+      inset 0 1px 0 rgba(255,255,255,.07) !important;
+    transform:none !important;
+  }
+
+  /* Remove excessive sweep/shine from the whole app */
+  .hero::after,
+  .dashboard-hero::after,
+  .rs15-hero::after,
+  header.hero::after,
+  button::after,
+  .btn::after{
+    opacity:.18 !important;
+  }
+
+  /* Minimal typography */
+  h1:first-child,
+  .page-title,
+  .dashboard-title{
+    background:linear-gradient(90deg, #f8fafc, #dff9ff) !important;
+    -webkit-background-clip:text !important;
+    background-clip:text !important;
+    color:transparent !important;
+  }
+
+  h1:first-child::after,
+  .page-title::after,
+  .dashboard-title::after{
+    width:86px !important;
+    height:2px !important;
+    opacity:.7 !important;
+  }
+
+  .panel > h2:first-child::before,
+  .rs15-panel > h2:first-child::before,
+  section > h2:first-child::before,
+  .panel-title::before{
+    width:6px !important;
+    height:6px !important;
+    opacity:.8 !important;
+    box-shadow:0 0 10px rgba(103,232,249,.45) !important;
+  }
+
+  /* Cleaner KPI numbers, less rainbow */
+  .rs15-kpi .rs15-value,
+  .kpi .value,
+  .stat-card .value,
+  .amount,
+  .stat-value{
+    background:none !important;
+    -webkit-background-clip:initial !important;
+    background-clip:initial !important;
+    color:#f8fafc !important;
+    text-shadow:0 0 12px rgba(103,232,249,.10) !important;
+  }
+
+  /* Better minimal input/buttons */
+  input,
+  select,
+  textarea{
+    background:rgba(2,6,23,.44) !important;
+    border:1px solid rgba(148,163,184,.18) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.035) !important;
+  }
+
+  button,
+  .btn,
+  [role="button"]{
+    box-shadow:none !important;
+  }
+
+  button:hover,
+  .btn:hover,
+  [role="button"]:hover{
+    transform:none !important;
+  }
+
+  /* Inventory action button: fixed glass */
+  #activeTableBody td.action-cell,
+  #activeTableBody .action-cell{
+    width:66px !important;
+    min-width:66px !important;
+    max-width:66px !important;
+    padding:6px 8px !important;
+    text-align:center !important;
+    vertical-align:middle !important;
+    overflow:visible !important;
+  }
+
+  #activeTableBody .action-cell > :not(.rs-menu-action-button){
+    display:none !important;
+  }
+
+  .rs-menu-action-button{
+    all:unset !important;
+    box-sizing:border-box !important;
+    width:38px !important;
+    height:32px !important;
+    min-width:38px !important;
+    max-width:38px !important;
+    margin:0 auto !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:12px !important;
+    font-size:22px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    color:rgba(226,232,240,.88) !important;
+    cursor:pointer !important;
+    user-select:none !important;
+
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.035)),
+      rgba(15,23,42,.54) !important;
+    border:1px solid rgba(226,232,240,.16) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.12),
+      0 8px 20px rgba(0,0,0,.18) !important;
+    backdrop-filter:blur(10px) saturate(1.08) !important;
+    -webkit-backdrop-filter:blur(10px) saturate(1.08) !important;
+
+    transform:none !important;
+    transition:background .12s ease, border-color .12s ease, color .12s ease !important;
+  }
+
+  .rs-menu-action-button::before,
+  .rs-menu-action-button::after{
+    display:none !important;
+    content:none !important;
+  }
+
+  .rs-menu-action-button:hover,
+  .rs-menu-action-button:focus,
+  .rs-menu-action-button:active{
+    color:#f8fafc !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.13), rgba(255,255,255,.045)),
+      rgba(15,23,42,.68) !important;
+    border-color:rgba(103,232,249,.28) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.14),
+      0 8px 22px rgba(0,0,0,.20) !important;
+    transform:none !important;
+  }
+
+  /* Inventory action menu: minimal glass sheet */
+  #rsActionsMenu{
+    border:1px solid rgba(226,232,240,.14) !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.060), rgba(255,255,255,.018)),
+      rgba(5,10,20,.92) !important;
+    border-radius:18px !important;
+    box-shadow:
+      0 22px 60px rgba(0,0,0,.48),
+      inset 0 1px 0 rgba(255,255,255,.08) !important;
+    backdrop-filter:blur(18px) saturate(1.08) !important;
+    -webkit-backdrop-filter:blur(18px) saturate(1.08) !important;
+  }
+
+  #rsActionsMenu button{
+    border-radius:12px !important;
+    color:rgba(226,232,240,.90) !important;
+    background:transparent !important;
+    transition:background .12s ease, color .12s ease !important;
+  }
+
+  #rsActionsMenu button::after{
+    display:none !important;
+    content:none !important;
+  }
+
+  #rsActionsMenu button:hover{
+    background:rgba(103,232,249,.085) !important;
+    color:#fff !important;
+  }
+
+  /* Tables minimal */
+  table{
+    border-spacing:0 6px !important;
+  }
+
+  tbody tr{
+    background:rgba(15,23,42,.32) !important;
+    box-shadow:inset 0 0 0 1px rgba(148,163,184,.085) !important;
+  }
+
+  tbody tr:hover{
+    background:rgba(30,41,59,.42) !important;
+    transform:none !important;
+    box-shadow:inset 0 0 0 1px rgba(103,232,249,.16) !important;
+  }
+
+  /* Optional visual toggle calmer */
+  #rsVisualToggle{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)),
+      rgba(8,12,20,.72) !important;
+    border:1px solid rgba(226,232,240,.16) !important;
+    box-shadow:0 12px 28px rgba(0,0,0,.24) !important;
+    color:rgba(226,232,240,.88) !important;
+  }
+</style>
+
+<script id="rs-v124-minimal-glass-js">
+(function(){
+  if(window.__rsV124MinimalGlass) return;
+  window.__rsV124MinimalGlass = true;
+
+  function cleanActionButtons(){
+    document.querySelectorAll(".rs-menu-action-button").forEach(btn=>{
+      btn.style.transform = "none";
+      btn.style.boxShadow = "";
+      btn.style.overflow = "hidden";
+    });
+  }
+
+  function start(){
+    cleanActionButtons();
+    setTimeout(cleanActionButtons,500);
+    setTimeout(cleanActionButtons,1500);
+
+    document.addEventListener("click",()=>setTimeout(cleanActionButtons,80),true);
+    const tbody = document.getElementById("activeTableBody");
+    if(tbody && window.MutationObserver){
+      new MutationObserver(()=>setTimeout(cleanActionButtons,80)).observe(tbody,{childList:true,subtree:true});
+    }
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+})();
+</script>
