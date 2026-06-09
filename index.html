@@ -29426,3 +29426,502 @@ body.skin-dreamtrip .chart-wrap{
   else start();
 })();
 </script>
+
+
+<!-- ===== v127: Ultra Clean Redesign - single outline, no ghost borders ===== -->
+<style id="rs-v127-ultra-clean-redesign-css">
+  /*
+    v127:
+    - fixes doubled/ghost outlines
+    - removes decorative pseudo borders
+    - cleaner sharper “expensive simple” redesign
+  */
+
+  :root{
+    --rs127-bg:#05070d;
+    --rs127-panel:rgba(11,16,26,.72);
+    --rs127-panel-soft:rgba(13,19,31,.58);
+    --rs127-border:rgba(255,255,255,.085);
+    --rs127-border-hover:rgba(255,255,255,.14);
+    --rs127-text:#f8fafc;
+    --rs127-muted:rgba(203,213,225,.62);
+    --rs127-accent:#8bdcff;
+  }
+
+  body{
+    background:
+      radial-gradient(circle at 18% -12%, rgba(139,220,255,.075), transparent 30%),
+      radial-gradient(circle at 90% -10%, rgba(167,139,250,.055), transparent 32%),
+      var(--rs127-bg) !important;
+    color:var(--rs127-text) !important;
+  }
+
+  /* Kill global visual noise and scanline doubling */
+  body::before,
+  body::after,
+  .rs123-aurora{
+    display:none !important;
+    content:none !important;
+  }
+
+  /* THE IMPORTANT FIX: remove every decorative pseudo outline */
+  .panel::before,
+  .panel::after,
+  section::before,
+  section::after,
+  .card::before,
+  .card::after,
+  .dashboard-card::before,
+  .dashboard-card::after,
+  .rs15-panel::before,
+  .rs15-panel::after,
+  .rs15-kpi::before,
+  .rs15-kpi::after,
+  .kpi::before,
+  .kpi::after,
+  .stat-card::before,
+  .stat-card::after,
+  .command-stat::before,
+  .command-stat::after,
+  .hero::before,
+  .hero::after,
+  .dashboard-hero::before,
+  .dashboard-hero::after,
+  .rs15-hero::before,
+  .rs15-hero::after,
+  header.hero::before,
+  header.hero::after{
+    display:none !important;
+    content:none !important;
+    opacity:0 !important;
+  }
+
+  /* Main panels: one clean border only */
+  .panel,
+  section,
+  .card,
+  .dashboard-card,
+  .rs15-panel,
+  .rs15-command,
+  .hero,
+  .dashboard-hero,
+  .rs15-hero,
+  header.hero{
+    border:1px solid var(--rs127-border) !important;
+    border-radius:20px !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.030), rgba(255,255,255,.010)),
+      var(--rs127-panel) !important;
+    box-shadow:0 12px 34px rgba(0,0,0,.22) !important;
+    backdrop-filter:blur(10px) saturate(1.01) !important;
+    -webkit-backdrop-filter:blur(10px) saturate(1.01) !important;
+    overflow:hidden !important;
+  }
+
+  .panel:hover,
+  section:hover,
+  .card:hover,
+  .dashboard-card:hover,
+  .rs15-panel:hover,
+  .rs15-command:hover,
+  .hero:hover,
+  .dashboard-hero:hover,
+  .rs15-hero:hover{
+    border-color:var(--rs127-border-hover) !important;
+    box-shadow:0 14px 36px rgba(0,0,0,.24) !important;
+    transform:none !important;
+  }
+
+  /* KPI cards: flatter and sharper */
+  .rs15-kpi,
+  .kpi,
+  .stat-card,
+  .command-stat{
+    border:1px solid rgba(255,255,255,.075) !important;
+    border-radius:16px !important;
+    background:rgba(13,19,31,.50) !important;
+    box-shadow:none !important;
+    backdrop-filter:blur(8px) !important;
+    -webkit-backdrop-filter:blur(8px) !important;
+    padding:14px !important;
+  }
+
+  .rs15-kpi:hover,
+  .kpi:hover,
+  .stat-card:hover,
+  .command-stat:hover{
+    border-color:rgba(255,255,255,.12) !important;
+    background:rgba(15,23,37,.58) !important;
+    box-shadow:none !important;
+    transform:none !important;
+  }
+
+  /* Top dashboard image panel, restored but refined */
+  #secDashboard #rs15CommandView.rs15-command,
+  #secDashboard .rs15-command{
+    min-height:154px !important;
+    position:relative !important;
+    isolation:isolate !important;
+  }
+
+  #secDashboard #rs15CommandView.rs15-command::before,
+  #secDashboard .rs15-command::before{
+    content:"" !important;
+    display:block !important;
+    position:absolute !important;
+    inset:0 !important;
+    z-index:0 !important;
+    background-image:var(--rs15-command-bg, var(--rs-shared-bg, none)) !important;
+    background-size:cover !important;
+    background-position:center center !important;
+    background-repeat:no-repeat !important;
+    opacity:.24 !important;
+    filter:saturate(.92) contrast(1.04) brightness(.88) !important;
+    pointer-events:none !important;
+  }
+
+  #secDashboard #rs15CommandView.rs15-command::after,
+  #secDashboard .rs15-command::after{
+    content:"" !important;
+    display:block !important;
+    position:absolute !important;
+    inset:0 !important;
+    z-index:1 !important;
+    background:
+      linear-gradient(90deg,
+        rgba(5,7,13,.98) 0%,
+        rgba(5,7,13,.88) 40%,
+        rgba(5,7,13,.60) 72%,
+        rgba(5,7,13,.36) 100%
+      ) !important;
+    pointer-events:none !important;
+  }
+
+  #secDashboard .rs15-command.no-bg::before,
+  #secDashboard #rs15CommandView.no-bg::before{
+    display:none !important;
+  }
+
+  #secDashboard .rs15-command.no-bg::after,
+  #secDashboard #rs15CommandView.no-bg::after{
+    display:none !important;
+  }
+
+  #secDashboard .rs15-command > *{
+    position:relative !important;
+    z-index:2 !important;
+  }
+
+  /* Typography: crisp, less glow */
+  h1,h2,h3,h4,
+  .panel-title,
+  .rs15-title,
+  .dashboard-title,
+  .page-title{
+    color:var(--rs127-text) !important;
+    background:none !important;
+    -webkit-background-clip:initial !important;
+    background-clip:initial !important;
+    text-shadow:none !important;
+    letter-spacing:-.025em !important;
+    font-weight:900 !important;
+  }
+
+  h1:first-child::after,
+  .page-title::after,
+  .dashboard-title::after{
+    display:none !important;
+    content:none !important;
+  }
+
+  .rs15-label,
+  .label,
+  .muted,
+  small,
+  .rs15-sub,
+  .rs15-note,
+  .note{
+    color:var(--rs127-muted) !important;
+    text-shadow:none !important;
+  }
+
+  .rs15-value,
+  .value,
+  .amount,
+  .stat-value,
+  .command-stat .value{
+    color:#fff !important;
+    background:none !important;
+    -webkit-background-clip:initial !important;
+    background-clip:initial !important;
+    text-shadow:none !important;
+    font-weight:900 !important;
+    letter-spacing:-.035em !important;
+  }
+
+  /* Buttons: simple precise controls */
+  button,
+  .btn,
+  [role="button"],
+  [data-rs15-range],
+  .chip,
+  .filter-chip{
+    background:rgba(15,23,42,.36) !important;
+    border:1px solid rgba(255,255,255,.085) !important;
+    color:rgba(248,250,252,.88) !important;
+    border-radius:12px !important;
+    box-shadow:none !important;
+    transform:none !important;
+  }
+
+  button::before,
+  button::after,
+  .btn::before,
+  .btn::after{
+    display:none !important;
+    content:none !important;
+  }
+
+  button:hover,
+  .btn:hover,
+  [role="button"]:hover,
+  [data-rs15-range]:hover,
+  .chip:hover,
+  .filter-chip:hover{
+    background:rgba(30,41,59,.46) !important;
+    border-color:rgba(255,255,255,.13) !important;
+    transform:none !important;
+    box-shadow:none !important;
+  }
+
+  button.active,
+  [data-rs15-range].active,
+  .chip.active,
+  .filter-chip.active,
+  .selected{
+    background:rgba(139,220,255,.105) !important;
+    border-color:rgba(139,220,255,.28) !important;
+    color:#effcff !important;
+    box-shadow:none !important;
+  }
+
+  /* Inputs */
+  input,
+  select,
+  textarea{
+    background:rgba(2,6,23,.30) !important;
+    border:1px solid rgba(255,255,255,.08) !important;
+    color:#fff !important;
+    border-radius:12px !important;
+    box-shadow:none !important;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus{
+    border-color:rgba(139,220,255,.30) !important;
+    box-shadow:0 0 0 3px rgba(139,220,255,.07) !important;
+    outline:none !important;
+  }
+
+  /* Tables */
+  table{
+    border-spacing:0 4px !important;
+  }
+
+  thead th{
+    color:rgba(203,213,225,.58) !important;
+    font-size:10.5px !important;
+    font-weight:900 !important;
+    letter-spacing:.055em !important;
+  }
+
+  tbody tr{
+    background:rgba(15,23,42,.24) !important;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.045) !important;
+  }
+
+  tbody tr:hover{
+    background:rgba(30,41,59,.32) !important;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08) !important;
+    transform:none !important;
+  }
+
+  tbody td{
+    border:none !important;
+  }
+
+  tbody td:first-child{border-radius:12px 0 0 12px !important;}
+  tbody td:last-child{border-radius:0 12px 12px 0 !important;}
+
+  /* Inventory action button, no broken glass/double edge */
+  .rs-menu-action-button{
+    all:unset !important;
+    box-sizing:border-box !important;
+    width:36px !important;
+    height:30px !important;
+    min-width:36px !important;
+    max-width:36px !important;
+    margin:0 auto !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:10px !important;
+    font-size:20px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    color:rgba(248,250,252,.80) !important;
+    cursor:pointer !important;
+    background:rgba(15,23,42,.44) !important;
+    border:1px solid rgba(255,255,255,.085) !important;
+    box-shadow:none !important;
+    backdrop-filter:blur(8px) !important;
+    -webkit-backdrop-filter:blur(8px) !important;
+    transform:none !important;
+  }
+
+  .rs-menu-action-button::before,
+  .rs-menu-action-button::after{
+    display:none !important;
+    content:none !important;
+  }
+
+  .rs-menu-action-button:hover,
+  .rs-menu-action-button:focus,
+  .rs-menu-action-button:active{
+    background:rgba(30,41,59,.52) !important;
+    border-color:rgba(139,220,255,.20) !important;
+    color:#fff !important;
+    box-shadow:none !important;
+    transform:none !important;
+  }
+
+  #rsActionsMenu{
+    border:1px solid rgba(255,255,255,.085) !important;
+    background:rgba(5,10,20,.94) !important;
+    border-radius:16px !important;
+    box-shadow:0 18px 45px rgba(0,0,0,.42) !important;
+    backdrop-filter:blur(18px) saturate(1.02) !important;
+    -webkit-backdrop-filter:blur(18px) saturate(1.02) !important;
+  }
+
+  #rsActionsMenu button{
+    background:transparent !important;
+    border:none !important;
+    border-radius:10px !important;
+    box-shadow:none !important;
+  }
+
+  #rsActionsMenu button:hover{
+    background:rgba(255,255,255,.055) !important;
+  }
+
+  /* Charts: remove HUD/grid pseudo overlay that creates visual clutter */
+  .chart-wrap::before,
+  .chart-wrap::after,
+  #rs-v113-growth-wrap::before,
+  #rs-v113-growth-wrap::after{
+    display:none !important;
+    content:none !important;
+  }
+
+  /* Sidebar cleaner */
+  .sidebar,
+  nav.sidebar,
+  .side-nav,
+  aside{
+    background:rgba(8,12,20,.66) !important;
+    border-right:1px solid rgba(255,255,255,.075) !important;
+    box-shadow:none !important;
+    backdrop-filter:blur(12px) !important;
+  }
+
+  .sidebar button:hover,
+  .side-nav button:hover,
+  nav button:hover,
+  aside button:hover,
+  .nav button:hover{
+    background:rgba(255,255,255,.055) !important;
+    box-shadow:none !important;
+    transform:none !important;
+  }
+
+  #rsVisualToggle{
+    display:none !important;
+  }
+
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track{background:rgba(2,6,23,.34)}
+  ::-webkit-scrollbar-thumb{
+    background:rgba(148,163,184,.25);
+    border-radius:999px;
+    border:2px solid rgba(2,6,23,.45);
+  }
+</style>
+
+<script id="rs-v127-ultra-clean-redesign-js">
+(function(){
+  if(window.__rsV127UltraCleanRedesign) return;
+  window.__rsV127UltraCleanRedesign = true;
+
+  const BG_KEY = "rs15CommandBg";
+
+  function applyDashboardImage(){
+    const box = document.getElementById("rs15CommandView") || document.querySelector("#secDashboard .rs15-command");
+    let bg = "";
+    try{ bg = localStorage.getItem(BG_KEY) || ""; }catch(e){}
+    if(!box) return;
+
+    if(bg){
+      const safe = String(bg).replace(/"/g,"%22");
+      box.classList.remove("no-bg");
+      box.style.setProperty("--rs15-command-bg", 'url("' + safe + '")');
+      document.documentElement.style.setProperty("--rs15-command-bg", 'url("' + safe + '")');
+      document.documentElement.style.setProperty("--rs-shared-bg", 'url("' + safe + '")');
+      document.documentElement.classList.add("rs-has-command-bg");
+    }else{
+      box.classList.add("no-bg");
+    }
+  }
+
+  function removeGhostClasses(){
+    document.querySelectorAll(".panel,.card,.rs15-panel,.rs15-kpi,.kpi,.stat-card,.dashboard-card,section").forEach(el=>{
+      el.style.outline = "none";
+    });
+  }
+
+  function cleanActionButtons(){
+    document.querySelectorAll(".rs-menu-action-button").forEach(btn=>{
+      btn.style.transform = "none";
+      btn.style.boxShadow = "none";
+      btn.style.overflow = "hidden";
+    });
+  }
+
+  function start(){
+    applyDashboardImage();
+    removeGhostClasses();
+    cleanActionButtons();
+
+    [300,900,1800,3200].forEach(t=>setTimeout(()=>{
+      applyDashboardImage();
+      removeGhostClasses();
+      cleanActionButtons();
+    },t));
+
+    document.addEventListener("click",()=>setTimeout(()=>{
+      applyDashboardImage();
+      removeGhostClasses();
+      cleanActionButtons();
+    },120),true);
+
+    const tbody=document.getElementById("activeTableBody");
+    if(tbody && window.MutationObserver){
+      new MutationObserver(()=>setTimeout(cleanActionButtons,80)).observe(tbody,{childList:true,subtree:true});
+    }
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+})();
+</script>
