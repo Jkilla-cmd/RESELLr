@@ -29981,3 +29981,148 @@ function start(){render();[300,900,1800,3200].forEach(t=>setTimeout(render,t));d
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();
 </script>
+
+
+<!-- ===== v129: remove Focus Item + calendar-month profit goal ===== -->
+<style id="rs-v129-remove-focus-month-goal-css">
+  /* Remove the Focus Item card and let the remaining cards breathe */
+  #rs128Spotlight{
+    display:none !important;
+  }
+
+  #rs128PremiumGrid{
+    grid-template-columns:1fr !important;
+  }
+
+  #rs128SideStack{
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:12px !important;
+  }
+
+  #rs128SideStack .rs128Card{
+    min-height:0 !important;
+  }
+
+  @media(max-width:1050px){
+    #rs128SideStack{
+      grid-template-columns:1fr !important;
+    }
+  }
+</style>
+
+<script id="rs-v129-remove-focus-month-goal-js">
+(function(){
+  if(window.__rsV129RemoveFocusMonthGoal) return;
+  window.__rsV129RemoveFocusMonthGoal = true;
+
+  function num(v){
+    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function money(v){
+    try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0);}
+    catch(e){return "$"+(Number(v)||0).toFixed(2);}
+  }
+
+  function read(key){
+    try{return JSON.parse(localStorage.getItem(key)||"[]")||[];}catch(e){return [];}
+  }
+
+  function sold(){
+    try{ if(typeof window.readSold === "function") return window.readSold() || []; }catch(e){}
+    return read("soldInventory");
+  }
+
+  function val(r, keys){
+    for(const k of keys){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return 0;
+  }
+
+  function saleOf(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"]);}
+  function costOf(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"]);}
+  function feeOf(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"]);}
+  function shipOf(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"]);}
+
+  function profitOf(r){
+    for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return saleOf(r) - costOf(r) - feeOf(r) - shipOf(r);
+  }
+
+  function dateOf(r){
+    const raw = r && (r.date || r.soldDate || r.Date || r["Sold Date"] || r.sold_date || r.saleDate || r.createdAt);
+    const d = new Date(raw || "");
+    return isNaN(d) ? null : d;
+  }
+
+  function currentMonthRows(){
+    const now = new Date();
+    return sold().filter(r=>{
+      const d = dateOf(r);
+      return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+  }
+
+  function currentMonthName(){
+    return new Date().toLocaleDateString("en-US",{month:"long"});
+  }
+
+  function fixPremiumCards(){
+    const focus = document.getElementById("rs128Spotlight");
+    if(focus) focus.remove();
+
+    const grid = document.getElementById("rs128PremiumGrid");
+    if(grid) grid.style.gridTemplateColumns = "1fr";
+
+    const stack = document.getElementById("rs128SideStack");
+    if(stack){
+      stack.style.display = "grid";
+      stack.style.gridTemplateColumns = window.innerWidth < 1050 ? "1fr" : "repeat(3,minmax(0,1fr))";
+      stack.style.gap = "12px";
+    }
+
+    const monthRows = currentMonthRows();
+    const monthProfit = monthRows.reduce((sum,r)=>sum+profitOf(r),0);
+    const goal = 300;
+    const pct = Math.max(0, Math.min(100, Math.round((monthProfit/goal)*100)));
+
+    const goalRing = document.querySelector(".rs128GoalRing");
+    if(goalRing){
+      goalRing.style.setProperty("--ring", pct + "%");
+      const b = goalRing.querySelector("b");
+      if(b) b.textContent = pct + "%";
+    }
+
+    const goalText = document.querySelector(".rs128GoalText");
+    if(goalText){
+      goalText.innerHTML = `
+        <strong>${money(monthProfit)}</strong>
+        <span>${currentMonthName()} Profit Goal · ${monthRows.length} sale${monthRows.length === 1 ? "" : "s"} this month</span>
+      `;
+    }
+  }
+
+  function start(){
+    fixPremiumCards();
+
+    [200,700,1500,3000].forEach(t=>setTimeout(fixPremiumCards,t));
+
+    document.addEventListener("click",()=>{
+      setTimeout(fixPremiumCards,180);
+      setTimeout(fixPremiumCards,800);
+    },true);
+
+    document.addEventListener("change",()=>setTimeout(fixPremiumCards,180),true);
+
+    window.addEventListener("resize",()=>setTimeout(fixPremiumCards,120));
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+})();
+</script>
