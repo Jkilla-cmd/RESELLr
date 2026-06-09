@@ -30292,3 +30292,364 @@ body.skin-dreamtrip .chart-wrap{
   else start();
 })();
 </script>
+
+
+<!-- ===== v131: remove Next Action, no Games pulse, sidebar labels, lower character ===== -->
+<style id="rs-v131-final-dashboard-tweaks-css">
+  /* Remove Next Action card from premium dashboard */
+  #rs130NextActionCard{
+    display:none !important;
+  }
+
+  #rs128SideStack{
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:12px !important;
+  }
+
+  @media(max-width:1050px){
+    #rs128SideStack{grid-template-columns:1fr !important;}
+  }
+
+  /* Sidebar active title label */
+  .rs131-nav-label{
+    display:none;
+    position:absolute;
+    left:58px;
+    top:50%;
+    transform:translateY(-50%);
+    white-space:nowrap;
+    padding:7px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(5,10,20,.92);
+    color:#f8fafc;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.01em;
+    box-shadow:0 14px 34px rgba(0,0,0,.34);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    z-index:9999;
+    pointer-events:none;
+  }
+
+  #sidebar button,
+  .sidebar button,
+  aside button,
+  .side-nav button,
+  nav.sidebar button{
+    position:relative !important;
+  }
+
+  #sidebar button.active .rs131-nav-label,
+  .sidebar button.active .rs131-nav-label,
+  aside button.active .rs131-nav-label,
+  .side-nav button.active .rs131-nav-label,
+  nav.sidebar button.active .rs131-nav-label,
+  #sidebar button.rs131-show-label .rs131-nav-label,
+  .sidebar button.rs131-show-label .rs131-nav-label,
+  aside button.rs131-show-label .rs131-nav-label,
+  .side-nav button.rs131-show-label .rs131-nav-label{
+    display:block !important;
+  }
+
+  /* Move hold/toasty character slightly lower */
+  #holdCharacter,
+  #rsDashboardToastyCharacter,
+  #rsToastyHoldClone,
+  .hold-character,
+  .toasty-character{
+    transform:translateY(28px) !important;
+  }
+</style>
+
+<script id="rs-v131-final-dashboard-tweaks-js">
+(function(){
+  if(window.__rsV131FinalDashboardTweaks) return;
+  window.__rsV131FinalDashboardTweaks = true;
+
+  function num(v){
+    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function money(v){
+    try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0);}
+    catch(e){return "$"+(Number(v)||0).toFixed(2);}
+  }
+
+  function read(k){
+    try{return JSON.parse(localStorage.getItem(k)||"[]")||[];}catch(e){return [];}
+  }
+
+  function active(){
+    try{if(typeof window.readActive==="function") return window.readActive()||[];}catch(e){}
+    return read("activeInventory");
+  }
+
+  function sold(){
+    try{if(typeof window.readSold==="function") return window.readSold()||[];}catch(e){}
+    return read("soldInventory");
+  }
+
+  function holds(){
+    try{if(typeof window.readHolds==="function") return window.readHolds()||[];}catch(e){}
+    return read("inventoryHolds");
+  }
+
+  function val(r,ks){
+    for(const k of ks){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return 0;
+  }
+
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim();}
+  function platform(r){return String(r.platform||r.marketplace||r.source||"Listing").trim();}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"]);}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"]);}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"]);}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"]);}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"]);}
+
+  function profit(r){
+    for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return sale(r)-cost(r)-fee(r)-ship(r);
+  }
+
+  function date(r){
+    const raw = r && (r.date||r.soldDate||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt);
+    const d = new Date(raw||"");
+    return isNaN(d) ? null : d;
+  }
+
+  function daysAgo(n){
+    const d=new Date();
+    d.setDate(d.getDate()-n);
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function isThisMonth(r){
+    const d = date(r);
+    const now = new Date();
+    return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }
+
+  function monthName(){
+    return new Date().toLocaleDateString("en-US",{month:"long"});
+  }
+
+  function category(r){
+    const rawCat = String(r.category||r.type||r.itemType||"").toLowerCase();
+    const t = (title(r)+" "+rawCat).toLowerCase();
+
+    if(/\b(comic|comics|issue|variant|cover|cvr|virgin|trade paperback|tpb)\b/.test(t) || /#[0-9]/.test(t)) return "Comics";
+    if(/\b(card|cards|psa|cgc|bgs|slab|graded|holo|foil|rookie|pokemon|cardsmiths)\b/.test(t)) return "Cards";
+    if(/\b(blu-ray|bluray|dvd|movie|film|steelbook|media)\b/.test(t)) return "Media";
+    return "Other";
+  }
+
+  function insertPoint(){
+    const dash=document.getElementById("secDashboard");
+    if(!dash) return null;
+    const command=document.getElementById("rs15CommandView")||dash.querySelector(".rs15-command");
+    if(command && command.parentElement) return {p:command.parentElement,a:command};
+    const wrap=dash.querySelector(".rs15-wrap")||dash;
+    return {p:wrap,a:null};
+  }
+
+  function renderPremiumCards(){
+    const pt=insertPoint();
+    if(!pt) return;
+
+    let grid=document.getElementById("rs128PremiumGrid");
+    if(!grid){
+      grid=document.createElement("div");
+      grid.id="rs128PremiumGrid";
+      if(pt.a && pt.a.nextSibling) pt.p.insertBefore(grid,pt.a.nextSibling);
+      else pt.p.appendChild(grid);
+    }
+
+    const a=active(), s=sold(), h=holds();
+    const last7=s.filter(r=>{const d=date(r);return d && d>=daysAgo(7);});
+    const monthSales=s.filter(isThisMonth);
+    const totalIncome=s.reduce((x,r)=>x+sale(r),0);
+    const totalProfit=s.reduce((x,r)=>x+profit(r),0);
+    const activeValue=a.reduce((x,r)=>x+list(r),0);
+    const avgProfit=s.length?totalProfit/s.length:0;
+    const margin=totalIncome?totalProfit/totalIncome*100:0;
+    const monthProfit=monthSales.reduce((x,r)=>x+profit(r),0);
+    const goal=300;
+    const goalPct=Math.max(0,Math.min(100,Math.round(monthProfit/goal*100)));
+
+    const velocity=last7.length>=2?"Healthy":last7.length===1?"Warming up":"Quiet";
+    const pressure=a.length>500?"High inventory":a.length>250?"Medium inventory":"Light inventory";
+
+    const recent=s.slice().sort((x,y)=>(date(y)||0)-(date(x)||0)).slice(0,5);
+    const buckets={};
+    a.forEach(r=>{
+      const b=category(r);
+      if(b !== "Games") buckets[b]=(buckets[b]||0)+1;
+    });
+    const maxBucket=Math.max(1,...Object.values(buckets));
+
+    const feed=recent.length?recent.map(r=>`
+      <div class="rs128FeedItem">
+        <div class="rs128FeedTag">SOLD</div>
+        <div>
+          <div class="rs128FeedName">${esc(title(r))}</div>
+          <div class="rs128FeedSub">${esc(platform(r))}</div>
+        </div>
+        <div class="rs128FeedMoney">${money(profit(r))}</div>
+      </div>
+    `).join(""):`<div class="rs128Empty">Sold activity will appear here.</div>`;
+
+    const heat=Object.entries(buckets).length?Object.entries(buckets)
+      .filter(([label,value]) => value > 0 && label !== "Games")
+      .sort((a,b)=>b[1]-a[1])
+      .map(([label,value])=>`
+        <div class="rs128HeatRow">
+          <div class="rs128HeatLabel">${esc(label)}</div>
+          <div class="rs128HeatTrack"><div class="rs128HeatBar" style="--w:${Math.max(8,value/maxBucket*100)}%"></div></div>
+          <div class="rs128HeatValue">${value}</div>
+        </div>
+      `).join(""):`<div class="rs128Empty">Inventory mix will appear here.</div>`;
+
+    grid.innerHTML=`
+      <div id="rs128StatusStrip">
+        <div class="rs128StatusLeft">
+          <span class="rs128PulseDot"></span>
+          <div>
+            <div class="rs128StatusTitle">Store Status · ${velocity}</div>
+            <div class="rs128StatusSub">${pressure} · ${last7.length} sale(s) in 7 days · ${h.length} hold(s)</div>
+          </div>
+        </div>
+        <div class="rs128StatusMetrics">
+          <span class="rs128MiniMetric">${money(activeValue)} active value</span>
+          <span class="rs128MiniMetric">${money(avgProfit)} avg profit</span>
+          <span class="rs128MiniMetric">${margin.toFixed(1)}% margin</span>
+        </div>
+      </div>
+
+      <div id="rs128SideStack">
+        <div class="rs128Card">
+          <h3>Profit goal</h3>
+          <div class="rs128GoalWrap">
+            <div class="rs128GoalRing" style="--ring:${goalPct}%"><b>${goalPct}%</b></div>
+            <div class="rs128GoalText">
+              <strong>${money(monthProfit)}</strong>
+              <span>${monthName()} Profit Goal · ${monthSales.length} sale${monthSales.length===1?"":"s"} this month</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rs128Card">
+          <h3>Activity feed</h3>
+          <div class="rs128Feed">${feed}</div>
+        </div>
+
+        <div class="rs128Card">
+          <h3>Inventory pulse</h3>
+          <div class="rs128Heat">${heat}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function navLabelFor(btn){
+    const target = String(btn.getAttribute("data-target") || btn.dataset.target || btn.id || btn.title || btn.getAttribute("aria-label") || "").toLowerCase();
+    const text = (btn.textContent || "").trim().toLowerCase();
+
+    if(target.includes("dashboard") || text.includes("▥") || text.includes("▤")) return "Dashboard";
+    if(target.includes("inventory")) return "Inventory";
+    if(target.includes("holds") || text.includes("◇")) return "Holds";
+    if(target.includes("sold") || text.includes("$")) return "Sold";
+    if(target.includes("tax") || target.includes("report") || text.includes("↕") || text.includes("⇅")) return "Tax Reports";
+    if(target.includes("tools") || text.includes("🔧") || text.includes("wrench")) return "Tools";
+    if(target.includes("settings") || text.includes("⚙")) return "Settings";
+    if(btn.title) return btn.title === "Tax" ? "Tax Reports" : btn.title;
+    return "";
+  }
+
+  function wireSidebarLabels(){
+    const buttons = document.querySelectorAll("#sidebar button,.sidebar button,aside button,.side-nav button,nav.sidebar button");
+    buttons.forEach(btn=>{
+      const label = navLabelFor(btn);
+      if(!label) return;
+
+      btn.setAttribute("title", label);
+      btn.setAttribute("aria-label", label);
+
+      let span = btn.querySelector(".rs131-nav-label");
+      if(!span){
+        span = document.createElement("span");
+        span.className = "rs131-nav-label";
+        btn.appendChild(span);
+      }
+      span.textContent = label;
+
+      if(label === "Tax Reports"){
+        btn.dataset.rsTaxReports = "1";
+      }
+    });
+  }
+
+  function showPressedLabel(e){
+    const btn = e.target && e.target.closest && e.target.closest("#sidebar button,.sidebar button,aside button,.side-nav button,nav.sidebar button");
+    if(!btn) return;
+
+    btn.classList.add("rs131-show-label");
+    clearTimeout(btn.__rs131Timer);
+    btn.__rs131Timer = setTimeout(()=>btn.classList.remove("rs131-show-label"),1400);
+  }
+
+  function lowerCharacters(){
+    const selectors = [
+      "#holdCharacter",
+      "#rsDashboardToastyCharacter",
+      "#rsToastyHoldClone",
+      ".hold-character",
+      ".toasty-character",
+      "img[src*='hold-character']",
+      "img[src*='holds-character']"
+    ];
+    document.querySelectorAll(selectors.join(",")).forEach(el=>{
+      el.style.transform = "translateY(28px)";
+    });
+  }
+
+  function start(){
+    renderPremiumCards();
+    wireSidebarLabels();
+    lowerCharacters();
+
+    [150,400,900,1800,3200].forEach(t=>setTimeout(()=>{
+      renderPremiumCards();
+      wireSidebarLabels();
+      lowerCharacters();
+    },t));
+
+    document.addEventListener("click",e=>{
+      showPressedLabel(e);
+      if(e.target.closest("[data-target='secDashboard'], #navDashboard, .nav button, button")){
+        setTimeout(renderPremiumCards,120);
+      }
+      setTimeout(()=>{wireSidebarLabels();lowerCharacters();},120);
+    },true);
+
+    document.addEventListener("change",()=>setTimeout(renderPremiumCards,120),true);
+    window.addEventListener("resize",()=>setTimeout(renderPremiumCards,120));
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+})();
+</script>
