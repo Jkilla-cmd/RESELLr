@@ -29942,79 +29942,127 @@ body.skin-dreamtrip .chart-wrap{
 .rs128Heat{display:grid;gap:8px}.rs128HeatRow{display:grid;grid-template-columns:70px 1fr 40px;gap:8px;align-items:center}.rs128HeatLabel{color:rgba(203,213,225,.72);font-size:11px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rs128HeatTrack{height:9px;border-radius:999px;background:rgba(255,255,255,.055);overflow:hidden}.rs128HeatBar{height:100%;width:var(--w,20%);border-radius:999px;background:linear-gradient(90deg,var(--rs128-accent),var(--rs128-purple))}.rs128HeatValue{color:#fff;font-size:11px;font-weight:900;text-align:right}.rs128Empty{color:var(--rs128-muted);font-size:12px;line-height:1.4}
 @media(max-width:980px){#rs128PremiumGrid{grid-template-columns:1fr}#rs128Spotlight{grid-template-columns:1fr}}@media(max-width:700px){#rs128StatusStrip{align-items:flex-start;flex-direction:column}.rs128StatusMetrics{justify-content:flex-start}}
 </style>
-
-
-<script id="rs-v128-premium-dashboard-js">
-(function(){if(window.__rsV128)return;window.__rsV128=true;
-function num(v){const n=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)?n:0}
-function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(2)}}
-function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
-function active(){try{if(typeof window.readActive==="function")return window.readActive()||[]}catch(e){}return read("activeInventory")}
-function sold(){try{if(typeof window.readSold==="function")return window.readSold()||[]}catch(e){}return read("soldInventory")}
-function holds(){try{if(typeof window.readHolds==="function")return window.readHolds()||[]}catch(e){}return read("inventoryHolds")}
-function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return num(r[k])}return 0}
-function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim()}
-function plat(r){return String(r.platform||r.marketplace||r.source||r.notes||"Listing").trim()}
-function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"])}
-function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
-function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
-function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"])}
-function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
-function profit(r){for(const k of["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return num(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
-function date(r){const raw=r&&(r.date||r.soldDate||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt);const d=new Date(raw||"");return isNaN(d)?null:d}
-function daysAgo(n){const d=new Date();d.setDate(d.getDate()-n);d.setHours(0,0,0,0);return d}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function bucket(r){const t=(title(r)+" "+plat(r)).toLowerCase();if(t.includes("comic")||t.includes("#"))return"Comics";if(t.includes("card")||t.includes("psa")||t.includes("cgc"))return"Cards";if(t.includes("game")||t.includes("ps")||t.includes("xbox")||t.includes("nintendo"))return"Games";if(t.includes("movie")||t.includes("blu")||t.includes("dvd"))return"Media";return"Other"}
-function point(){const dash=document.getElementById("secDashboard");if(!dash)return null;const command=document.getElementById("rs15CommandView")||dash.querySelector(".rs15-command");if(command&&command.parentElement)return{p:command.parentElement,a:command};const wrap=dash.querySelector(".rs15-wrap")||dash;return{p:wrap,a:null}}
-function render(){const pt=point();if(!pt)return;let grid=document.getElementById("rs128PremiumGrid");if(!grid){grid=document.createElement("div");grid.id="rs128PremiumGrid";if(pt.a&&pt.a.nextSibling)pt.p.insertBefore(grid,pt.a.nextSibling);else pt.p.appendChild(grid)}
-const a=active(),s=sold(),h=holds(),l7=s.filter(r=>{const d=date(r);return d&&d>=daysAgo(7)}),l30=s.filter(r=>{const d=date(r);return d&&d>=daysAgo(30)});
-const totalIncome=s.reduce((x,r)=>x+sale(r),0),totalProfit=s.reduce((x,r)=>x+profit(r),0),activeValue=a.reduce((x,r)=>x+list(r),0),avgProfit=s.length?totalProfit/s.length:0,margin=totalIncome?totalProfit/totalIncome*100:0,monthProfit=l30.reduce((x,r)=>x+profit(r),0),goalPct=Math.max(0,Math.min(100,Math.round(monthProfit/300*100)));
-const best=a.map(r=>({r,title:title(r),list:list(r),cost:cost(r),potential:list(r)-cost(r)})).sort((x,y)=>y.potential-x.potential)[0];
-const recent=s.slice().sort((x,y)=>(date(y)||0)-(date(x)||0)).slice(0,5);
-const buckets={};a.forEach(r=>{const b=bucket(r);buckets[b]=(buckets[b]||0)+1});const maxBucket=Math.max(1,...Object.values(buckets));
-const velocity=l7.length>=2?"Healthy":l7.length===1?"Warming up":"Quiet",pressure=a.length>500?"High inventory":a.length>250?"Medium inventory":"Light inventory";
-const spotlight=best?`<div><h3>Focus item</h3><p class="rs128SpotTitle">${esc(best.title)}</p><div class="rs128SpotMeta">One of the better visible spreads in active inventory.</div><div class="rs128SpotPills"><span class="rs128Pill">List ${money(best.list)}</span><span class="rs128Pill">Cost ${money(best.cost)}</span><span class="rs128Pill">Spread ${money(best.potential)}</span></div></div><div class="rs128SpotVisual"><div class="rs128Potential" style="--ring:${Math.max(8,Math.min(100,best.potential/(best.list||1)*100))}%"><b>${Math.max(0,Math.round(best.potential/(best.list||1)*100))}%</b></div></div>`:`<div><h3>Focus item</h3><p class="rs128SpotTitle">Add active inventory</p><div class="rs128SpotMeta">RESELLr will spotlight the item with the strongest visible spread.</div></div><div class="rs128SpotVisual"><div class="rs128Empty">No item yet</div></div>`;
-const feed=recent.length?recent.map(r=>`<div class="rs128FeedItem"><div class="rs128FeedTag">SOLD</div><div><div class="rs128FeedName">${esc(title(r))}</div><div class="rs128FeedSub">${esc(plat(r))}</div></div><div class="rs128FeedMoney">${money(profit(r))}</div></div>`).join(""):`<div class="rs128Empty">Sold activity will appear here.</div>`;
-const heat=Object.entries(buckets).length?Object.entries(buckets).sort((a,b)=>b[1]-a[1]).map(([label,value])=>`<div class="rs128HeatRow"><div class="rs128HeatLabel">${esc(label)}</div><div class="rs128HeatTrack"><div class="rs128HeatBar" style="--w:${Math.max(8,value/maxBucket*100)}%"></div></div><div class="rs128HeatValue">${value}</div></div>`).join(""):`<div class="rs128Empty">Inventory mix will appear here.</div>`;
-grid.innerHTML=`<div id="rs128StatusStrip"><div class="rs128StatusLeft"><span class="rs128PulseDot"></span><div><div class="rs128StatusTitle">Store Status · ${velocity}</div><div class="rs128StatusSub">${pressure} · ${l7.length} sale(s) in 7 days · ${h.length} hold(s)</div></div></div><div class="rs128StatusMetrics"><span class="rs128MiniMetric">${money(activeValue)} active value</span><span class="rs128MiniMetric">${money(avgProfit)} avg profit</span><span class="rs128MiniMetric">${margin.toFixed(1)}% margin</span></div></div><div class="rs128Card" id="rs128Spotlight">${spotlight}</div><div id="rs128SideStack"><div class="rs128Card"><h3>Profit goal</h3><div class="rs128GoalWrap"><div class="rs128GoalRing" style="--ring:${goalPct}%"><b>${goalPct}%</b></div><div class="rs128GoalText"><strong>${money(monthProfit)}</strong><span>toward $300 monthly profit</span></div></div></div><div class="rs128Card"><h3>Activity feed</h3><div class="rs128Feed">${feed}</div></div><div class="rs128Card"><h3>Inventory pulse</h3><div class="rs128Heat">${heat}</div></div></div>`}
-function start(){render();[300,900,1800,3200].forEach(t=>setTimeout(render,t));document.addEventListener("click",e=>{if(e.target.closest("[data-target='secDashboard'], #navDashboard, .nav button, button"))setTimeout(render,160)},true);document.addEventListener("change",()=>setTimeout(render,160),true)}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
-})();
-</script>
-
-
 <!-- ===== v129: remove Focus Item + calendar-month profit goal ===== -->
-<style id="rs-v129-remove-focus-month-goal-css">
-  /* Remove the Focus Item card and let the remaining cards breathe */
-  #rs128Spotlight{
-    display:none !important;
-  }
 
+
+<!-- ===== v130: stable premium cards, true current-month goal, centered dock ===== -->
+<style id="rs-v130-premium-dashboard-stable-css">
+  /* Prevent old/focus card from ever showing */
+  #rs128Spotlight{display:none!important;}
+
+  /* Stable layout: no fighting scripts, no focus item */
   #rs128PremiumGrid{
-    grid-template-columns:1fr !important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:12px!important;
+    margin:12px 0 14px!important;
   }
 
   #rs128SideStack{
-    display:grid !important;
-    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
-    gap:12px !important;
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:12px!important;
   }
 
   #rs128SideStack .rs128Card{
-    min-height:0 !important;
+    min-height:0!important;
   }
 
-  @media(max-width:1050px){
-    #rs128SideStack{
-      grid-template-columns:1fr !important;
-    }
+  /* Cleaner centered floating side dock */
+  #sidebar,
+  .sidebar,
+  aside.sidebar,
+  nav.sidebar{
+    width:76px!important;
+    padding:10px 0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+  }
+
+  #sidebar .nav,
+  .sidebar .nav,
+  aside .nav,
+  .side-nav{
+    width:100%!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:8px!important;
+  }
+
+  #sidebar .nav button,
+  .sidebar .nav button,
+  aside .nav button,
+  .side-nav button,
+  #sidebar button,
+  .sidebar button{
+    width:46px!important;
+    height:46px!important;
+    min-width:46px!important;
+    max-width:46px!important;
+    margin:0 auto!important;
+    padding:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    text-align:center!important;
+    border-radius:15px!important;
+    transform:none!important;
+  }
+
+  #sidebar .nav button > *,
+  .sidebar .nav button > *,
+  aside .nav button > *,
+  .side-nav button > *{
+    margin:auto!important;
+  }
+
+  /* Add a small new card that is useful but not cluttered */
+  .rs130ActionText strong{
+    display:block;
+    color:#fff;
+    font-size:20px;
+    letter-spacing:-.035em;
+    margin-bottom:4px;
+  }
+
+  .rs130ActionText span{
+    display:block;
+    color:rgba(203,213,225,.62);
+    font-size:12px;
+    line-height:1.35;
+  }
+
+  .rs130ActionBadge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    border:1px solid rgba(139,220,255,.18);
+    background:rgba(139,220,255,.08);
+    color:#e0f2fe;
+    padding:7px 10px;
+    font-size:11px;
+    font-weight:900;
+    margin-bottom:10px;
+  }
+
+  @media(max-width:1150px){
+    #rs128SideStack{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  }
+
+  @media(max-width:720px){
+    #rs128SideStack{grid-template-columns:1fr!important;}
   }
 </style>
 
-<script id="rs-v129-remove-focus-month-goal-js">
+<script id="rs-v130-premium-dashboard-stable-js">
 (function(){
-  if(window.__rsV129RemoveFocusMonthGoal) return;
-  window.__rsV129RemoveFocusMonthGoal = true;
+  if(window.__rsV130PremiumDashboardStable) return;
+  window.__rsV130PremiumDashboardStable = true;
 
   function num(v){
     const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
@@ -30026,103 +30074,221 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
     catch(e){return "$"+(Number(v)||0).toFixed(2);}
   }
 
-  function read(key){
-    try{return JSON.parse(localStorage.getItem(key)||"[]")||[];}catch(e){return [];}
+  function read(k){
+    try{return JSON.parse(localStorage.getItem(k)||"[]")||[];}catch(e){return [];}
+  }
+
+  function active(){
+    try{if(typeof window.readActive==="function") return window.readActive()||[];}catch(e){}
+    return read("activeInventory");
   }
 
   function sold(){
-    try{ if(typeof window.readSold === "function") return window.readSold() || []; }catch(e){}
+    try{if(typeof window.readSold==="function") return window.readSold()||[];}catch(e){}
     return read("soldInventory");
   }
 
-  function val(r, keys){
-    for(const k of keys){
+  function holds(){
+    try{if(typeof window.readHolds==="function") return window.readHolds()||[];}catch(e){}
+    return read("inventoryHolds");
+  }
+
+  function val(r,ks){
+    for(const k of ks){
       if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
     }
     return 0;
   }
 
-  function saleOf(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"]);}
-  function costOf(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"]);}
-  function feeOf(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"]);}
-  function shipOf(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"]);}
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim();}
+  function platform(r){return String(r.platform||r.marketplace||r.source||"Listing").trim();}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"]);}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"]);}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"]);}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"]);}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"]);}
 
-  function profitOf(r){
+  function profit(r){
     for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){
       if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
     }
-    return saleOf(r) - costOf(r) - feeOf(r) - shipOf(r);
+    return sale(r)-cost(r)-fee(r)-ship(r);
   }
 
-  function dateOf(r){
-    const raw = r && (r.date || r.soldDate || r.Date || r["Sold Date"] || r.sold_date || r.saleDate || r.createdAt);
-    const d = new Date(raw || "");
+  function date(r){
+    const raw = r && (r.date||r.soldDate||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt);
+    const d = new Date(raw||"");
     return isNaN(d) ? null : d;
   }
 
-  function currentMonthRows(){
-    const now = new Date();
-    return sold().filter(r=>{
-      const d = dateOf(r);
-      return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    });
+  function daysAgo(n){
+    const d=new Date();
+    d.setDate(d.getDate()-n);
+    d.setHours(0,0,0,0);
+    return d;
   }
 
-  function currentMonthName(){
+  function esc(s){
+    return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function isThisMonth(r){
+    const d = date(r);
+    const now = new Date();
+    return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }
+
+  function monthName(){
     return new Date().toLocaleDateString("en-US",{month:"long"});
   }
 
-  function fixPremiumCards(){
-    const focus = document.getElementById("rs128Spotlight");
-    if(focus) focus.remove();
+  function category(r){
+    const cat = String(r.category||r.type||r.itemType||"").toLowerCase();
+    const t = (title(r)+" "+cat).toLowerCase();
 
-    const grid = document.getElementById("rs128PremiumGrid");
-    if(grid) grid.style.gridTemplateColumns = "1fr";
+    if(/\b(comic|comics|issue|variant|cover|cvr|virgin|trade paperback|tpb)\b/.test(t) || /#[0-9]/.test(t)) return "Comics";
+    if(/\b(card|cards|psa|cgc|bgs|slab|graded|holo|foil|rookie|pokemon|cardsmiths)\b/.test(t)) return "Cards";
+    if(/\b(video game|gamecube|playstation|ps1|ps2|ps3|ps4|ps5|xbox|nintendo switch|nes|snes|n64|sega|atari)\b/.test(t)) return "Games";
+    if(/\b(blu-ray|bluray|dvd|movie|film|steelbook)\b/.test(t)) return "Media";
+    return "Other";
+  }
 
-    const stack = document.getElementById("rs128SideStack");
-    if(stack){
-      stack.style.display = "grid";
-      stack.style.gridTemplateColumns = window.innerWidth < 1050 ? "1fr" : "repeat(3,minmax(0,1fr))";
-      stack.style.gap = "12px";
+  function insertPoint(){
+    const dash=document.getElementById("secDashboard");
+    if(!dash) return null;
+    const command=document.getElementById("rs15CommandView")||dash.querySelector(".rs15-command");
+    if(command && command.parentElement) return {p:command.parentElement,a:command};
+    const wrap=dash.querySelector(".rs15-wrap")||dash;
+    return {p:wrap,a:null};
+  }
+
+  function nextActionText(a,last7,monthSales){
+    if(last7.length === 0) return ["List fresh items","No sales in the last 7 days. Add fresh inventory or relist stale items."];
+    if(monthSales.length <= 3) return ["Build month pace","You have "+monthSales.length+" sale"+(monthSales.length===1?"":"s")+" this month. Focus on fresh listings and offers."];
+    if(a.length > 500) return ["Reduce inventory pressure","High inventory. Relist stale items before buying too much more."];
+    return ["Keep momentum","Sales are moving. Keep your weekend listing rhythm consistent."];
+  }
+
+  function render(){
+    const pt=insertPoint();
+    if(!pt) return;
+
+    let grid=document.getElementById("rs128PremiumGrid");
+    if(!grid){
+      grid=document.createElement("div");
+      grid.id="rs128PremiumGrid";
+      if(pt.a && pt.a.nextSibling) pt.p.insertBefore(grid,pt.a.nextSibling);
+      else pt.p.appendChild(grid);
     }
 
-    const monthRows = currentMonthRows();
-    const monthProfit = monthRows.reduce((sum,r)=>sum+profitOf(r),0);
-    const goal = 300;
-    const pct = Math.max(0, Math.min(100, Math.round((monthProfit/goal)*100)));
+    const a=active(), s=sold(), h=holds();
+    const last7=s.filter(r=>{const d=date(r);return d && d>=daysAgo(7);});
+    const monthSales=s.filter(isThisMonth);
+    const totalIncome=s.reduce((x,r)=>x+sale(r),0);
+    const totalProfit=s.reduce((x,r)=>x+profit(r),0);
+    const activeValue=a.reduce((x,r)=>x+list(r),0);
+    const avgProfit=s.length?totalProfit/s.length:0;
+    const margin=totalIncome?totalProfit/totalIncome*100:0;
+    const monthProfit=monthSales.reduce((x,r)=>x+profit(r),0);
+    const goal=300;
+    const goalPct=Math.max(0,Math.min(100,Math.round(monthProfit/goal*100)));
 
-    const goalRing = document.querySelector(".rs128GoalRing");
-    if(goalRing){
-      goalRing.style.setProperty("--ring", pct + "%");
-      const b = goalRing.querySelector("b");
-      if(b) b.textContent = pct + "%";
-    }
+    const velocity=last7.length>=2?"Healthy":last7.length===1?"Warming up":"Quiet";
+    const pressure=a.length>500?"High inventory":a.length>250?"Medium inventory":"Light inventory";
 
-    const goalText = document.querySelector(".rs128GoalText");
-    if(goalText){
-      goalText.innerHTML = `
-        <strong>${money(monthProfit)}</strong>
-        <span>${currentMonthName()} Profit Goal · ${monthRows.length} sale${monthRows.length === 1 ? "" : "s"} this month</span>
-      `;
-    }
+    const recent=s.slice().sort((x,y)=>(date(y)||0)-(date(x)||0)).slice(0,5);
+    const buckets={};
+    a.forEach(r=>{const b=category(r); buckets[b]=(buckets[b]||0)+1;});
+    const maxBucket=Math.max(1,...Object.values(buckets));
+    const [actionTitle, actionSub]=nextActionText(a,last7,monthSales);
+
+    const feed=recent.length?recent.map(r=>`
+      <div class="rs128FeedItem">
+        <div class="rs128FeedTag">SOLD</div>
+        <div>
+          <div class="rs128FeedName">${esc(title(r))}</div>
+          <div class="rs128FeedSub">${esc(platform(r))}</div>
+        </div>
+        <div class="rs128FeedMoney">${money(profit(r))}</div>
+      </div>
+    `).join(""):`<div class="rs128Empty">Sold activity will appear here.</div>`;
+
+    const heat=Object.entries(buckets).length?Object.entries(buckets)
+      .filter(([label,value]) => value > 0)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([label,value])=>`
+        <div class="rs128HeatRow">
+          <div class="rs128HeatLabel">${esc(label)}</div>
+          <div class="rs128HeatTrack"><div class="rs128HeatBar" style="--w:${Math.max(8,value/maxBucket*100)}%"></div></div>
+          <div class="rs128HeatValue">${value}</div>
+        </div>
+      `).join(""):`<div class="rs128Empty">Inventory mix will appear here.</div>`;
+
+    grid.innerHTML=`
+      <div id="rs128StatusStrip">
+        <div class="rs128StatusLeft">
+          <span class="rs128PulseDot"></span>
+          <div>
+            <div class="rs128StatusTitle">Store Status · ${velocity}</div>
+            <div class="rs128StatusSub">${pressure} · ${last7.length} sale(s) in 7 days · ${h.length} hold(s)</div>
+          </div>
+        </div>
+        <div class="rs128StatusMetrics">
+          <span class="rs128MiniMetric">${money(activeValue)} active value</span>
+          <span class="rs128MiniMetric">${money(avgProfit)} avg profit</span>
+          <span class="rs128MiniMetric">${margin.toFixed(1)}% margin</span>
+        </div>
+      </div>
+
+      <div id="rs128SideStack">
+        <div class="rs128Card">
+          <h3>Profit goal</h3>
+          <div class="rs128GoalWrap">
+            <div class="rs128GoalRing" style="--ring:${goalPct}%"><b>${goalPct}%</b></div>
+            <div class="rs128GoalText">
+              <strong>${money(monthProfit)}</strong>
+              <span>${monthName()} Profit Goal · ${monthSales.length} sale${monthSales.length===1?"":"s"} this month</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rs128Card">
+          <h3>Next action</h3>
+          <div class="rs130ActionBadge">Quick read</div>
+          <div class="rs130ActionText">
+            <strong>${esc(actionTitle)}</strong>
+            <span>${esc(actionSub)}</span>
+          </div>
+        </div>
+
+        <div class="rs128Card">
+          <h3>Activity feed</h3>
+          <div class="rs128Feed">${feed}</div>
+        </div>
+
+        <div class="rs128Card">
+          <h3>Inventory pulse</h3>
+          <div class="rs128Heat">${heat}</div>
+        </div>
+      </div>
+    `;
   }
 
   function start(){
-    fixPremiumCards();
+    render();
+    [150,400,900,1800,3200].forEach(t=>setTimeout(render,t));
 
-    [200,700,1500,3000].forEach(t=>setTimeout(fixPremiumCards,t));
-
-    document.addEventListener("click",()=>{
-      setTimeout(fixPremiumCards,180);
-      setTimeout(fixPremiumCards,800);
+    document.addEventListener("click",e=>{
+      if(e.target.closest("[data-target='secDashboard'], #navDashboard, .nav button, button")){
+        setTimeout(render,120);
+      }
     },true);
 
-    document.addEventListener("change",()=>setTimeout(fixPremiumCards,180),true);
-
-    window.addEventListener("resize",()=>setTimeout(fixPremiumCards,120));
+    document.addEventListener("change",()=>setTimeout(render,120),true);
+    window.addEventListener("resize",()=>setTimeout(render,120));
   }
 
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",start);
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
   else start();
 })();
 </script>
