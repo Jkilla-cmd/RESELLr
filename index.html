@@ -30656,21 +30656,14 @@ body.skin-dreamtrip .chart-wrap{
 
 
 <!-- ===== v132: visible sidebar labels, matched toasty slide, live chart refresh ===== -->
-<style id="rs-v132-sidebar-toasty-livecharts-css">
-  /* Keep the dock centered but stop labels from being clipped */
-  #sidebar,
-  .sidebar,
-  aside.sidebar,
-  nav.sidebar{
-    overflow:visible !important;
-  }
 
-  /* Floating label rendered outside the sidebar so it cannot be clipped */
-  #rs132SideLabel{
+
+<!-- ===== v134: calm chart updates + dashboard Toasty auto-hide ===== -->
+<style id="rs-v134-calm-toasty-range-css">
+  /* Sidebar labels that don't get clipped */
+  #sidebar,.sidebar,aside.sidebar,nav.sidebar{overflow:visible!important;}
+  #rs134SideLabel{
     position:fixed;
-    left:92px;
-    top:50%;
-    transform:translateY(-50%) translateX(-4px);
     z-index:999999;
     display:none;
     padding:8px 11px;
@@ -30683,67 +30676,290 @@ body.skin-dreamtrip .chart-wrap{
     -webkit-backdrop-filter:blur(14px);
     font-size:11px;
     font-weight:950;
-    letter-spacing:.01em;
     pointer-events:none;
     white-space:nowrap;
   }
-
-  #rs132SideLabel.show{
-    display:block;
-    animation:rs132LabelIn .18s ease-out both;
-  }
-
-  @keyframes rs132LabelIn{
+  #rs134SideLabel.show{display:block;animation:rs134LabelIn .18s ease-out both;}
+  @keyframes rs134LabelIn{
     from{opacity:0;transform:translateY(-50%) translateX(-8px);}
     to{opacity:1;transform:translateY(-50%) translateX(0);}
   }
+  .rs131-nav-label{display:none!important;}
 
-  /* Hide old internal label attempt */
-  .rs131-nav-label{
-    display:none !important;
-  }
-
-  /* Dashboard Toasty should match inventory hold slide-in, just slightly lower */
+  /* Dashboard Toasty is allowed to appear, then always exits left and hides. */
   #rsDashboardToastyCharacter,
-  #rsDashboardToastyCharacter.show,
-  #rsDashboardToastyCharacter.active,
   .dashboard-toasty,
-  .dashboard-toasty.show,
-  .dashboard-toasty.active{
-    transform:translate(-115%, 28px) !important;
-    transition:transform .42s cubic-bezier(.2,.8,.2,1), opacity .18s ease !important;
-    opacity:1 !important;
+  #rsDashboardToastyClone{
+    transition:transform .42s cubic-bezier(.2,.8,.2,1), opacity .18s ease!important;
+  }
+  #rsDashboardToastyCharacter.rs134-show,
+  .dashboard-toasty.rs134-show,
+  #rsDashboardToastyClone.rs134-show{
+    transform:translate(0,28px)!important;
+    opacity:1!important;
+  }
+  #rsDashboardToastyCharacter.rs134-hide,
+  .dashboard-toasty.rs134-hide,
+  #rsDashboardToastyClone.rs134-hide{
+    transform:translate(-120%,28px)!important;
+    opacity:1!important;
   }
 
-  #rsDashboardToastyCharacter.rs-toasty-in,
-  #rsDashboardToastyCharacter.toasty-in,
-  #rsDashboardToastyCharacter.visible,
-  #rsDashboardToastyCharacter.is-visible,
-  #rsDashboardToastyCharacter[style*="display: block"],
-  .dashboard-toasty.rs-toasty-in,
-  .dashboard-toasty.toasty-in,
-  .dashboard-toasty.visible,
-  .dashboard-toasty.is-visible{
-    transform:translate(0, 28px) !important;
-  }
-
-  @keyframes rs132ToastySlideIn{
-    from{transform:translate(-115%, 28px);opacity:1;}
-    to{transform:translate(0, 28px);opacity:1;}
-  }
-
-  @keyframes rs132ToastySlideOut{
-    from{transform:translate(0, 28px);opacity:1;}
-    to{transform:translate(-115%, 28px);opacity:1;}
+  [data-rs15-range].active,
+  button.rs134-range-active{
+    background:rgba(139,220,255,.105)!important;
+    border-color:rgba(139,220,255,.28)!important;
+    color:#effcff!important;
   }
 </style>
 
-<script id="rs-v132-sidebar-toasty-livecharts-js">
+<script id="rs-v134-calm-toasty-range-js">
 (function(){
-  if(window.__rsV132SidebarToastyLiveCharts) return;
-  window.__rsV132SidebarToastyLiveCharts = true;
+  if(window.__rsV134CalmToastyRange) return;
+  window.__rsV134CalmToastyRange = true;
 
-  function labelFor(btn){
+  function num(v){
+    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function money(n){
+    try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(n)||0);}
+    catch(e){return "$"+(Number(n)||0).toFixed(2);}
+  }
+
+  function readSold(){
+    try{ if(typeof window.readSold === "function") return window.readSold() || []; }catch(e){}
+    try{return JSON.parse(localStorage.getItem("soldInventory") || "[]") || [];}catch(e){return [];}
+  }
+
+  function val(r, keys){
+    for(const k of keys){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return 0;
+  }
+
+  function saleOf(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"]);}
+  function costOf(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"]);}
+  function feeOf(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"]);}
+  function shipOf(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"]);}
+
+  function profitOf(r){
+    for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return saleOf(r) - costOf(r) - feeOf(r) - shipOf(r);
+  }
+
+  function dateOf(r){
+    const raw = r && (r.date || r.soldDate || r.Date || r["Sold Date"] || r.sold_date || r.saleDate || r.createdAt);
+    const d = new Date(raw || "");
+    return isNaN(d) ? null : d;
+  }
+
+  function dayKey(d){
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+
+  function activeRange(){
+    let r = "";
+    const active = document.querySelector("[data-rs15-range].active,button.rs134-range-active");
+    if(active) r = String(active.dataset.rs15Range || active.textContent || "").trim().toUpperCase();
+    if(!r){
+      try{ r = String(localStorage.getItem("rs15Range") || "ALL").toUpperCase(); }catch(e){ r = "ALL"; }
+    }
+    return ["ALL","YTD","3M","1M"].includes(r) ? r : "ALL";
+  }
+
+  function rangeStart(r){
+    const now = new Date();
+    if(r === "YTD") return new Date(now.getFullYear(),0,1);
+    if(r === "3M") return new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
+    if(r === "1M") return new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
+    return null;
+  }
+
+  function growthRows(){
+    const r = activeRange();
+    const start = rangeStart(r);
+    const byDay = new Map();
+
+    readSold().forEach(row=>{
+      const d = dateOf(row);
+      if(!d || (start && d < start)) return;
+
+      const k = dayKey(d);
+      if(!byDay.has(k)){
+        byDay.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0});
+      }
+
+      const b = byDay.get(k);
+      b.income += saleOf(row);
+      b.profit += profitOf(row);
+      b.costProfit += costOf(row) + profitOf(row);
+    });
+
+    let income=0, profit=0, cp=0;
+    return Array.from(byDay.values()).sort((a,b)=>a.date-b.date).map(x=>{
+      income += x.income;
+      profit += x.profit;
+      cp += x.costProfit;
+      return {
+        label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),
+        income:+income.toFixed(2),
+        profit:+profit.toFixed(2),
+        costProfit:+cp.toFixed(2)
+      };
+    });
+  }
+
+  function growthCanvas(){
+    return document.getElementById("rs-v113-growth-canvas") ||
+           document.getElementById("rs15GrowthChart");
+  }
+
+  let chartTimer = null;
+  let lastChartSignature = "";
+
+  function rebuildGrowthOnce(){
+    const canvas = growthCanvas();
+    if(!canvas || !window.Chart) return;
+
+    const rows = growthRows();
+    const sig = activeRange() + "|" + rows.length + "|" + rows.map(r=>r.label+":"+r.income+":"+r.profit+":"+r.costProfit).join(",");
+    if(sig === lastChartSignature) return;
+    lastChartSignature = sig;
+
+    const wrap = canvas.closest("#rs-v113-growth-wrap,.chart-wrap") || canvas.parentElement;
+    if(wrap){
+      wrap.style.display = "block";
+      wrap.style.visibility = "visible";
+      wrap.style.opacity = "1";
+    }
+
+    canvas.style.display = "block";
+    canvas.style.visibility = "visible";
+    canvas.style.opacity = "1";
+    canvas.style.width = "100%";
+    canvas.style.height = "340px";
+    canvas.height = 340;
+    canvas.width = canvas.clientWidth || (wrap && wrap.clientWidth) || 900;
+
+    try{
+      const old = Chart.getChart ? Chart.getChart(canvas) : null;
+      if(old) old.destroy();
+    }catch(e){}
+
+    try{
+      new Chart(canvas,{
+        type:"line",
+        data:{
+          labels:rows.map(r=>r.label),
+          datasets:[
+            {label:"Total Income",data:rows.map(r=>r.income),borderWidth:3,pointRadius:0,pointHoverRadius:5,tension:.25,fill:false},
+            {label:"Total Profit",data:rows.map(r=>r.profit),borderWidth:3,pointRadius:0,pointHoverRadius:5,tension:.25,fill:false},
+            {label:"Cost + Profit",data:rows.map(r=>r.costProfit),borderWidth:4,pointRadius:0,pointHoverRadius:5,tension:.25,fill:false}
+          ]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          animation:false,
+          interaction:{mode:"index",intersect:false},
+          plugins:{
+            legend:{position:"top"},
+            tooltip:{callbacks:{label:function(ctx){return " " + ctx.dataset.label + ": " + money(ctx.parsed.y);}}}
+          },
+          scales:{
+            x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.10)"}},
+            y:{beginAtZero:true,grace:"12%",ticks:{callback:function(v){return money(v);}},grid:{color:"rgba(255,255,255,.10)"}}
+          }
+        }
+      });
+    }catch(e){}
+  }
+
+  function scheduleChartRebuild(force){
+    if(force) lastChartSignature = "";
+    clearTimeout(chartTimer);
+    chartTimer = setTimeout(rebuildGrowthOnce,180);
+  }
+
+  function setRange(btn){
+    let r = String(btn.dataset.rs15Range || btn.textContent || "").trim().toUpperCase();
+    if(!["ALL","YTD","3M","1M"].includes(r)) return false;
+
+    try{ localStorage.setItem("rs15Range", r); }catch(e){}
+
+    document.querySelectorAll("[data-rs15-range],button").forEach(b=>{
+      const br = String(b.dataset.rs15Range || b.textContent || "").trim().toUpperCase();
+      if(["ALL","YTD","3M","1M"].includes(br)){
+        b.classList.toggle("active", br === r);
+        b.classList.toggle("rs134-range-active", br === r);
+      }
+    });
+
+    scheduleChartRebuild(true);
+    setTimeout(()=>scheduleChartRebuild(true),650);
+    return true;
+  }
+
+  function toastyCandidates(){
+    const dash = document.getElementById("secDashboard");
+    return Array.from(document.querySelectorAll("#rsDashboardToastyCharacter,.dashboard-toasty,#rsDashboardToastyClone,img[src*='hold-character'],img[src*='holds-character']"))
+      .filter(el => el.id === "rsDashboardToastyCharacter" || el.id === "rsDashboardToastyClone" || el.classList.contains("dashboard-toasty") || (dash && dash.contains(el)));
+  }
+
+  function hideDashboardToasty(){
+    toastyCandidates().forEach(el=>{
+      el.classList.remove("rs134-show","rs-toasty-in","toasty-in","visible","is-visible","active","show");
+      el.classList.add("rs134-hide");
+      setTimeout(()=>{
+        el.classList.remove("rs134-hide");
+        el.style.display = "none";
+        el.style.visibility = "hidden";
+        el.style.opacity = "0";
+        el.__rs134Busy = false;
+      },520);
+    });
+  }
+
+  function showDashboardToasty(){
+    const el = document.getElementById("rsDashboardToastyCharacter") ||
+               document.querySelector(".dashboard-toasty") ||
+               toastyCandidates()[0];
+
+    if(!el || el.__rs134Busy) return;
+    el.__rs134Busy = true;
+
+    el.style.display = "block";
+    el.style.visibility = "visible";
+    el.style.opacity = "1";
+
+    el.classList.remove("rs134-hide");
+    el.classList.add("rs134-show");
+
+    clearTimeout(el.__rs134HideA);
+    clearTimeout(el.__rs134HideB);
+
+    el.__rs134HideA = setTimeout(()=>hideDashboardToasty(),2600);
+    el.__rs134HideB = setTimeout(()=>hideDashboardToasty(),3300);
+  }
+
+  function wireToasty(){
+    document.querySelectorAll("button,.btn,[role='button']").forEach(btn=>{
+      const label = String(btn.textContent || btn.title || btn.getAttribute("aria-label") || "").toLowerCase();
+      if(label.includes("toasty") && !btn.__rs134Toasty){
+        btn.__rs134Toasty = true;
+        btn.addEventListener("click",function(e){
+          setTimeout(showDashboardToasty,80);
+        },true);
+      }
+    });
+  }
+
+  function sideLabelFor(btn){
     const text = (btn.textContent || "").trim().toLowerCase();
     const target = String(btn.getAttribute("data-target") || btn.dataset.target || btn.id || btn.title || btn.getAttribute("aria-label") || "").toLowerCase();
 
@@ -30754,266 +30970,72 @@ body.skin-dreamtrip .chart-wrap{
     if(target.includes("tax") || target.includes("report") || text.includes("↕") || text.includes("⇅")) return "Tax Reports";
     if(target.includes("tools") || text.includes("🔧")) return "Tools";
     if(target.includes("settings") || text.includes("⚙")) return "Settings";
-    if(btn.title) return btn.title.toLowerCase()==="tax" ? "Tax Reports" : btn.title;
+    if(btn.title) return btn.title.toLowerCase() === "tax" ? "Tax Reports" : btn.title;
     return "";
   }
 
   function ensureSideLabel(){
-    let el = document.getElementById("rs132SideLabel");
-    if(!el){
-      el = document.createElement("div");
-      el.id = "rs132SideLabel";
-      document.body.appendChild(el);
+    let bubble = document.getElementById("rs134SideLabel");
+    if(!bubble){
+      bubble = document.createElement("div");
+      bubble.id = "rs134SideLabel";
+      document.body.appendChild(bubble);
     }
-    return el;
+    return bubble;
   }
 
   function wireSideLabels(){
-    const buttons = document.querySelectorAll("#sidebar button,.sidebar button,aside button,.side-nav button,nav.sidebar button");
-    buttons.forEach(btn=>{
-      const label = labelFor(btn);
+    document.querySelectorAll("#sidebar button,.sidebar button,aside button,.side-nav button,nav.sidebar button").forEach(btn=>{
+      const label = sideLabelFor(btn);
       if(!label) return;
-      btn.setAttribute("title", label);
-      btn.setAttribute("aria-label", label);
-      if(label === "Tax Reports") btn.dataset.rsTaxReports = "1";
+      btn.setAttribute("title",label);
+      btn.setAttribute("aria-label",label);
     });
   }
 
   function showSideLabel(btn){
-    const label = labelFor(btn);
+    const label = sideLabelFor(btn);
     if(!label) return;
-
     const bubble = ensureSideLabel();
-    bubble.textContent = label;
-
     const r = btn.getBoundingClientRect();
-    bubble.style.top = (r.top + r.height/2) + "px";
+    bubble.textContent = label;
     bubble.style.left = (r.right + 12) + "px";
+    bubble.style.top = (r.top + r.height/2) + "px";
     bubble.classList.add("show");
-
-    clearTimeout(bubble.__hideTimer);
-    bubble.__hideTimer = setTimeout(()=>bubble.classList.remove("show"),1300);
-  }
-
-  function removeNextActionAndGames(){
-    const next = document.getElementById("rs130NextActionCard");
-    if(next) next.remove();
-
-    document.querySelectorAll("#rs128SideStack .rs128Card").forEach(card=>{
-      const h = (card.querySelector("h3")?.textContent || "").trim().toLowerCase();
-      if(h === "next action") card.remove();
-    });
-
-    document.querySelectorAll(".rs128HeatRow").forEach(row=>{
-      const label = (row.querySelector(".rs128HeatLabel")?.textContent || "").trim().toLowerCase();
-      if(label === "games") row.remove();
-    });
-
-    const stack = document.getElementById("rs128SideStack");
-    if(stack) stack.style.gridTemplateColumns = window.innerWidth < 1050 ? "1fr" : "repeat(3,minmax(0,1fr))";
-  }
-
-  function lowerCharacters(){
-    const selectors = [
-      "#holdCharacter",
-      "#rsDashboardToastyCharacter",
-      "#rsToastyHoldClone",
-      ".hold-character",
-      ".toasty-character",
-      "img[src*='hold-character']",
-      "img[src*='holds-character']"
-    ];
-    document.querySelectorAll(selectors.join(",")).forEach(el=>{
-      if(el.id === "rsDashboardToastyCharacter" || el.classList.contains("dashboard-toasty")){
-        return;
-      }
-      el.style.transform = "translateY(28px)";
-    });
-  }
-
-  function matchDashboardToasty(){
-    const candidates = document.querySelectorAll("#rsDashboardToastyCharacter,.dashboard-toasty,img[src*='hold-character'],img[src*='holds-character']");
-    candidates.forEach(el=>{
-      const isDash = el.id === "rsDashboardToastyCharacter" || el.classList.contains("dashboard-toasty") || el.closest("#secDashboard");
-      if(!isDash) return;
-
-      el.style.transition = "transform .42s cubic-bezier(.2,.8,.2,1), opacity .18s ease";
-      el.style.opacity = "1";
-
-      const display = getComputedStyle(el).display;
-      const visible = display !== "none" && getComputedStyle(el).visibility !== "hidden";
-      if(visible){
-        el.classList.add("rs-toasty-in");
-        setTimeout(()=>el.classList.remove("rs-toasty-in"),2500);
-      }
-    });
-  }
-
-  function refreshCharts(){
-    // Existing premium cards / dashboard cards
-    try{
-      if(window.__rsV130PremiumDashboardStable){
-        document.dispatchEvent(new Event("change", {bubbles:true}));
-      }
-    }catch(e){}
-
-    // Common app render/update function names used across the file versions.
-    [
-      "renderDashboard",
-      "renderSoldSummary",
-      "renderSold",
-      "renderHolds",
-      "renderCharts",
-      "updateCharts",
-      "updateDashboard",
-      "refreshDashboard",
-      "refreshCharts",
-      "renderBusinessGrowth",
-      "renderMonthlyProfit"
-    ].forEach(name=>{
-      try{
-        if(typeof window[name] === "function") window[name]();
-      }catch(e){}
-    });
-
-    // Chart.js instances
-    try{
-      if(window.Chart && Chart.instances){
-        Object.values(Chart.instances).forEach(ch=>{
-          try{ if(ch && ch.update) ch.update("none"); if(ch && ch.resize) ch.resize(); }catch(e){}
-        });
-      }
-    }catch(e){}
-
-    try{
-      if(window.Chart && Chart.getChart){
-        document.querySelectorAll("canvas").forEach(c=>{
-          try{
-            const ch = Chart.getChart(c);
-            if(ch){ ch.resize(); ch.update("none"); }
-          }catch(e){}
-        });
-      }
-    }catch(e){}
-
-    removeNextActionAndGames();
-  }
-
-  let refreshTimer = null;
-  function scheduleRefresh(){
-    clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(refreshCharts,160);
-    setTimeout(refreshCharts,700);
-  }
-
-  function patchStorage(){
-    if(localStorage.__rs132Patched === "1") return;
-    try{ localStorage.__rs132Patched = "1"; }catch(e){}
-
-    const originalSet = localStorage.setItem;
-    const originalRemove = localStorage.removeItem;
-
-    localStorage.setItem = function(key,value){
-      const result = originalSet.apply(this,arguments);
-      if(/sold|hold|inventory|active/i.test(String(key))){
-        window.dispatchEvent(new CustomEvent("rs:datachanged",{detail:{key:String(key)}}));
-      }
-      return result;
-    };
-
-    localStorage.removeItem = function(key){
-      const result = originalRemove.apply(this,arguments);
-      if(/sold|hold|inventory|active/i.test(String(key))){
-        window.dispatchEvent(new CustomEvent("rs:datachanged",{detail:{key:String(key)}}));
-      }
-      return result;
-    };
-  }
-
-  function observeTables(){
-    ["activeTableBody","holdsTableBody","soldTableBody"].forEach(id=>{
-      const el = document.getElementById(id);
-      if(el && window.MutationObserver && !el.__rs132Observed){
-        el.__rs132Observed = true;
-        new MutationObserver(scheduleRefresh).observe(el,{childList:true,subtree:true,attributes:true});
-      }
-    });
+    clearTimeout(bubble.__timer);
+    bubble.__timer = setTimeout(()=>bubble.classList.remove("show"),1200);
   }
 
   function start(){
-    patchStorage();
     wireSideLabels();
-    removeNextActionAndGames();
-    lowerCharacters();
-    matchDashboardToasty();
-    observeTables();
-    refreshCharts();
+    wireToasty();
+    hideDashboardToasty();
+    scheduleChartRebuild(true);
 
-    [250,700,1500,3000].forEach(t=>setTimeout(()=>{
+    [300,900,1800].forEach(t=>setTimeout(()=>{
       wireSideLabels();
-      removeNextActionAndGames();
-      lowerCharacters();
-      observeTables();
-      refreshCharts();
+      wireToasty();
+      hideDashboardToasty();
+      scheduleChartRebuild(false);
     },t));
 
     document.addEventListener("click",e=>{
+      const rangeBtn = e.target.closest && e.target.closest("[data-rs15-range],button");
+      if(rangeBtn && setRange(rangeBtn)){
+        e.stopPropagation();
+      }
+
       const navBtn = e.target.closest && e.target.closest("#sidebar button,.sidebar button,aside button,.side-nav button,nav.sidebar button");
       if(navBtn) showSideLabel(navBtn);
 
-      setTimeout(()=>{
-        wireSideLabels();
-        removeNextActionAndGames();
-        lowerCharacters();
-        matchDashboardToasty();
-        observeTables();
-        refreshCharts();
-      },140);
+      setTimeout(()=>{wireSideLabels();wireToasty();},120);
     },true);
 
-    document.addEventListener("change",scheduleRefresh,true);
-    window.addEventListener("rs:datachanged",scheduleRefresh);
-    window.addEventListener("storage",scheduleRefresh);
+    document.addEventListener("change",()=>scheduleChartRebuild(true),true);
+    window.addEventListener("storage",()=>scheduleChartRebuild(true));
   }
 
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
   else start();
-})();
-</script>
-
-
-<style id="rs-v133-toasty-range-chart-fix-css">
-#rsDashboardToastyCharacter,.dashboard-toasty{transition:transform .42s cubic-bezier(.2,.8,.2,1),opacity .2s ease!important;transform:translate(-115%,28px)!important;opacity:1!important}
-#rsDashboardToastyCharacter.rs133-show,.dashboard-toasty.rs133-show{transform:translate(0,28px)!important;opacity:1!important}
-#rsDashboardToastyCharacter.rs133-hide,.dashboard-toasty.rs133-hide{transform:translate(-115%,28px)!important;opacity:1!important}
-[data-rs15-range].active,button.rs133-range-active{background:rgba(139,220,255,.105)!important;border-color:rgba(139,220,255,.28)!important;color:#effcff!important}
-</style>
-
-
-<script id="rs-v133-toasty-range-chart-fix-js">
-(function(){if(window.__rsV133)return;window.__rsV133=true;
-function num(v){const n=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)?n:0}
-function money(n){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(n)||0)}catch(e){return "$"+(Number(n)||0).toFixed(2)}}
-function sold(){try{if(typeof window.readSold==="function")return window.readSold()||[]}catch(e){}try{return JSON.parse(localStorage.getItem("soldInventory")||"[]")||[]}catch(e){return[]}}
-function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return num(r[k])}return 0}
-function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
-function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
-function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"])}
-function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
-function profit(r){for(const k of["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return num(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
-function date(r){const raw=r&&(r.date||r.soldDate||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt);const d=new Date(raw||"");return isNaN(d)?null:d}
-function dayKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
-function range(){let r="";const a=document.querySelector("[data-rs15-range].active,button.rs133-range-active");if(a)r=String(a.dataset.rs15Range||a.textContent||"").trim().toUpperCase();if(!r){try{r=String(localStorage.getItem("rs15Range")||"ALL").toUpperCase()}catch(e){r="ALL"}}return["ALL","YTD","3M","1M"].includes(r)?r:"ALL"}
-function startDate(r){const n=new Date();if(r==="YTD")return new Date(n.getFullYear(),0,1);if(r==="3M")return new Date(n.getFullYear(),n.getMonth()-3,n.getDate());if(r==="1M")return new Date(n.getFullYear(),n.getMonth()-1,n.getDate());return null}
-function rows(){const st=startDate(range()),m=new Map();sold().forEach(r=>{const d=date(r);if(!d||(st&&d<st))return;const k=dayKey(d);if(!m.has(k))m.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,cp:0});const b=m.get(k);b.income+=sale(r);b.profit+=profit(r);b.cp+=cost(r)+profit(r)});let i=0,p=0,c=0;return Array.from(m.values()).sort((a,b)=>a.date-b.date).map(x=>{i+=x.income;p+=x.profit;c+=x.cp;return{label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),income:+i.toFixed(2),profit:+p.toFixed(2),cp:+c.toFixed(2)}})}
-function canvas(){return document.getElementById("rs-v113-growth-canvas")||document.getElementById("rs15GrowthChart")||document.querySelector("#secDashboard canvas")}
-function rebuild(){const c=canvas();if(!c||!window.Chart)return;const w=c.closest("#rs-v113-growth-wrap,.chart-wrap")||c.parentElement;if(w){w.style.display="block";w.style.visibility="visible";w.style.opacity="1"}c.style.display="block";c.style.visibility="visible";c.style.opacity="1";c.style.width="100%";c.style.height="340px";c.height=340;c.width=c.clientWidth||(w&&w.clientWidth)||900;const r=rows();try{const old=Chart.getChart?Chart.getChart(c):null;if(old)old.destroy()}catch(e){}try{new Chart(c,{type:"line",data:{labels:r.map(x=>x.label),datasets:[{label:"Total Income",data:r.map(x=>x.income),borderWidth:3,pointRadius:0,pointHoverRadius:5,tension:.25,fill:false},{label:"Total Profit",data:r.map(x=>x.profit),borderWidth:3,pointRadius:0,pointHoverRadius:5,tension:.25,fill:false},{label:"Cost + Profit",data:r.map(x=>x.cp),borderWidth:4,pointRadius:0,pointHoverRadius:5,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top"},tooltip:{callbacks:{label:function(ctx){return" "+ctx.dataset.label+": "+money(ctx.parsed.y)}}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.10)"}},y:{beginAtZero:true,grace:"12%",ticks:{callback:function(v){return money(v)}},grid:{color:"rgba(255,255,255,.10)"}}}}})}catch(e){}}
-function setRange(btn){let r=String(btn.dataset.rs15Range||btn.textContent||"").trim().toUpperCase();if(!["ALL","YTD","3M","1M"].includes(r))return;try{localStorage.setItem("rs15Range",r)}catch(e){}document.querySelectorAll("[data-rs15-range],button").forEach(b=>{const br=String(b.dataset.rs15Range||b.textContent||"").trim().toUpperCase();if(["ALL","YTD","3M","1M"].includes(br)){b.classList.toggle("active",br===r);b.classList.toggle("rs133-range-active",br===r)}});rebuild();setTimeout(rebuild,250);setTimeout(rebuild,900)}
-function toasty(el){if(!el||el.__rs133Busy)return;el.__rs133Busy=true;el.style.display="block";el.style.visibility="visible";el.style.opacity="1";el.classList.remove("rs133-hide");el.classList.add("rs133-show");clearTimeout(el.__rs133a);clearTimeout(el.__rs133b);el.__rs133a=setTimeout(()=>{el.classList.remove("rs133-show");el.classList.add("rs133-hide")},2600);el.__rs133b=setTimeout(()=>{el.classList.remove("rs133-show","rs133-hide","rs-toasty-in","toasty-in","visible","is-visible");el.style.display="none";el.__rs133Busy=false},3150)}
-function dashToasty(){const dash=document.getElementById("secDashboard");const els=[...document.querySelectorAll("#rsDashboardToastyCharacter,.dashboard-toasty,img[src*='hold-character'],img[src*='holds-character']")];els.forEach(el=>{const isDash=el.id==="rsDashboardToastyCharacter"||el.classList.contains("dashboard-toasty")||(dash&&dash.contains(el));if(!isDash)return;const cs=getComputedStyle(el);if(cs.display!=="none"&&cs.visibility!=="hidden"&&!el.__rs133Busy)toasty(el)})}
-function wireToasty(){document.querySelectorAll("button,.btn,[role='button']").forEach(btn=>{const t=String(btn.textContent||btn.title||btn.getAttribute("aria-label")||"").toLowerCase();if(t.includes("toasty")&&!btn.__rs133){btn.__rs133=1;btn.addEventListener("click",()=>setTimeout(()=>{const dash=document.getElementById("secDashboard");const el=document.getElementById("rsDashboardToastyCharacter")||document.querySelector(".dashboard-toasty")||(dash&&dash.querySelector("img[src*='hold-character'],img[src*='holds-character']"));if(el)toasty(el)},80),true)}})}
-function patchStorage(){if(window.__rs133Storage)return;window.__rs133Storage=1;const set=localStorage.setItem,rem=localStorage.removeItem;localStorage.setItem=function(k,v){const res=set.apply(this,arguments);if(/sold|hold|inventory|active/i.test(String(k))){setTimeout(rebuild,120);setTimeout(rebuild,700)}return res};localStorage.removeItem=function(k){const res=rem.apply(this,arguments);if(/sold|hold|inventory|active/i.test(String(k))){setTimeout(rebuild,120);setTimeout(rebuild,700)}return res}}
-function start(){patchStorage();wireToasty();rebuild();[250,700,1500,3000].forEach(t=>setTimeout(()=>{wireToasty();dashToasty();rebuild()},t));document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-rs15-range],button");if(b)setRange(b);setTimeout(()=>{wireToasty();dashToasty()},120)},true);document.addEventListener("change",()=>{setTimeout(rebuild,120);setTimeout(rebuild,700)},true);window.addEventListener("storage",()=>setTimeout(rebuild,120));setInterval(()=>{wireToasty();dashToasty()},1500)}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();
 </script>
