@@ -33050,3 +33050,67 @@ function start(){dock();acts();[250,700,1500].forEach(t=>setTimeout(dock,t))}if(
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();
 </script>
+
+
+<style id="rs-v143-side-menu-remove">
+#sidebar,.sidebar,aside,nav.sidebar,.side-panel,.menu-panel{
+ display:none !important;
+}
+body{margin-left:0 !important;}
+</style>
+
+<script id="rs-v143-backup-restore-fix">
+(function(){
+ if(window.__rsV143)return; window.__rsV143=true;
+
+ function restoreBackup(data){
+   const activeData =
+     data.activeInventory ||
+     data.inventory ||
+     data.inventoryData ||
+     data.items ||
+     [];
+
+   const soldData =
+     data.soldInventory ||
+     data.sold ||
+     data.soldData ||
+     [];
+
+   const holdData =
+     data.inventoryHolds ||
+     data.holds ||
+     data.holdData ||
+     [];
+
+   localStorage.setItem("activeInventory", JSON.stringify(activeData));
+   localStorage.setItem("soldInventory", JSON.stringify(soldData));
+   localStorage.setItem("inventoryHolds", JSON.stringify(holdData));
+
+   alert("Backup restored: " + activeData.length + " inventory, " +
+         soldData.length + " sold, " + holdData.length + " holds.");
+   setTimeout(()=>location.reload(),300);
+ }
+
+ document.addEventListener("change", function(e){
+   if(e.target && e.target.id==="rs142ImportFile"){
+      const f=e.target.files && e.target.files[0];
+      if(!f) return;
+
+      const mode=window.importMode || "";
+      if(mode!=="backup") return;
+
+      const r=new FileReader();
+      r.onload=function(){
+        try{
+          const data=JSON.parse(r.result);
+          restoreBackup(data);
+        }catch(err){
+          alert("Backup file could not be restored.");
+        }
+      };
+      r.readAsText(f);
+   }
+ }, true);
+})();
+</script>
