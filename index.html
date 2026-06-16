@@ -33114,3 +33114,281 @@ body{margin-left:0 !important;}
  }, true);
 })();
 </script>
+
+
+<!-- ===== v144: Real backup restore fix - direct restore inside bottom Import/Data ===== -->
+<style id="rs-v144-restore-real-fix-css">
+  #sidebar,.sidebar,aside.sidebar,nav.sidebar,.side-nav,.side-panel,.menu-panel{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+    width:0 !important;
+    min-width:0 !important;
+    max-width:0 !important;
+  }
+
+  #rs144RestoreStatus{
+    grid-column:1 / -1;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.065);
+    border-radius:18px;
+    padding:12px 14px;
+    color:rgba(248,250,252,.88);
+    font-size:12px;
+    line-height:1.4;
+  }
+
+  #rs144RestoreStatus.good{border-color:rgba(134,239,172,.28);color:#bbf7d0;}
+  #rs144RestoreStatus.bad{border-color:rgba(248,113,113,.30);color:#fecaca;}
+</style>
+
+<script id="rs-v144-restore-real-fix-js">
+(function(){
+  if(window.__rsV144RestoreRealFix) return;
+  window.__rsV144RestoreRealFix = true;
+
+  let restoreMode = "backup";
+
+  function safeArray(v){
+    return Array.isArray(v) ? v : [];
+  }
+
+  function firstArray(obj, keys){
+    for(const k of keys){
+      if(obj && Array.isArray(obj[k])) return obj[k];
+    }
+    return [];
+  }
+
+  function normalizeBackup(data){
+    if(Array.isArray(data)){
+      return {active:data, sold:[], holds:[]};
+    }
+
+    if(!data || typeof data !== "object"){
+      return {active:[], sold:[], holds:[]};
+    }
+
+    const active = firstArray(data, [
+      "activeInventory",
+      "inventory",
+      "inventoryData",
+      "active",
+      "items",
+      "listings",
+      "activeItems",
+      "inventoryItems"
+    ]);
+
+    const sold = firstArray(data, [
+      "soldInventory",
+      "sold",
+      "soldData",
+      "soldItems",
+      "sales",
+      "salesData"
+    ]);
+
+    const holds = firstArray(data, [
+      "inventoryHolds",
+      "holds",
+      "holdData",
+      "holdItems",
+      "heldItems"
+    ]);
+
+    // Some exports are nested under data/app/state.
+    if(!active.length && !sold.length && !holds.length){
+      const nested = data.data || data.app || data.state || data.backup || data.store;
+      if(nested && typeof nested === "object"){
+        return normalizeBackup(nested);
+      }
+    }
+
+    return {active:safeArray(active), sold:safeArray(sold), holds:safeArray(holds)};
+  }
+
+  function setAllKeys(name, arr){
+    // Write the keys used across previous versions so every renderer can find data.
+    const json = JSON.stringify(arr || []);
+    if(name === "active"){
+      localStorage.setItem("activeInventory", json);
+      localStorage.setItem("inventory", json);
+      localStorage.setItem("inventoryData", json);
+    }
+    if(name === "sold"){
+      localStorage.setItem("soldInventory", json);
+      localStorage.setItem("sold", json);
+      localStorage.setItem("soldData", json);
+    }
+    if(name === "holds"){
+      localStorage.setItem("inventoryHolds", json);
+      localStorage.setItem("holds", json);
+      localStorage.setItem("holdData", json);
+    }
+  }
+
+  function status(msg, good){
+    let el = document.getElementById("rs144RestoreStatus");
+    const grid = document.querySelector("#rs142Panel .rs142Grid");
+    if(!el && grid){
+      el = document.createElement("div");
+      el.id = "rs144RestoreStatus";
+      grid.prepend(el);
+    }
+    if(el){
+      el.className = good ? "good" : "bad";
+      el.textContent = msg;
+    }else{
+      alert(msg);
+    }
+  }
+
+  function restoreBackupObject(data){
+    const normalized = normalizeBackup(data);
+
+    setAllKeys("active", normalized.active);
+    setAllKeys("sold", normalized.sold);
+    setAllKeys("holds", normalized.holds);
+
+    status(
+      "Backup restored: " +
+      normalized.active.length + " active, " +
+      normalized.sold.length + " sold, " +
+      normalized.holds.length + " holds. Reloading...",
+      true
+    );
+
+    setTimeout(function(){ location.reload(); }, 800);
+  }
+
+  function parseCSV(text){
+    const rows = [];
+    let cur = "", row = [], quote = false;
+
+    for(let i=0;i<text.length;i++){
+      const c = text[i], n = text[i+1];
+      if(c === '"' && quote && n === '"'){ cur += '"'; i++; }
+      else if(c === '"'){ quote = !quote; }
+      else if(c === "," && !quote){ row.push(cur); cur = ""; }
+      else if((c === "\n" || c === "\r") && !quote){
+        if(cur !== "" || row.length){ row.push(cur); rows.push(row); row = []; cur = ""; }
+        if(c === "\r" && n === "\n") i++;
+      }else cur += c;
+    }
+
+    if(cur !== "" || row.length){ row.push(cur); rows.push(row); }
+    if(!rows.length) return [];
+
+    const headers = rows.shift().map(h => String(h).trim());
+    return rows.filter(r => r.some(x => String(x).trim() !== "")).map(r => {
+      const o = {};
+      headers.forEach((h,i)=>o[h]=r[i] ?? "");
+      return o;
+    });
+  }
+
+  function handleFile(file){
+    const reader = new FileReader();
+    reader.onload = function(){
+      const text = String(reader.result || "");
+      let data;
+
+      try{
+        data = JSON.parse(text);
+      }catch(jsonErr){
+        try{
+          data = parseCSV(text);
+        }catch(csvErr){
+          status("Could not read this file. Use a RESELLr JSON backup or CSV.", false);
+          return;
+        }
+      }
+
+      if(restoreMode === "backup"){
+        restoreBackupObject(data);
+        return;
+      }
+
+      if(!Array.isArray(data)){
+        const normalized = normalizeBackup(data);
+        data = restoreMode === "sold" ? normalized.sold : normalized.active;
+      }
+
+      if(restoreMode === "sold"){
+        setAllKeys("sold", data);
+        status("Sold data imported: " + data.length + " records. Reloading...", true);
+      }else{
+        setAllKeys("active", data);
+        status("Active inventory imported: " + data.length + " records. Reloading...", true);
+      }
+
+      setTimeout(function(){ location.reload(); }, 800);
+    };
+    reader.readAsText(file);
+  }
+
+  function makeFreshInput(){
+    let old = document.getElementById("rs144RestoreFile");
+    if(old) old.remove();
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json,.csv,text/csv,application/json";
+    input.id = "rs144RestoreFile";
+    input.style.display = "none";
+    document.body.appendChild(input);
+
+    input.addEventListener("change", function(){
+      const file = input.files && input.files[0];
+      if(file) handleFile(file);
+    }, {once:true});
+
+    return input;
+  }
+
+  function interceptImportClicks(e){
+    const btn = e.target && e.target.closest && e.target.closest("[data-import], #rs139ImportBackup, #rs142ImportFile, #rs139ImportFile");
+    const importBtn = e.target && e.target.closest && e.target.closest("[data-import]");
+
+    if(importBtn){
+      const mode = importBtn.getAttribute("data-import");
+      if(mode === "export") return; // let existing export work
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      restoreMode = mode === "sold" ? "sold" : mode === "active" ? "active" : "backup";
+      makeFreshInput().click();
+    }
+  }
+
+  function interceptChange(e){
+    // If older hidden inputs are used, still handle them with the correct mode.
+    if(e.target && (e.target.id === "rs142ImportFile" || e.target.id === "rs139ImportFile")){
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      handleFile(file);
+    }
+  }
+
+  function updateImportLabels(){
+    document.querySelectorAll("[data-import='backup']").forEach(btn=>{
+      const strong = btn.querySelector("strong");
+      if(strong) strong.textContent = "Restore backup";
+    });
+  }
+
+  function start(){
+    updateImportLabels();
+    document.addEventListener("click", interceptImportClicks, true);
+    document.addEventListener("change", interceptChange, true);
+    setInterval(updateImportLabels, 1000);
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+</script>
