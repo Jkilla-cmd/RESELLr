@@ -31597,3 +31597,164 @@ body.rs136-focus-bg:after{
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();
 </script>
+
+
+<!-- ===== v137: remove center RESELLr title + add Import/Data to bottom menu ===== -->
+<style id="rs-v137-remove-title-add-import-css">
+  /* Remove the big center RESELLr home card/title */
+  #rs136HomeOverlay{
+    display:none !important;
+  }
+
+  /* Let the background image be the main screen */
+  body.rs136-focus-bg #secDashboard .rs15-wrap > *:not(#rs136PullDock):not(#rs136DataPanel),
+  body.rs136-focus-bg #rs136HomeOverlay{
+    display:none !important;
+  }
+
+  /* Keep bottom menu visible and clean */
+  #rs136PullDock{
+    bottom:22px !important;
+  }
+
+  .rs136DockBtn[data-panel="import"],
+  .rs136DockBtn[data-panel="data"]{
+    display:inline-flex !important;
+  }
+</style>
+
+<script id="rs-v137-remove-title-add-import-js">
+(function(){
+  if(window.__rsV137RemoveTitleAddImport) return;
+  window.__rsV137RemoveTitleAddImport = true;
+
+  function ensureImportButton(){
+    const dock = document.getElementById("rs136PullDock");
+    if(!dock) return;
+
+    if(!dock.querySelector('[data-panel="import"]')){
+      const btn = document.createElement("button");
+      btn.className = "rs136DockBtn";
+      btn.type = "button";
+      btn.dataset.panel = "import";
+      btn.textContent = "Import / Data";
+
+      const close = dock.querySelector('[data-panel="close"]');
+      if(close) dock.insertBefore(btn, close);
+      else dock.appendChild(btn);
+    }
+  }
+
+  function openNativeSection(id){
+    const targetBtn =
+      document.querySelector('[data-target="'+id+'"]') ||
+      document.querySelector('#nav' + id.replace("sec","")) ||
+      document.querySelector('button[aria-label*="Import" i], button[title*="Import" i]') ||
+      document.querySelector('button[aria-label*="Data" i], button[title*="Data" i]');
+
+    if(targetBtn && typeof targetBtn.click === "function"){
+      targetBtn.click();
+      return true;
+    }
+
+    const sec = document.getElementById(id);
+    if(sec){
+      document.querySelectorAll("section[id^='sec'], .section[id^='sec']").forEach(s=>{
+        if(s.id && s.id.startsWith("sec")) s.style.display = "none";
+      });
+      sec.style.display = "block";
+      sec.style.opacity = "1";
+      sec.style.pointerEvents = "auto";
+      sec.style.transform = "none";
+      return true;
+    }
+
+    return false;
+  }
+
+  function importPanelHTML(){
+    return `
+      <div class="rs136PanelHeader">
+        <div>
+          <h2>Import / Data</h2>
+          <p>Use your original RESELLr import, export, backup, and data tools.</p>
+        </div>
+        <button id="rs136ClosePanel" type="button">×</button>
+      </div>
+
+      <div class="rs136Grid">
+        <div class="rs136MetricCard">
+          <div class="rs136MetricLabel">Open tools</div>
+          <div class="rs136MetricValue" style="font-size:22px">Import / Export</div>
+          <div class="rs136MetricNote">Tap below to show the original data page.</div>
+          <button id="rs137OpenImportNative" class="rs136DockBtn" type="button" style="margin-top:14px;background:rgba(255,255,255,.13)!important;">Open Import Page</button>
+        </div>
+
+        <div class="rs136MetricCard">
+          <div class="rs136MetricLabel">Tip</div>
+          <div class="rs136MetricValue" style="font-size:22px">Backup first</div>
+          <div class="rs136MetricNote">Before importing, export your current data so you can roll back.</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function openImportPanel(){
+    const p = document.getElementById("rs136DataPanel");
+    if(!p) return;
+
+    p.innerHTML = importPanelHTML();
+    p.classList.add("open");
+
+    const close = document.getElementById("rs136ClosePanel");
+    if(close) close.addEventListener("click",()=>p.classList.remove("open"),{once:true});
+
+    const openBtn = document.getElementById("rs137OpenImportNative");
+    if(openBtn){
+      openBtn.addEventListener("click",()=>{
+        p.classList.remove("open");
+        document.body.classList.remove("rs136-focus-bg");
+        openNativeSection("secImportExport") || openNativeSection("secTools") || openNativeSection("secSettings");
+      });
+    }
+  }
+
+  function wireImportButton(){
+    const dock = document.getElementById("rs136PullDock");
+    if(!dock || dock.__rs137Wired) return;
+    dock.__rs137Wired = true;
+
+    dock.addEventListener("click", e=>{
+      const btn = e.target.closest && e.target.closest('.rs136DockBtn[data-panel="import"]');
+      if(!btn) return;
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      dock.querySelectorAll(".rs136DockBtn").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      openImportPanel();
+    }, true);
+  }
+
+  function removeHomeTitle(){
+    const home = document.getElementById("rs136HomeOverlay");
+    if(home) home.remove();
+  }
+
+  function start(){
+    removeHomeTitle();
+    ensureImportButton();
+    wireImportButton();
+
+    [300,900,1800].forEach(t=>setTimeout(()=>{
+      removeHomeTitle();
+      ensureImportButton();
+      wireImportButton();
+    },t));
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+})();
+</script>
