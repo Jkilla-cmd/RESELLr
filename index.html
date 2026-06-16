@@ -32537,3 +32537,516 @@ function acts(){document.addEventListener('click',ev=>{let b=ev.target.closest&&
 function start(){dock();acts();[250,700,1500].forEach(t=>setTimeout(dock,t))}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
+
+
+<!-- ===== v142: Bottom-menu app migration - no side panel, full inventory/sold/import functionality ===== -->
+<style id="rs-v142-bottom-menu-migration-css">
+  /* Remove the old side menu completely */
+  #sidebar,
+  .sidebar,
+  aside.sidebar,
+  nav.sidebar,
+  .side-nav{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+
+  main,
+  .main,
+  .content,
+  #secDashboard,
+  #secInventory,
+  #secHolds,
+  #secSold,
+  #secImportExport,
+  #secTools,
+  #secSettings{
+    margin-left:0 !important;
+  }
+
+  /* Hide old native sections while using bottom menu */
+  body.rs142-bottom-app #secDashboard .rs15-wrap > *:not(#rs136PullDock):not(#rs142Panel),
+  body.rs142-bottom-app #rs136DataPanel,
+  body.rs142-bottom-app #secInventory,
+  body.rs142-bottom-app #secHolds,
+  body.rs142-bottom-app #secSold,
+  body.rs142-bottom-app #secImportExport,
+  body.rs142-bottom-app #secTools,
+  body.rs142-bottom-app #secSettings{
+    display:none !important;
+  }
+
+  body.rs142-bottom-app #rs136PullDock{
+    display:none !important;
+  }
+
+  #rs142Dock{
+    position:fixed;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%);
+    z-index:80000;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:9px;
+    max-width:calc(100vw - 24px);
+    overflow:auto;
+    border-radius:999px;
+    background:rgba(8,12,20,.50);
+    border:1px solid rgba(255,255,255,.13);
+    box-shadow:0 24px 70px rgba(0,0,0,.36), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(26px) saturate(1.10);
+    -webkit-backdrop-filter:blur(26px) saturate(1.10);
+  }
+
+  .rs142DockBtn{
+    width:auto !important;
+    min-width:max-content !important;
+    height:42px !important;
+    padding:0 15px !important;
+    border-radius:999px !important;
+    border:1px solid transparent !important;
+    background:transparent !important;
+    color:rgba(248,250,252,.74) !important;
+    font-size:12px !important;
+    font-weight:950 !important;
+    letter-spacing:.01em !important;
+    box-shadow:none !important;
+  }
+
+  .rs142DockBtn:hover,
+  .rs142DockBtn.active{
+    background:rgba(255,255,255,.13) !important;
+    border-color:rgba(255,255,255,.10) !important;
+    color:#fff !important;
+  }
+
+  #rs142Panel{
+    position:fixed;
+    left:50%;
+    bottom:88px;
+    transform:translateX(-50%) translateY(18px) scale(.985);
+    width:calc(100vw - 34px);
+    height:calc(100vh - 118px);
+    z-index:79000;
+    opacity:0;
+    pointer-events:none;
+    overflow:auto;
+    border-radius:34px;
+    border:1px solid rgba(255,255,255,.13);
+    background:rgba(8,12,20,.56);
+    box-shadow:0 34px 100px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(30px) saturate(1.10);
+    -webkit-backdrop-filter:blur(30px) saturate(1.10);
+    padding:18px;
+    transition:opacity .22s ease, transform .22s cubic-bezier(.2,.8,.2,1);
+  }
+
+  #rs142Panel.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:translateX(-50%) translateY(0) scale(1);
+  }
+
+  .rs142Header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:4px 4px 14px;
+  }
+
+  .rs142Header h2{
+    margin:0;
+    color:#fff !important;
+    font-size:26px;
+    letter-spacing:-.045em;
+    font-weight:950;
+  }
+
+  .rs142Header p{
+    margin:4px 0 0;
+    color:rgba(226,232,240,.64);
+    font-size:12px;
+  }
+
+  #rs142Close{
+    width:38px !important;
+    height:38px !important;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.08) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    color:#fff !important;
+  }
+
+  .rs142Grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .rs142Metric,
+  .rs142Card,
+  .rs142GraphCard,
+  .rs142TableCard{
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.065);
+    border-radius:22px;
+    padding:14px;
+  }
+
+  .rs142MetricLabel{
+    color:rgba(226,232,240,.62);
+    font-size:11px;
+    font-weight:950;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+
+  .rs142MetricValue{
+    color:#fff;
+    font-size:26px;
+    font-weight:950;
+    letter-spacing:-.045em;
+    margin-top:6px;
+  }
+
+  .rs142MetricNote{
+    color:rgba(226,232,240,.58);
+    font-size:11px;
+    margin-top:4px;
+  }
+
+  .rs142SearchRow{
+    grid-column:1 / -1;
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+
+  .rs142Search{
+    flex:1;
+    height:44px;
+    border-radius:999px !important;
+    padding:0 16px !important;
+  }
+
+  .rs142TableCard{
+    grid-column:1 / -1;
+    min-height:420px;
+    overflow:auto;
+  }
+
+  .rs142Table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0 8px;
+  }
+
+  .rs142Table th{
+    color:rgba(226,232,240,.62);
+    font-size:11px;
+    font-weight:950;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    text-align:left;
+    padding:0 10px 6px;
+    white-space:nowrap;
+  }
+
+  .rs142Table td{
+    background:rgba(2,6,23,.18);
+    border-top:1px solid rgba(255,255,255,.07);
+    border-bottom:1px solid rgba(255,255,255,.07);
+    color:#fff;
+    padding:11px 10px;
+    font-size:12px;
+    vertical-align:middle;
+  }
+
+  .rs142Table td:first-child{
+    border-left:1px solid rgba(255,255,255,.07);
+    border-radius:14px 0 0 14px;
+    font-weight:850;
+  }
+
+  .rs142Table td:last-child{
+    border-right:1px solid rgba(255,255,255,.07);
+    border-radius:0 14px 14px 0;
+  }
+
+  .rs142Sub{
+    color:rgba(226,232,240,.58);
+    font-size:11px;
+    margin-top:3px;
+  }
+
+  .rs142Money{
+    color:#bbf7d0 !important;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .rs142Actions{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .rs142ActionBtn,
+  .rs142ImportBtn{
+    width:auto !important;
+    min-width:0 !important;
+    border-radius:999px !important;
+    font-size:11px !important;
+    font-weight:900 !important;
+    background:rgba(255,255,255,.08) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    color:#fff !important;
+  }
+
+  .rs142ActionBtn{
+    height:30px !important;
+    padding:0 9px !important;
+  }
+
+  .rs142Danger{
+    color:#fecaca !important;
+    border-color:rgba(248,113,113,.25) !important;
+  }
+
+  .rs142GraphCard{
+    grid-column:1 / -1;
+    min-height:350px;
+  }
+
+  .rs142GraphCard canvas{
+    width:100% !important;
+    height:305px !important;
+    display:block !important;
+  }
+
+  .rs142ImportGrid{
+    grid-column:1 / -1;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .rs142ImportBtn{
+    min-height:100px !important;
+    width:100% !important;
+    padding:14px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    justify-content:space-between !important;
+    text-align:left !important;
+    border-radius:22px !important;
+  }
+
+  .rs142ImportBtn strong{
+    font-size:15px;
+    font-weight:950;
+    letter-spacing:-.025em;
+  }
+
+  .rs142ImportBtn span{
+    color:rgba(226,232,240,.62);
+    font-size:11px;
+    line-height:1.35;
+  }
+
+  #rs142ImportFile{display:none !important;}
+
+  @media(max-width:1000px){
+    .rs142Grid,
+    .rs142ImportGrid{
+      grid-template-columns:1fr 1fr;
+    }
+    .rs142Table{min-width:980px;}
+  }
+
+  @media(max-width:620px){
+    #rs142Panel{
+      width:calc(100vw - 18px);
+      height:calc(100vh - 96px);
+      bottom:78px;
+      border-radius:26px;
+    }
+    .rs142Grid,
+    .rs142ImportGrid{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+
+<script id="rs-v142-bottom-menu-migration-js">
+(function(){
+  if(window.__rsV142BottomMenuMigration) return;
+  window.__rsV142BottomMenuMigration = true;
+
+  function num(v){const n=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)?n:0;}
+  function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(2)}}
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v||[]));}catch(e){}}
+  function active(){try{if(typeof window.readActive==="function")return window.readActive()||[]}catch(e){}return read("activeInventory")}
+  function sold(){try{if(typeof window.readSold==="function")return window.readSold()||[]}catch(e){}return read("soldInventory")}
+  function holds(){try{if(typeof window.readHolds==="function")return window.readHolds()||[]}catch(e){}return read("inventoryHolds")}
+  function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return num(r[k])}return 0}
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim()}
+  function platform(r){return String(r.platform||r.marketplace||r.source||r.store||"").trim()}
+  function qty(r){return val(r,["qty","quantity","count"])||1}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"])}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"])}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
+  function profit(r){for(const k of["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return num(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+  function addedDate(r){const raw=r.addedAt||r.createdAt||r.dateAdded||r.addedDate||r.created||r.timestamp||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function soldDate(r){const raw=r.soldDate||r.date||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function fmtDate(d){return d?d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"2-digit"}):""}
+  function withIndex(rows){return rows.map((row,index)=>({row,index}))}
+  function sortActive(rows){return rows.slice().sort((a,b)=>{const da=addedDate(a.row),db=addedDate(b.row);if(da&&db)return db-da;if(db&&!da)return 1;if(da&&!db)return -1;return b.index-a.index})}
+  function sortSold(rows){return rows.slice().sort((a,b)=>{const da=soldDate(a.row),db=soldDate(b.row);if(da&&db)return db-da;if(db&&!da)return 1;if(da&&!db)return -1;return b.index-a.index})}
+  function filter(rows,q){q=String(q||"").toLowerCase().trim();if(!q)return rows;return rows.filter(x=>JSON.stringify(x.row||x).toLowerCase().includes(q))}
+  function dayKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+  function monthKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+
+  function ensureUI(){
+    document.body.classList.add("rs142-bottom-app","rs136-focus-bg");
+
+    if(!document.getElementById("rs142Panel")){
+      const p=document.createElement("div");
+      p.id="rs142Panel";
+      document.body.appendChild(p);
+    }
+
+    if(!document.getElementById("rs142Dock")){
+      const dock=document.createElement("div");
+      dock.id="rs142Dock";
+      dock.innerHTML=[
+        ["dashboard","Dashboard"],
+        ["inventory","Inventory"],
+        ["sold","Sold"],
+        ["holds","Holds"],
+        ["import","Import / Data"],
+        ["tax","Tax Reports"],
+        ["close","Close"]
+      ].map(x=>'<button class="rs142DockBtn" data-panel="'+x[0]+'" type="button">'+x[1]+'</button>').join("");
+      document.body.appendChild(dock);
+    }
+  }
+
+  function header(t,s){return '<div class="rs142Header"><div><h2>'+esc(t)+'</h2><p>'+esc(s)+'</p></div><button id="rs142Close" type="button">×</button></div>'}
+  function open(content){const p=document.getElementById("rs142Panel");if(!p)return;p.innerHTML=content;p.classList.add("open");document.getElementById("rs142Close")?.addEventListener("click",()=>p.classList.remove("open"),{once:true})}
+  function close(){document.getElementById("rs142Panel")?.classList.remove("open");document.querySelectorAll(".rs142DockBtn").forEach(b=>b.classList.remove("active"))}
+
+  function dailyRows(){
+    const by=new Map();
+    sold().forEach(r=>{const d=soldDate(r);if(!d)return;const k=dayKey(d);if(!by.has(k))by.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0});const b=by.get(k);b.income+=sale(r);b.profit+=profit(r);b.costProfit+=cost(r)+profit(r)});
+    let income=0,prof=0,cp=0;
+    return Array.from(by.values()).sort((a,b)=>a.date-b.date).map(x=>{income+=x.income;prof+=x.profit;cp+=x.costProfit;return{label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),income:+income.toFixed(2),profit:+prof.toFixed(2),costProfit:+cp.toFixed(2)}})
+  }
+
+  function monthlyRows(){
+    const by=new Map();
+    sold().forEach(r=>{const d=soldDate(r);if(!d)return;const k=monthKey(d);if(!by.has(k))by.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,profit:0,cost:0,costProfit:0});const b=by.get(k);b.income+=sale(r);b.profit+=profit(r);b.cost+=cost(r);b.costProfit+=cost(r)+profit(r)});
+    return Array.from(by.values()).sort((a,b)=>a.date-b.date).map(x=>({label:x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"}),income:+x.income.toFixed(2),profit:+x.profit.toFixed(2),cost:+x.cost.toFixed(2),costProfit:+x.costProfit.toFixed(2)}))
+  }
+
+  function graphCards(prefix){
+    return '<div class="rs142GraphCard"><div class="rs142MetricLabel">Business growth</div><canvas id="'+prefix+'Growth"></canvas></div><div class="rs142GraphCard"><div class="rs142MetricLabel">Monthly profit view</div><canvas id="'+prefix+'Monthly"></canvas></div>';
+  }
+
+  function drawGraphs(prefix){
+    if(!window.Chart)return;
+    const g=document.getElementById(prefix+"Growth");
+    if(g){const rows=dailyRows();try{const old=Chart.getChart&&Chart.getChart(g);if(old)old.destroy()}catch(e){}new Chart(g,{type:"line",data:{labels:rows.map(x=>x.label),datasets:[{label:"Total Income",data:rows.map(x=>x.income),borderWidth:3,pointRadius:0,tension:.25,fill:false},{label:"Total Profit",data:rows.map(x=>x.profit),borderWidth:3,pointRadius:0,tension:.25,fill:false},{label:"Cost + Profit",data:rows.map(x=>x.costProfit),borderWidth:4,pointRadius:0,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top"},tooltip:{callbacks:{label:function(ctx){return" "+ctx.dataset.label+": "+money(ctx.parsed.y)}}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.10)"}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}},grid:{color:"rgba(255,255,255,.10)"}}}}})}
+    const m=document.getElementById(prefix+"Monthly");
+    if(m){const rows=monthlyRows();try{const old=Chart.getChart&&Chart.getChart(m);if(old)old.destroy()}catch(e){}new Chart(m,{type:"line",data:{labels:rows.map(x=>x.label),datasets:[{label:"Total Income",data:rows.map(x=>x.income),borderWidth:3,pointRadius:2,tension:.30,fill:false},{label:"Cost of Sold",data:rows.map(x=>x.cost),borderWidth:3,pointRadius:2,tension:.30,fill:false},{label:"Profit",data:rows.map(x=>x.profit),borderWidth:3,pointRadius:2,tension:.30,fill:false},{label:"Cost + Profit",data:rows.map(x=>x.costProfit),borderWidth:4,pointRadius:2,tension:.30,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top"},tooltip:{callbacks:{label:function(ctx){return" "+ctx.dataset.label+": "+money(ctx.parsed.y)}}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.10)"}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}},grid:{color:"rgba(255,255,255,.10)"}}}}})}
+  }
+
+  function renderDashboard(){
+    const a=active(),s=sold();
+    const income=s.reduce((x,r)=>x+sale(r),0), prof=s.reduce((x,r)=>x+profit(r),0), cp=s.reduce((x,r)=>x+cost(r)+profit(r),0), activeValue=a.reduce((x,r)=>x+list(r),0);
+    open(header("Dashboard","Your bottom-menu dashboard with graphs included.")+'<div class="rs142Grid"><div class="rs142Metric"><div class="rs142MetricLabel">Active value</div><div class="rs142MetricValue">'+money(activeValue)+'</div><div class="rs142MetricNote">'+a.length+' active listings</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Total income</div><div class="rs142MetricValue">'+money(income)+'</div><div class="rs142MetricNote">'+s.length+' sold items</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Total profit</div><div class="rs142MetricValue">'+money(prof)+'</div><div class="rs142MetricNote">Estimated net profit</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Cost + Profit</div><div class="rs142MetricValue">'+money(cp)+'</div><div class="rs142MetricNote">Cost of sold plus profit</div></div>'+graphCards("rs142Dash")+'</div>');
+    setTimeout(()=>drawGraphs("rs142Dash"),80);setTimeout(()=>drawGraphs("rs142Dash"),420);
+  }
+
+  function tableSearch(type,q){
+    const id = "rs142Search";
+    const input = document.getElementById(id);
+    if(input){
+      input.focus();
+      input.setSelectionRange(input.value.length,input.value.length);
+      input.addEventListener("input",()=>{clearTimeout(input.__timer);const v=input.value;input.__timer=setTimeout(()=>render(type,v),180)})
+    }
+  }
+
+  function renderInventory(q){
+    const rows=filter(sortActive(withIndex(active())),q), totalValue=rows.reduce((x,i)=>x+list(i.row),0), totalCost=rows.reduce((x,i)=>x+cost(i.row),0);
+    const body=rows.map(x=>{const r=x.row,i=x.index;return '<tr><td>'+esc(title(r))+'<div class="rs142Sub">'+esc(platform(r)||"Active listing")+'</div><div class="rs142Sub">Added '+esc(fmtDate(addedDate(r))||"latest saved order")+'</div></td><td class="rs142Money">'+money(cost(r))+'</td><td class="rs142Money">'+money(list(r))+'</td><td>'+qty(r)+'</td><td>'+esc(String(r.notes||r.note||""))+'</td><td><div class="rs142Actions"><button class="rs142ActionBtn" data-act="edit-active" data-index="'+i+'">Edit</button><button class="rs142ActionBtn" data-act="comps" data-index="'+i+'">Comps</button><button class="rs142ActionBtn" data-act="move-sold" data-index="'+i+'">Move to sold</button><button class="rs142ActionBtn rs142Danger" data-act="delete-active" data-index="'+i+'">Delete</button></div></td></tr>'}).join("");
+    open(header("Inventory","Newest additions are shown first. Edit, delete, check comps, or move items to sold.")+'<div class="rs142Grid"><div class="rs142Metric"><div class="rs142MetricLabel">Active listings</div><div class="rs142MetricValue">'+rows.length+'</div><div class="rs142MetricNote">Newest on top</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Listed value</div><div class="rs142MetricValue">'+money(totalValue)+'</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Inventory cost</div><div class="rs142MetricValue">'+money(totalCost)+'</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Avg list</div><div class="rs142MetricValue">'+money(rows.length?totalValue/rows.length:0)+'</div></div><div class="rs142SearchRow"><input id="rs142Search" class="rs142Search" placeholder="Search inventory..." value="'+esc(q||"")+'"></div><div class="rs142TableCard"><table class="rs142Table"><thead><tr><th>Item</th><th>Cost</th><th>List</th><th>Qty</th><th>Notes</th><th>Actions</th></tr></thead><tbody>'+(body||'<tr><td colspan="6">No active inventory found.</td></tr>')+'</tbody></table></div></div>');
+    tableSearch("inventory",q);
+  }
+
+  function renderSold(q){
+    const rows=filter(sortSold(withIndex(sold())),q), income=rows.reduce((x,i)=>x+sale(i.row),0), prof=rows.reduce((x,i)=>x+profit(i.row),0);
+    const body=rows.map(x=>{const r=x.row,i=x.index;return '<tr><td>'+esc(title(r))+'<div class="rs142Sub">'+esc(platform(r)||"Sold item")+'</div></td><td>'+esc(fmtDate(soldDate(r)))+'</td><td class="rs142Money">'+money(sale(r))+'</td><td class="rs142Money">'+money(cost(r))+'</td><td class="rs142Money">'+money(profit(r))+'</td><td><div class="rs142Actions"><button class="rs142ActionBtn" data-act="edit-sold" data-index="'+i+'">Edit</button><button class="rs142ActionBtn rs142Danger" data-act="delete-sold" data-index="'+i+'">Delete</button></div></td></tr>'}).join("");
+    open(header("Sold","Sold items with graphs, edit, and delete controls.")+'<div class="rs142Grid"><div class="rs142Metric"><div class="rs142MetricLabel">Sold records</div><div class="rs142MetricValue">'+rows.length+'</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Total income</div><div class="rs142MetricValue">'+money(income)+'</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Total profit</div><div class="rs142MetricValue">'+money(prof)+'</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Avg profit</div><div class="rs142MetricValue">'+money(rows.length?prof/rows.length:0)+'</div></div>'+graphCards("rs142Sold")+'<div class="rs142SearchRow"><input id="rs142Search" class="rs142Search" placeholder="Search sold items..." value="'+esc(q||"")+'"></div><div class="rs142TableCard"><table class="rs142Table"><thead><tr><th>Item</th><th>Date</th><th>Sale</th><th>Cost</th><th>Profit</th><th>Actions</th></tr></thead><tbody>'+(body||'<tr><td colspan="6">No sold items found.</td></tr>')+'</tbody></table></div></div>');
+    setTimeout(()=>drawGraphs("rs142Sold"),80);setTimeout(()=>drawGraphs("rs142Sold"),420);tableSearch("sold",q);
+  }
+
+  function renderHolds(q){
+    const rows=filter(withIndex(holds()).reverse(),q), value=rows.reduce((x,i)=>x+(list(i.row)||cost(i.row)),0);
+    const body=rows.map(x=>{const r=x.row;return '<tr><td>'+esc(title(r))+'<div class="rs142Sub">'+esc(platform(r)||"Hold")+'</div></td><td class="rs142Money">'+money(cost(r))+'</td><td class="rs142Money">'+money(list(r)||cost(r))+'</td><td>'+qty(r)+'</td><td>'+esc(String(r.notes||r.note||""))+'</td></tr>'}).join("");
+    open(header("Holds","Held inventory records.")+'<div class="rs142Grid"><div class="rs142Metric"><div class="rs142MetricLabel">Holds</div><div class="rs142MetricValue">'+rows.length+'</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Hold value</div><div class="rs142MetricValue">'+money(value)+'</div></div><div class="rs142SearchRow"><input id="rs142Search" class="rs142Search" placeholder="Search holds..." value="'+esc(q||"")+'"></div><div class="rs142TableCard"><table class="rs142Table"><thead><tr><th>Item</th><th>Cost</th><th>Value</th><th>Qty</th><th>Notes</th></tr></thead><tbody>'+(body||'<tr><td colspan="5">No holds found.</td></tr>')+'</tbody></table></div></div>');
+    tableSearch("holds",q);
+  }
+
+  function renderImport(){
+    open(header("Import / Data","Import directly here, or export a complete backup.")+'<input id="rs142ImportFile" type="file" accept=".json,.csv,text/csv,application/json"><div class="rs142Grid"><div class="rs142Metric"><div class="rs142MetricLabel">Active</div><div class="rs142MetricValue">'+active().length+'</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Sold</div><div class="rs142MetricValue">'+sold().length+'</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Holds</div><div class="rs142MetricValue">'+holds().length+'</div></div><div class="rs142ImportGrid"><button class="rs142ImportBtn" data-import="active"><strong>Import active</strong><span>JSON or CSV into active inventory.</span></button><button class="rs142ImportBtn" data-import="sold"><strong>Import sold</strong><span>JSON or CSV into sold items.</span></button><button class="rs142ImportBtn" data-import="backup"><strong>Import backup</strong><span>Restore active, sold, and holds.</span></button><button class="rs142ImportBtn" data-import="export"><strong>Export backup</strong><span>Download all data as JSON.</span></button></div></div>');
+  }
+
+  function renderTax(){
+    const s=sold(), income=s.reduce((x,r)=>x+sale(r),0), prof=s.reduce((x,r)=>x+profit(r),0), costs=s.reduce((x,r)=>x+cost(r),0);
+    open(header("Tax Reports","Quick snapshot for tax records.")+'<div class="rs142Grid"><div class="rs142Metric"><div class="rs142MetricLabel">Gross income</div><div class="rs142MetricValue">'+money(income)+'</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Cost basis</div><div class="rs142MetricValue">'+money(costs)+'</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Estimated profit</div><div class="rs142MetricValue">'+money(prof)+'</div></div><div class="rs142Metric"><div class="rs142MetricLabel">Sold items</div><div class="rs142MetricValue">'+s.length+'</div></div></div>');
+  }
+
+  function render(type,q){if(type==="dashboard")renderDashboard();else if(type==="inventory")renderInventory(q||"");else if(type==="sold")renderSold(q||"");else if(type==="holds")renderHolds(q||"");else if(type==="import")renderImport();else if(type==="tax")renderTax();}
+
+  function editActive(i){const arr=active(),r=Object.assign({},arr[i]||{});const nt=prompt("Item title:",title(r));if(nt===null)return;const nc=prompt("Cost:",String(cost(r)||""));if(nc===null)return;const nl=prompt("List price:",String(list(r)||""));if(nl===null)return;const nq=prompt("Quantity:",String(qty(r)||1));if(nq===null)return;const nn=prompt("Notes:",String(r.notes||r.note||""));if(nn===null)return;r.title=nt;r.cost=num(nc);r.list=num(nl);r.qty=num(nq)||1;r.notes=nn;if(!r.addedAt&&!r.createdAt)r.addedAt=new Date().toISOString();arr[i]=r;write("activeInventory",arr);renderInventory(document.getElementById("rs142Search")?.value||"")}
+  function editSold(i){const arr=sold(),r=Object.assign({},arr[i]||{});const nt=prompt("Item title:",title(r));if(nt===null)return;const ns=prompt("Sold price / income:",String(sale(r)||""));if(ns===null)return;const nc=prompt("Cost:",String(cost(r)||""));if(nc===null)return;const nf=prompt("Fees:",String(fee(r)||""));if(nf===null)return;const nsh=prompt("Shipping:",String(ship(r)||""));if(nsh===null)return;r.title=nt;r.salePrice=num(ns);r.soldPrice=num(ns);r.cost=num(nc);r.fees=num(nf);r.shipping=num(nsh);r.profit=+(num(ns)-num(nc)-num(nf)-num(nsh)).toFixed(2);if(!r.soldDate&&!r.date)r.soldDate=new Date().toISOString();arr[i]=r;write("soldInventory",arr);renderSold(document.getElementById("rs142Search")?.value||"")}
+  function deleteActive(i){if(!confirm("Delete this active inventory item?"))return;const arr=active();arr.splice(i,1);write("activeInventory",arr);renderInventory(document.getElementById("rs142Search")?.value||"")}
+  function deleteSold(i){if(!confirm("Delete this sold item?"))return;const arr=sold();arr.splice(i,1);write("soldInventory",arr);renderSold(document.getElementById("rs142Search")?.value||"")}
+  function moveSold(i){const arr=active(),r=Object.assign({},arr[i]||{});const sp=prompt("Sold price:",String(list(r)||""));if(sp===null)return;const f=prompt("Fees:",String(fee(r)||"0"));if(f===null)return;const sh=prompt("Shipping:",String(ship(r)||"0"));if(sh===null)return;const sr=Object.assign({},r,{salePrice:num(sp),soldPrice:num(sp),fees:num(f),shipping:num(sh),profit:+(num(sp)-cost(r)-num(f)-num(sh)).toFixed(2),soldDate:new Date().toISOString()});arr.splice(i,1);const soldArr=sold();soldArr.push(sr);write("activeInventory",arr);write("soldInventory",soldArr);renderInventory(document.getElementById("rs142Search")?.value||"")}
+  function comps(i){const r=active()[i]||{};window.open("https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(title(r))+"&LH_Sold=1&LH_Complete=1","_blank")}
+
+  function parseCSV(text){const lines=text.split(/\r?\n/).filter(Boolean);if(!lines.length)return[];const headers=lines.shift().split(",").map(x=>x.trim());return lines.map(line=>{const vals=line.split(",");const o={};headers.forEach((h,i)=>o[h]=vals[i]||"");return o})}
+  let importMode="active";
+  function triggerImport(mode){importMode=mode;if(mode==="export"){backup();return;}document.getElementById("rs142ImportFile")?.click()}
+  function importFile(file){const rd=new FileReader();rd.onload=()=>{const text=String(rd.result||"");let data;try{data=JSON.parse(text)}catch(e){data=parseCSV(text)}if(importMode==="backup"&&!Array.isArray(data)){if(Array.isArray(data.activeInventory))write("activeInventory",data.activeInventory);if(Array.isArray(data.soldInventory))write("soldInventory",data.soldInventory);if(Array.isArray(data.inventoryHolds))write("inventoryHolds",data.inventoryHolds)}else{const arr=Array.isArray(data)?data:[];if(importMode==="sold")write("soldInventory",arr);else write("activeInventory",arr)}renderImport()};rd.readAsText(file)}
+  function backup(){const data={exportedAt:new Date().toISOString(),activeInventory:active(),soldInventory:sold(),inventoryHolds:holds()};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+
+  function wire(){
+    document.addEventListener("click",e=>{
+      const db=e.target.closest&&e.target.closest(".rs142DockBtn");
+      if(db){const type=db.dataset.panel;e.preventDefault();e.stopImmediatePropagation();document.querySelectorAll(".rs142DockBtn").forEach(b=>b.classList.remove("active"));if(type==="close"){close();return;}db.classList.add("active");render(type,"");return;}
+      const act=e.target.closest&&e.target.closest("[data-act]");
+      if(act){e.preventDefault();e.stopImmediatePropagation();const a=act.dataset.act,i=Number(act.dataset.index);if(a==="edit-active")editActive(i);if(a==="delete-active")deleteActive(i);if(a==="move-sold")moveSold(i);if(a==="comps")comps(i);if(a==="edit-sold")editSold(i);if(a==="delete-sold")deleteSold(i);return;}
+      const imp=e.target.closest&&e.target.closest("[data-import]");
+      if(imp){e.preventDefault();e.stopImmediatePropagation();triggerImport(imp.dataset.import);return;}
+    },true);
+    document.addEventListener("change",e=>{if(e.target&&e.target.id==="rs142ImportFile"){const f=e.target.files&&e.target.files[0];if(f)importFile(f)}},true);
+  }
+
+  function start(){ensureUI();wire();setTimeout(()=>renderDashboard(),300)}
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
+})();
+</script>
