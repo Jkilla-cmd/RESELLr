@@ -31088,3 +31088,512 @@ function start(){ensureAmbient();ensureTopPill();ensureBottomPlayer();applyBg();
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();
 </script>
+
+
+<style id="rs-v136-lofizen-pullup-css">
+/* ===== v136: Lofizen-style background-first pull-up data panels ===== */
+body.rs136-focus-bg{
+  overflow-x:hidden !important;
+}
+
+/* Show mostly just the background image at rest */
+body.rs136-focus-bg main,
+body.rs136-focus-bg .main,
+body.rs136-focus-bg .content{
+  background:transparent !important;
+}
+
+/* Dashboard content becomes a hidden data layer until opened */
+body.rs136-focus-bg #secDashboard .rs15-wrap > *:not(#rs136HomeOverlay):not(#rs136PullDock):not(#rs136DataPanel),
+body.rs136-focus-bg #secInventory,
+body.rs136-focus-bg #secHolds,
+body.rs136-focus-bg #secSold,
+body.rs136-focus-bg #secImportExport,
+body.rs136-focus-bg #secTools,
+body.rs136-focus-bg #secSettings{
+  opacity:0 !important;
+  pointer-events:none !important;
+  transform:translateY(12px) scale(.985) !important;
+  transition:opacity .22s ease, transform .22s ease !important;
+}
+
+/* Let the background breathe */
+body.rs136-focus-bg:before{
+  opacity:.52 !important;
+  filter:saturate(.98) contrast(1.02) brightness(.72) blur(0px) !important;
+}
+body.rs136-focus-bg:after{
+  background:
+    linear-gradient(180deg, rgba(2,6,23,.10), rgba(2,6,23,.62)),
+    radial-gradient(circle at 50% 46%, rgba(2,6,23,.05), rgba(2,6,23,.44) 68%, rgba(2,6,23,.78) 100%) !important;
+}
+
+/* Center home overlay */
+#rs136HomeOverlay{
+  position:fixed;
+  inset:0;
+  z-index:52000;
+  display:grid;
+  place-items:center;
+  pointer-events:none;
+  padding:24px;
+}
+
+.rs136HomeCard{
+  width:min(720px, calc(100vw - 42px));
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:34px;
+  background:rgba(8,12,20,.30);
+  box-shadow:0 30px 90px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter:blur(18px) saturate(1.04);
+  -webkit-backdrop-filter:blur(18px) saturate(1.04);
+  padding:28px;
+  text-align:center;
+}
+
+.rs136HomeTitle{
+  margin:0;
+  color:#fff;
+  font-size:clamp(34px, 7vw, 78px);
+  line-height:.92;
+  letter-spacing:-.075em;
+  font-weight:950;
+}
+
+.rs136HomeSub{
+  margin:14px auto 0;
+  max-width:560px;
+  color:rgba(248,250,252,.72);
+  font-size:14px;
+  line-height:1.45;
+}
+
+.rs136HomeStats{
+  margin-top:18px;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:8px;
+}
+
+.rs136StatPill{
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.07);
+  color:rgba(248,250,252,.88);
+  border-radius:999px;
+  padding:8px 11px;
+  font-size:12px;
+  font-weight:900;
+}
+
+/* Bottom pull-up dock */
+#rs136PullDock{
+  position:fixed;
+  left:50%;
+  bottom:22px;
+  transform:translateX(-50%);
+  z-index:70000;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:9px;
+  border-radius:999px;
+  background:rgba(8,12,20,.48);
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:0 22px 65px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter:blur(24px) saturate(1.08);
+  -webkit-backdrop-filter:blur(24px) saturate(1.08);
+}
+
+.rs136DockBtn{
+  width:auto !important;
+  min-width:0 !important;
+  height:42px !important;
+  padding:0 15px !important;
+  border-radius:999px !important;
+  border:1px solid transparent !important;
+  background:transparent !important;
+  color:rgba(248,250,252,.74) !important;
+  font-size:12px !important;
+  font-weight:950 !important;
+  letter-spacing:.01em !important;
+  box-shadow:none !important;
+}
+
+.rs136DockBtn:hover,
+.rs136DockBtn.active{
+  background:rgba(255,255,255,.13) !important;
+  border-color:rgba(255,255,255,.10) !important;
+  color:#fff !important;
+}
+
+/* Pull-up data panel */
+#rs136DataPanel{
+  position:fixed;
+  left:50%;
+  bottom:88px;
+  transform:translateX(-50%) translateY(22px) scale(.985);
+  width:min(1080px, calc(100vw - 36px));
+  max-height:min(74vh, 720px);
+  overflow:auto;
+  z-index:69000;
+  opacity:0;
+  pointer-events:none;
+  border-radius:34px;
+  border:1px solid rgba(255,255,255,.13);
+  background:rgba(8,12,20,.54);
+  box-shadow:0 34px 100px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter:blur(28px) saturate(1.08);
+  -webkit-backdrop-filter:blur(28px) saturate(1.08);
+  padding:18px;
+  transition:opacity .22s ease, transform .22s cubic-bezier(.2,.8,.2,1);
+}
+
+#rs136DataPanel.open{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateX(-50%) translateY(0) scale(1);
+}
+
+.rs136PanelHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:4px 4px 14px;
+}
+
+.rs136PanelHeader h2{
+  margin:0;
+  color:#fff !important;
+  font-size:24px;
+  letter-spacing:-.04em;
+  font-weight:950;
+}
+
+.rs136PanelHeader p{
+  margin:4px 0 0;
+  color:rgba(226,232,240,.64);
+  font-size:12px;
+}
+
+#rs136ClosePanel{
+  width:38px !important;
+  height:38px !important;
+  border-radius:999px !important;
+  background:rgba(255,255,255,.08) !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  color:#fff !important;
+}
+
+.rs136Grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+
+.rs136MetricCard,
+.rs136WideCard{
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.065);
+  border-radius:22px;
+  padding:14px;
+}
+
+.rs136MetricLabel{
+  color:rgba(226,232,240,.62);
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.rs136MetricValue{
+  color:#fff;
+  font-size:26px;
+  font-weight:950;
+  letter-spacing:-.045em;
+  margin-top:6px;
+}
+
+.rs136MetricNote{
+  color:rgba(226,232,240,.58);
+  font-size:11px;
+  margin-top:4px;
+}
+
+.rs136WideCard{
+  grid-column:span 2;
+}
+
+.rs136List{
+  display:grid;
+  gap:8px;
+}
+
+.rs136Row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(2,6,23,.18);
+  border-radius:16px;
+  padding:10px;
+}
+
+.rs136RowTitle{
+  color:#fff;
+  font-size:12px;
+  font-weight:850;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+
+.rs136RowSub{
+  color:rgba(226,232,240,.58);
+  font-size:11px;
+  margin-top:2px;
+}
+
+.rs136Money{
+  color:#bbf7d0;
+  font-size:12px;
+  font-weight:950;
+}
+
+.rs136HeatRow{
+  display:grid;
+  grid-template-columns:76px 1fr 36px;
+  align-items:center;
+  gap:8px;
+  margin:8px 0;
+}
+
+.rs136HeatLabel,.rs136HeatValue{
+  color:rgba(248,250,252,.82);
+  font-size:11px;
+  font-weight:900;
+}
+
+.rs136HeatValue{text-align:right;}
+.rs136HeatTrack{
+  height:9px;
+  border-radius:999px;
+  background:rgba(255,255,255,.08);
+  overflow:hidden;
+}
+.rs136HeatBar{
+  height:100%;
+  width:var(--w,20%);
+  border-radius:999px;
+  background:linear-gradient(90deg,#93c5fd,#c4b5fd);
+}
+
+.rs136Empty{
+  color:rgba(226,232,240,.62);
+  font-size:12px;
+  line-height:1.4;
+}
+
+/* Hide the v135 top/bottom fake player so only the new pull-up dock remains */
+#rs135TopPill,
+#rs135BottomPlayer{
+  display:none !important;
+}
+
+@media(max-width:900px){
+  #rs136HomeOverlay{display:none;}
+  #rs136PullDock{
+    bottom:12px;
+    max-width:calc(100vw - 20px);
+    overflow:auto;
+  }
+  #rs136DataPanel{
+    bottom:78px;
+    width:calc(100vw - 20px);
+    max-height:72vh;
+    border-radius:26px;
+  }
+  .rs136Grid{
+    grid-template-columns:1fr 1fr;
+  }
+  .rs136WideCard{
+    grid-column:1 / -1;
+  }
+}
+
+@media(max-width:560px){
+  .rs136Grid{grid-template-columns:1fr;}
+}
+</style>
+
+
+<script id="rs-v136-lofizen-pullup-js">
+(function(){
+  if(window.__rsV136LofizenPullup) return;
+  window.__rsV136LofizenPullup = true;
+
+  function num(v){const n=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)?n:0;}
+  function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency","currency":"USD",maximumFractionDigits:2}).format(Number(v)||0);}catch(e){return "$"+(Number(v)||0).toFixed(2);}}
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function active(){try{if(typeof window.readActive==="function")return window.readActive()||[]}catch(e){}return read("activeInventory")}
+  function sold(){try{if(typeof window.readSold==="function")return window.readSold()||[]}catch(e){}return read("soldInventory")}
+  function holds(){try{if(typeof window.readHolds==="function")return window.readHolds()||[]}catch(e){}return read("inventoryHolds")}
+  function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return num(r[k])}return 0}
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim()}
+  function platform(r){return String(r.platform||r.marketplace||r.source||"Listing").trim()}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"])}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"])}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
+  function profit(r){for(const k of["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return num(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
+  function date(r){const raw=r&&(r.date||r.soldDate||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt);const d=new Date(raw||"");return isNaN(d)?null:d}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+  function category(r){const t=(title(r)+" "+String(r.category||r.type||"")).toLowerCase();if(/\b(comic|comics|issue|variant|cover|cvr|virgin|tpb)\b/.test(t)||/#[0-9]/.test(t))return"Comics";if(/\b(card|cards|psa|cgc|bgs|slab|graded|holo|foil|pokemon|cardsmiths)\b/.test(t))return"Cards";if(/\b(blu-ray|bluray|dvd|movie|film|steelbook|media)\b/.test(t))return"Media";return"Other"}
+  function monthRows(rows){const now=new Date();return rows.filter(r=>{const d=date(r);return d&&d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()})}
+  function daysAgo(n){const d=new Date();d.setDate(d.getDate()-n);d.setHours(0,0,0,0);return d}
+
+  function data(){
+    const a=active(),s=sold(),h=holds();
+    const m=monthRows(s);
+    const l7=s.filter(r=>{const d=date(r);return d&&d>=daysAgo(7)});
+    const activeValue=a.reduce((x,r)=>x+list(r),0);
+    const income=s.reduce((x,r)=>x+sale(r),0);
+    const prof=s.reduce((x,r)=>x+profit(r),0);
+    const mProfit=m.reduce((x,r)=>x+profit(r),0);
+    const avg=s.length?prof/s.length:0;
+    const margin=income?prof/income*100:0;
+    return {a,s,h,m,l7,activeValue,income,prof,mProfit,avg,margin};
+  }
+
+  function applyBg(){
+    let bg="";try{bg=localStorage.getItem("rs15CommandBg")||""}catch(e){}
+    if(bg){
+      const safe=String(bg).replace(/"/g,"%22");
+      document.documentElement.style.setProperty("--rs-shared-bg",'url("'+safe+'")');
+      document.documentElement.style.setProperty("--rs15-command-bg",'url("'+safe+'")');
+    }
+  }
+
+  function ensureHome(){
+    if(document.getElementById("rs136HomeOverlay")) return;
+    const o=document.createElement("div");
+    o.id="rs136HomeOverlay";
+    o.innerHTML='<div class="rs136HomeCard"><h1 class="rs136HomeTitle">RESELLr</h1><p class="rs136HomeSub">A calm command center for inventory, sales, profit, and decisions. Tap a button below to pull up your data.</p><div class="rs136HomeStats" id="rs136HomeStats"></div></div>';
+    document.body.appendChild(o);
+  }
+
+  function ensureDock(){
+    if(document.getElementById("rs136PullDock")) return;
+    const dock=document.createElement("div");
+    dock.id="rs136PullDock";
+    dock.innerHTML='<button class="rs136DockBtn active" data-panel="dashboard">Dashboard</button><button class="rs136DockBtn" data-panel="inventory">Inventory</button><button class="rs136DockBtn" data-panel="sold">Sold</button><button class="rs136DockBtn" data-panel="holds">Holds</button><button class="rs136DockBtn" data-panel="tax">Tax Reports</button><button class="rs136DockBtn" data-panel="close">Close</button>';
+    document.body.appendChild(dock);
+    dock.addEventListener("click",e=>{
+      const b=e.target.closest(".rs136DockBtn");if(!b)return;
+      dock.querySelectorAll(".rs136DockBtn").forEach(x=>x.classList.remove("active"));
+      if(b.dataset.panel!=="close")b.classList.add("active");
+      if(b.dataset.panel==="close") closePanel(); else openPanel(b.dataset.panel);
+    });
+  }
+
+  function ensurePanel(){
+    if(document.getElementById("rs136DataPanel")) return;
+    const p=document.createElement("div");
+    p.id="rs136DataPanel";
+    document.body.appendChild(p);
+  }
+
+  function updateHomeStats(){
+    const d=data();
+    const el=document.getElementById("rs136HomeStats");
+    if(!el)return;
+    el.innerHTML='<span class="rs136StatPill">'+money(d.activeValue)+' active value</span><span class="rs136StatPill">'+d.a.length+' active</span><span class="rs136StatPill">'+d.s.length+' sold</span><span class="rs136StatPill">'+money(d.mProfit)+' this month</span>';
+  }
+
+  function baseHeader(title,sub){
+    return '<div class="rs136PanelHeader"><div><h2>'+esc(title)+'</h2><p>'+esc(sub)+'</p></div><button id="rs136ClosePanel" type="button">×</button></div>';
+  }
+
+  function dashboardHTML(){
+    const d=data();
+    const goalPct=Math.max(0,Math.min(100,Math.round(d.mProfit/300*100)));
+    return baseHeader("Dashboard","A quick pull-up view of your store.")+'<div class="rs136Grid"><div class="rs136MetricCard"><div class="rs136MetricLabel">Active value</div><div class="rs136MetricValue">'+money(d.activeValue)+'</div><div class="rs136MetricNote">'+d.a.length+' active listings</div></div><div class="rs136MetricCard"><div class="rs136MetricLabel">Month profit</div><div class="rs136MetricValue">'+money(d.mProfit)+'</div><div class="rs136MetricNote">'+goalPct+'% of $300 goal</div></div><div class="rs136MetricCard"><div class="rs136MetricLabel">Avg profit</div><div class="rs136MetricValue">'+money(d.avg)+'</div><div class="rs136MetricNote">'+d.margin.toFixed(1)+'% margin</div></div><div class="rs136MetricCard"><div class="rs136MetricLabel">7-day sales</div><div class="rs136MetricValue">'+d.l7.length+'</div><div class="rs136MetricNote">'+d.h.length+' holds</div></div>'+activityCard()+pulseCard()+'</div>';
+  }
+
+  function inventoryHTML(){
+    const d=data();
+    const rows=d.a.slice(0,10).map(r=>'<div class="rs136Row"><div><div class="rs136RowTitle">'+esc(title(r))+'</div><div class="rs136RowSub">'+esc(platform(r))+' · Cost '+money(cost(r))+'</div></div><div class="rs136Money">'+money(list(r))+'</div></div>').join("") || '<div class="rs136Empty">No active inventory found.</div>';
+    return baseHeader("Inventory","Your current active listings.")+'<div class="rs136Grid"><div class="rs136MetricCard"><div class="rs136MetricLabel">Active listings</div><div class="rs136MetricValue">'+d.a.length+'</div></div><div class="rs136MetricCard"><div class="rs136MetricLabel">Active value</div><div class="rs136MetricValue">'+money(d.activeValue)+'</div></div><div class="rs136WideCard"><div class="rs136MetricLabel">Latest active items</div><div class="rs136List" style="margin-top:10px">'+rows+'</div></div>'+pulseCard()+'</div>';
+  }
+
+  function soldHTML(){
+    const d=data();
+    const rows=d.s.slice().sort((x,y)=>(date(y)||0)-(date(x)||0)).slice(0,12).map(r=>'<div class="rs136Row"><div><div class="rs136RowTitle">'+esc(title(r))+'</div><div class="rs136RowSub">'+esc(platform(r))+'</div></div><div class="rs136Money">'+money(profit(r))+'</div></div>').join("") || '<div class="rs136Empty">No sold items found.</div>';
+    return baseHeader("Sold","Recent sold items and profit.")+'<div class="rs136Grid"><div class="rs136MetricCard"><div class="rs136MetricLabel">Sold total</div><div class="rs136MetricValue">'+d.s.length+'</div></div><div class="rs136MetricCard"><div class="rs136MetricLabel">Total profit</div><div class="rs136MetricValue">'+money(d.prof)+'</div></div><div class="rs136WideCard"><div class="rs136MetricLabel">Recent sold</div><div class="rs136List" style="margin-top:10px">'+rows+'</div></div></div>';
+  }
+
+  function holdsHTML(){
+    const d=data();
+    const rows=d.h.slice(0,12).map(r=>'<div class="rs136Row"><div><div class="rs136RowTitle">'+esc(title(r))+'</div><div class="rs136RowSub">'+esc(platform(r))+'</div></div><div class="rs136Money">'+money(list(r)||cost(r))+'</div></div>').join("") || '<div class="rs136Empty">No holds found.</div>';
+    return baseHeader("Holds","Inventory waiting to move.")+'<div class="rs136Grid"><div class="rs136MetricCard"><div class="rs136MetricLabel">Held items</div><div class="rs136MetricValue">'+d.h.length+'</div></div><div class="rs136WideCard"><div class="rs136MetricLabel">Current holds</div><div class="rs136List" style="margin-top:10px">'+rows+'</div></div></div>';
+  }
+
+  function taxHTML(){
+    const d=data();
+    return baseHeader("Tax Reports","A clean pull-up tax snapshot.")+'<div class="rs136Grid"><div class="rs136MetricCard"><div class="rs136MetricLabel">Gross income</div><div class="rs136MetricValue">'+money(d.income)+'</div></div><div class="rs136MetricCard"><div class="rs136MetricLabel">Estimated profit</div><div class="rs136MetricValue">'+money(d.prof)+'</div></div><div class="rs136MetricCard"><div class="rs136MetricLabel">Sold items</div><div class="rs136MetricValue">'+d.s.length+'</div></div><div class="rs136MetricCard"><div class="rs136MetricLabel">Month profit</div><div class="rs136MetricValue">'+money(d.mProfit)+'</div></div></div>';
+  }
+
+  function activityCard(){
+    const d=data();
+    const rows=d.s.slice().sort((x,y)=>(date(y)||0)-(date(x)||0)).slice(0,5).map(r=>'<div class="rs136Row"><div><div class="rs136RowTitle">'+esc(title(r))+'</div><div class="rs136RowSub">'+esc(platform(r))+'</div></div><div class="rs136Money">'+money(profit(r))+'</div></div>').join("") || '<div class="rs136Empty">Sold activity will appear here.</div>';
+    return '<div class="rs136WideCard"><div class="rs136MetricLabel">Activity</div><div class="rs136List" style="margin-top:10px">'+rows+'</div></div>';
+  }
+
+  function pulseCard(){
+    const d=data(),b={};
+    d.a.forEach(r=>{const c=category(r);b[c]=(b[c]||0)+1});
+    const max=Math.max(1,...Object.values(b));
+    const rows=Object.entries(b).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="rs136HeatRow"><div class="rs136HeatLabel">'+esc(k)+'</div><div class="rs136HeatTrack"><div class="rs136HeatBar" style="--w:'+Math.max(8,v/max*100)+'%"></div></div><div class="rs136HeatValue">'+v+'</div></div>').join("") || '<div class="rs136Empty">Inventory mix will appear here.</div>';
+    return '<div class="rs136WideCard"><div class="rs136MetricLabel">Inventory pulse</div>'+rows+'</div>';
+  }
+
+  function openPanel(type){
+    ensurePanel();
+    const p=document.getElementById("rs136DataPanel");
+    if(type==="inventory")p.innerHTML=inventoryHTML();
+    else if(type==="sold")p.innerHTML=soldHTML();
+    else if(type==="holds")p.innerHTML=holdsHTML();
+    else if(type==="tax")p.innerHTML=taxHTML();
+    else p.innerHTML=dashboardHTML();
+    p.classList.add("open");
+    const close=document.getElementById("rs136ClosePanel");
+    if(close)close.addEventListener("click",closePanel,{once:true});
+  }
+
+  function closePanel(){
+    const p=document.getElementById("rs136DataPanel");
+    if(p)p.classList.remove("open");
+    document.querySelectorAll(".rs136DockBtn").forEach(x=>x.classList.remove("active"));
+  }
+
+  function start(){
+    document.body.classList.add("rs136-focus-bg");
+    applyBg();
+    ensureHome();
+    ensureDock();
+    ensurePanel();
+    updateHomeStats();
+    openPanel("dashboard");
+    setTimeout(()=>closePanel(),700);
+    [500,1600,3000].forEach(t=>setTimeout(()=>{applyBg();updateHomeStats()},t));
+    window.addEventListener("storage",()=>{applyBg();updateHomeStats()});
+    document.addEventListener("click",()=>setTimeout(updateHomeStats,150),true);
+  }
+
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
+})();
+</script>
