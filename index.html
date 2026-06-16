@@ -33392,3 +33392,295 @@ body{margin-left:0 !important;}
   else start();
 })();
 </script>
+
+
+<!-- ===== v145: hard restore override - handles JSON backups directly before old handlers ===== -->
+<style id="rs-v145-hard-restore-css">
+  #rs145RestoreInput{display:none!important;}
+  #rs145RestoreStatus{
+    grid-column:1 / -1;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.075);
+    border-radius:18px;
+    padding:12px 14px;
+    color:rgba(248,250,252,.90);
+    font-size:12px;
+    line-height:1.4;
+  }
+  #rs145RestoreStatus.good{border-color:rgba(134,239,172,.35);color:#bbf7d0;}
+  #rs145RestoreStatus.bad{border-color:rgba(248,113,113,.35);color:#fecaca;}
+</style>
+
+<script id="rs-v145-hard-restore-js">
+(function(){
+  if(window.__rsV145HardRestore) return;
+  window.__rsV145HardRestore = true;
+
+  let mode = "backup";
+
+  const ACTIVE_KEYS = ["activeInventory","inventory","inventoryData","active","items","listings","activeItems","inventoryItems"];
+  const SOLD_KEYS = ["soldInventory","sold","soldData","soldItems","sales","salesData"];
+  const HOLD_KEYS = ["inventoryHolds","holds","holdData","holdItems","heldItems"];
+
+  function status(msg, good){
+    let el = document.getElementById("rs145RestoreStatus");
+    const panel = document.getElementById("rs142Panel") || document.getElementById("rs136DataPanel");
+    const grid = panel && (panel.querySelector(".rs142Grid") || panel.querySelector(".rs136Grid"));
+    if(!el && grid){
+      el = document.createElement("div");
+      el.id = "rs145RestoreStatus";
+      grid.prepend(el);
+    }
+    if(el){
+      el.className = good ? "good" : "bad";
+      el.textContent = msg;
+    }else{
+      alert(msg);
+    }
+  }
+
+  function parseMaybeArray(v){
+    if(Array.isArray(v)) return v;
+    if(typeof v === "string"){
+      const s = v.trim();
+      if(!s) return [];
+      try{
+        const parsed = JSON.parse(s);
+        return Array.isArray(parsed) ? parsed : [];
+      }catch(e){
+        return [];
+      }
+    }
+    return [];
+  }
+
+  function getArray(obj, keys){
+    if(!obj || typeof obj !== "object") return [];
+    for(const k of keys){
+      const arr = parseMaybeArray(obj[k]);
+      if(arr.length) return arr;
+    }
+    return [];
+  }
+
+  function localStorageLike(obj){
+    if(!obj || typeof obj !== "object") return null;
+
+    const candidates = [
+      obj.localStorage,
+      obj.storage,
+      obj.local_storage,
+      obj.browserStorage,
+      obj.appStorage,
+      obj.reSELLrStorage,
+      obj.RESELLr,
+      obj.resellr
+    ];
+
+    for(const c of candidates){
+      if(c && typeof c === "object"){
+        const active = getArray(c, ACTIVE_KEYS);
+        const sold = getArray(c, SOLD_KEYS);
+        const holds = getArray(c, HOLD_KEYS);
+        if(active.length || sold.length || holds.length){
+          return {active, sold, holds};
+        }
+      }
+    }
+    return null;
+  }
+
+  function deepFindArrays(obj, depth){
+    if(!obj || typeof obj !== "object" || depth > 4) return {active:[], sold:[], holds:[]};
+
+    let active = getArray(obj, ACTIVE_KEYS);
+    let sold = getArray(obj, SOLD_KEYS);
+    let holds = getArray(obj, HOLD_KEYS);
+
+    if(active.length || sold.length || holds.length) return {active, sold, holds};
+
+    const ls = localStorageLike(obj);
+    if(ls) return ls;
+
+    for(const k of Object.keys(obj)){
+      const v = obj[k];
+      if(v && typeof v === "object" && !Array.isArray(v)){
+        const found = deepFindArrays(v, depth + 1);
+        if(found.active.length || found.sold.length || found.holds.length) return found;
+      }
+    }
+
+    return {active:[], sold:[], holds:[]};
+  }
+
+  function normalize(data){
+    if(Array.isArray(data)){
+      return {active:data, sold:[], holds:[]};
+    }
+
+    if(!data || typeof data !== "object"){
+      return {active:[], sold:[], holds:[]};
+    }
+
+    return deepFindArrays(data, 0);
+  }
+
+  function writeAll(active, sold, holds){
+    const sets = [
+      ["activeInventory", active], ["inventory", active], ["inventoryData", active],
+      ["soldInventory", sold], ["sold", sold], ["soldData", sold],
+      ["inventoryHolds", holds], ["holds", holds], ["holdData", holds]
+    ];
+
+    sets.forEach(([k,v])=>localStorage.setItem(k, JSON.stringify(v || [])));
+
+    // Force old renderers that cached functions to see the new data after reload.
+    localStorage.setItem("rsLastRestoreAt", new Date().toISOString());
+  }
+
+  function parseCSV(text){
+    const rows = [];
+    let cur = "", row = [], quote = false;
+
+    for(let i=0;i<text.length;i++){
+      const c = text[i], n = text[i+1];
+      if(c === '"' && quote && n === '"'){ cur += '"'; i++; }
+      else if(c === '"'){ quote = !quote; }
+      else if(c === "," && !quote){ row.push(cur); cur = ""; }
+      else if((c === "\n" || c === "\r") && !quote){
+        if(cur !== "" || row.length){ row.push(cur); rows.push(row); row = []; cur = ""; }
+        if(c === "\r" && n === "\n") i++;
+      }else cur += c;
+    }
+
+    if(cur !== "" || row.length){ row.push(cur); rows.push(row); }
+    if(!rows.length) return [];
+
+    const headers = rows.shift().map(h=>String(h).trim());
+    return rows.filter(r=>r.some(x=>String(x).trim() !== "")).map(r=>{
+      const o = {};
+      headers.forEach((h,i)=>o[h] = r[i] ?? "");
+      return o;
+    });
+  }
+
+  function restoreFromText(text){
+    let data;
+    let parsedAs = "JSON";
+
+    try{
+      data = JSON.parse(text);
+    }catch(e){
+      parsedAs = "CSV";
+      data = parseCSV(text);
+    }
+
+    if(mode === "active"){
+      const arr = Array.isArray(data) ? data : normalize(data).active;
+      writeAll(arr, parseMaybeArray(localStorage.getItem("soldInventory")), parseMaybeArray(localStorage.getItem("inventoryHolds")));
+      status("Active inventory imported: " + arr.length + " records. Reloading...", true);
+      setTimeout(()=>location.reload(), 700);
+      return;
+    }
+
+    if(mode === "sold"){
+      const arr = Array.isArray(data) ? data : normalize(data).sold;
+      writeAll(parseMaybeArray(localStorage.getItem("activeInventory")), arr, parseMaybeArray(localStorage.getItem("inventoryHolds")));
+      status("Sold data imported: " + arr.length + " records. Reloading...", true);
+      setTimeout(()=>location.reload(), 700);
+      return;
+    }
+
+    const n = normalize(data);
+
+    // Backup restore replaces all 3 buckets. If a bucket is missing, restore it as empty.
+    writeAll(n.active, n.sold, n.holds);
+
+    status(
+      "Backup restored from " + parsedAs + ": " +
+      n.active.length + " active, " +
+      n.sold.length + " sold, " +
+      n.holds.length + " holds. Reloading...",
+      true
+    );
+
+    setTimeout(()=>location.reload(), 900);
+  }
+
+  function selectFile(nextMode){
+    mode = nextMode || "backup";
+
+    let input = document.getElementById("rs145RestoreInput");
+    if(input) input.remove();
+
+    input = document.createElement("input");
+    input.id = "rs145RestoreInput";
+    input.type = "file";
+    input.accept = ".json,.csv,text/csv,application/json";
+    document.body.appendChild(input);
+
+    input.addEventListener("change", function(){
+      const file = input.files && input.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(){
+        try{
+          restoreFromText(String(reader.result || ""));
+        }catch(err){
+          status("Restore failed: " + (err && err.message ? err.message : "unknown error"), false);
+        }
+      };
+      reader.readAsText(file);
+    }, {once:true});
+
+    input.click();
+  }
+
+  function updateImportButtons(){
+    document.querySelectorAll("[data-import='backup']").forEach(btn=>{
+      const strong = btn.querySelector("strong");
+      if(strong) strong.textContent = "Restore backup";
+    });
+  }
+
+  // IMPORTANT: window capture fires before the old document capture handlers.
+  window.addEventListener("click", function(e){
+    const btn = e.target && e.target.closest && e.target.closest("[data-import]");
+    if(!btn) return;
+
+    const m = btn.getAttribute("data-import");
+    if(m === "export") return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    if(m === "active") selectFile("active");
+    else if(m === "sold") selectFile("sold");
+    else selectFile("backup");
+  }, true);
+
+  // Also catch old file inputs before previous handlers can process them.
+  window.addEventListener("change", function(e){
+    if(!e.target || !["rs142ImportFile","rs139ImportFile","rs144RestoreFile"].includes(e.target.id)) return;
+
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    const reader = new FileReader();
+    reader.onload = function(){
+      try{ restoreFromText(String(reader.result || "")); }
+      catch(err){ status("Restore failed: " + (err && err.message ? err.message : "unknown error"), false); }
+    };
+    reader.readAsText(file);
+  }, true);
+
+  updateImportButtons();
+  setInterval(updateImportButtons, 800);
+})();
+</script>
