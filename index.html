@@ -31805,3 +31805,371 @@ function start(){ensureDockButtons();wireDock();[250,700,1500].forEach(t=>setTim
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();
 </script>
+
+
+<!-- ===== v139: Graphs inside Dashboard, Import in-panel, full-screen pull-ups ===== -->
+<style id="rs-v139-dashboard-graphs-import-fullscreen-css">
+  /* Remove Graphs as its own bottom-menu item */
+  #rs136PullDock .rs136DockBtn[data-panel="graphs"]{
+    display:none !important;
+  }
+
+  /* Make every selected pull-up page use almost the full screen */
+  #rs136DataPanel{
+    width:calc(100vw - 34px) !important;
+    height:calc(100vh - 118px) !important;
+    max-height:none !important;
+    left:50% !important;
+    bottom:88px !important;
+    padding:18px !important;
+    overflow:auto !important;
+  }
+
+  #rs136DataPanel.open{
+    transform:translateX(-50%) translateY(0) scale(1) !important;
+  }
+
+  .rs136Grid{
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  }
+
+  .rs139GraphSection{
+    grid-column:1 / -1;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+
+  .rs139GraphCard{
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.065);
+    border-radius:22px;
+    padding:14px;
+    min-height:360px;
+  }
+
+  .rs139GraphCard canvas{
+    display:block !important;
+    width:100% !important;
+    height:315px !important;
+  }
+
+  .rs139ImportZone{
+    grid-column:1 / -1;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.065);
+    border-radius:22px;
+    padding:14px;
+  }
+
+  .rs139ImportGrid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-top:10px;
+  }
+
+  .rs139ImportBtn{
+    min-height:92px !important;
+    width:100% !important;
+    border-radius:22px !important;
+    padding:14px !important;
+    text-align:left !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    justify-content:space-between !important;
+    background:rgba(255,255,255,.075) !important;
+    border:1px solid rgba(255,255,255,.11) !important;
+    color:#fff !important;
+  }
+
+  .rs139ImportBtn strong{
+    font-size:15px;
+    font-weight:950;
+    letter-spacing:-.025em;
+  }
+
+  .rs139ImportBtn span{
+    color:rgba(226,232,240,.62);
+    font-size:11px;
+    line-height:1.35;
+  }
+
+  #rs139ImportFile{
+    display:none !important;
+  }
+
+  @media(max-width:900px){
+    #rs136DataPanel{
+      width:calc(100vw - 18px) !important;
+      height:calc(100vh - 96px) !important;
+      bottom:78px !important;
+      border-radius:26px !important;
+    }
+    .rs136Grid,
+    .rs139ImportGrid{
+      grid-template-columns:1fr !important;
+    }
+  }
+</style>
+
+<script id="rs-v139-dashboard-graphs-import-fullscreen-js">
+(function(){
+  if(window.__rsV139DashboardGraphsImportFullscreen) return;
+  window.__rsV139DashboardGraphsImportFullscreen = true;
+
+  function num(v){const n=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(n)?n:0;}
+  function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(2)}}
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v||[]));}catch(e){}}
+  function sold(){try{if(typeof window.readSold==="function")return window.readSold()||[]}catch(e){}return read("soldInventory")}
+  function active(){try{if(typeof window.readActive==="function")return window.readActive()||[]}catch(e){}return read("activeInventory")}
+  function holds(){try{if(typeof window.readHolds==="function")return window.readHolds()||[]}catch(e){}return read("inventoryHolds")}
+  function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return num(r[k])}return 0}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"])}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
+  function profit(r){for(const k of["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return num(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
+  function date(r){const raw=r&&(r.date||r.soldDate||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt);const d=new Date(raw||"");return isNaN(d)?null:d}
+  function dayKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+  function monthKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+  function removeGraphsMenu(){
+    document.querySelectorAll('#rs136PullDock .rs136DockBtn[data-panel="graphs"]').forEach(b=>b.remove());
+  }
+
+  function baseHeader(title,sub){
+    return '<div class="rs136PanelHeader"><div><h2>'+esc(title)+'</h2><p>'+esc(sub)+'</p></div><button id="rs136ClosePanel" type="button">×</button></div>';
+  }
+
+  function dailyRows(){
+    const by=new Map();
+    sold().forEach(r=>{
+      const d=date(r); if(!d)return;
+      const k=dayKey(d);
+      if(!by.has(k))by.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0});
+      const b=by.get(k); b.income+=sale(r); b.profit+=profit(r); b.costProfit+=cost(r)+profit(r);
+    });
+    let income=0, prof=0, cp=0;
+    return Array.from(by.values()).sort((a,b)=>a.date-b.date).map(x=>{
+      income+=x.income; prof+=x.profit; cp+=x.costProfit;
+      return {label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}), income:+income.toFixed(2), profit:+prof.toFixed(2), costProfit:+cp.toFixed(2)};
+    });
+  }
+
+  function monthlyRows(){
+    const by=new Map();
+    sold().forEach(r=>{
+      const d=date(r); if(!d)return;
+      const k=monthKey(d);
+      if(!by.has(k))by.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,profit:0,cost:0,costProfit:0});
+      const b=by.get(k); b.income+=sale(r); b.profit+=profit(r); b.cost+=cost(r); b.costProfit+=cost(r)+profit(r);
+    });
+    return Array.from(by.values()).sort((a,b)=>a.date-b.date).map(x=>({
+      label:x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"}),
+      income:+x.income.toFixed(2), profit:+x.profit.toFixed(2), cost:+x.cost.toFixed(2), costProfit:+x.costProfit.toFixed(2)
+    }));
+  }
+
+  function graphBlock(){
+    return `
+      <div class="rs139GraphSection">
+        <div class="rs139GraphCard">
+          <div class="rs136MetricLabel">Business growth</div>
+          <canvas id="rs139GrowthCanvas"></canvas>
+        </div>
+        <div class="rs139GraphCard">
+          <div class="rs136MetricLabel">Monthly profit view</div>
+          <canvas id="rs139MonthlyCanvas"></canvas>
+        </div>
+      </div>
+    `;
+  }
+
+  function drawGraphs(){
+    if(!window.Chart) return;
+
+    const g=document.getElementById("rs139GrowthCanvas");
+    if(g){
+      const rows=dailyRows();
+      try{const old=Chart.getChart&&Chart.getChart(g); if(old)old.destroy();}catch(e){}
+      new Chart(g,{type:"line",data:{labels:rows.map(x=>x.label),datasets:[
+        {label:"Total Income",data:rows.map(x=>x.income),borderWidth:3,pointRadius:0,tension:.25,fill:false},
+        {label:"Total Profit",data:rows.map(x=>x.profit),borderWidth:3,pointRadius:0,tension:.25,fill:false},
+        {label:"Cost + Profit",data:rows.map(x=>x.costProfit),borderWidth:4,pointRadius:0,tension:.25,fill:false}
+      ]},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top"},tooltip:{callbacks:{label:function(ctx){return" "+ctx.dataset.label+": "+money(ctx.parsed.y)}}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.10)"}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}},grid:{color:"rgba(255,255,255,.10)"}}}}});
+    }
+
+    const m=document.getElementById("rs139MonthlyCanvas");
+    if(m){
+      const rows=monthlyRows();
+      try{const old=Chart.getChart&&Chart.getChart(m); if(old)old.destroy();}catch(e){}
+      new Chart(m,{type:"line",data:{labels:rows.map(x=>x.label),datasets:[
+        {label:"Total Income",data:rows.map(x=>x.income),borderWidth:3,pointRadius:2,tension:.30,fill:false},
+        {label:"Cost of Sold",data:rows.map(x=>x.cost),borderWidth:3,pointRadius:2,tension:.30,fill:false},
+        {label:"Profit",data:rows.map(x=>x.profit),borderWidth:3,pointRadius:2,tension:.30,fill:false},
+        {label:"Cost + Profit",data:rows.map(x=>x.costProfit),borderWidth:4,pointRadius:2,tension:.30,fill:false}
+      ]},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top"},tooltip:{callbacks:{label:function(ctx){return" "+ctx.dataset.label+": "+money(ctx.parsed.y)}}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.10)"}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}},grid:{color:"rgba(255,255,255,.10)"}}}}});
+    }
+  }
+
+  function dashboardHTML(){
+    const a=active(), s=sold();
+    const income=s.reduce((x,r)=>x+sale(r),0);
+    const prof=s.reduce((x,r)=>x+profit(r),0);
+    const activeValue=a.reduce((x,r)=>x+val(r,["list","listPrice","listingPrice","price","salePrice","amount"]),0);
+    return baseHeader("Dashboard","Your pull-up dashboard with graphs included.") + `
+      <div class="rs136Grid">
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Active value</div><div class="rs136MetricValue">${money(activeValue)}</div><div class="rs136MetricNote">${a.length} active listings</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Total income</div><div class="rs136MetricValue">${money(income)}</div><div class="rs136MetricNote">${s.length} sold items</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Total profit</div><div class="rs136MetricValue">${money(prof)}</div><div class="rs136MetricNote">Estimated net profit</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Cost + Profit</div><div class="rs136MetricValue">${money(s.reduce((x,r)=>x+cost(r)+profit(r),0))}</div><div class="rs136MetricNote">Cost of sold plus profit</div></div>
+        ${graphBlock()}
+      </div>
+    `;
+  }
+
+  function importHTML(){
+    return baseHeader("Import / Data","Import directly here without leaving the pull-up window.") + `
+      <input id="rs139ImportFile" type="file" accept=".json,.csv,text/csv,application/json">
+      <div class="rs136Grid">
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Active listings</div><div class="rs136MetricValue">${active().length}</div><div class="rs136MetricNote">Current inventory records</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Sold records</div><div class="rs136MetricValue">${sold().length}</div><div class="rs136MetricNote">Sales saved locally</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Holds</div><div class="rs136MetricValue">${holds().length}</div><div class="rs136MetricNote">Held inventory records</div></div>
+
+        <div class="rs139ImportZone">
+          <div class="rs136MetricLabel">Import tools</div>
+          <div class="rs139ImportGrid">
+            <button class="rs139ImportBtn" id="rs139ImportActive" type="button"><strong>Import active</strong><span>Load JSON/CSV into active inventory.</span></button>
+            <button class="rs139ImportBtn" id="rs139ImportSold" type="button"><strong>Import sold</strong><span>Load JSON/CSV into sold items.</span></button>
+            <button class="rs139ImportBtn" id="rs139ImportBackup" type="button"><strong>Import backup</strong><span>Restore active, sold, and holds from a JSON backup.</span></button>
+            <button class="rs139ImportBtn" id="rs139ExportBackup" type="button"><strong>Export backup</strong><span>Download all current data as JSON.</span></button>
+            <button class="rs139ImportBtn" id="rs139ClearPanel" type="button"><strong>Stay in focus</strong><span>Close this panel and return to the background.</span></button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function parseCSV(text){
+    const rows=[]; let cur="", row=[], quote=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i], n=text[i+1];
+      if(c=='"' && quote && n=='"'){cur+='"'; i++;}
+      else if(c=='"'){quote=!quote;}
+      else if(c=="," && !quote){row.push(cur); cur="";}
+      else if((c=="\n" || c=="\r") && !quote){ if(cur!=="" || row.length){row.push(cur); rows.push(row); row=[]; cur="";} if(c=="\r" && n=="\n") i++; }
+      else cur+=c;
+    }
+    if(cur!=="" || row.length){row.push(cur); rows.push(row);}
+    if(!rows.length) return [];
+    const headers=rows.shift().map(h=>String(h).trim());
+    return rows.filter(r=>r.some(x=>String(x).trim()!=="")).map(r=>{
+      const o={}; headers.forEach((h,i)=>o[h]=r[i]??""); return o;
+    });
+  }
+
+  let importMode="active";
+  function triggerImport(mode){
+    importMode=mode;
+    const input=document.getElementById("rs139ImportFile");
+    if(input) input.click();
+  }
+
+  function handleImportFile(file){
+    const reader=new FileReader();
+    reader.onload=function(){
+      const text=String(reader.result||"");
+      let data=null;
+      try{ data=JSON.parse(text); }catch(e){ data=parseCSV(text); }
+
+      if(importMode==="backup" && data && !Array.isArray(data)){
+        if(Array.isArray(data.activeInventory)) write("activeInventory",data.activeInventory);
+        if(Array.isArray(data.soldInventory)) write("soldInventory",data.soldInventory);
+        if(Array.isArray(data.inventoryHolds)) write("inventoryHolds",data.inventoryHolds);
+      }else{
+        const arr=Array.isArray(data) ? data : [];
+        if(importMode==="sold") write("soldInventory",arr);
+        else write("activeInventory",arr);
+      }
+
+      openImport();
+    };
+    reader.readAsText(file);
+  }
+
+  function backupData(){
+    const data={exportedAt:new Date().toISOString(),activeInventory:active(),soldInventory:sold(),inventoryHolds:holds()};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+  }
+
+  function openDashboard(){
+    const p=document.getElementById("rs136DataPanel");
+    if(!p)return;
+    p.innerHTML=dashboardHTML();
+    p.classList.add("open");
+    const close=document.getElementById("rs136ClosePanel");
+    if(close) close.addEventListener("click",()=>p.classList.remove("open"),{once:true});
+    setTimeout(drawGraphs,80); setTimeout(drawGraphs,420);
+  }
+
+  function openImport(){
+    const p=document.getElementById("rs136DataPanel");
+    if(!p)return;
+    p.innerHTML=importHTML();
+    p.classList.add("open");
+    const close=document.getElementById("rs136ClosePanel");
+    if(close) close.addEventListener("click",()=>p.classList.remove("open"),{once:true});
+    document.getElementById("rs139ImportActive")?.addEventListener("click",()=>triggerImport("active"));
+    document.getElementById("rs139ImportSold")?.addEventListener("click",()=>triggerImport("sold"));
+    document.getElementById("rs139ImportBackup")?.addEventListener("click",()=>triggerImport("backup"));
+    document.getElementById("rs139ExportBackup")?.addEventListener("click",backupData);
+    document.getElementById("rs139ClearPanel")?.addEventListener("click",()=>p.classList.remove("open"));
+    document.getElementById("rs139ImportFile")?.addEventListener("change",e=>{
+      const file=e.target.files&&e.target.files[0];
+      if(file) handleImportFile(file);
+    });
+  }
+
+  function wireDock(){
+    const dock=document.getElementById("rs136PullDock");
+    if(!dock || dock.__rs139Wired) return;
+    dock.__rs139Wired=1;
+
+    dock.addEventListener("click",e=>{
+      const btn=e.target.closest&&e.target.closest(".rs136DockBtn");
+      if(!btn)return;
+      if(btn.dataset.panel==="graphs"){e.preventDefault();e.stopImmediatePropagation();return;}
+      if(btn.dataset.panel==="dashboard"){
+        e.preventDefault();e.stopImmediatePropagation();
+        dock.querySelectorAll(".rs136DockBtn").forEach(x=>x.classList.remove("active"));
+        btn.classList.add("active");
+        openDashboard();
+      }
+      if(btn.dataset.panel==="import"){
+        e.preventDefault();e.stopImmediatePropagation();
+        dock.querySelectorAll(".rs136DockBtn").forEach(x=>x.classList.remove("active"));
+        btn.classList.add("active");
+        openImport();
+      }
+    },true);
+  }
+
+  function start(){
+    removeGraphsMenu();
+    wireDock();
+    [200,600,1200,2500].forEach(t=>setTimeout(()=>{removeGraphsMenu();wireDock();},t));
+  }
+
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);
+  else start();
+})();
+</script>
