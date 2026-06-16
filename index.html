@@ -32173,3 +32173,336 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
   else start();
 })();
 </script>
+
+
+<!-- ===== v140: Fix Inventory/Sold/Holds pull-up pages ===== -->
+<style id="rs-v140-inventory-pullup-fix-css">
+  .rs140TableCard{
+    grid-column:1 / -1;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.065);
+    border-radius:22px;
+    padding:14px;
+    min-height:420px;
+    overflow:auto;
+  }
+
+  .rs140Table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0 8px;
+  }
+
+  .rs140Table th{
+    color:rgba(226,232,240,.62);
+    font-size:11px;
+    font-weight:950;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    text-align:left;
+    padding:0 10px 6px;
+    white-space:nowrap;
+  }
+
+  .rs140Table td{
+    background:rgba(2,6,23,.18);
+    border-top:1px solid rgba(255,255,255,.07);
+    border-bottom:1px solid rgba(255,255,255,.07);
+    color:#fff;
+    padding:11px 10px;
+    font-size:12px;
+    vertical-align:middle;
+  }
+
+  .rs140Table td:first-child{
+    border-left:1px solid rgba(255,255,255,.07);
+    border-radius:14px 0 0 14px;
+    font-weight:850;
+  }
+
+  .rs140Table td:last-child{
+    border-right:1px solid rgba(255,255,255,.07);
+    border-radius:0 14px 14px 0;
+  }
+
+  .rs140Sub{
+    color:rgba(226,232,240,.58);
+    font-size:11px;
+    margin-top:3px;
+  }
+
+  .rs140Money{
+    color:#bbf7d0 !important;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .rs140SearchRow{
+    grid-column:1 / -1;
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+
+  #rs140Search{
+    flex:1;
+    height:44px;
+    border-radius:999px !important;
+    padding:0 16px !important;
+  }
+
+  @media(max-width:800px){
+    .rs140Table{
+      min-width:760px;
+    }
+  }
+</style>
+
+<script id="rs-v140-inventory-pullup-fix-js">
+(function(){
+  if(window.__rsV140InventoryPullupFix) return;
+  window.__rsV140InventoryPullupFix = true;
+
+  function num(v){
+    const n = Number(String(v ?? "").replace(/[^0-9.-]/g,""));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function money(v){
+    try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0);}
+    catch(e){return "$"+(Number(v)||0).toFixed(2);}
+  }
+
+  function read(k){
+    try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return [];}
+  }
+
+  function active(){
+    try{ if(typeof window.readActive === "function") return window.readActive() || []; }catch(e){}
+    return read("activeInventory");
+  }
+
+  function sold(){
+    try{ if(typeof window.readSold === "function") return window.readSold() || []; }catch(e){}
+    return read("soldInventory");
+  }
+
+  function holds(){
+    try{ if(typeof window.readHolds === "function") return window.readHolds() || []; }catch(e){}
+    return read("inventoryHolds");
+  }
+
+  function val(r,ks){
+    for(const k of ks){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return 0;
+  }
+
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim();}
+  function platform(r){return String(r.platform||r.marketplace||r.source||r.store||"").trim();}
+  function qty(r){return val(r,["qty","quantity","count"]) || 1;}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"]);}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"]);}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"]);}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"]);}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"]);}
+  function profit(r){
+    for(const k of ["profit","netProfit","totalProfit","net","netIncome"]){
+      if(r && r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== "") return num(r[k]);
+    }
+    return sale(r)-cost(r)-fee(r)-ship(r);
+  }
+
+  function dateStr(r){
+    const raw = r.date || r.soldDate || r.Date || r["Sold Date"] || r.sold_date || r.saleDate || r.createdAt || "";
+    const d = new Date(raw);
+    if(isNaN(d)) return String(raw || "");
+    return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"2-digit"});
+  }
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function baseHeader(title,sub){
+    return '<div class="rs136PanelHeader"><div><h2>'+esc(title)+'</h2><p>'+esc(sub)+'</p></div><button id="rs136ClosePanel" type="button">×</button></div>';
+  }
+
+  function openPanel(content){
+    const p = document.getElementById("rs136DataPanel");
+    if(!p) return;
+    p.innerHTML = content;
+    p.classList.add("open");
+    const close = document.getElementById("rs136ClosePanel");
+    if(close) close.addEventListener("click",()=>p.classList.remove("open"),{once:true});
+  }
+
+  function filterRows(rows,q){
+    q = String(q||"").toLowerCase().trim();
+    if(!q) return rows;
+    return rows.filter(r => JSON.stringify(r).toLowerCase().includes(q));
+  }
+
+  function inventoryHTML(q){
+    const rows = filterRows(active(),q);
+    const totalValue = rows.reduce((x,r)=>x+list(r),0);
+    const totalCost = rows.reduce((x,r)=>x+cost(r),0);
+
+    const body = rows.map(r=>`
+      <tr>
+        <td>
+          ${esc(title(r))}
+          <div class="rs140Sub">${esc(platform(r) || "Active listing")}</div>
+        </td>
+        <td class="rs140Money">${money(cost(r))}</td>
+        <td class="rs140Money">${money(list(r))}</td>
+        <td>${qty(r)}</td>
+        <td>${esc(String(r.notes || r.note || ""))}</td>
+      </tr>
+    `).join("");
+
+    return baseHeader("Inventory","Full-screen pull-up view of active inventory.") + `
+      <div class="rs136Grid">
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Active listings</div><div class="rs136MetricValue">${rows.length}</div><div class="rs136MetricNote">Showing ${q ? "filtered" : "all"} active records</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Listed value</div><div class="rs136MetricValue">${money(totalValue)}</div><div class="rs136MetricNote">Current visible list total</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Inventory cost</div><div class="rs136MetricValue">${money(totalCost)}</div><div class="rs136MetricNote">Cost basis visible here</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Avg list</div><div class="rs136MetricValue">${money(rows.length ? totalValue/rows.length : 0)}</div><div class="rs136MetricNote">Average listed price</div></div>
+
+        <div class="rs140SearchRow">
+          <input id="rs140Search" placeholder="Search inventory..." value="${esc(q||"")}">
+        </div>
+
+        <div class="rs140TableCard">
+          <table class="rs140Table">
+            <thead><tr><th>Item</th><th>Cost</th><th>List</th><th>Qty</th><th>Notes</th></tr></thead>
+            <tbody>${body || '<tr><td colspan="5">No active inventory found.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function soldHTML(q){
+    const rows = filterRows(sold(),q).slice().sort((a,b)=>new Date(b.soldDate||b.date||0)-new Date(a.soldDate||a.date||0));
+    const totalIncome = rows.reduce((x,r)=>x+sale(r),0);
+    const totalProfit = rows.reduce((x,r)=>x+profit(r),0);
+
+    const body = rows.map(r=>`
+      <tr>
+        <td>
+          ${esc(title(r))}
+          <div class="rs140Sub">${esc(platform(r) || "Sold item")}</div>
+        </td>
+        <td>${esc(dateStr(r))}</td>
+        <td class="rs140Money">${money(sale(r))}</td>
+        <td class="rs140Money">${money(cost(r))}</td>
+        <td class="rs140Money">${money(profit(r))}</td>
+      </tr>
+    `).join("");
+
+    return baseHeader("Sold","Full-screen pull-up view of sold items.") + `
+      <div class="rs136Grid">
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Sold records</div><div class="rs136MetricValue">${rows.length}</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Total income</div><div class="rs136MetricValue">${money(totalIncome)}</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Total profit</div><div class="rs136MetricValue">${money(totalProfit)}</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Avg profit</div><div class="rs136MetricValue">${money(rows.length ? totalProfit/rows.length : 0)}</div></div>
+
+        <div class="rs140SearchRow">
+          <input id="rs140Search" placeholder="Search sold items..." value="${esc(q||"")}">
+        </div>
+
+        <div class="rs140TableCard">
+          <table class="rs140Table">
+            <thead><tr><th>Item</th><th>Date</th><th>Sale</th><th>Cost</th><th>Profit</th></tr></thead>
+            <tbody>${body || '<tr><td colspan="5">No sold items found.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function holdsHTML(q){
+    const rows = filterRows(holds(),q);
+    const totalValue = rows.reduce((x,r)=>x+(list(r)||cost(r)),0);
+
+    const body = rows.map(r=>`
+      <tr>
+        <td>
+          ${esc(title(r))}
+          <div class="rs140Sub">${esc(platform(r) || "Hold")}</div>
+        </td>
+        <td class="rs140Money">${money(cost(r))}</td>
+        <td class="rs140Money">${money(list(r)||cost(r))}</td>
+        <td>${qty(r)}</td>
+        <td>${esc(String(r.notes || r.note || ""))}</td>
+      </tr>
+    `).join("");
+
+    return baseHeader("Holds","Full-screen pull-up view of held inventory.") + `
+      <div class="rs136Grid">
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Hold records</div><div class="rs136MetricValue">${rows.length}</div></div>
+        <div class="rs136MetricCard"><div class="rs136MetricLabel">Hold value</div><div class="rs136MetricValue">${money(totalValue)}</div></div>
+
+        <div class="rs140SearchRow">
+          <input id="rs140Search" placeholder="Search holds..." value="${esc(q||"")}">
+        </div>
+
+        <div class="rs140TableCard">
+          <table class="rs140Table">
+            <thead><tr><th>Item</th><th>Cost</th><th>Value</th><th>Qty</th><th>Notes</th></tr></thead>
+            <tbody>${body || '<tr><td colspan="5">No holds found.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPage(type,q){
+    if(type === "inventory") openPanel(inventoryHTML(q));
+    else if(type === "sold") openPanel(soldHTML(q));
+    else if(type === "holds") openPanel(holdsHTML(q));
+    else return;
+
+    const input = document.getElementById("rs140Search");
+    if(input){
+      input.focus();
+      input.setSelectionRange(input.value.length,input.value.length);
+      input.addEventListener("input",()=>{
+        clearTimeout(input.__rs140Timer);
+        const val = input.value;
+        input.__rs140Timer = setTimeout(()=>renderPage(type,val),180);
+      });
+    }
+  }
+
+  function wireDock(){
+    const dock = document.getElementById("rs136PullDock");
+    if(!dock || dock.__rs140Wired) return;
+    dock.__rs140Wired = true;
+
+    dock.addEventListener("click",e=>{
+      const btn = e.target.closest && e.target.closest(".rs136DockBtn");
+      if(!btn) return;
+
+      const type = btn.dataset.panel;
+      if(!["inventory","sold","holds"].includes(type)) return;
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      dock.querySelectorAll(".rs136DockBtn").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      renderPage(type,"");
+    },true);
+  }
+
+  function start(){
+    wireDock();
+    [250,700,1500].forEach(t=>setTimeout(wireDock,t));
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+})();
+</script>
