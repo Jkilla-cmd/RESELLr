@@ -35669,3 +35669,79 @@ body{margin-left:0 !important;}
   setTimeout(()=>{removeTaxReset();addResetToImport();recolorProfitOnly();syncLoginMenu();},800);
 })();
 </script>
+
+
+<!-- ===== v154: hide bottom menu while dashboard is locked ===== -->
+<style id="rs-v154-hide-menu-locked-css">
+  body.rs154-locked #rs146Dock,
+  body.rs154-locked #rs142Dock,
+  body.rs154-locked #rs136PullDock{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+    opacity:0 !important;
+  }
+</style>
+
+<script id="rs-v154-hide-menu-locked-js">
+(function(){
+  if(window.__rsV154HideMenuLocked) return;
+  window.__rsV154HideMenuLocked = true;
+
+  function isVisible(el){
+    if(!el) return false;
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    return cs.display !== "none" &&
+           cs.visibility !== "hidden" &&
+           Number(cs.opacity) !== 0 &&
+           r.width > 20 &&
+           r.height > 20;
+  }
+
+  function isLocked(){
+    const text = (document.body.innerText || "").toLowerCase();
+
+    // This matches your actual lock screen text from the screenshot.
+    if(text.includes("dashboard locked") && text.includes("enter your passcode")) return true;
+
+    const candidates = document.querySelectorAll(
+      "#lockOverlay,#rsLockOverlay,#passcodeOverlay,#loginModal,#login,[class*='lock'],[id*='lock'],[class*='passcode'],[id*='passcode']"
+    );
+
+    for(const el of candidates){
+      const t = (el.innerText || "").toLowerCase();
+      if(isVisible(el) && (t.includes("dashboard locked") || t.includes("enter passcode") || t.includes("enter your passcode"))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  let last = null;
+  function sync(){
+    const locked = isLocked();
+    if(locked !== last){
+      last = locked;
+      document.body.classList.toggle("rs154-locked", locked);
+    }
+  }
+
+  sync();
+
+  const obs = new MutationObserver(function(){
+    clearTimeout(window.__rs154LockTimer);
+    window.__rs154LockTimer = setTimeout(sync, 80);
+  });
+
+  obs.observe(document.body, {childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:["class","style","hidden"]});
+
+  window.addEventListener("load", sync);
+  document.addEventListener("input", sync, true);
+  document.addEventListener("click", function(){ setTimeout(sync,80); }, true);
+
+  // Small fallback in case the lock screen appears without DOM mutation.
+  setInterval(sync, 700);
+})();
+</script>
