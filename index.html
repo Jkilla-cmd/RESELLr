@@ -36618,3 +36618,287 @@ body{margin-left:0 !important;}
   setInterval(statsPill,15000);
 })();
 </script>
+
+
+<!-- ===== v163: smaller Lofizen dock, closer groups, one reset, RESELLr label, logo hamburger ===== -->
+<style id="rs-v163-lofizen-dock-polish-css">
+  /* Smaller dock closer to Lofizen size */
+  #rs146Dock{
+    bottom:16px !important;
+    gap:6px !important;
+    max-width:calc(100vw - 250px) !important;
+  }
+
+  #rs146Dock .rs161DockGroup,
+  #rs161LofiPlayer,
+  #rs162StatsPill{
+    height:42px !important;
+    min-height:42px !important;
+    padding:5px 8px !important;
+    gap:5px !important;
+    border-radius:999px !important;
+  }
+
+  #rs146Dock .rs161DockGroup{
+    min-width:238px !important;
+  }
+
+  #rs146Dock .rs146DockBtn{
+    width:30px !important;
+    min-width:30px !important;
+    height:30px !important;
+  }
+
+  #rs146Dock .rs146DockBtn .rs162Icon{
+    font-size:15px !important;
+  }
+
+  #rs146Dock .rs161GroupLabel,
+  #rs161LofiPlayer .rs161GroupLabel,
+  #rs162StatsPill .rs161GroupLabel{
+    bottom:48px !important;
+    left:10px !important;
+    font-size:10px !important;
+    letter-spacing:.01em !important;
+  }
+
+  .rs162Tip{
+    bottom:44px !important;
+    font-size:10px !important;
+    padding:5px 8px !important;
+  }
+
+  #rs161LofiPlayer{
+    left:16px !important;
+    bottom:16px !important;
+  }
+
+  .rs161PlayerBtn{
+    width:28px !important;
+    min-width:28px !important;
+    height:28px !important;
+    font-size:12px !important;
+    background:rgba(255,255,255,.075) !important;
+  }
+
+  .rs161NowPlaying{
+    max-width:72px !important;
+    font-size:10px !important;
+  }
+
+  /* Cleaner volume slider */
+  .rs161Volume{
+    -webkit-appearance:none !important;
+    appearance:none !important;
+    width:54px !important;
+    height:5px !important;
+    border-radius:999px !important;
+    background:linear-gradient(90deg, rgba(248,250,252,.92), rgba(248,250,252,.22)) !important;
+    outline:none !important;
+    cursor:pointer !important;
+  }
+
+  .rs161Volume::-webkit-slider-thumb{
+    -webkit-appearance:none !important;
+    appearance:none !important;
+    width:14px !important;
+    height:14px !important;
+    border-radius:999px !important;
+    background:#f8fafc !important;
+    border:1px solid rgba(15,23,42,.22) !important;
+    box-shadow:0 4px 12px rgba(0,0,0,.35) !important;
+  }
+
+  .rs161Volume::-moz-range-thumb{
+    width:14px !important;
+    height:14px !important;
+    border-radius:999px !important;
+    background:#f8fafc !important;
+    border:1px solid rgba(15,23,42,.22) !important;
+    box-shadow:0 4px 12px rgba(0,0,0,.35) !important;
+  }
+
+  #rs162StatsPill{
+    right:16px !important;
+    bottom:16px !important;
+    gap:6px !important;
+    font-size:11px !important;
+  }
+
+  #rs162StatsPill .rs162StatIcon{
+    width:28px !important;
+    height:28px !important;
+    font-size:12px !important;
+  }
+
+  #rs162StatsPill .rs162Time{
+    min-width:58px !important;
+    font-size:11px !important;
+  }
+
+  /* Hide duplicate reset blocks/buttons except our final one */
+  #rs146Panel .rs150ResetBlock,
+  #rs146Panel .rs152ResetBlock,
+  #rs146Panel .rs147ResetZone,
+  #rs146Panel #rs147ResetAll,
+  #rs146Panel #rs150FullResetBtn,
+  #rs146Panel #rs152FullResetBtn{
+    display:none !important;
+  }
+
+  #rs146Panel .rs163ResetBlock{
+    grid-column:1 / -1;
+    border:1px solid rgba(248,113,113,.24);
+    background:rgba(248,113,113,.075);
+    border-radius:20px;
+    padding:12px 14px;
+  }
+
+  #rs163FullResetBtn{
+    margin-top:9px;
+    height:34px !important;
+    color:#fecaca !important;
+    border-color:rgba(248,113,113,.30) !important;
+  }
+
+  /* Top right hamburger/action becomes RESELLr logo glass button */
+  .rs163LogoAction{
+    position:fixed;
+    top:14px;
+    right:14px;
+    z-index:999950;
+    width:48px;
+    height:48px;
+    display:grid;
+    place-items:center;
+    border-radius:999px;
+    background:rgba(8,12,20,.46);
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 16px 46px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(20px) saturate(1.08);
+    -webkit-backdrop-filter:blur(20px) saturate(1.08);
+    cursor:pointer;
+  }
+
+  .rs163LogoAction img{
+    width:28px;
+    height:28px;
+    object-fit:contain;
+    filter:drop-shadow(0 0 8px rgba(45,212,191,.28));
+  }
+
+  .rs161UnderlayPatch{
+    display:none !important;
+  }
+
+  @media(max-width:900px){
+    #rs146Dock{
+      max-width:calc(100vw - 20px) !important;
+    }
+    #rs146Dock .rs161DockGroup{
+      min-width:0 !important;
+    }
+  }
+</style>
+
+<script id="rs-v163-lofizen-dock-polish-js">
+(function(){
+  if(window.__rsV163LofizenDockPolish) return;
+  window.__rsV163LofizenDockPolish = true;
+
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v||[]));}catch(e){}}
+  function setEmptyAll(){
+    ["activeInventory","inventory","inventoryData","items","soldInventory","sold","soldData","sales","inventoryHolds","holds","holdData"].forEach(k=>write(k,[]));
+  }
+
+  function renameAppsLabel(){
+    document.querySelectorAll("#rs146Dock .rs161GroupLabel").forEach(el=>{
+      if((el.textContent||"").trim().toLowerCase()==="apps") el.textContent="RESELLr";
+    });
+  }
+
+  function addSingleReset(){
+    const panel=document.getElementById("rs146Panel");
+    if(!panel || !panel.classList.contains("open")) return;
+    if(!/Import \/ Data|Import|Restore/i.test(panel.textContent||"")) return;
+
+    panel.querySelectorAll(".rs163ResetBlock").forEach((el,i)=>{ if(i>0) el.remove(); });
+    if(panel.querySelector(".rs163ResetBlock")) return;
+
+    const grid=panel.querySelector(".rs146Grid");
+    if(!grid) return;
+
+    const block=document.createElement("div");
+    block.className="rs163ResetBlock";
+    block.innerHTML='<div class="rs146MetricLabel">Danger zone</div><div class="rs146MetricValue" style="font-size:18px">Full reset</div><div class="rs146MetricNote">Clears all RESELLr local data and duplicate keys. Export a backup first.</div><button id="rs163FullResetBtn" class="rs146ActionBtn rs146Danger" type="button">Full reset RESELLr</button>';
+    grid.appendChild(block);
+
+    document.getElementById("rs163FullResetBtn").addEventListener("click",function(){
+      if(!confirm("Full reset RESELLr? Export a backup first.")) return;
+      if(!confirm("Are you sure? This cannot be undone without a backup.")) return;
+
+      const keys=[];
+      for(let i=0;i<localStorage.length;i++) keys.push(localStorage.key(i));
+      keys.forEach(k=>{
+        if(/inventory|sold|hold|resellr|rs15|rs136|rs142|rs146|rs147|rs148|rs149|rs150|rs151|rs152|rs153|rs154|rs155|rs156|rs157|rs158|rs159|rs160|rs161|rs162|chart|backup|tax|dashboard|commandbg|bg|filter|goal/i.test(k)){
+          localStorage.removeItem(k);
+        }
+      });
+      setEmptyAll();
+      alert("RESELLr fully reset. Reloading...");
+      location.reload();
+    });
+  }
+
+  function logoSrc(){
+    return "assets/images/coffee-icon.png";
+  }
+
+  function replaceHamburgerWithLogo(){
+    let logo=document.getElementById("rs163LogoAction");
+    if(!logo){
+      logo=document.createElement("button");
+      logo.id="rs163LogoAction";
+      logo.className="rs163LogoAction";
+      logo.type="button";
+      logo.title="RESELLr";
+      logo.innerHTML='<img src="'+logoSrc()+'" alt="RESELLr">';
+      document.body.appendChild(logo);
+    }
+
+    // Hide visible hamburger/top-right action buttons, keep our logo.
+    document.querySelectorAll("button, .top-action, .action-button, .action-btn, #actionButton, #quickActionButton").forEach(el=>{
+      if(el.id==="rs163LogoAction" || el.closest("#rs163LogoAction")) return;
+      const text=(el.textContent||"").trim();
+      const rect=el.getBoundingClientRect();
+      const topRight=rect.top < 90 && rect.right > window.innerWidth - 130;
+      const looksHamburger=/^☰$|^≡$|menu/i.test(text) || /hamburger|menu|action/i.test(el.className+" "+el.id);
+      if(topRight && looksHamburger){
+        el.style.display="none";
+      }
+    });
+
+    logo.onclick=function(){
+      const dashboardBtn=document.querySelector(".rs146DockBtn[data-panel='dashboard']");
+      if(dashboardBtn) dashboardBtn.click();
+    };
+  }
+
+  function polish(){
+    renameAppsLabel();
+    addSingleReset();
+    replaceHamburgerWithLogo();
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",polish);
+  else polish();
+
+  document.addEventListener("click",function(){
+    setTimeout(polish,120);
+    setTimeout(polish,500);
+  },true);
+
+  setTimeout(polish,600);
+})();
+</script>
