@@ -35358,3 +35358,44 @@ body{margin-left:0 !important;}
   },900);
 })();
 </script>
+
+
+<!-- ===== v151: allow exact decimal fee/shipping/cost values in overlays ===== -->
+<script id="rs-v151-decimal-input-fix-js">
+(function(){
+  if(window.__rsV151DecimalInputFix) return;
+  window.__rsV151DecimalInputFix = true;
+
+  function fixNumberInputs(root){
+    (root || document).querySelectorAll('input[type="number"]').forEach(function(input){
+      input.setAttribute("step","any");
+      input.setAttribute("inputmode","decimal");
+      input.removeAttribute("min");
+      input.removeAttribute("max");
+    });
+  }
+
+  // Fix existing fields and anything created later by the edit / move-to-sold overlays.
+  fixNumberInputs(document);
+
+  const obs = new MutationObserver(function(mutations){
+    mutations.forEach(function(m){
+      m.addedNodes.forEach(function(node){
+        if(node && node.nodeType === 1) fixNumberInputs(node);
+      });
+    });
+  });
+
+  obs.observe(document.documentElement,{childList:true,subtree:true});
+
+  // Extra safety: before any form submits, make decimals valid.
+  document.addEventListener("submit",function(e){
+    fixNumberInputs(e.target);
+  },true);
+
+  document.addEventListener("click",function(){
+    setTimeout(function(){fixNumberInputs(document);},50);
+    setTimeout(function(){fixNumberInputs(document);},250);
+  },true);
+})();
+</script>
