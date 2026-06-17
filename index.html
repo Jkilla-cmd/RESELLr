@@ -36773,3 +36773,315 @@ body{margin-left:0 !important;}
   },true);
 })();
 </script>
+
+
+<!-- ===== v159: smart restore for database exports, object maps, table rows, and nested records ===== -->
+<style id="rs-v159-smart-restore-css">
+  #rs159RestoreFile{display:none!important;}
+  .rs159Status{
+    grid-column:1 / -1;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.075);
+    border-radius:18px;
+    padding:12px 14px;
+    color:rgba(248,250,252,.9);
+    font-size:12px;
+    line-height:1.45;
+    white-space:pre-wrap;
+  }
+  .rs159Status.good{border-color:rgba(134,239,172,.35);color:#bbf7d0;}
+  .rs159Status.bad{border-color:rgba(248,113,113,.35);color:#fecaca;}
+  .rs159Status.warn{border-color:rgba(250,204,21,.35);color:#fef3c7;}
+</style>
+
+<script id="rs-v159-smart-restore-js">
+(function(){
+  if(window.__rsV159SmartRestore) return;
+  window.__rsV159SmartRestore = true;
+
+  const ACTIVE_RE = /(active|inventory|inventor|listing|listings|for.?sale|items|products)/i;
+  const SOLD_RE = /(sold|sales|sale.?records|completed|sold.?items)/i;
+  const HOLD_RE = /(hold|holds|held)/i;
+
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){localStorage.setItem(k,JSON.stringify(Array.isArray(v)?v:[]))}
+  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v);write("items",v)}
+  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v);write("sales",v)}
+  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
+  function currentActive(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function currentSold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function currentHolds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+
+  function status(msg,type){
+    let el=document.querySelector(".rs159Status");
+    const grid=document.querySelector("#rs146Panel .rs146Grid") || document.querySelector("#rs142Panel .rs142Grid") || document.querySelector("#rs136DataPanel .rs136Grid");
+    if(!el && grid){
+      el=document.createElement("div");
+      el.className="rs159Status";
+      grid.prepend(el);
+    }
+    if(el){
+      el.className="rs159Status "+(type||"");
+      el.textContent=msg;
+    }else alert(msg);
+  }
+
+  function parseMaybe(v){
+    if(typeof v==="string"){
+      const s=v.trim();
+      if(!s) return v;
+      try{return JSON.parse(s)}catch(e){return v}
+    }
+    return v;
+  }
+
+  function objectValuesIfItems(v){
+    v=parseMaybe(v);
+    if(Array.isArray(v)) return v;
+    if(v && typeof v==="object"){
+      const vals=Object.values(v);
+      if(vals.length && vals.some(looksItem)) return vals;
+      if(Array.isArray(v.rows)) return v.rows;
+      if(Array.isArray(v.records)) return v.records;
+      if(Array.isArray(v.data)) return v.data;
+      if(Array.isArray(v.items)) return v.items;
+      if(Array.isArray(v.value)) return v.value;
+      if(v.value && typeof v.value==="string"){
+        try{
+          const p=JSON.parse(v.value);
+          if(Array.isArray(p)) return p;
+        }catch(e){}
+      }
+    }
+    return [];
+  }
+
+  function looksItem(o){
+    if(!o || typeof o!=="object" || Array.isArray(o)) return false;
+    const keys=Object.keys(o).join(" ").toLowerCase();
+    const text=JSON.stringify(o).slice(0,1200).toLowerCase();
+    return /title|name|item|description|cost|price|list|sold|profit|platform|marketplace|notes|qty|quantity|sku|category|comic|barcode|variant|issue/.test(keys+" "+text);
+  }
+
+  function looksSold(o){
+    if(!looksItem(o)) return false;
+    const s=JSON.stringify(o).toLowerCase();
+    return /solddate|sold_date|sold date|saleprice|soldprice|sold price|profit|fees|shipping|date sold|status["']?\s*:\s*["']?sold/.test(s);
+  }
+
+  function looksHold(o){
+    if(!looksItem(o)) return false;
+    const s=JSON.stringify(o).toLowerCase();
+    return /holddate|hold_date|hold date|status["']?\s*:\s*["']?hold|held/.test(s);
+  }
+
+  function addUnique(arr,row){
+    const key=JSON.stringify(row);
+    if(!arr.__seen) Object.defineProperty(arr,"__seen",{value:new Set(),enumerable:false});
+    if(!arr.__seen.has(key)){arr.__seen.add(key);arr.push(row);}
+  }
+
+  function scan(node,path,out,depth){
+    if(depth>12 || node==null) return;
+    node=parseMaybe(node);
+
+    if(Array.isArray(node)){
+      const items=node.filter(looksItem);
+      if(items.length){
+        const p=path.join(".").toLowerCase();
+        let target="active";
+        if(SOLD_RE.test(p) || items.filter(looksSold).length >= Math.max(1,items.length*.45)) target="sold";
+        else if(HOLD_RE.test(p) || items.filter(looksHold).length >= Math.max(1,items.length*.45)) target="holds";
+        items.forEach(r=>addUnique(out[target],r));
+      }
+      node.forEach((v,i)=>scan(v,path.concat(String(i)),out,depth+1));
+      return;
+    }
+
+    if(typeof node==="object"){
+      // common table export shapes: [{name:"soldInventory", rows:[...]}]
+      const tableName=String(node.name||node.table||node.store||node.objectStore||node.key||node.id||"");
+      const rowArrays=[
+        objectValuesIfItems(node.rows),
+        objectValuesIfItems(node.records),
+        objectValuesIfItems(node.data),
+        objectValuesIfItems(node.value),
+        objectValuesIfItems(node.items)
+      ].filter(a=>a.length);
+
+      rowArrays.forEach(rows=>{
+        const items=rows.filter(looksItem);
+        if(!items.length) return;
+        const p=(path.join(".")+"."+tableName).toLowerCase();
+        let target="active";
+        if(SOLD_RE.test(p) || items.filter(looksSold).length >= Math.max(1,items.length*.45)) target="sold";
+        else if(HOLD_RE.test(p) || items.filter(looksHold).length >= Math.max(1,items.length*.45)) target="holds";
+        items.forEach(r=>addUnique(out[target],r));
+      });
+
+      // localStorage exact key dump
+      Object.entries(node).forEach(([k,v])=>{
+        const rows=objectValuesIfItems(v);
+        if(rows.length && rows.some(looksItem)){
+          const key=String(k).toLowerCase();
+          let target="active";
+          if(SOLD_RE.test(key)) target="sold";
+          else if(HOLD_RE.test(key)) target="holds";
+          rows.filter(looksItem).forEach(r=>addUnique(out[target],r));
+        }
+      });
+
+      Object.entries(node).forEach(([k,v])=>scan(v,path.concat(k),out,depth+1));
+    }
+  }
+
+  function normalize(data){
+    const out={active:[],sold:[],holds:[]};
+    scan(data,[],out,0);
+
+    // If everything landed active but some rows look sold/hold, split them.
+    const stillActive=[];
+    out.active.forEach(r=>{
+      if(looksSold(r)) addUnique(out.sold,r);
+      else if(looksHold(r)) addUnique(out.holds,r);
+      else stillActive.push(r);
+    });
+    out.active=stillActive;
+    return out;
+  }
+
+  function parseCSV(text){
+    const rows=[]; let cur="", row=[], quote=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i], nx=text[i+1];
+      if(c==='"' && quote && nx==='"'){cur+='"'; i++;}
+      else if(c==='"'){quote=!quote;}
+      else if(c==="," && !quote){row.push(cur); cur="";}
+      else if((c==="\n" || c==="\r") && !quote){
+        if(cur!=="" || row.length){row.push(cur); rows.push(row); row=[]; cur="";}
+        if(c==="\r" && nx==="\n") i++;
+      }else cur+=c;
+    }
+    if(cur!=="" || row.length){row.push(cur); rows.push(row);}
+    if(!rows.length) return [];
+    const headers=rows.shift().map(h=>String(h).trim());
+    return rows.filter(r=>r.some(x=>String(x).trim()!=="")).map(r=>{
+      const o={}; headers.forEach((h,i)=>o[h]=r[i]??""); return o;
+    });
+  }
+
+  function parseText(text){
+    try{return JSON.parse(text)}
+    catch(e){return parseCSV(text)}
+  }
+
+  function restore(data,mode){
+    const found=normalize(data);
+
+    if(mode==="active"){
+      const rows=Array.isArray(data)?data:found.active;
+      setActive(rows);
+      status("Imported active inventory: "+rows.length+" records. Reloading...","good");
+      setTimeout(()=>location.reload(),900);
+      return;
+    }
+
+    if(mode==="sold"){
+      const rows=Array.isArray(data)?data:found.sold;
+      setSold(rows);
+      status("Imported sold items: "+rows.length+" records. Reloading...","good");
+      setTimeout(()=>location.reload(),900);
+      return;
+    }
+
+    const total=found.active.length+found.sold.length+found.holds.length;
+    if(!total){
+      status("I could open the file, but could not identify inventory records inside it.\n\nPlease upload the JSON backup file here so I can match its exact structure.", "bad");
+      return;
+    }
+
+    setActive(found.active);
+    setSold(found.sold);
+    setHolds(found.holds);
+    localStorage.setItem("rsLastRestoreAt",new Date().toISOString());
+
+    status("Database restored:\nActive: "+found.active.length+"\nSold: "+found.sold.length+"\nHolds: "+found.holds.length+"\nReloading...","good");
+    setTimeout(()=>location.reload(),1000);
+  }
+
+  function choose(mode){
+    let input=document.getElementById("rs159RestoreFile");
+    if(input) input.remove();
+    input=document.createElement("input");
+    input.id="rs159RestoreFile";
+    input.type="file";
+    input.accept=".json,.csv,text/csv,application/json";
+    document.body.appendChild(input);
+    input.addEventListener("change",function(){
+      const file=input.files&&input.files[0];
+      if(!file) return;
+      status("Reading "+file.name+" ...","warn");
+      const reader=new FileReader();
+      reader.onload=function(){
+        try{restore(parseText(String(reader.result||"")),mode||"backup")}
+        catch(err){status("Restore failed: "+(err&&err.message?err.message:"unknown error"),"bad")}
+      };
+      reader.readAsText(file);
+    },{once:true});
+    input.click();
+  }
+
+  function exportBackup(){
+    const data={exportedAt:new Date().toISOString(),activeInventory:currentActive(),soldInventory:currentSold(),inventoryHolds:currentHolds()};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+  }
+
+  function renderImport(){
+    const p=document.getElementById("rs146Panel")||document.getElementById("rs142Panel")||document.getElementById("rs136DataPanel");
+    if(!p) return;
+    p.innerHTML='<div class="rs146Header"><div><h2>Import / Data</h2><p>Smart restore finds inventory inside database exports, table rows, object maps, and old backups.</p></div><button id="rs146Close" type="button">×</button></div>'+
+      '<div class="rs146Grid">'+
+      '<div class="rs146Metric"><div class="rs146MetricLabel">Active</div><div class="rs146MetricValue">'+currentActive().length+'</div></div>'+
+      '<div class="rs146Metric"><div class="rs146MetricLabel">Sold</div><div class="rs146MetricValue">'+currentSold().length+'</div></div>'+
+      '<div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+currentHolds().length+'</div></div>'+
+      '<div class="rs146Metric"><div class="rs146MetricLabel">Restore mode</div><div class="rs146MetricValue" style="font-size:20px">Smart scan</div><div class="rs146MetricNote">JSON / CSV / DB export</div></div>'+
+      '<div class="rs146ImportGrid">'+
+      '<button class="rs146ImportBtn" data-rs159-import="active" type="button"><strong>Import active</strong><span>Active inventory only.</span></button>'+
+      '<button class="rs146ImportBtn" data-rs159-import="sold" type="button"><strong>Import sold</strong><span>Sold items only.</span></button>'+
+      '<button class="rs146ImportBtn" data-rs159-import="backup" type="button"><strong>Restore database</strong><span>Smart scan and restore all data.</span></button>'+
+      '<button class="rs146ImportBtn" data-rs159-import="export" type="button"><strong>Export backup</strong><span>Download all current data.</span></button>'+
+      '</div></div>';
+    p.classList.add("open");
+    document.getElementById("rs146Close")?.addEventListener("click",()=>p.classList.remove("open"),{once:true});
+  }
+
+  window.addEventListener("pointerdown",function(e){
+    const dock=e.target.closest&&e.target.closest(".rs146DockBtn[data-panel='import'],.rs142DockBtn[data-panel='import'],.rs136DockBtn[data-panel='import']");
+    if(dock&&!document.body.classList.contains("rs154-locked")){
+      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+      document.querySelectorAll(".rs146DockBtn,.rs142DockBtn,.rs136DockBtn").forEach(b=>b.classList.remove("active"));
+      dock.classList.add("active");
+      renderImport();
+      return;
+    }
+    const btn=e.target.closest&&e.target.closest("[data-rs159-import],[data-rs158-import],[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import]");
+    if(!btn||document.body.classList.contains("rs154-locked")) return;
+    const mode=btn.getAttribute("data-rs159-import")||btn.getAttribute("data-rs158-import")||btn.getAttribute("data-rs157-import")||btn.getAttribute("data-rs149-import")||btn.getAttribute("data-rs146-import")||btn.getAttribute("data-import");
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    if(mode==="export") exportBackup(); else choose(mode==="active"?"active":mode==="sold"?"sold":"backup");
+  },true);
+
+  window.addEventListener("click",function(e){
+    const btn=e.target.closest&&e.target.closest("[data-rs159-import],[data-rs158-import],[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import],.rs146DockBtn[data-panel='import']");
+    if(btn&&!document.body.classList.contains("rs154-locked")){
+      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    }
+  },true);
+})();
+</script>
