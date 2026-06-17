@@ -33684,3 +33684,296 @@ body{margin-left:0 !important;}
   setInterval(updateImportButtons, 800);
 })();
 </script>
+
+
+<!-- ===== v146: clean bottom menu only + working actions + full tax report ===== -->
+<style id="rs-v146-bottom-menu-stability-css">
+  /* Remove useless top panel / top pill / old home cards */
+  #rs135TopPill,
+  #rs136HomeOverlay,
+  .rs136HomeCard,
+  #rs135BottomPlayer{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+
+  /* Aggressively remove the old side panel/rail */
+  #sidebar,
+  .sidebar,
+  aside,
+  aside.sidebar,
+  nav.sidebar,
+  .side-nav,
+  .side-panel,
+  .menu-panel,
+  [class*="sidebar"],
+  [id*="sidebar"],
+  [class*="side-nav"],
+  [id*="side-nav"]{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+    width:0 !important;
+    min-width:0 !important;
+    max-width:0 !important;
+    opacity:0 !important;
+  }
+
+  main,.main,.content,#app,.app,#appShell,
+  #secDashboard,#secInventory,#secHolds,#secSold,#secImportExport,#secTools,#secSettings{
+    margin-left:0 !important;
+    padding-left:0 !important;
+  }
+
+  body.rs146-app #rs136PullDock,
+  body.rs146-app #rs136DataPanel,
+  body.rs146-app #rs142Dock,
+  body.rs146-app #rs142Panel{
+    display:none !important;
+  }
+
+  body.rs146-app #secDashboard .rs15-wrap > *:not(#rs146Dock):not(#rs146Panel),
+  body.rs146-app #secInventory,
+  body.rs146-app #secHolds,
+  body.rs146-app #secSold,
+  body.rs146-app #secImportExport,
+  body.rs146-app #secTools,
+  body.rs146-app #secSettings{
+    display:none !important;
+  }
+
+  #rs146Dock{
+    position:fixed;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%);
+    z-index:999990;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:9px;
+    max-width:calc(100vw - 24px);
+    overflow:auto;
+    border-radius:999px;
+    background:rgba(8,12,20,.52);
+    border:1px solid rgba(255,255,255,.13);
+    box-shadow:0 24px 70px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(26px) saturate(1.10);
+    -webkit-backdrop-filter:blur(26px) saturate(1.10);
+  }
+
+  .rs146DockBtn{
+    width:auto !important;
+    min-width:max-content !important;
+    height:42px !important;
+    padding:0 15px !important;
+    border-radius:999px !important;
+    border:1px solid transparent !important;
+    background:transparent !important;
+    color:rgba(248,250,252,.74) !important;
+    font-size:12px !important;
+    font-weight:950 !important;
+    letter-spacing:.01em !important;
+    box-shadow:none !important;
+  }
+
+  .rs146DockBtn:hover,
+  .rs146DockBtn.active{
+    background:rgba(255,255,255,.13) !important;
+    border-color:rgba(255,255,255,.10) !important;
+    color:#fff !important;
+  }
+
+  #rs146Panel{
+    position:fixed;
+    left:50%;
+    bottom:88px;
+    transform:translateX(-50%) translateY(18px) scale(.985);
+    width:calc(100vw - 34px);
+    height:calc(100vh - 118px);
+    z-index:999980;
+    opacity:0;
+    pointer-events:none;
+    overflow:auto;
+    border-radius:34px;
+    border:1px solid rgba(255,255,255,.13);
+    background:rgba(8,12,20,.58);
+    box-shadow:0 34px 100px rgba(0,0,0,.50), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(30px) saturate(1.10);
+    -webkit-backdrop-filter:blur(30px) saturate(1.10);
+    padding:18px;
+    transition:opacity .22s ease, transform .22s cubic-bezier(.2,.8,.2,1);
+  }
+
+  #rs146Panel.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:translateX(-50%) translateY(0) scale(1);
+  }
+
+  .rs146Header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 4px 14px;}
+  .rs146Header h2{margin:0;color:#fff!important;font-size:26px;letter-spacing:-.045em;font-weight:950;}
+  .rs146Header p{margin:4px 0 0;color:rgba(226,232,240,.64);font-size:12px;}
+  #rs146Close{width:38px!important;height:38px!important;border-radius:999px!important;background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.12)!important;color:#fff!important;}
+
+  .rs146Grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+  .rs146Metric,.rs146Card,.rs146GraphCard,.rs146TableCard,.rs146TaxBlock{
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.065);
+    border-radius:22px;
+    padding:14px;
+  }
+
+  .rs146MetricLabel{color:rgba(226,232,240,.62);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.06em;}
+  .rs146MetricValue{color:#fff;font-size:26px;font-weight:950;letter-spacing:-.045em;margin-top:6px;}
+  .rs146MetricNote{color:rgba(226,232,240,.58);font-size:11px;margin-top:4px;}
+
+  .rs146SearchRow{grid-column:1/-1;display:flex;gap:10px;align-items:center;}
+  .rs146Search{flex:1;height:44px;border-radius:999px!important;padding:0 16px!important;}
+
+  .rs146TableCard{grid-column:1/-1;min-height:420px;overflow:auto;}
+  .rs146Table{width:100%;border-collapse:separate;border-spacing:0 8px;}
+  .rs146Table th{color:rgba(226,232,240,.62);font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:0 10px 6px;white-space:nowrap;}
+  .rs146Table td{background:rgba(2,6,23,.18);border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);color:#fff;padding:11px 10px;font-size:12px;vertical-align:middle;}
+  .rs146Table td:first-child{border-left:1px solid rgba(255,255,255,.07);border-radius:14px 0 0 14px;font-weight:850;}
+  .rs146Table td:last-child{border-right:1px solid rgba(255,255,255,.07);border-radius:0 14px 14px 0;}
+  .rs146Sub{color:rgba(226,232,240,.58);font-size:11px;margin-top:3px;}
+  .rs146Money{color:#bbf7d0!important;font-weight:950;white-space:nowrap;}
+
+  .rs146Actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+  .rs146ActionBtn,.rs146ImportBtn{
+    width:auto!important;min-width:0!important;border-radius:999px!important;font-size:11px!important;font-weight:900!important;background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.12)!important;color:#fff!important;
+  }
+  .rs146ActionBtn{height:30px!important;padding:0 9px!important;}
+  .rs146Danger{color:#fecaca!important;border-color:rgba(248,113,113,.25)!important;}
+
+  .rs146GraphCard{grid-column:1/-1;min-height:350px;}
+  .rs146GraphCard canvas{width:100%!important;height:305px!important;display:block!important;}
+
+  .rs146ImportGrid{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+  .rs146ImportBtn{min-height:100px!important;width:100%!important;padding:14px!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:space-between!important;text-align:left!important;border-radius:22px!important;}
+  .rs146ImportBtn strong{font-size:15px;font-weight:950;letter-spacing:-.025em;}
+  .rs146ImportBtn span{color:rgba(226,232,240,.62);font-size:11px;line-height:1.35;}
+  #rs146ImportFile{display:none!important;}
+
+  .rs146TaxBlock{grid-column:span 2;}
+  .rs146TaxLine{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px;color:rgba(248,250,252,.88);}
+  .rs146TaxLine:last-child{border-bottom:0;}
+  .rs146TaxLine b{color:#fff;}
+
+  @media(max-width:1000px){
+    .rs146Grid,.rs146ImportGrid{grid-template-columns:1fr 1fr;}
+    .rs146Table{min-width:1040px;}
+  }
+  @media(max-width:620px){
+    #rs146Panel{width:calc(100vw - 18px);height:calc(100vh - 96px);bottom:78px;border-radius:26px;}
+    .rs146Grid,.rs146ImportGrid{grid-template-columns:1fr;}
+    .rs146TaxBlock{grid-column:1/-1;}
+  }
+</style>
+
+<script id="rs-v146-bottom-menu-stability-js">
+(function(){
+  if(window.__rsV146BottomMenuStability) return;
+  window.__rsV146BottomMenuStability = true;
+
+  function n(v){const x=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(x)?x:0;}
+  function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(2)}}
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v||[]));}catch(e){}}
+  function active(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function sold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function holds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v)}
+  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v)}
+  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
+  function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return 0}
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim()}
+  function platform(r){return String(r.platform||r.marketplace||r.source||r.store||"").trim()}
+  function qty(r){return val(r,["qty","quantity","count"])||1}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"])}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"])}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
+  function profit(r){for(const k of["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+  function addedDate(r){const raw=r.addedAt||r.createdAt||r.dateAdded||r.addedDate||r.created||r.timestamp||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function soldDate(r){const raw=r.soldDate||r.date||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function fmt(d){return d?d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"2-digit"}):""}
+  function withIndex(rows){return rows.map((row,index)=>({row,index}))}
+  function sortActive(rows){return rows.slice().sort((a,b)=>{const da=addedDate(a.row),db=addedDate(b.row);if(da&&db)return db-da;if(db&&!da)return 1;if(da&&!db)return -1;return b.index-a.index})}
+  function sortSold(rows){return rows.slice().sort((a,b)=>{const da=soldDate(a.row),db=soldDate(b.row);if(da&&db)return db-da;if(db&&!da)return 1;if(da&&!db)return -1;return b.index-a.index})}
+  function filter(rows,q){q=String(q||"").toLowerCase().trim();if(!q)return rows;return rows.filter(x=>JSON.stringify(x.row||x).toLowerCase().includes(q))}
+  function dayKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+  function monthKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+
+  function killOldUI(){
+    document.querySelectorAll("#sidebar,.sidebar,aside,nav.sidebar,.side-nav,.side-panel,.menu-panel,#rs135TopPill,#rs136HomeOverlay,#rs135BottomPlayer").forEach(el=>el.remove());
+  }
+
+  function ensureUI(){
+    document.body.classList.add("rs146-app","rs136-focus-bg");
+    killOldUI();
+    if(!document.getElementById("rs146Panel")){
+      const p=document.createElement("div");p.id="rs146Panel";document.body.appendChild(p);
+    }
+    if(!document.getElementById("rs146Dock")){
+      const d=document.createElement("div");d.id="rs146Dock";
+      d.innerHTML=[["dashboard","Dashboard"],["inventory","Inventory"],["sold","Sold"],["holds","Holds"],["import","Import / Data"],["tax","Tax Reports"],["close","Close"]].map(x=>'<button class="rs146DockBtn" data-panel="'+x[0]+'" type="button">'+x[1]+'</button>').join("");
+      document.body.appendChild(d);
+    }
+  }
+
+  function header(t,s){return '<div class="rs146Header"><div><h2>'+esc(t)+'</h2><p>'+esc(s)+'</p></div><button id="rs146Close" type="button">×</button></div>'}
+  function open(c){const p=document.getElementById("rs146Panel");if(!p)return;p.innerHTML=c;p.classList.add("open");document.getElementById("rs146Close")?.addEventListener("click",close,{once:true})}
+  function close(){document.getElementById("rs146Panel")?.classList.remove("open");document.querySelectorAll(".rs146DockBtn").forEach(b=>b.classList.remove("active"))}
+
+  function dailyRows(){const by=new Map();sold().forEach(r=>{const d=soldDate(r);if(!d)return;const k=dayKey(d);if(!by.has(k))by.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0});const b=by.get(k);b.income+=sale(r);b.profit+=profit(r);b.costProfit+=cost(r)+profit(r)});let income=0,prof=0,cp=0;return Array.from(by.values()).sort((a,b)=>a.date-b.date).map(x=>{income+=x.income;prof+=x.profit;cp+=x.costProfit;return{label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),income:+income.toFixed(2),profit:+prof.toFixed(2),costProfit:+cp.toFixed(2)}})}
+  function monthlyRows(){const by=new Map();sold().forEach(r=>{const d=soldDate(r);if(!d)return;const k=monthKey(d);if(!by.has(k))by.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,profit:0,cost:0,costProfit:0});const b=by.get(k);b.income+=sale(r);b.profit+=profit(r);b.cost+=cost(r);b.costProfit+=cost(r)+profit(r)});return Array.from(by.values()).sort((a,b)=>a.date-b.date).map(x=>({label:x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"}),income:+x.income.toFixed(2),profit:+x.profit.toFixed(2),cost:+x.cost.toFixed(2),costProfit:+x.costProfit.toFixed(2)}))}
+  function graphCards(prefix){return '<div class="rs146GraphCard"><div class="rs146MetricLabel">Business growth</div><canvas id="'+prefix+'Growth"></canvas></div><div class="rs146GraphCard"><div class="rs146MetricLabel">Monthly profit view</div><canvas id="'+prefix+'Monthly"></canvas></div>'}
+  function drawGraphs(prefix){
+    if(!window.Chart)return;
+    const g=document.getElementById(prefix+"Growth"); if(g){const rows=dailyRows();try{const old=Chart.getChart&&Chart.getChart(g);if(old)old.destroy()}catch(e){}new Chart(g,{type:"line",data:{labels:rows.map(x=>x.label),datasets:[{label:"Total Income",data:rows.map(x=>x.income),borderWidth:3,pointRadius:0,tension:.25,fill:false},{label:"Total Profit",data:rows.map(x=>x.profit),borderWidth:3,pointRadius:0,tension:.25,fill:false},{label:"Cost + Profit",data:rows.map(x=>x.costProfit),borderWidth:4,pointRadius:0,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top"},tooltip:{callbacks:{label:function(ctx){return" "+ctx.dataset.label+": "+money(ctx.parsed.y)}}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.10)"}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}},grid:{color:"rgba(255,255,255,.10)"}}}}})}
+    const m=document.getElementById(prefix+"Monthly"); if(m){const rows=monthlyRows();try{const old=Chart.getChart&&Chart.getChart(m);if(old)old.destroy()}catch(e){}new Chart(m,{type:"line",data:{labels:rows.map(x=>x.label),datasets:[{label:"Total Income",data:rows.map(x=>x.income),borderWidth:3,pointRadius:2,tension:.30,fill:false},{label:"Cost of Sold",data:rows.map(x=>x.cost),borderWidth:3,pointRadius:2,tension:.30,fill:false},{label:"Profit",data:rows.map(x=>x.profit),borderWidth:3,pointRadius:2,tension:.30,fill:false},{label:"Cost + Profit",data:rows.map(x=>x.costProfit),borderWidth:4,pointRadius:2,tension:.30,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top"},tooltip:{callbacks:{label:function(ctx){return" "+ctx.dataset.label+": "+money(ctx.parsed.y)}}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.10)"}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}},grid:{color:"rgba(255,255,255,.10)"}}}}})}
+  }
+
+  function renderDashboard(){const a=active(),s=sold();const income=s.reduce((x,r)=>x+sale(r),0),prof=s.reduce((x,r)=>x+profit(r),0),cp=s.reduce((x,r)=>x+cost(r)+profit(r),0),av=a.reduce((x,r)=>x+list(r),0);open(header("Dashboard","Graphs and store totals.")+'<div class="rs146Grid"><div class="rs146Metric"><div class="rs146MetricLabel">Active value</div><div class="rs146MetricValue">'+money(av)+'</div><div class="rs146MetricNote">'+a.length+' active listings</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Total income</div><div class="rs146MetricValue">'+money(income)+'</div><div class="rs146MetricNote">'+s.length+' sold items</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Total profit</div><div class="rs146MetricValue">'+money(prof)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Cost + Profit</div><div class="rs146MetricValue">'+money(cp)+'</div></div>'+graphCards("rs146Dash")+'</div>');setTimeout(()=>drawGraphs("rs146Dash"),80);setTimeout(()=>drawGraphs("rs146Dash"),420)}
+
+  function bindSearch(type){const inp=document.getElementById("rs146Search");if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);inp.addEventListener("input",()=>{clearTimeout(inp.__t);const v=inp.value;inp.__t=setTimeout(()=>render(type,v),180)})}}
+  function renderInventory(q){const rows=filter(sortActive(withIndex(active())),q),tv=rows.reduce((x,i)=>x+list(i.row),0),tc=rows.reduce((x,i)=>x+cost(i.row),0);const body=rows.map(x=>{const r=x.row,i=x.index;return '<tr><td>'+esc(title(r))+'<div class="rs146Sub">'+esc(platform(r)||"Active listing")+'</div><div class="rs146Sub">Added '+esc(fmt(addedDate(r))||"latest saved order")+'</div></td><td class="rs146Money">'+money(cost(r))+'</td><td class="rs146Money">'+money(list(r))+'</td><td>'+qty(r)+'</td><td>'+esc(String(r.notes||r.note||""))+'</td><td><div class="rs146Actions"><button class="rs146ActionBtn" data-rs146-act="edit-active" data-index="'+i+'">Edit</button><button class="rs146ActionBtn" data-rs146-act="comps" data-index="'+i+'">Comps</button><button class="rs146ActionBtn" data-rs146-act="move-sold" data-index="'+i+'">Move to sold</button><button class="rs146ActionBtn rs146Danger" data-rs146-act="delete-active" data-index="'+i+'">Delete</button></div></td></tr>'}).join("");open(header("Inventory","Newest additions first with full actions.")+'<div class="rs146Grid"><div class="rs146Metric"><div class="rs146MetricLabel">Active listings</div><div class="rs146MetricValue">'+rows.length+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Listed value</div><div class="rs146MetricValue">'+money(tv)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Inventory cost</div><div class="rs146MetricValue">'+money(tc)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Avg list</div><div class="rs146MetricValue">'+money(rows.length?tv/rows.length:0)+'</div></div><div class="rs146SearchRow"><input id="rs146Search" class="rs146Search" placeholder="Search inventory..." value="'+esc(q||"")+'"></div><div class="rs146TableCard"><table class="rs146Table"><thead><tr><th>Item</th><th>Cost</th><th>List</th><th>Qty</th><th>Notes</th><th>Actions</th></tr></thead><tbody>'+(body||'<tr><td colspan="6">No active inventory found.</td></tr>')+'</tbody></table></div></div>');bindSearch("inventory")}
+  function renderSold(q){const rows=filter(sortSold(withIndex(sold())),q),income=rows.reduce((x,i)=>x+sale(i.row),0),prof=rows.reduce((x,i)=>x+profit(i.row),0);const body=rows.map(x=>{const r=x.row,i=x.index;return '<tr><td>'+esc(title(r))+'<div class="rs146Sub">'+esc(platform(r)||"Sold item")+'</div></td><td>'+esc(fmt(soldDate(r)))+'</td><td class="rs146Money">'+money(sale(r))+'</td><td class="rs146Money">'+money(cost(r))+'</td><td class="rs146Money">'+money(profit(r))+'</td><td><div class="rs146Actions"><button class="rs146ActionBtn" data-rs146-act="edit-sold" data-index="'+i+'">Edit</button><button class="rs146ActionBtn rs146Danger" data-rs146-act="delete-sold" data-index="'+i+'">Delete</button></div></td></tr>'}).join("");open(header("Sold","Sold items with graphs and actions.")+'<div class="rs146Grid"><div class="rs146Metric"><div class="rs146MetricLabel">Sold records</div><div class="rs146MetricValue">'+rows.length+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Total income</div><div class="rs146MetricValue">'+money(income)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Total profit</div><div class="rs146MetricValue">'+money(prof)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Avg profit</div><div class="rs146MetricValue">'+money(rows.length?prof/rows.length:0)+'</div></div>'+graphCards("rs146Sold")+'<div class="rs146SearchRow"><input id="rs146Search" class="rs146Search" placeholder="Search sold items..." value="'+esc(q||"")+'"></div><div class="rs146TableCard"><table class="rs146Table"><thead><tr><th>Item</th><th>Date</th><th>Sale</th><th>Cost</th><th>Profit</th><th>Actions</th></tr></thead><tbody>'+(body||'<tr><td colspan="6">No sold items found.</td></tr>')+'</tbody></table></div></div>');setTimeout(()=>drawGraphs("rs146Sold"),80);setTimeout(()=>drawGraphs("rs146Sold"),420);bindSearch("sold")}
+  function renderHolds(q){const rows=filter(withIndex(holds()).reverse(),q),value=rows.reduce((x,i)=>x+(list(i.row)||cost(i.row)),0);const body=rows.map(x=>{const r=x.row,i=x.index;return '<tr><td>'+esc(title(r))+'<div class="rs146Sub">'+esc(platform(r)||"Hold")+'</div></td><td class="rs146Money">'+money(cost(r))+'</td><td class="rs146Money">'+money(list(r)||cost(r))+'</td><td>'+qty(r)+'</td><td>'+esc(String(r.notes||r.note||""))+'</td><td><div class="rs146Actions"><button class="rs146ActionBtn" data-rs146-act="edit-hold" data-index="'+i+'">Edit</button><button class="rs146ActionBtn rs146Danger" data-rs146-act="delete-hold" data-index="'+i+'">Delete</button></div></td></tr>'}).join("");open(header("Holds","Held inventory records with actions.")+'<div class="rs146Grid"><div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+rows.length+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Hold value</div><div class="rs146MetricValue">'+money(value)+'</div></div><div class="rs146SearchRow"><input id="rs146Search" class="rs146Search" placeholder="Search holds..." value="'+esc(q||"")+'"></div><div class="rs146TableCard"><table class="rs146Table"><thead><tr><th>Item</th><th>Cost</th><th>Value</th><th>Qty</th><th>Notes</th><th>Actions</th></tr></thead><tbody>'+(body||'<tr><td colspan="6">No holds found.</td></tr>')+'</tbody></table></div></div>');bindSearch("holds")}
+
+  function renderImport(){open(header("Import / Data","Import or restore data without leaving the bottom menu.")+'<input id="rs146ImportFile" type="file" accept=".json,.csv,text/csv,application/json"><div class="rs146Grid"><div class="rs146Metric"><div class="rs146MetricLabel">Active</div><div class="rs146MetricValue">'+active().length+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Sold</div><div class="rs146MetricValue">'+sold().length+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+holds().length+'</div></div><div class="rs146ImportGrid"><button class="rs146ImportBtn" data-rs146-import="active"><strong>Import active</strong><span>JSON or CSV into active inventory.</span></button><button class="rs146ImportBtn" data-rs146-import="sold"><strong>Import sold</strong><span>JSON or CSV into sold items.</span></button><button class="rs146ImportBtn" data-rs146-import="backup"><strong>Restore backup</strong><span>Restore active, sold, and holds.</span></button><button class="rs146ImportBtn" data-rs146-import="export"><strong>Export backup</strong><span>Download all data as JSON.</span></button></div></div>')}
+  function renderTax(){const s=sold(),a=active(),h=holds();const income=s.reduce((x,r)=>x+sale(r),0),costs=s.reduce((x,r)=>x+cost(r),0),fees=s.reduce((x,r)=>x+fee(r),0),ships=s.reduce((x,r)=>x+ship(r),0),prof=s.reduce((x,r)=>x+profit(r),0),cp=s.reduce((x,r)=>x+cost(r)+profit(r),0),av=a.reduce((x,r)=>x+list(r),0);open(header("Tax Reports","Expanded tax snapshot with the important totals restored.")+'<div class="rs146Grid"><div class="rs146Metric"><div class="rs146MetricLabel">Gross income</div><div class="rs146MetricValue">'+money(income)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Cost basis</div><div class="rs146MetricValue">'+money(costs)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Estimated profit</div><div class="rs146MetricValue">'+money(prof)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Fees + Shipping</div><div class="rs146MetricValue">'+money(fees+ships)+'</div></div><div class="rs146TaxBlock"><div class="rs146MetricLabel">Sales summary</div><div class="rs146TaxLine"><span>Sold items</span><b>'+s.length+'</b></div><div class="rs146TaxLine"><span>Average sale</span><b>'+money(s.length?income/s.length:0)+'</b></div><div class="rs146TaxLine"><span>Average profit</span><b>'+money(s.length?prof/s.length:0)+'</b></div><div class="rs146TaxLine"><span>Cost + Profit</span><b>'+money(cp)+'</b></div></div><div class="rs146TaxBlock"><div class="rs146MetricLabel">Inventory summary</div><div class="rs146TaxLine"><span>Active inventory</span><b>'+a.length+'</b></div><div class="rs146TaxLine"><span>Active listed value</span><b>'+money(av)+'</b></div><div class="rs146TaxLine"><span>Held items</span><b>'+h.length+'</b></div><div class="rs146TaxLine"><span>Potential taxable profit</span><b>'+money(prof)+'</b></div></div></div>')}
+
+  function render(type,q){if(type==="dashboard")renderDashboard();if(type==="inventory")renderInventory(q||"");if(type==="sold")renderSold(q||"");if(type==="holds")renderHolds(q||"");if(type==="import")renderImport();if(type==="tax")renderTax()}
+
+  function editRow(arrName,i){const arr=arrName==="active"?active():arrName==="sold"?sold():holds();const r=Object.assign({},arr[i]||{});const nt=prompt("Item title:",title(r));if(nt===null)return;const nc=prompt("Cost:",String(cost(r)||""));if(nc===null)return;let extra=list(r);if(arrName==="sold")extra=sale(r);const ne=prompt(arrName==="sold"?"Sold price / income:":"List/value:",String(extra||""));if(ne===null)return;const nn=prompt("Notes:",String(r.notes||r.note||""));if(nn===null)return;r.title=nt;r.cost=n(nc);r.notes=nn;if(arrName==="sold"){r.salePrice=n(ne);r.soldPrice=n(ne);r.profit=+(n(ne)-r.cost-fee(r)-ship(r)).toFixed(2);if(!r.soldDate&&!r.date)r.soldDate=new Date().toISOString();arr[i]=r;setSold(arr);renderSold(document.getElementById("rs146Search")?.value||"")}else if(arrName==="active"){r.list=n(ne);if(!r.addedAt&&!r.createdAt)r.addedAt=new Date().toISOString();arr[i]=r;setActive(arr);renderInventory(document.getElementById("rs146Search")?.value||"")}else{r.list=n(ne);arr[i]=r;setHolds(arr);renderHolds(document.getElementById("rs146Search")?.value||"")}}
+  function del(arrName,i){if(!confirm("Delete this item?"))return;const arr=arrName==="active"?active():arrName==="sold"?sold():holds();arr.splice(i,1);if(arrName==="active"){setActive(arr);renderInventory(document.getElementById("rs146Search")?.value||"")}if(arrName==="sold"){setSold(arr);renderSold(document.getElementById("rs146Search")?.value||"")}if(arrName==="holds"){setHolds(arr);renderHolds(document.getElementById("rs146Search")?.value||"")}}
+  function moveSold(i){const arr=active(),r=Object.assign({},arr[i]||{});const sp=prompt("Sold price:",String(list(r)||""));if(sp===null)return;const f=prompt("Fees:",String(fee(r)||"0"));if(f===null)return;const sh=prompt("Shipping:",String(ship(r)||"0"));if(sh===null)return;const sr=Object.assign({},r,{salePrice:n(sp),soldPrice:n(sp),fees:n(f),shipping:n(sh),profit:+(n(sp)-cost(r)-n(f)-n(sh)).toFixed(2),soldDate:new Date().toISOString()});arr.splice(i,1);const s=sold();s.push(sr);setActive(arr);setSold(s);renderInventory(document.getElementById("rs146Search")?.value||"")}
+  function comps(i){window.open("https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent(title(active()[i]||{}))+"&LH_Sold=1&LH_Complete=1","_blank")}
+
+  function parseCSV(text){const lines=text.split(/\r?\n/).filter(Boolean);if(!lines.length)return[];const heads=lines.shift().split(",").map(x=>x.trim());return lines.map(line=>{const vals=line.split(",");const o={};heads.forEach((h,i)=>o[h]=vals[i]||"");return o})}
+  function firstArr(o,keys){for(const k of keys){if(o&&Array.isArray(o[k]))return o[k];}return[]}
+  function norm(data){if(Array.isArray(data))return{active:data,sold:[],holds:[]};if(!data||typeof data!=="object")return{active:[],sold:[],holds:[]};const nested=data.data||data.app||data.state||data.backup||data.store;let out={active:firstArr(data,["activeInventory","inventory","inventoryData","active","items","listings"]),sold:firstArr(data,["soldInventory","sold","soldData","soldItems","sales"]),holds:firstArr(data,["inventoryHolds","holds","holdData","holdItems"])};if(!out.active.length&&!out.sold.length&&!out.holds.length&&nested)out=norm(nested);return out}
+  let importMode="active";
+  function triggerImport(mode){importMode=mode;if(mode==="export"){backup();return}let inp=document.getElementById("rs146ImportFile");if(inp)inp.click()}
+  function importFile(file){const rd=new FileReader();rd.onload=()=>{let data;const text=String(rd.result||"");try{data=JSON.parse(text)}catch(e){data=parseCSV(text)}if(importMode==="backup"){const d=norm(data);setActive(d.active);setSold(d.sold);setHolds(d.holds);alert("Restored: "+d.active.length+" active, "+d.sold.length+" sold, "+d.holds.length+" holds.");location.reload();return}if(!Array.isArray(data)){const d=norm(data);data=importMode==="sold"?d.sold:d.active}if(importMode==="sold")setSold(data);else setActive(data);alert("Imported "+data.length+" records.");location.reload()};rd.readAsText(file)}
+  function backup(){const data={exportedAt:new Date().toISOString(),activeInventory:active(),soldInventory:sold(),inventoryHolds:holds()};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+
+  function wire(){
+    window.addEventListener("click",e=>{
+      const dock=e.target.closest&&e.target.closest(".rs146DockBtn");if(dock){e.preventDefault();e.stopImmediatePropagation();const type=dock.dataset.panel;document.querySelectorAll(".rs146DockBtn").forEach(b=>b.classList.remove("active"));if(type==="close"){close();return}dock.classList.add("active");render(type,"");return}
+      const act=e.target.closest&&e.target.closest("[data-rs146-act]");if(act){e.preventDefault();e.stopImmediatePropagation();const a=act.dataset.rs146Act,i=Number(act.dataset.index);if(a==="edit-active")editRow("active",i);if(a==="delete-active")del("active",i);if(a==="move-sold")moveSold(i);if(a==="comps")comps(i);if(a==="edit-sold")editRow("sold",i);if(a==="delete-sold")del("sold",i);if(a==="edit-hold")editRow("holds",i);if(a==="delete-hold")del("holds",i);return}
+      const imp=e.target.closest&&e.target.closest("[data-rs146-import]");if(imp){e.preventDefault();e.stopImmediatePropagation();triggerImport(imp.dataset.rs146Import);return}
+    },true);
+    window.addEventListener("change",e=>{if(e.target&&e.target.id==="rs146ImportFile"){const f=e.target.files&&e.target.files[0];if(f)importFile(f)}},true)
+  }
+
+  function start(){ensureUI();wire();setTimeout(()=>{killOldUI();renderDashboard()},300);setInterval(killOldUI,1500)}
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
+})();
+</script>
