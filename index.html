@@ -36046,3 +36046,340 @@ body{margin-left:0 !important;}
   },true);
 })();
 </script>
+
+
+<!-- ===== v157: universal backup restore that recognizes old RESELLr backup shapes ===== -->
+<style id="rs-v157-universal-restore-css">
+  #rs157RestoreFile{display:none!important;}
+  .rs157RestoreStatus{
+    grid-column:1 / -1;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.07);
+    border-radius:18px;
+    padding:12px 14px;
+    color:rgba(248,250,252,.9);
+    font-size:12px;
+    line-height:1.45;
+  }
+  .rs157RestoreStatus.good{border-color:rgba(134,239,172,.35);color:#bbf7d0;}
+  .rs157RestoreStatus.bad{border-color:rgba(248,113,113,.35);color:#fecaca;}
+</style>
+
+<script id="rs-v157-universal-restore-js">
+(function(){
+  if(window.__rsV157UniversalRestore) return;
+  window.__rsV157UniversalRestore = true;
+
+  const ACTIVE_KEYS = ["activeInventory","inventory","inventoryData","active","items","listings","activeItems","inventoryItems","forSale","forSaleInventory"];
+  const SOLD_KEYS = ["soldInventory","sold","soldData","soldItems","sales","salesData","soldListings","soldRecords"];
+  const HOLD_KEYS = ["inventoryHolds","holds","holdData","holdItems","heldItems","holdInventory"];
+
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){localStorage.setItem(k,JSON.stringify(Array.isArray(v)?v:[]))}
+  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v)}
+  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v)}
+  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
+  function currentActive(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function currentSold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function currentHolds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+
+  function status(msg, good){
+    let el=document.querySelector(".rs157RestoreStatus");
+    const grid=document.querySelector("#rs146Panel .rs146Grid") || document.querySelector("#rs142Panel .rs142Grid") || document.querySelector("#rs136DataPanel .rs136Grid");
+    if(!el && grid){
+      el=document.createElement("div");
+      el.className="rs157RestoreStatus";
+      grid.prepend(el);
+    }
+    if(el){
+      el.className="rs157RestoreStatus "+(good?"good":"bad");
+      el.textContent=msg;
+    }else{
+      alert(msg);
+    }
+  }
+
+  function arr(v){
+    if(Array.isArray(v)) return v;
+    if(typeof v === "string"){
+      const s=v.trim();
+      if(!s) return [];
+      try{
+        const p=JSON.parse(s);
+        return Array.isArray(p)?p:[];
+      }catch(e){return []}
+    }
+    return [];
+  }
+
+  function looksItem(o){
+    if(!o || typeof o!=="object" || Array.isArray(o)) return false;
+    const s=Object.keys(o).join(" ").toLowerCase();
+    return /title|name|item|description|cost|price|list|sold|profit|platform|marketplace|notes|qty|quantity/.test(s);
+  }
+
+  function looksSold(o){
+    if(!looksItem(o)) return false;
+    const s=JSON.stringify(o).toLowerCase();
+    return /solddate|sold_date|saleprice|soldprice|profit|fees|shipping|status["']?\s*:\s*["']?sold/.test(s);
+  }
+
+  function looksHold(o){
+    if(!looksItem(o)) return false;
+    const s=JSON.stringify(o).toLowerCase();
+    return /holddate|hold_date|status["']?\s*:\s*["']?hold|held/.test(s);
+  }
+
+  function pickByKeys(obj, keys){
+    if(!obj || typeof obj!=="object") return [];
+    for(const k of keys){
+      if(Object.prototype.hasOwnProperty.call(obj,k)){
+        const a=arr(obj[k]);
+        if(a.length) return a;
+      }
+    }
+    return [];
+  }
+
+  function deepScan(obj, depth, found){
+    found = found || {active:[],sold:[],holds:[],allArrays:[]};
+    if(!obj || typeof obj!=="object" || depth>8) return found;
+
+    if(Array.isArray(obj)){
+      if(obj.length && obj.some(looksItem)) found.allArrays.push(obj);
+      return found;
+    }
+
+    const active=pickByKeys(obj, ACTIVE_KEYS);
+    const sold=pickByKeys(obj, SOLD_KEYS);
+    const holds=pickByKeys(obj, HOLD_KEYS);
+    if(active.length && !found.active.length) found.active=active;
+    if(sold.length && !found.sold.length) found.sold=sold;
+    if(holds.length && !found.holds.length) found.holds=holds;
+
+    // Handles backups like { "localStorage": { "activeInventory": "[...]" } }
+    for(const [k,v] of Object.entries(obj)){
+      if(typeof v==="string" && /^[\[{]/.test(v.trim())){
+        try{
+          const parsed=JSON.parse(v);
+          deepScan(parsed, depth+1, found);
+        }catch(e){}
+      }else if(v && typeof v==="object"){
+        deepScan(v, depth+1, found);
+      }
+    }
+
+    return found;
+  }
+
+  function classifyFallback(allArrays){
+    const out={active:[],sold:[],holds:[]};
+    const seen=new Set();
+
+    function addMany(type, rows){
+      rows.forEach(r=>{
+        const key=JSON.stringify(r);
+        if(!seen.has(key)){
+          seen.add(key);
+          out[type].push(r);
+        }
+      });
+    }
+
+    allArrays.forEach(rows=>{
+      const items=rows.filter(looksItem);
+      if(!items.length) return;
+      const soldRows=items.filter(looksSold);
+      const holdRows=items.filter(looksHold);
+      const activeRows=items.filter(r=>!looksSold(r)&&!looksHold(r));
+
+      if(soldRows.length >= items.length*.6) addMany("sold",items);
+      else if(holdRows.length >= items.length*.6) addMany("holds",items);
+      else addMany("active",activeRows.length?activeRows:items);
+
+      if(soldRows.length && soldRows.length < items.length*.6) addMany("sold",soldRows);
+      if(holdRows.length && holdRows.length < items.length*.6) addMany("holds",holdRows);
+    });
+
+    return out;
+  }
+
+  function normalize(data){
+    if(Array.isArray(data)){
+      const soldRows=data.filter(looksSold);
+      const holdRows=data.filter(looksHold);
+      if(soldRows.length >= data.length*.6) return {active:[],sold:data,holds:[]};
+      if(holdRows.length >= data.length*.6) return {active:[],sold:[],holds:data};
+      return {active:data,sold:[],holds:[]};
+    }
+
+    const found=deepScan(data,0);
+    let active=found.active, sold=found.sold, holds=found.holds;
+
+    if(!active.length && !sold.length && !holds.length){
+      const fb=classifyFallback(found.allArrays);
+      active=fb.active; sold=fb.sold; holds=fb.holds;
+    }
+
+    return {active:active||[], sold:sold||[], holds:holds||[]};
+  }
+
+  function parseCSV(text){
+    const rows=[]; let cur="", row=[], quote=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i], nx=text[i+1];
+      if(c==='"' && quote && nx==='"'){cur+='"'; i++;}
+      else if(c==='"'){quote=!quote;}
+      else if(c==="," && !quote){row.push(cur); cur="";}
+      else if((c==="\n" || c==="\r") && !quote){
+        if(cur!=="" || row.length){row.push(cur); rows.push(row); row=[]; cur="";}
+        if(c==="\r" && nx==="\n") i++;
+      }else cur+=c;
+    }
+    if(cur!=="" || row.length){row.push(cur); rows.push(row);}
+    if(!rows.length) return [];
+    const headers=rows.shift().map(h=>String(h).trim());
+    return rows.filter(r=>r.some(x=>String(x).trim()!=="")).map(r=>{
+      const o={}; headers.forEach((h,i)=>o[h]=r[i]??""); return o;
+    });
+  }
+
+  function parseText(text){
+    try{return JSON.parse(text)}
+    catch(e){return parseCSV(text)}
+  }
+
+  function restoreData(data, mode){
+    const normalized=normalize(data);
+
+    if(mode==="active"){
+      const activeRows=Array.isArray(data)?data:normalized.active;
+      setActive(activeRows);
+      status("Imported active inventory: "+activeRows.length+" records. Reloading...", true);
+      setTimeout(()=>location.reload(),900);
+      return;
+    }
+
+    if(mode==="sold"){
+      const soldRows=Array.isArray(data)?data:normalized.sold;
+      setSold(soldRows);
+      status("Imported sold items: "+soldRows.length+" records. Reloading...", true);
+      setTimeout(()=>location.reload(),900);
+      return;
+    }
+
+    // Backup restore should replace all buckets, but preserve existing bucket only when backup omits that bucket
+    // AND at least one other bucket was found. This prevents accidental blank restore.
+    const anyFound=normalized.active.length || normalized.sold.length || normalized.holds.length;
+    if(!anyFound){
+      status("No RESELLr data was found inside this backup. Try opening the file and checking the top-level names.", false);
+      return;
+    }
+
+    setActive(normalized.active);
+    setSold(normalized.sold);
+    setHolds(normalized.holds);
+    localStorage.setItem("rsLastRestoreAt",new Date().toISOString());
+
+    status("Backup restored: "+normalized.active.length+" active, "+normalized.sold.length+" sold, "+normalized.holds.length+" holds. Reloading...", true);
+    setTimeout(()=>location.reload(),1000);
+  }
+
+  function chooseFile(mode){
+    let input=document.getElementById("rs157RestoreFile");
+    if(input) input.remove();
+
+    input=document.createElement("input");
+    input.id="rs157RestoreFile";
+    input.type="file";
+    input.accept=".json,.csv,text/csv,application/json";
+    document.body.appendChild(input);
+
+    input.addEventListener("change",function(){
+      const file=input.files && input.files[0];
+      if(!file) return;
+
+      const reader=new FileReader();
+      reader.onload=function(){
+        try{
+          restoreData(parseText(String(reader.result||"")), mode||"backup");
+        }catch(err){
+          status("Restore failed: "+(err&&err.message?err.message:"Could not read file."), false);
+        }
+      };
+      reader.readAsText(file);
+    },{once:true});
+
+    input.click();
+  }
+
+  function exportBackup(){
+    const data={
+      exportedAt:new Date().toISOString(),
+      activeInventory:currentActive(),
+      soldInventory:currentSold(),
+      inventoryHolds:currentHolds()
+    };
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+  }
+
+  function renderImportPanel(){
+    const panel=document.getElementById("rs146Panel") || document.getElementById("rs142Panel") || document.getElementById("rs136DataPanel");
+    if(!panel) return false;
+
+    panel.innerHTML =
+      '<div class="rs146Header"><div><h2>Import / Data</h2><p>Universal restore reads new and old RESELLr backup formats.</p></div><button id="rs146Close" type="button">×</button></div>'+
+      '<div class="rs146Grid">'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Active</div><div class="rs146MetricValue">'+currentActive().length+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Sold</div><div class="rs146MetricValue">'+currentSold().length+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+currentHolds().length+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Restore</div><div class="rs146MetricValue" style="font-size:20px">Ready</div><div class="rs146MetricNote">JSON / CSV</div></div>'+
+        '<div class="rs146ImportGrid">'+
+          '<button class="rs146ImportBtn" data-rs157-import="active" type="button"><strong>Import active</strong><span>Import active inventory only.</span></button>'+
+          '<button class="rs146ImportBtn" data-rs157-import="sold" type="button"><strong>Import sold</strong><span>Import sold items only.</span></button>'+
+          '<button class="rs146ImportBtn" data-rs157-import="backup" type="button"><strong>Restore backup</strong><span>Restore active, sold, and holds.</span></button>'+
+          '<button class="rs146ImportBtn" data-rs157-import="export" type="button"><strong>Export backup</strong><span>Download all data.</span></button>'+
+        '</div>'+
+      '</div>';
+
+    panel.classList.add("open");
+    document.getElementById("rs146Close")?.addEventListener("click",()=>panel.classList.remove("open"),{once:true});
+    return true;
+  }
+
+  window.addEventListener("pointerdown",function(e){
+    const importDock=e.target.closest && e.target.closest(".rs146DockBtn[data-panel='import'],.rs142DockBtn[data-panel='import'],.rs136DockBtn[data-panel='import']");
+    if(importDock && !document.body.classList.contains("rs154-locked")){
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      document.querySelectorAll(".rs146DockBtn,.rs142DockBtn,.rs136DockBtn").forEach(b=>b.classList.remove("active"));
+      importDock.classList.add("active");
+      renderImportPanel();
+      return;
+    }
+
+    const btn=e.target.closest && e.target.closest("[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import]");
+    if(!btn || document.body.classList.contains("rs154-locked")) return;
+
+    const mode=btn.getAttribute("data-rs157-import") || btn.getAttribute("data-rs149-import") || btn.getAttribute("data-rs146-import") || btn.getAttribute("data-import");
+    if(!mode) return;
+
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    if(mode==="export") exportBackup();
+    else chooseFile(mode==="active"?"active":mode==="sold"?"sold":"backup");
+  },true);
+
+  window.addEventListener("click",function(e){
+    const btn=e.target.closest && e.target.closest("[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import],.rs146DockBtn[data-panel='import']");
+    if(btn && !document.body.classList.contains("rs154-locked")){
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    }
+  },true);
+})();
+</script>
