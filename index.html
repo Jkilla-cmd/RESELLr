@@ -35399,3 +35399,273 @@ body{margin-left:0 !important;}
   },true);
 })();
 </script>
+
+
+<!-- ===== v152: reset moved to Import/Data, profit-only colors, add Hold action, hide bottom menu on login ===== -->
+<style id="rs-v152-holds-reset-colors-login-css">
+  /* Only profit values should be green/red. Everything else stays white. */
+  .rs146Money,
+  .rs150Money,
+  .rs142Money,
+  .rs140Money{
+    color:#fff !important;
+  }
+
+  .rs152ProfitPos{
+    color:#bbf7d0 !important;
+    font-weight:950 !important;
+    white-space:nowrap;
+  }
+
+  .rs152ProfitNeg{
+    color:#fecaca !important;
+    font-weight:950 !important;
+    white-space:nowrap;
+  }
+
+  /* Hide the old Full Reset button/zone from Tax Reports */
+  #rs147ResetAll,
+  .rs147ResetZone{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+
+  /* Full reset belongs in Import/Data */
+  .rs152ResetBlock{
+    grid-column:1 / -1;
+    border:1px solid rgba(248,113,113,.24);
+    background:rgba(248,113,113,.075);
+    border-radius:22px;
+    padding:14px;
+  }
+
+  .rs152ResetBlock .rs146ActionBtn{
+    margin-top:10px;
+    height:36px !important;
+    color:#fecaca !important;
+    border-color:rgba(248,113,113,.30) !important;
+  }
+
+  /* Hide bottom menus when login overlay is visible */
+  body.rs152-login-open #rs146Dock,
+  body.rs152-login-open #rs142Dock,
+  body.rs152-login-open #rs136PullDock{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+</style>
+
+<script id="rs-v152-holds-reset-colors-login-js">
+(function(){
+  if(window.__rsV152HoldsResetColorsLogin) return;
+  window.__rsV152HoldsResetColorsLogin = true;
+
+  function n(v){const x=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(x)?x:0;}
+  function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(2)}}
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v||[]));}catch(e){}}
+  function active(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function sold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function holds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v)}
+  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
+  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v)}
+  function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return 0}
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim()}
+  function platform(r){return String(r.platform||r.marketplace||r.source||r.store||"").trim()}
+  function qty(r){return val(r,["qty","quantity","count"])||1}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"])}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"])}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
+  function profit(r){for(const k of["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+  function addedDate(r){const raw=r.addedAt||r.createdAt||r.dateAdded||r.addedDate||r.created||r.timestamp||r.date||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function fmt(d){return d?d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"2-digit"}):""}
+  function withIndex(rows){return rows.map((row,index)=>({row,index}))}
+  function sortActive(rows){return rows.slice().sort((a,b)=>{const da=addedDate(a.row),db=addedDate(b.row);if(da&&db)return db-da;if(db&&!da)return 1;if(da&&!db)return -1;return b.index-a.index})}
+  function filter(rows,q){q=String(q||"").toLowerCase().trim();if(!q)return rows;return rows.filter(x=>JSON.stringify(x.row||x).toLowerCase().includes(q))}
+  function header(t,s){return '<div class="rs146Header"><div><h2>'+esc(t)+'</h2><p>'+esc(s)+'</p></div><button id="rs146Close" type="button">×</button></div>'}
+  function open(c,mode){const p=document.getElementById("rs146Panel");if(!p)return;p.classList.remove("rs150-inventory-mode");if(mode==="inventory")p.classList.add("rs150-inventory-mode");p.innerHTML=c;p.classList.add("open");document.getElementById("rs146Close")?.addEventListener("click",()=>p.classList.remove("open"),{once:true})}
+  function profitClass(v){return n(v) < 0 ? "rs152ProfitNeg" : "rs152ProfitPos"}
+  function profitSpan(v){return '<span class="'+profitClass(v)+'">'+money(v)+'</span>'}
+
+  function bindSearch(){
+    const inp=document.getElementById("rs146Search");
+    if(inp){
+      inp.focus();
+      inp.setSelectionRange(inp.value.length,inp.value.length);
+      inp.addEventListener("input",()=>{
+        clearTimeout(inp.__rs152T);
+        const v=inp.value;
+        inp.__rs152T=setTimeout(()=>renderInventory(v),180);
+      });
+    }
+  }
+
+  function renderInventory(q){
+    const rows=filter(sortActive(withIndex(active())),q);
+    const tv=rows.reduce((x,i)=>x+list(i.row),0);
+    const tc=rows.reduce((x,i)=>x+cost(i.row),0);
+    const body=rows.map(x=>{
+      const r=x.row,i=x.index;
+      return '<tr><td>'+esc(title(r))+'<div class="rs146Sub">'+esc(platform(r)||"Active listing")+'</div></td><td>'+esc(fmt(addedDate(r))||"—")+'</td><td class="rs146Money">'+money(cost(r))+'</td><td class="rs146Money">'+money(list(r))+'</td><td>'+qty(r)+'</td><td><div class="rs146Actions"><button class="rs146ActionBtn" data-rs146-act="edit-active" data-index="'+i+'">Edit</button><button class="rs146ActionBtn" data-rs146-act="comps" data-index="'+i+'">Comps</button><button class="rs146ActionBtn" data-rs146-act="add-hold" data-index="'+i+'">Hold</button><button class="rs146ActionBtn" data-rs146-act="move-sold" data-index="'+i+'">Move to sold</button><button class="rs146ActionBtn rs146Danger" data-rs146-act="delete-active" data-index="'+i+'">Delete</button></div></td></tr>';
+    }).join("");
+
+    open(header("Inventory","Newest additions first. Date added is shown, and active items can be moved to Holds.")+
+      '<div class="rs146Grid">'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Active listings</div><div class="rs146MetricValue">'+rows.length+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Listed value</div><div class="rs146MetricValue">'+money(tv)+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Inventory cost</div><div class="rs146MetricValue">'+money(tc)+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Avg list</div><div class="rs146MetricValue">'+money(rows.length?tv/rows.length:0)+'</div></div>'+
+        '<div class="rs146SearchRow"><input id="rs146Search" class="rs146Search" placeholder="Search inventory..." value="'+esc(q||"")+'"></div>'+
+        '<div class="rs146TableCard"><table class="rs146Table"><thead><tr><th>Item</th><th>Date added</th><th>Cost</th><th>List</th><th>Qty</th><th>Actions</th></tr></thead><tbody>'+(body||'<tr><td colspan="6">No active inventory found.</td></tr>')+'</tbody></table></div>'+
+      '</div>',"inventory");
+    bindSearch();
+  }
+
+  function addToHolds(index){
+    const arr=active();
+    const r=Object.assign({},arr[index]||{});
+    const h=holds();
+    r.holdDate=new Date().toISOString();
+    r.status="hold";
+    h.push(r);
+    arr.splice(index,1);
+    setActive(arr);
+    setHolds(h);
+    const input=document.getElementById("rs146Search");
+    renderInventory(input ? input.value : "");
+  }
+
+  function fullResetConfirm(){
+    const ok1=confirm("Full reset RESELLr? This clears active inventory, sold items, holds, filters, dashboard cache, backgrounds, and old duplicate storage keys. Export a backup first.");
+    if(!ok1) return;
+    const ok2=confirm("Are you sure? This cannot be undone without a backup.");
+    if(!ok2) return;
+
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++) keys.push(localStorage.key(i));
+    keys.forEach(k=>{
+      if(/inventory|sold|hold|resellr|rs15|rs136|rs142|rs146|rs147|rs148|rs149|rs150|rs151|rs152|chart|backup|tax|dashboard|commandbg|bg|filter|goal/i.test(k)){
+        localStorage.removeItem(k);
+      }
+    });
+    ["activeInventory","inventory","inventoryData","soldInventory","sold","soldData","inventoryHolds","holds","holdData"].forEach(k=>localStorage.setItem(k,"[]"));
+    alert("RESELLr fully reset. Reloading...");
+    location.reload();
+  }
+
+  function removeTaxReset(){
+    document.querySelectorAll("#rs147ResetAll,.rs147ResetZone").forEach(el=>el.remove());
+  }
+
+  function addResetToImport(){
+    const panel=document.getElementById("rs146Panel");
+    if(!panel || !panel.classList.contains("open")) return;
+    if(!/Import \/ Data/i.test(panel.textContent||"")) return;
+    if(panel.querySelector("#rs152FullResetBtn")) return;
+
+    const grid=panel.querySelector(".rs146Grid");
+    if(!grid) return;
+
+    const block=document.createElement("div");
+    block.className="rs152ResetBlock";
+    block.innerHTML='<div class="rs146MetricLabel">Danger zone</div><div class="rs146MetricValue" style="font-size:20px">Full reset</div><div class="rs146MetricNote">Clears all RESELLr local data and old duplicate keys. Export a backup first.</div><button id="rs152FullResetBtn" class="rs146ActionBtn rs146Danger" type="button">Full reset RESELLr</button>';
+    grid.appendChild(block);
+    document.getElementById("rs152FullResetBtn").addEventListener("click",fullResetConfirm);
+  }
+
+  function recolorProfitOnly(){
+    // In Sold tables, only the Profit column is green/red. Sale and cost remain white.
+    document.querySelectorAll("#rs146Panel table.rs146Table tbody tr").forEach(row=>{
+      const headers=[...row.closest("table").querySelectorAll("thead th")].map(th=>th.textContent.trim().toLowerCase());
+      const profitIndex=headers.findIndex(h=>h==="profit" || h.includes("profit"));
+      if(profitIndex >= 0 && row.children[profitIndex]){
+        const cell=row.children[profitIndex];
+        const value=n(cell.textContent);
+        cell.classList.remove("rs146Money","rs150Money","rs142Money","rs140Money");
+        cell.innerHTML=profitSpan(value);
+      }
+      [...row.children].forEach((td,idx)=>{
+        if(idx !== profitIndex && td.classList.contains("rs146Money")){
+          td.style.color="#fff";
+        }
+      });
+    });
+
+    // Dashboard/recent sold profit values already use rs150Money; only convert if text appears to be profit by context.
+    document.querySelectorAll(".rs150Money").forEach(el=>{
+      const value=n(el.textContent);
+      el.classList.remove("rs150Money");
+      el.classList.add(value < 0 ? "rs152ProfitNeg" : "rs152ProfitPos");
+    });
+  }
+
+  function loginVisible(){
+    const candidates=[...document.querySelectorAll("dialog,[role='dialog'],.modal,.login,.login-modal,.auth,.auth-modal,#login,#loginModal,#lockOverlay,#rsLockOverlay")];
+    return candidates.some(el=>{
+      const txt=(el.textContent||"").toLowerCase();
+      const cs=getComputedStyle(el);
+      const rect=el.getBoundingClientRect();
+      const visible=cs.display!=="none" && cs.visibility!=="hidden" && Number(cs.opacity)!==0 && rect.width>0 && rect.height>0;
+      return visible && (/login|password|pin|unlock|sign in|locked/.test(txt) || /login|auth|lock/i.test(el.id+" "+el.className));
+    });
+  }
+
+  function syncLoginMenu(){
+    document.body.classList.toggle("rs152-login-open",loginVisible());
+  }
+
+  function patchClicks(){
+    window.addEventListener("click",function(e){
+      const dock=e.target.closest&&e.target.closest(".rs146DockBtn");
+      if(dock && dock.dataset.panel==="inventory"){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        document.querySelectorAll(".rs146DockBtn").forEach(b=>b.classList.remove("active"));
+        dock.classList.add("active");
+        renderInventory("");
+        setTimeout(recolorProfitOnly,120);
+        return;
+      }
+
+      const act=e.target.closest&&e.target.closest("[data-rs146-act]");
+      if(act && act.dataset.rs146Act==="add-hold"){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        addToHolds(Number(act.dataset.index));
+        return;
+      }
+
+      if(dock && dock.dataset.panel==="import"){
+        setTimeout(addResetToImport,250);
+        setTimeout(addResetToImport,800);
+      }
+
+      if(dock && dock.dataset.panel==="tax"){
+        setTimeout(removeTaxReset,120);
+        setTimeout(removeTaxReset,500);
+      }
+
+      setTimeout(recolorProfitOnly,150);
+    },true);
+  }
+
+  patchClicks();
+
+  const obs=new MutationObserver(()=>{
+    removeTaxReset();
+    addResetToImport();
+    recolorProfitOnly();
+    syncLoginMenu();
+  });
+  obs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:["class","style","open"]});
+
+  setInterval(syncLoginMenu,500);
+  setTimeout(()=>{removeTaxReset();addResetToImport();recolorProfitOnly();syncLoginMenu();},800);
+})();
+</script>
