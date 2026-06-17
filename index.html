@@ -36287,3 +36287,334 @@ body{margin-left:0 !important;}
   setTimeout(start,500);
 })();
 </script>
+
+
+<!-- ===== v162: clean Lofizen-style dock visual fix ===== -->
+<style id="rs-v162-dock-visual-fix-css">
+  /* Clean bottom layout: Music left, Apps centered, Stats right */
+  #rs146Dock{
+    position:fixed !important;
+    left:50% !important;
+    bottom:18px !important;
+    transform:translateX(-50%) !important;
+    z-index:999990 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:10px !important;
+    padding:0 !important;
+    width:auto !important;
+    max-width:calc(100vw - 300px) !important;
+    overflow:visible !important;
+    background:transparent !important;
+    border:0 !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+
+  #rs146Dock .rs161DockWrap{
+    position:relative !important;
+    display:flex !important;
+    align-items:center !important;
+  }
+
+  #rs146Dock .rs161DockGroup{
+    height:52px !important;
+    min-width:300px !important;
+    padding:7px 10px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:8px !important;
+    border-radius:999px !important;
+    background:rgba(9,14,22,.52) !important;
+    border:1px solid rgba(255,255,255,.14) !important;
+    box-shadow:0 22px 60px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.09) !important;
+    backdrop-filter:blur(26px) saturate(1.12) !important;
+    -webkit-backdrop-filter:blur(26px) saturate(1.12) !important;
+  }
+
+  #rs146Dock .rs161GroupLabel,
+  #rs161LofiPlayer .rs161GroupLabel,
+  #rs162StatsPill .rs161GroupLabel{
+    position:absolute !important;
+    bottom:58px !important;
+    left:14px !important;
+    color:rgba(248,250,252,.82) !important;
+    font-size:11px !important;
+    font-weight:950 !important;
+    line-height:1 !important;
+    text-shadow:0 2px 12px rgba(0,0,0,.50) !important;
+    pointer-events:none !important;
+  }
+
+  #rs146Dock .rs146DockBtn{
+    width:38px !important;
+    min-width:38px !important;
+    height:38px !important;
+    padding:0 !important;
+    display:grid !important;
+    place-items:center !important;
+    border-radius:999px !important;
+    border:1px solid transparent !important;
+    background:transparent !important;
+    color:#f8fafc !important;
+    font-size:18px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    box-shadow:none !important;
+    text-indent:0 !important;
+    overflow:visible !important;
+  }
+
+  #rs146Dock .rs146DockBtn::before,
+  #rs146Dock .rs146DockBtn::after{
+    display:none !important;
+    content:none !important;
+  }
+
+  #rs146Dock .rs146DockBtn .rs162Icon{
+    font-size:18px !important;
+    color:rgba(248,250,252,.88) !important;
+    line-height:1 !important;
+    display:block !important;
+  }
+
+  #rs146Dock .rs146DockBtn:hover,
+  #rs146Dock .rs146DockBtn.active{
+    background:rgba(255,255,255,.14) !important;
+    border-color:rgba(255,255,255,.12) !important;
+  }
+
+  #rs146Dock .rs146DockBtn:hover .rs162Tip{
+    opacity:1 !important;
+    transform:translateX(-50%) translateY(0) !important;
+  }
+
+  .rs162Tip{
+    position:absolute !important;
+    bottom:54px !important;
+    left:50% !important;
+    transform:translateX(-50%) translateY(4px) !important;
+    opacity:0 !important;
+    pointer-events:none !important;
+    font-size:11px !important;
+    font-weight:950 !important;
+    color:#fff !important;
+    background:rgba(8,12,20,.76) !important;
+    border:1px solid rgba(255,255,255,.13) !important;
+    border-radius:999px !important;
+    padding:6px 9px !important;
+    white-space:nowrap !important;
+    box-shadow:0 14px 30px rgba(0,0,0,.35) !important;
+    transition:.14s ease !important;
+  }
+
+  /* Music pill */
+  #rs161LofiPlayer{
+    position:fixed !important;
+    left:18px !important;
+    bottom:18px !important;
+    z-index:999990 !important;
+    height:52px !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    padding:7px 10px !important;
+    border-radius:999px !important;
+    background:rgba(9,14,22,.52) !important;
+    border:1px solid rgba(255,255,255,.14) !important;
+    box-shadow:0 22px 60px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.09) !important;
+    backdrop-filter:blur(26px) saturate(1.12) !important;
+    -webkit-backdrop-filter:blur(26px) saturate(1.12) !important;
+  }
+
+  .rs161PlayerBtn{
+    width:34px !important;
+    min-width:34px !important;
+    height:34px !important;
+    padding:0 !important;
+    border-radius:999px !important;
+    display:grid !important;
+    place-items:center !important;
+    background:rgba(255,255,255,.10) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    color:#fff !important;
+    font-size:14px !important;
+    line-height:1 !important;
+  }
+
+  .rs161NowPlaying{
+    color:rgba(248,250,252,.86) !important;
+    font-size:11px !important;
+    font-weight:950 !important;
+    max-width:86px !important;
+    overflow:hidden !important;
+    white-space:nowrap !important;
+    text-overflow:ellipsis !important;
+  }
+
+  .rs161Volume{
+    width:56px !important;
+    accent-color:#e5e7eb !important;
+  }
+
+  /* Add a right stats pill to balance the bottom like Lofizen */
+  #rs162StatsPill{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:999990;
+    height:52px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:7px 12px;
+    border-radius:999px;
+    background:rgba(9,14,22,.52);
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 22px 60px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.09);
+    backdrop-filter:blur(26px) saturate(1.12);
+    -webkit-backdrop-filter:blur(26px) saturate(1.12);
+    color:#fff;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .rs162StatIcon{
+    width:34px;
+    height:34px;
+    border-radius:999px;
+    display:grid;
+    place-items:center;
+    background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.12);
+  }
+
+  .rs162Time{
+    min-width:76px;
+    text-align:center;
+  }
+
+  /* remove stray empty round close wrapper look */
+  #rs146Dock .rs146DockBtn[data-panel="close"]{
+    display:none !important;
+  }
+
+  #rs146Dock .rs161DockWrap:has(.rs146DockBtn[data-panel="close"]){
+    display:none !important;
+  }
+
+  @media(max-width:900px){
+    #rs161LofiPlayer,
+    #rs162StatsPill{
+      display:none !important;
+    }
+    #rs146Dock{
+      max-width:calc(100vw - 24px) !important;
+    }
+    #rs146Dock .rs161DockGroup{
+      min-width:0 !important;
+    }
+  }
+</style>
+
+<script id="rs-v162-dock-visual-fix-js">
+(function(){
+  if(window.__rsV162DockVisualFix) return;
+  window.__rsV162DockVisualFix = true;
+
+  function labelFor(panel){
+    return {
+      dashboard:"Dashboard",
+      inventory:"Inventory",
+      sold:"Sold",
+      holds:"Holds",
+      import:"Import / Data",
+      tax:"Tax Reports",
+      close:"Close"
+    }[panel] || panel || "";
+  }
+
+  function iconFor(panel){
+    return {
+      dashboard:"▦",
+      inventory:"▤",
+      sold:"$",
+      holds:"◇",
+      import:"⇅",
+      tax:"◷",
+      close:"×"
+    }[panel] || "•";
+  }
+
+  function rebuildDock(){
+    const dock=document.getElementById("rs146Dock");
+    if(!dock) return;
+
+    const oldButtons=[...dock.querySelectorAll(".rs146DockBtn")];
+    if(!oldButtons.length) return;
+
+    const unique=[];
+    const seen=new Set();
+    oldButtons.forEach(btn=>{
+      const p=btn.dataset.panel || btn.getAttribute("data-panel") || "";
+      if(!p || p==="close" || seen.has(p)) return;
+      seen.add(p);
+      unique.push(btn);
+    });
+
+    dock.innerHTML="";
+    const wrap=document.createElement("div");
+    wrap.className="rs161DockWrap";
+    wrap.innerHTML='<div class="rs161GroupLabel">Apps</div><div class="rs161DockGroup"></div>';
+    const group=wrap.querySelector(".rs161DockGroup");
+
+    unique.forEach(btn=>{
+      const p=btn.dataset.panel;
+      btn.innerHTML='<span class="rs162Icon">'+iconFor(p)+'</span><span class="rs162Tip">'+labelFor(p)+'</span>';
+      btn.title=labelFor(p);
+      btn.setAttribute("aria-label",labelFor(p));
+      group.appendChild(btn);
+    });
+
+    dock.appendChild(wrap);
+  }
+
+  function statsPill(){
+    let pill=document.getElementById("rs162StatsPill");
+    if(!pill){
+      pill=document.createElement("div");
+      pill.id="rs162StatsPill";
+      pill.innerHTML='<div class="rs161GroupLabel">Stats</div><div class="rs162StatIcon">▥</div><div class="rs162Time"></div><div class="rs162StatIcon">◔</div>';
+      document.body.appendChild(pill);
+    }
+    const time=pill.querySelector(".rs162Time");
+    if(time){
+      time.textContent=new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    }
+  }
+
+  function fixMusic(){
+    const player=document.getElementById("rs161LofiPlayer");
+    if(!player) return;
+    const label=player.querySelector(".rs161GroupLabel");
+    if(label) label.textContent="Music";
+    const now=player.querySelector(".rs161NowPlaying");
+    if(now) now.textContent="lofi radio";
+  }
+
+  function start(){
+    rebuildDock();
+    statsPill();
+    fixMusic();
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  setTimeout(start,300);
+  setInterval(statsPill,15000);
+})();
+</script>
