@@ -35905,3 +35905,385 @@ body{margin-left:0 !important;}
   },true);
 })();
 </script>
+
+
+<!-- ===== v161: Lofizen-style flat icon dock + lofi player + inventory/holds movement + background underlay ===== -->
+<style id="rs-v161-lofizen-icons-holds-music-css">
+  /* Turn bottom menu into Lofizen-style grouped flat icons */
+  #rs146Dock{
+    gap:10px !important;
+    padding:8px 10px !important;
+    background:transparent !important;
+    border:0 !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    overflow:visible !important;
+  }
+
+  .rs161DockGroup,
+  #rs161LofiPlayer{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 10px;
+    border-radius:999px;
+    background:rgba(8,12,20,.48);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 18px 54px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(24px) saturate(1.1);
+    -webkit-backdrop-filter:blur(24px) saturate(1.1);
+  }
+
+  .rs161GroupLabel{
+    position:absolute;
+    bottom:54px;
+    left:12px;
+    color:rgba(248,250,252,.78);
+    font-size:11px;
+    font-weight:900;
+    text-shadow:0 2px 12px rgba(0,0,0,.45);
+    pointer-events:none;
+  }
+
+  .rs161DockWrap{
+    position:relative;
+    display:flex;
+    align-items:center;
+  }
+
+  #rs146Dock .rs146DockBtn{
+    width:38px !important;
+    min-width:38px !important;
+    height:38px !important;
+    padding:0 !important;
+    display:grid !important;
+    place-items:center !important;
+    font-size:0 !important;
+    border-radius:999px !important;
+  }
+
+  #rs146Dock .rs146DockBtn::before{
+    content:attr(data-rs161-icon);
+    font-size:18px;
+    line-height:1;
+    color:rgba(248,250,252,.86);
+  }
+
+  #rs146Dock .rs146DockBtn:hover,
+  #rs146Dock .rs146DockBtn.active{
+    background:rgba(255,255,255,.14) !important;
+    border-color:rgba(255,255,255,.12) !important;
+  }
+
+  #rs146Dock .rs146DockBtn:hover::after{
+    content:attr(data-rs161-label);
+    position:absolute;
+    bottom:52px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:11px;
+    font-weight:900;
+    color:#fff;
+    background:rgba(8,12,20,.72);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:999px;
+    padding:6px 9px;
+    white-space:nowrap;
+    box-shadow:0 12px 30px rgba(0,0,0,.35);
+  }
+
+  #rs161LofiPlayer{
+    position:fixed;
+    left:18px;
+    bottom:18px;
+    z-index:999990;
+  }
+
+  #rs161LofiPlayer .rs161GroupLabel{
+    left:12px;
+  }
+
+  .rs161PlayerBtn{
+    width:34px !important;
+    height:34px !important;
+    border-radius:999px !important;
+    display:grid !important;
+    place-items:center !important;
+    padding:0 !important;
+    background:rgba(255,255,255,.08) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    color:#fff !important;
+    font-size:15px !important;
+    cursor:pointer !important;
+  }
+
+  .rs161NowPlaying{
+    color:rgba(248,250,252,.82);
+    font-size:11px;
+    font-weight:900;
+    max-width:110px;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+  }
+
+  .rs161Volume{
+    width:64px;
+    accent-color:#bbf7d0;
+  }
+
+  /* Top-right action button background underlay */
+  .top-action,
+  .action-button,
+  .action-btn,
+  #actionButton,
+  #quickActionButton,
+  [class*="action"][class*="button"],
+  [id*="action"][id*="button"]{
+    background:rgba(8,12,20,.48) !important;
+    border:1px solid rgba(255,255,255,.14) !important;
+    border-radius:999px !important;
+    box-shadow:0 16px 46px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.08) !important;
+    backdrop-filter:blur(18px) saturate(1.08) !important;
+    -webkit-backdrop-filter:blur(18px) saturate(1.08) !important;
+  }
+
+  .rs161UnderlayPatch{
+    position:fixed;
+    top:14px;
+    right:14px;
+    width:54px;
+    height:54px;
+    border-radius:999px;
+    background:rgba(8,12,20,.34);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 16px 46px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    z-index:1000;
+    pointer-events:none;
+  }
+
+  @media(max-width:760px){
+    #rs161LofiPlayer{
+      display:none !important;
+    }
+    #rs146Dock{
+      left:50% !important;
+      max-width:calc(100vw - 16px) !important;
+      overflow:auto !important;
+    }
+    .rs161DockGroup{
+      gap:5px;
+      padding:7px;
+    }
+  }
+</style>
+
+<script id="rs-v161-lofizen-icons-holds-music-js">
+(function(){
+  if(window.__rsV161LofizenIconsHoldsMusic) return;
+  window.__rsV161LofizenIconsHoldsMusic = true;
+
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v||[]));}catch(e){}}
+  function active(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function holds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v);write("items",v)}
+  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
+  function n(v){const x=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(x)?x:0}
+  function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(2)}}
+  function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return 0}
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim()}
+  function platform(r){return String(r.platform||r.marketplace||r.source||r.store||"").trim()}
+  function qty(r){return val(r,["qty","quantity","count"])||1}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"])}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+  function addedDate(r){const raw=r.addedAt||r.createdAt||r.dateAdded||r.addedDate||r.created||r.timestamp||r.date||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function holdDate(r){const raw=r.holdDate||r.heldAt||r.createdAt||r.date||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function fmt(d){return d?d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"2-digit"}):""}
+  function withIndex(rows){return rows.map((row,index)=>({row,index}))}
+  function sortRows(rows,dateFn){return rows.slice().sort((a,b)=>{const da=dateFn(a.row),db=dateFn(b.row);if(da&&db)return db-da;if(db&&!da)return 1;if(da&&!db)return -1;return b.index-a.index})}
+  function filter(rows,q){q=String(q||"").toLowerCase().trim();if(!q)return rows;return rows.filter(x=>JSON.stringify(x.row||x).toLowerCase().includes(q))}
+  function header(t,s){return '<div class="rs146Header"><div><h2>'+esc(t)+'</h2><p>'+esc(s)+'</p></div><button id="rs146Close" type="button">×</button></div>'}
+  function open(c,mode){const p=document.getElementById("rs146Panel");if(!p)return;p.classList.toggle("rs150-inventory-mode",mode==="inventory"||mode==="holds");p.innerHTML=c;p.classList.add("open");document.getElementById("rs146Close")?.addEventListener("click",()=>p.classList.remove("open"),{once:true})}
+
+  function setupDock(){
+    const dock=document.getElementById("rs146Dock");
+    if(!dock || dock.dataset.rs161Done) return;
+    dock.dataset.rs161Done="1";
+
+    const iconMap={
+      dashboard:["▦","Dashboard"],
+      inventory:["▤","Inventory"],
+      sold:["$","Sold"],
+      holds:["◇","Holds"],
+      import:["⇅","Import / Data"],
+      tax:["◷","Tax Reports"],
+      close:["×","Close"]
+    };
+
+    [...dock.querySelectorAll(".rs146DockBtn")].forEach(btn=>{
+      const p=btn.dataset.panel || "";
+      const data=iconMap[p] || ["•",btn.textContent.trim()];
+      btn.dataset.rs161Icon=data[0];
+      btn.dataset.rs161Label=data[1];
+      btn.title=data[1];
+    });
+
+    const appButtons=[...dock.querySelectorAll(".rs146DockBtn")].filter(b=>!["close"].includes(b.dataset.panel));
+    const closeBtn=dock.querySelector(".rs146DockBtn[data-panel='close']");
+    dock.innerHTML="";
+    const apps=document.createElement("div");
+    apps.className="rs161DockWrap";
+    apps.innerHTML='<div class="rs161GroupLabel">Apps</div><div class="rs161DockGroup"></div>';
+    const appsGroup=apps.querySelector(".rs161DockGroup");
+    appButtons.forEach(b=>appsGroup.appendChild(b));
+    dock.appendChild(apps);
+    if(closeBtn){
+      const closeWrap=document.createElement("div");
+      closeWrap.className="rs161DockWrap";
+      closeWrap.innerHTML='<div class="rs161DockGroup"></div>';
+      closeWrap.querySelector(".rs161DockGroup").appendChild(closeBtn);
+      dock.appendChild(closeWrap);
+    }
+  }
+
+  function setupMusic(){
+    if(document.getElementById("rs161LofiPlayer")) return;
+    const wrap=document.createElement("div");
+    wrap.id="rs161LofiPlayer";
+    wrap.innerHTML='<div class="rs161GroupLabel">Music</div>'+
+      '<button class="rs161PlayerBtn" id="rs161Play" type="button" title="Play / pause">▶</button>'+
+      '<button class="rs161PlayerBtn" id="rs161Mute" type="button" title="Mute">🔈</button>'+
+      '<div class="rs161NowPlaying">lofi radio</div>'+
+      '<input class="rs161Volume" id="rs161Volume" type="range" min="0" max="1" step="0.01" value="0.35">';
+    document.body.appendChild(wrap);
+
+    const audio=new Audio("https://stream.zeno.fm/f3wvbbqmdg8uv");
+    audio.loop=false;
+    audio.volume=0.35;
+    window.rs161LofiAudio=audio;
+
+    document.getElementById("rs161Play").addEventListener("click",async()=>{
+      if(audio.paused){
+        try{await audio.play();document.getElementById("rs161Play").textContent="Ⅱ"}catch(e){alert("Browser blocked autoplay. Press play again or use your own stream URL.")}
+      }else{
+        audio.pause();document.getElementById("rs161Play").textContent="▶";
+      }
+    });
+
+    document.getElementById("rs161Mute").addEventListener("click",()=>{
+      audio.muted=!audio.muted;
+      document.getElementById("rs161Mute").textContent=audio.muted?"🔇":"🔈";
+    });
+
+    document.getElementById("rs161Volume").addEventListener("input",e=>{
+      audio.volume=Number(e.target.value)||0;
+      audio.muted=false;
+      document.getElementById("rs161Mute").textContent="🔈";
+    });
+  }
+
+  function addUnderlay(){
+    if(!document.querySelector(".rs161UnderlayPatch")){
+      const div=document.createElement("div");
+      div.className="rs161UnderlayPatch";
+      document.body.appendChild(div);
+    }
+  }
+
+  function renderInventory(q){
+    const rows=filter(sortRows(withIndex(active()),addedDate),q);
+    const tv=rows.reduce((x,i)=>x+list(i.row),0);
+    const tc=rows.reduce((x,i)=>x+cost(i.row),0);
+    const body=rows.map(x=>{
+      const r=x.row,i=x.index;
+      return '<tr><td>'+esc(title(r))+'<div class="rs146Sub">'+esc(platform(r)||"Active listing")+'</div></td><td>'+esc(fmt(addedDate(r))||"—")+'</td><td class="rs146Money">'+money(cost(r))+'</td><td class="rs146Money">'+money(list(r))+'</td><td>'+qty(r)+'</td><td><div class="rs146Actions"><button class="rs146ActionBtn" data-rs146-act="edit-active" data-index="'+i+'">Edit</button><button class="rs146ActionBtn" data-rs146-act="comps" data-index="'+i+'">Comps</button><button class="rs146ActionBtn" data-rs161-act="to-hold" data-index="'+i+'">Hold</button><button class="rs146ActionBtn" data-rs146-act="move-sold" data-index="'+i+'">Move to sold</button><button class="rs146ActionBtn rs146Danger" data-rs146-act="delete-active" data-index="'+i+'">Delete</button></div></td></tr>';
+    }).join("");
+    open(header("Inventory","Move active items to Holds, or sell/edit them.")+
+      '<div class="rs146Grid"><div class="rs146Metric"><div class="rs146MetricLabel">Active listings</div><div class="rs146MetricValue">'+rows.length+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Listed value</div><div class="rs146MetricValue">'+money(tv)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Inventory cost</div><div class="rs146MetricValue">'+money(tc)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Avg list</div><div class="rs146MetricValue">'+money(rows.length?tv/rows.length:0)+'</div></div><div class="rs146SearchRow"><input id="rs161Search" class="rs146Search" placeholder="Search inventory..." value="'+esc(q||"")+'"></div><div class="rs146TableCard"><table class="rs146Table"><thead><tr><th>Item</th><th>Date added</th><th>Cost</th><th>List</th><th>Qty</th><th>Actions</th></tr></thead><tbody>'+(body||'<tr><td colspan="6">No active inventory found.</td></tr>')+'</tbody></table></div></div>',
+      "inventory");
+    const inp=document.getElementById("rs161Search");
+    if(inp) inp.addEventListener("input",()=>{clearTimeout(inp.__t);const v=inp.value;inp.__t=setTimeout(()=>renderInventory(v),160)});
+  }
+
+  function renderHolds(q){
+    const rows=filter(sortRows(withIndex(holds()),holdDate),q);
+    const value=rows.reduce((x,i)=>x+(list(i.row)||cost(i.row)),0);
+    const body=rows.map(x=>{
+      const r=x.row,i=x.index;
+      return '<tr><td>'+esc(title(r))+'<div class="rs146Sub">'+esc(platform(r)||"Hold")+'</div></td><td>'+esc(fmt(holdDate(r))||"—")+'</td><td class="rs146Money">'+money(cost(r))+'</td><td class="rs146Money">'+money(list(r)||cost(r))+'</td><td>'+qty(r)+'</td><td><div class="rs146Actions"><button class="rs146ActionBtn" data-rs146-act="edit-hold" data-index="'+i+'">Edit</button><button class="rs146ActionBtn" data-rs161-act="hold-to-inventory" data-index="'+i+'">To inventory</button><button class="rs146ActionBtn rs146Danger" data-rs146-act="delete-hold" data-index="'+i+'">Delete</button></div></td></tr>';
+    }).join("");
+    open(header("Holds","Move held items back to active inventory when ready.")+
+      '<div class="rs146Grid"><div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+rows.length+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Hold value</div><div class="rs146MetricValue">'+money(value)+'</div></div><div class="rs146SearchRow"><input id="rs161Search" class="rs146Search" placeholder="Search holds..." value="'+esc(q||"")+'"></div><div class="rs146TableCard"><table class="rs146Table"><thead><tr><th>Item</th><th>Hold date</th><th>Cost</th><th>Value</th><th>Qty</th><th>Actions</th></tr></thead><tbody>'+(body||'<tr><td colspan="6">No holds found.</td></tr>')+'</tbody></table></div></div>',
+      "holds");
+    const inp=document.getElementById("rs161Search");
+    if(inp) inp.addEventListener("input",()=>{clearTimeout(inp.__t);const v=inp.value;inp.__t=setTimeout(()=>renderHolds(v),160)});
+  }
+
+  function toHold(index){
+    const a=active(), h=holds();
+    const row=Object.assign({},a[index]||{});
+    row.status="hold";
+    row.holdDate=new Date().toISOString();
+    h.push(row);
+    a.splice(index,1);
+    setActive(a);
+    setHolds(h);
+    renderInventory(document.getElementById("rs161Search")?.value||"");
+  }
+
+  function holdToInventory(index){
+    const h=holds(), a=active();
+    const row=Object.assign({},h[index]||{});
+    row.status="active";
+    if(!row.addedAt && !row.createdAt) row.addedAt=new Date().toISOString();
+    delete row.holdDate;
+    a.push(row);
+    h.splice(index,1);
+    setActive(a);
+    setHolds(h);
+    renderHolds(document.getElementById("rs161Search")?.value||"");
+  }
+
+  window.addEventListener("click",function(e){
+    const dock=e.target.closest&&e.target.closest(".rs146DockBtn");
+    if(dock && dock.dataset.panel==="inventory" && !document.body.classList.contains("rs154-locked")){
+      e.preventDefault();e.stopImmediatePropagation();
+      document.querySelectorAll(".rs146DockBtn").forEach(b=>b.classList.remove("active"));
+      dock.classList.add("active");
+      renderInventory("");
+      return;
+    }
+    if(dock && dock.dataset.panel==="holds" && !document.body.classList.contains("rs154-locked")){
+      e.preventDefault();e.stopImmediatePropagation();
+      document.querySelectorAll(".rs146DockBtn").forEach(b=>b.classList.remove("active"));
+      dock.classList.add("active");
+      renderHolds("");
+      return;
+    }
+
+    const act=e.target.closest&&e.target.closest("[data-rs161-act]");
+    if(act){
+      e.preventDefault();e.stopImmediatePropagation();
+      const index=Number(act.dataset.index);
+      if(act.dataset.rs161Act==="to-hold") toHold(index);
+      if(act.dataset.rs161Act==="hold-to-inventory") holdToInventory(index);
+    }
+  },true);
+
+  function start(){
+    setupDock();
+    setupMusic();
+    addUnderlay();
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  setTimeout(start,500);
+})();
+</script>
