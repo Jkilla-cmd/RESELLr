@@ -37130,3 +37130,320 @@ body{margin-left:0 !important;}
   document.addEventListener("click",()=>setTimeout(start,120),true);
 })();
 </script>
+
+
+<!-- ===== v165: fixed RESELLr top-right logo + background picker/upload ===== -->
+<style id="rs-v165-logo-bg-picker-css">
+  #rs165LogoBtn{
+    position:fixed !important;
+    top:16px !important;
+    right:16px !important;
+    z-index:2147483000 !important;
+    width:52px !important;
+    height:52px !important;
+    display:grid !important;
+    place-items:center !important;
+    border-radius:999px !important;
+    background:rgba(8,12,20,.58) !important;
+    border:1px solid rgba(255,255,255,.16) !important;
+    box-shadow:0 18px 54px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.10) !important;
+    backdrop-filter:blur(24px) saturate(1.12) !important;
+    -webkit-backdrop-filter:blur(24px) saturate(1.12) !important;
+    cursor:pointer !important;
+    padding:0 !important;
+  }
+
+  #rs165LogoBtn img{
+    width:34px !important;
+    height:34px !important;
+    object-fit:contain !important;
+    filter:drop-shadow(0 0 10px rgba(45,212,191,.38)) !important;
+  }
+
+  #rs165LogoBtn .rs165LogoText{
+    color:#2dd4bf;
+    font-size:22px;
+    font-weight:950;
+    letter-spacing:-.06em;
+  }
+
+  #rs165BgPanel{
+    position:fixed;
+    top:78px;
+    right:16px;
+    z-index:2147482999;
+    width:300px;
+    max-width:calc(100vw - 32px);
+    display:none;
+    border-radius:24px;
+    border:1px solid rgba(255,255,255,.15);
+    background:rgba(8,12,20,.72);
+    box-shadow:0 28px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10);
+    backdrop-filter:blur(28px) saturate(1.12);
+    -webkit-backdrop-filter:blur(28px) saturate(1.12);
+    padding:14px;
+  }
+
+  #rs165BgPanel.open{
+    display:block;
+  }
+
+  .rs165PanelTitle{
+    color:#fff;
+    font-size:14px;
+    font-weight:950;
+    letter-spacing:-.02em;
+    margin-bottom:4px;
+  }
+
+  .rs165PanelSub{
+    color:rgba(226,232,240,.62);
+    font-size:11px;
+    line-height:1.35;
+    margin-bottom:12px;
+  }
+
+  .rs165BgGrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .rs165BgChoice,
+  .rs165UploadBtn,
+  .rs165ClearBtn{
+    min-height:70px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.07);
+    color:#fff;
+    font-size:11px;
+    font-weight:950;
+    cursor:pointer;
+    overflow:hidden;
+    position:relative;
+  }
+
+  .rs165BgChoice span{
+    position:absolute;
+    left:9px;
+    bottom:8px;
+    z-index:2;
+    text-shadow:0 2px 10px rgba(0,0,0,.65);
+  }
+
+  .rs165BgChoice::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:var(--bg);
+  }
+
+  .rs165UploadBtn,
+  .rs165ClearBtn{
+    min-height:42px;
+    width:100%;
+    margin-top:8px;
+  }
+
+  .rs165ClearBtn{
+    color:#fecaca;
+    border-color:rgba(248,113,113,.22);
+  }
+
+  #rs165BgUpload{
+    display:none !important;
+  }
+
+  body.rs165CustomBg #rs164AnimatedBg{
+    background-image:var(--rs165CustomBg) !important;
+    background-size:cover !important;
+    background-position:center !important;
+  }
+
+  body.rs165CustomBg #rs164AnimatedBg::before{
+    background:rgba(0,0,0,.22) !important;
+    filter:none !important;
+    animation:none !important;
+  }
+
+  body.rs165CustomBg #rs164AnimatedBg::after{
+    background:
+      radial-gradient(circle at 20% 80%, rgba(45,212,191,.15), transparent 28%),
+      linear-gradient(115deg, transparent 0 42%, rgba(255,255,255,.05) 50%, transparent 58%) !important;
+  }
+</style>
+
+<script id="rs-v165-logo-bg-picker-js">
+(function(){
+  if(window.__rsV165LogoBgPicker) return;
+  window.__rsV165LogoBgPicker = true;
+
+  const logoCandidates=[
+    "assets/images/coffee-icon.png",
+    "assets/images/lofi-avatar.webp",
+    "assets/images/hold-character.png"
+  ];
+
+  function ensureAnimatedBg(){
+    let bg=document.getElementById("rs164AnimatedBg");
+    if(!bg){
+      bg=document.createElement("div");
+      bg.id="rs164AnimatedBg";
+      bg.innerHTML='<div class="rs164FloatOrb" style="left:8%;top:58%"></div><div class="rs164FloatOrb two"></div><div class="rs164FloatOrb three"></div>';
+      document.body.prepend(bg);
+    }
+  }
+
+  function setLogoImg(img, index){
+    index=index||0;
+    if(index>=logoCandidates.length){
+      img.remove();
+      const btn=document.getElementById("rs165LogoBtn");
+      if(btn && !btn.querySelector(".rs165LogoText")){
+        const t=document.createElement("span");
+        t.className="rs165LogoText";
+        t.textContent="R";
+        btn.appendChild(t);
+      }
+      return;
+    }
+    img.onerror=function(){setLogoImg(img,index+1)};
+    img.src=logoCandidates[index];
+  }
+
+  function ensureLogo(){
+    document.querySelectorAll("#rs163LogoAction,.rs163LogoAction").forEach(el=>el.remove());
+
+    let btn=document.getElementById("rs165LogoBtn");
+    if(!btn){
+      btn=document.createElement("button");
+      btn.id="rs165LogoBtn";
+      btn.type="button";
+      btn.title="Backgrounds";
+      btn.setAttribute("aria-label","Backgrounds");
+      const img=document.createElement("img");
+      img.alt="RESELLr";
+      btn.appendChild(img);
+      document.body.appendChild(btn);
+      setLogoImg(img,0);
+    }
+
+    btn.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      ensurePanel().classList.toggle("open");
+    };
+
+    // Hide actual top-right hamburger/menu buttons without affecting browser UI.
+    document.querySelectorAll("button,a,div").forEach(el=>{
+      if(el.id==="rs165LogoBtn" || el.closest("#rs165LogoBtn") || el.closest("#rs165BgPanel")) return;
+      const r=el.getBoundingClientRect();
+      if(r.width<1 || r.height<1) return;
+      const topRight=r.top<110 && r.right>window.innerWidth-170;
+      const txt=(el.textContent||"").trim();
+      const meta=(el.id+" "+el.className+" "+(el.getAttribute("title")||"")+" "+(el.getAttribute("aria-label")||"")).toLowerCase();
+      const looks=/hamburger|menu|toggle|action|settings/.test(meta) || txt==="☰" || txt==="≡" || txt==="⋮";
+      if(topRight && looks){
+        el.style.display="none";
+        el.style.visibility="hidden";
+        el.style.pointerEvents="none";
+      }
+    });
+  }
+
+  function ensurePanel(){
+    let panel=document.getElementById("rs165BgPanel");
+    if(panel) return panel;
+
+    panel=document.createElement("div");
+    panel.id="rs165BgPanel";
+    panel.innerHTML=
+      '<div class="rs165PanelTitle">Backgrounds</div>'+
+      '<div class="rs165PanelSub">Pick an animated mood or upload your own image.</div>'+
+      '<div class="rs165BgGrid">'+
+        '<button class="rs165BgChoice" data-bg="aurora" style="--bg:radial-gradient(circle at 25% 80%, rgba(45,212,191,.55), transparent 38%), radial-gradient(circle at 76% 22%, rgba(59,130,246,.42), transparent 34%), linear-gradient(145deg,#071016,#101827)"><span>Aurora</span></button>'+
+        '<button class="rs165BgChoice" data-bg="sunset" style="--bg:radial-gradient(circle at 25% 30%, rgba(251,191,36,.48), transparent 34%), radial-gradient(circle at 75% 75%, rgba(236,72,153,.36), transparent 36%), linear-gradient(145deg,#16100a,#111827)"><span>Sunset</span></button>'+
+        '<button class="rs165BgChoice" data-bg="forest" style="--bg:radial-gradient(circle at 28% 78%, rgba(34,197,94,.42), transparent 34%), radial-gradient(circle at 72% 22%, rgba(20,184,166,.34), transparent 32%), linear-gradient(145deg,#07130e,#101827)"><span>Forest</span></button>'+
+        '<button class="rs165BgChoice" data-bg="midnight" style="--bg:radial-gradient(circle at 50% 45%, rgba(99,102,241,.30), transparent 36%), radial-gradient(circle at 20% 80%, rgba(14,165,233,.30), transparent 35%), linear-gradient(145deg,#020617,#111827)"><span>Midnight</span></button>'+
+      '</div>'+
+      '<button class="rs165UploadBtn" type="button">Upload background</button>'+
+      '<button class="rs165ClearBtn" type="button">Reset animated background</button>'+
+      '<input id="rs165BgUpload" type="file" accept="image/*">';
+    document.body.appendChild(panel);
+
+    panel.querySelectorAll(".rs165BgChoice").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        localStorage.setItem("rs165BgPreset",btn.dataset.bg);
+        localStorage.removeItem("rs165CustomBg");
+        applyBg();
+      });
+    });
+
+    panel.querySelector(".rs165UploadBtn").addEventListener("click",()=>{
+      panel.querySelector("#rs165BgUpload").click();
+    });
+
+    panel.querySelector("#rs165BgUpload").addEventListener("change",e=>{
+      const file=e.target.files && e.target.files[0];
+      if(!file) return;
+      const reader=new FileReader();
+      reader.onload=function(){
+        localStorage.setItem("rs165CustomBg",String(reader.result||""));
+        applyBg();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    panel.querySelector(".rs165ClearBtn").addEventListener("click",()=>{
+      localStorage.removeItem("rs165CustomBg");
+      localStorage.removeItem("rs165BgPreset");
+      applyBg();
+    });
+
+    return panel;
+  }
+
+  function applyBg(){
+    ensureAnimatedBg();
+    const custom=localStorage.getItem("rs165CustomBg");
+    const preset=localStorage.getItem("rs165BgPreset") || "aurora";
+    document.body.classList.toggle("rs165CustomBg",!!custom);
+    if(custom){
+      document.body.style.setProperty("--rs165CustomBg","url("+custom+")");
+      return;
+    }
+    document.body.style.removeProperty("--rs165CustomBg");
+    const bg=document.getElementById("rs164AnimatedBg");
+    if(!bg) return;
+    const presets={
+      aurora:"radial-gradient(circle at 18% 72%, rgba(45,212,191,.22), transparent 34%),radial-gradient(circle at 78% 30%, rgba(59,130,246,.18), transparent 32%),radial-gradient(circle at 50% 100%, rgba(134,239,172,.14), transparent 42%),linear-gradient(145deg, #071016 0%, #0a1018 45%, #101827 100%)",
+      sunset:"radial-gradient(circle at 22% 30%, rgba(251,191,36,.24), transparent 34%),radial-gradient(circle at 72% 78%, rgba(236,72,153,.18), transparent 38%),linear-gradient(145deg,#16100a,#111827)",
+      forest:"radial-gradient(circle at 26% 78%, rgba(34,197,94,.22), transparent 34%),radial-gradient(circle at 74% 24%, rgba(20,184,166,.18), transparent 34%),linear-gradient(145deg,#07130e,#101827)",
+      midnight:"radial-gradient(circle at 50% 45%, rgba(99,102,241,.22), transparent 36%),radial-gradient(circle at 20% 80%, rgba(14,165,233,.18), transparent 35%),linear-gradient(145deg,#020617,#111827)"
+    };
+    bg.style.background=presets[preset] || presets.aurora;
+  }
+
+  function closePanelOnOutside(e){
+    const panel=document.getElementById("rs165BgPanel");
+    if(!panel || !panel.classList.contains("open")) return;
+    if(e.target.closest("#rs165BgPanel") || e.target.closest("#rs165LogoBtn")) return;
+    panel.classList.remove("open");
+  }
+
+  function start(){
+    ensureAnimatedBg();
+    ensurePanel();
+    ensureLogo();
+    applyBg();
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  document.addEventListener("click",closePanelOnOutside,true);
+  setTimeout(start,300);
+  setTimeout(start,1000);
+})();
+</script>
