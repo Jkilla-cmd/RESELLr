@@ -33977,3 +33977,497 @@ body{margin-left:0 !important;}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();
 </script>
+
+
+<!-- ===== v147: restore edit/move overlays + tax year filter + full reset ===== -->
+<style id="rs-v147-modal-tax-reset-css">
+  #rs147Overlay{
+    position:fixed;
+    inset:0;
+    z-index:1000000;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(2,6,23,.58);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+
+  #rs147Overlay.open{
+    display:flex;
+  }
+
+  .rs147Modal{
+    width:min(760px, calc(100vw - 28px));
+    max-height:calc(100vh - 42px);
+    overflow:auto;
+    border-radius:28px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(8,12,20,.88);
+    box-shadow:0 34px 100px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(28px) saturate(1.08);
+    -webkit-backdrop-filter:blur(28px) saturate(1.08);
+    padding:18px;
+  }
+
+  .rs147ModalHeader{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+  }
+
+  .rs147ModalHeader h3{
+    margin:0;
+    color:#fff;
+    font-size:24px;
+    letter-spacing:-.04em;
+    font-weight:950;
+  }
+
+  .rs147ModalHeader p{
+    margin:4px 0 0;
+    color:rgba(226,232,240,.62);
+    font-size:12px;
+  }
+
+  .rs147Close{
+    width:38px !important;
+    height:38px !important;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.08) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    color:#fff !important;
+  }
+
+  .rs147Form{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .rs147Field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+
+  .rs147Field.full{
+    grid-column:1 / -1;
+  }
+
+  .rs147Field label{
+    color:rgba(226,232,240,.72);
+    font-size:11px;
+    font-weight:950;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+
+  .rs147Field input,
+  .rs147Field textarea,
+  .rs147Field select{
+    width:100%;
+    min-height:42px;
+    border-radius:14px !important;
+    background:rgba(255,255,255,.075) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    color:#fff !important;
+    padding:10px 12px !important;
+    box-sizing:border-box;
+  }
+
+  .rs147Field textarea{
+    min-height:86px;
+    resize:vertical;
+  }
+
+  .rs147Actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-top:14px;
+  }
+
+  .rs147Primary,
+  .rs147Secondary,
+  .rs147DangerBtn{
+    width:auto !important;
+    min-width:0 !important;
+    height:40px !important;
+    padding:0 14px !important;
+    border-radius:999px !important;
+    font-weight:950 !important;
+  }
+
+  .rs147Primary{
+    background:rgba(134,239,172,.14) !important;
+    border:1px solid rgba(134,239,172,.28) !important;
+    color:#dcfce7 !important;
+  }
+
+  .rs147Secondary{
+    background:rgba(255,255,255,.08) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    color:#fff !important;
+  }
+
+  .rs147DangerBtn{
+    background:rgba(248,113,113,.12) !important;
+    border:1px solid rgba(248,113,113,.26) !important;
+    color:#fecaca !important;
+  }
+
+  .rs147ItemPreview{
+    grid-column:1 / -1;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.055);
+    border-radius:18px;
+    padding:12px;
+    color:#fff;
+    font-size:13px;
+    line-height:1.4;
+  }
+
+  .rs147ItemPreview b{
+    display:block;
+    font-size:16px;
+    margin-bottom:4px;
+  }
+
+  .rs147TaxControls{
+    grid-column:1 / -1;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-bottom:2px;
+  }
+
+  .rs147TaxControls select,
+  .rs147TaxControls button{
+    height:40px !important;
+    border-radius:999px !important;
+  }
+
+  .rs147ResetZone{
+    grid-column:1 / -1;
+    border:1px solid rgba(248,113,113,.20);
+    background:rgba(248,113,113,.075);
+    border-radius:22px;
+    padding:14px;
+  }
+
+  @media(max-width:650px){
+    .rs147Form{grid-template-columns:1fr;}
+  }
+</style>
+
+<script id="rs-v147-modal-tax-reset-js">
+(function(){
+  if(window.__rsV147ModalTaxReset) return;
+  window.__rsV147ModalTaxReset = true;
+
+  function n(v){const x=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(x)?x:0;}
+  function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(2)}}
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v||[]));}catch(e){}}
+  function active(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function sold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function holds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v)}
+  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v)}
+  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
+  function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return 0}
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim()}
+  function platform(r){return String(r.platform||r.marketplace||r.source||r.store||"").trim()}
+  function qty(r){return val(r,["qty","quantity","count"])||1}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"])}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"])}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
+  function profit(r){for(const k of["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+  function soldDate(r){const raw=r.soldDate||r.date||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function yearOf(r){const d=soldDate(r);return d?d.getFullYear():"Unknown"}
+
+  function ensureOverlay(){
+    let o=document.getElementById("rs147Overlay");
+    if(!o){
+      o=document.createElement("div");
+      o.id="rs147Overlay";
+      document.body.appendChild(o);
+    }
+    return o;
+  }
+
+  function closeModal(){
+    const o=document.getElementById("rs147Overlay");
+    if(o){o.classList.remove("open");o.innerHTML="";}
+  }
+
+  function modal(titleText, sub, body){
+    const o=ensureOverlay();
+    o.innerHTML='<div class="rs147Modal"><div class="rs147ModalHeader"><div><h3>'+esc(titleText)+'</h3><p>'+esc(sub||"")+'</p></div><button class="rs147Close" type="button">×</button></div>'+body+'</div>';
+    o.classList.add("open");
+    o.querySelector(".rs147Close")?.addEventListener("click", closeModal, {once:true});
+    o.addEventListener("click", function(e){ if(e.target === o) closeModal(); }, {once:true});
+  }
+
+  function refreshCurrent(page){
+    const activeBtn=[...document.querySelectorAll(".rs146DockBtn")].find(b=>b.classList.contains("active"));
+    const type=page || (activeBtn && activeBtn.dataset.panel) || "inventory";
+    if(type==="inventory") document.querySelector(".rs146DockBtn[data-panel='inventory']")?.click();
+    else if(type==="sold") document.querySelector(".rs146DockBtn[data-panel='sold']")?.click();
+    else if(type==="holds") document.querySelector(".rs146DockBtn[data-panel='holds']")?.click();
+    else if(type==="tax") document.querySelector(".rs146DockBtn[data-panel='tax']")?.click();
+    else document.querySelector(".rs146DockBtn[data-panel='dashboard']")?.click();
+  }
+
+  function field(id,label,value,type,full){
+    return '<div class="rs147Field '+(full?'full':'')+'"><label for="'+id+'">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" value="'+esc(value??"")+'"></div>';
+  }
+
+  function area(id,label,value){
+    return '<div class="rs147Field full"><label for="'+id+'">'+label+'</label><textarea id="'+id+'">'+esc(value??"")+'</textarea></div>';
+  }
+
+  function itemForm(r, mode){
+    const isSold = mode==="sold";
+    const extra = isSold
+      ? field("rs147Sale","Sold price / income",sale(r),"number")
+      : field("rs147List","List / value",list(r),"number");
+
+    return '<form class="rs147Form" id="rs147Form">'+
+      '<div class="rs147ItemPreview"><b>'+esc(title(r))+'</b><span>'+esc(platform(r)||"RESELLr item")+'</span></div>'+
+      field("rs147Title","Title",title(r),"text",true)+
+      field("rs147Platform","Platform",platform(r),"text")+
+      field("rs147Qty","Qty",qty(r),"number")+
+      field("rs147Cost","Cost",cost(r),"number")+
+      extra+
+      (isSold ? field("rs147Fees","Fees",fee(r),"number")+field("rs147Ship","Shipping",ship(r),"number") : "")+
+      area("rs147Notes","Notes",String(r.notes||r.note||""))+
+      '<div class="rs147Actions full"><button type="button" class="rs147Secondary" id="rs147Cancel">Cancel</button><button type="submit" class="rs147Primary">Save changes</button></div>'+
+    '</form>';
+  }
+
+  function readForm(r, mode){
+    r=Object.assign({},r||{});
+    r.title=document.getElementById("rs147Title").value;
+    r.platform=document.getElementById("rs147Platform").value;
+    r.qty=n(document.getElementById("rs147Qty").value)||1;
+    r.cost=n(document.getElementById("rs147Cost").value);
+    r.notes=document.getElementById("rs147Notes").value;
+    if(mode==="sold"){
+      r.salePrice=n(document.getElementById("rs147Sale").value);
+      r.soldPrice=n(document.getElementById("rs147Sale").value);
+      r.fees=n(document.getElementById("rs147Fees").value);
+      r.shipping=n(document.getElementById("rs147Ship").value);
+      r.profit=+(r.salePrice-r.cost-r.fees-r.shipping).toFixed(2);
+      if(!r.soldDate&&!r.date) r.soldDate=new Date().toISOString();
+    }else{
+      r.list=n(document.getElementById("rs147List").value);
+      if(!r.addedAt&&!r.createdAt) r.addedAt=new Date().toISOString();
+    }
+    return r;
+  }
+
+  function editActive(index){
+    const arr=active(), r=arr[index]||{};
+    modal("Edit inventory item","Update the item details without leaving the page.",itemForm(r,"active"));
+    document.getElementById("rs147Cancel")?.addEventListener("click", closeModal);
+    document.getElementById("rs147Form")?.addEventListener("submit",function(e){
+      e.preventDefault();
+      arr[index]=readForm(r,"active");
+      setActive(arr);
+      closeModal();
+      refreshCurrent("inventory");
+    });
+  }
+
+  function editSold(index){
+    const arr=sold(), r=arr[index]||{};
+    modal("Edit sold item","Update the sold item details and profit calculation.",itemForm(r,"sold"));
+    document.getElementById("rs147Cancel")?.addEventListener("click", closeModal);
+    document.getElementById("rs147Form")?.addEventListener("submit",function(e){
+      e.preventDefault();
+      arr[index]=readForm(r,"sold");
+      setSold(arr);
+      closeModal();
+      refreshCurrent("sold");
+    });
+  }
+
+  function editHold(index){
+    const arr=holds(), r=arr[index]||{};
+    modal("Edit hold item","Update the held item details.",itemForm(r,"active"));
+    document.getElementById("rs147Cancel")?.addEventListener("click", closeModal);
+    document.getElementById("rs147Form")?.addEventListener("submit",function(e){
+      e.preventDefault();
+      arr[index]=readForm(r,"active");
+      setHolds(arr);
+      closeModal();
+      refreshCurrent("holds");
+    });
+  }
+
+  function moveToSold(index){
+    const arr=active(), r=arr[index]||{};
+    const body='<form class="rs147Form" id="rs147MoveForm">'+
+      '<div class="rs147ItemPreview"><b>'+esc(title(r))+'</b><span>Cost '+money(cost(r))+' · List '+money(list(r))+'</span></div>'+
+      field("rs147MoveSale","Sold price",list(r),"number")+
+      field("rs147MoveCost","Cost",cost(r),"number")+
+      field("rs147MoveFees","Fees",fee(r),"number")+
+      field("rs147MoveShip","Shipping",ship(r),"number")+
+      field("rs147MoveDate","Sold date",new Date().toISOString().slice(0,10),"date")+
+      area("rs147MoveNotes","Notes",String(r.notes||r.note||""))+
+      '<div class="rs147Actions full"><button type="button" class="rs147Secondary" id="rs147Cancel">Cancel</button><button type="submit" class="rs147Primary">Move to sold</button></div>'+
+    '</form>';
+
+    modal("Move item to sold","Confirm sale details before moving this item out of active inventory.",body);
+    document.getElementById("rs147Cancel")?.addEventListener("click", closeModal);
+    document.getElementById("rs147MoveForm")?.addEventListener("submit",function(e){
+      e.preventDefault();
+      const salePrice=n(document.getElementById("rs147MoveSale").value);
+      const c=n(document.getElementById("rs147MoveCost").value);
+      const f=n(document.getElementById("rs147MoveFees").value);
+      const sh=n(document.getElementById("rs147MoveShip").value);
+      const soldRow=Object.assign({},r,{
+        cost:c,
+        salePrice:salePrice,
+        soldPrice:salePrice,
+        fees:f,
+        shipping:sh,
+        profit:+(salePrice-c-f-sh).toFixed(2),
+        soldDate:document.getElementById("rs147MoveDate").value || new Date().toISOString(),
+        notes:document.getElementById("rs147MoveNotes").value
+      });
+      arr.splice(index,1);
+      const s=sold();
+      s.push(soldRow);
+      setActive(arr);
+      setSold(s);
+      closeModal();
+      refreshCurrent("inventory");
+    });
+  }
+
+  function deleteRow(kind,index){
+    const arr = kind==="active" ? active() : kind==="sold" ? sold() : holds();
+    const r = arr[index] || {};
+    const body='<div class="rs147ItemPreview"><b>'+esc(title(r))+'</b><span>This cannot be undone unless you have a backup.</span></div>'+
+      '<div class="rs147Actions"><button class="rs147Secondary" id="rs147Cancel">Cancel</button><button class="rs147DangerBtn" id="rs147ConfirmDelete">Delete</button></div>';
+    modal("Delete item","Confirm deletion.",body);
+    document.getElementById("rs147Cancel")?.addEventListener("click",closeModal);
+    document.getElementById("rs147ConfirmDelete")?.addEventListener("click",function(){
+      arr.splice(index,1);
+      if(kind==="active") setActive(arr);
+      if(kind==="sold") setSold(arr);
+      if(kind==="holds") setHolds(arr);
+      closeModal();
+      refreshCurrent(kind==="active"?"inventory":kind);
+    });
+  }
+
+  function taxYears(){
+    const years=[...new Set(sold().map(yearOf))].filter(Boolean).sort((a,b)=>String(b).localeCompare(String(a)));
+    return ["All",...years];
+  }
+
+  function installTaxOverride(){
+    if(window.__rs147TaxOverrideInstalled) return;
+    window.__rs147TaxOverrideInstalled = true;
+
+    window.rs147RenderTax = function(year){
+      const yr = year || localStorage.getItem("rsTaxYearFilter") || "All";
+      const allSold=sold();
+      const filtered = yr==="All" ? allSold : allSold.filter(r=>String(yearOf(r))===String(yr));
+      const a=active(), h=holds();
+
+      const income=filtered.reduce((x,r)=>x+sale(r),0);
+      const costs=filtered.reduce((x,r)=>x+cost(r),0);
+      const fees=filtered.reduce((x,r)=>x+fee(r),0);
+      const ships=filtered.reduce((x,r)=>x+ship(r),0);
+      const prof=filtered.reduce((x,r)=>x+profit(r),0);
+      const cp=filtered.reduce((x,r)=>x+cost(r)+profit(r),0);
+      const av=a.reduce((x,r)=>x+list(r),0);
+
+      const opts=taxYears().map(y=>'<option value="'+esc(y)+'" '+(String(y)===String(yr)?'selected':'')+'>'+esc(y)+'</option>').join("");
+      const html='<div class="rs146Header"><div><h2>Tax Reports</h2><p>Expanded tax snapshot with year filtering.</p></div><button id="rs146Close" type="button">×</button></div>'+
+      '<div class="rs146Grid">'+
+        '<div class="rs147TaxControls"><select id="rs147TaxYear">'+opts+'</select><button class="rs146ActionBtn" id="rs147ResetAll" type="button">Full reset</button></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Gross income</div><div class="rs146MetricValue">'+money(income)+'</div><div class="rs146MetricNote">'+filtered.length+' sold item(s) shown</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Cost basis</div><div class="rs146MetricValue">'+money(costs)+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Estimated profit</div><div class="rs146MetricValue">'+money(prof)+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Fees + Shipping</div><div class="rs146MetricValue">'+money(fees+ships)+'</div></div>'+
+        '<div class="rs146TaxBlock"><div class="rs146MetricLabel">Sales summary</div><div class="rs146TaxLine"><span>Year filter</span><b>'+esc(yr)+'</b></div><div class="rs146TaxLine"><span>Sold items</span><b>'+filtered.length+'</b></div><div class="rs146TaxLine"><span>Average sale</span><b>'+money(filtered.length?income/filtered.length:0)+'</b></div><div class="rs146TaxLine"><span>Average profit</span><b>'+money(filtered.length?prof/filtered.length:0)+'</b></div><div class="rs146TaxLine"><span>Cost + Profit</span><b>'+money(cp)+'</b></div></div>'+
+        '<div class="rs146TaxBlock"><div class="rs146MetricLabel">Inventory summary</div><div class="rs146TaxLine"><span>Active inventory</span><b>'+a.length+'</b></div><div class="rs146TaxLine"><span>Active listed value</span><b>'+money(av)+'</b></div><div class="rs146TaxLine"><span>Held items</span><b>'+h.length+'</b></div><div class="rs146TaxLine"><span>All-time sold count</span><b>'+allSold.length+'</b></div></div>'+
+        '<div class="rs147ResetZone"><div class="rs146MetricLabel">Danger zone</div><div class="rs146MetricValue" style="font-size:20px">Full reset clears all storage keys</div><div class="rs146MetricNote">Use only after exporting a backup.</div></div>'+
+      '</div>';
+
+      const p=document.getElementById("rs146Panel");
+      if(p){
+        p.innerHTML=html;
+        p.classList.add("open");
+        document.getElementById("rs146Close")?.addEventListener("click",function(){p.classList.remove("open")},{once:true});
+        document.getElementById("rs147TaxYear")?.addEventListener("change",function(){
+          localStorage.setItem("rsTaxYearFilter",this.value);
+          window.rs147RenderTax(this.value);
+        });
+        document.getElementById("rs147ResetAll")?.addEventListener("click",fullResetConfirm);
+      }
+    };
+  }
+
+  function fullResetConfirm(){
+    const body='<div class="rs147ItemPreview"><b>Full reset RESELLr?</b><span>This clears inventory, sold, holds, backups, filters, cached chart data, uploaded background, and old duplicate storage keys.</span></div>'+
+      '<div class="rs147Actions"><button class="rs147Secondary" id="rs147Cancel">Cancel</button><button class="rs147DangerBtn" id="rs147ConfirmReset">Full reset</button></div>';
+    modal("Full reset","This will clear all RESELLr local data.",body);
+    document.getElementById("rs147Cancel")?.addEventListener("click",closeModal);
+    document.getElementById("rs147ConfirmReset")?.addEventListener("click",function(){
+      const keys=[];
+      for(let i=0;i<localStorage.length;i++) keys.push(localStorage.key(i));
+      keys.forEach(k=>{
+        if(/inventory|sold|hold|resellr|rs15|rs136|rs142|rs146|chart|backup|tax|dashboard|commandbg|bg/i.test(k)){
+          localStorage.removeItem(k);
+        }
+      });
+      ["activeInventory","inventory","inventoryData","soldInventory","sold","soldData","inventoryHolds","holds","holdData"].forEach(k=>localStorage.setItem(k,"[]"));
+      alert("RESELLr data fully reset. Reloading...");
+      location.reload();
+    });
+  }
+
+  function patchClicks(){
+    window.addEventListener("click",function(e){
+      const act=e.target.closest&&e.target.closest("[data-rs146-act], [data-act], [data-rs141-action]");
+      if(act){
+        const a=act.dataset.rs146Act || act.dataset.act || act.dataset.rs141Action || "";
+        const i=Number(act.dataset.index);
+        if(a==="edit-active"){e.preventDefault();e.stopImmediatePropagation();editActive(i);return;}
+        if(a==="edit-sold"){e.preventDefault();e.stopImmediatePropagation();editSold(i);return;}
+        if(a==="edit-hold"){e.preventDefault();e.stopImmediatePropagation();editHold(i);return;}
+        if(a==="move-sold" || a==="sold"){e.preventDefault();e.stopImmediatePropagation();moveToSold(i);return;}
+        if(a==="delete-active"){e.preventDefault();e.stopImmediatePropagation();deleteRow("active",i);return;}
+        if(a==="delete-sold"){e.preventDefault();e.stopImmediatePropagation();deleteRow("sold",i);return;}
+        if(a==="delete-hold"){e.preventDefault();e.stopImmediatePropagation();deleteRow("holds",i);return;}
+      }
+
+      const dock=e.target.closest&&e.target.closest(".rs146DockBtn[data-panel='tax']");
+      if(dock){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        document.querySelectorAll(".rs146DockBtn").forEach(b=>b.classList.remove("active"));
+        dock.classList.add("active");
+        installTaxOverride();
+        window.rs147RenderTax(localStorage.getItem("rsTaxYearFilter") || "All");
+      }
+    },true);
+  }
+
+  installTaxOverride();
+  patchClicks();
+})();
+</script>
