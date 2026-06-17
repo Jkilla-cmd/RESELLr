@@ -36383,3 +36383,393 @@ body{margin-left:0 !important;}
   },true);
 })();
 </script>
+
+
+<!-- ===== v158: database restore fix - supports full localStorage/database exports + diagnostics ===== -->
+<style id="rs-v158-database-restore-debug-css">
+  #rs158RestoreFile{display:none!important;}
+  .rs158Status{
+    grid-column:1 / -1;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.075);
+    border-radius:18px;
+    padding:12px 14px;
+    color:rgba(248,250,252,.9);
+    font-size:12px;
+    line-height:1.45;
+    white-space:pre-wrap;
+  }
+  .rs158Status.good{border-color:rgba(134,239,172,.35);color:#bbf7d0;}
+  .rs158Status.bad{border-color:rgba(248,113,113,.35);color:#fecaca;}
+  .rs158Status.warn{border-color:rgba(250,204,21,.35);color:#fef3c7;}
+</style>
+
+<script id="rs-v158-database-restore-debug-js">
+(function(){
+  if(window.__rsV158DatabaseRestoreDebug) return;
+  window.__rsV158DatabaseRestoreDebug = true;
+
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){localStorage.setItem(k,JSON.stringify(Array.isArray(v)?v:[]))}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v)}
+  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v)}
+  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
+  function currentActive(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function currentSold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function currentHolds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+
+  const ACTIVE_KEYS = [
+    "activeInventory","inventory","inventoryData","active","items","listings",
+    "activeItems","inventoryItems","forSale","forSaleInventory","products"
+  ];
+  const SOLD_KEYS = [
+    "soldInventory","sold","soldData","soldItems","sales","salesData",
+    "soldListings","soldRecords","completedSales"
+  ];
+  const HOLD_KEYS = [
+    "inventoryHolds","holds","holdData","holdItems","heldItems","holdInventory"
+  ];
+
+  function status(msg,type){
+    let el=document.querySelector(".rs158Status");
+    const grid=document.querySelector("#rs146Panel .rs146Grid") || document.querySelector("#rs142Panel .rs142Grid") || document.querySelector("#rs136DataPanel .rs136Grid");
+    if(!el && grid){
+      el=document.createElement("div");
+      el.className="rs158Status";
+      grid.prepend(el);
+    }
+    if(el){
+      el.className="rs158Status "+(type||"");
+      el.textContent=msg;
+    }else{
+      alert(msg);
+    }
+  }
+
+  function maybeParse(v){
+    if(Array.isArray(v)) return v;
+    if(v && typeof v==="object") return v;
+    if(typeof v==="string"){
+      const s=v.trim();
+      if(!s) return v;
+      try{return JSON.parse(s)}catch(e){return v}
+    }
+    return v;
+  }
+
+  function asArray(v){
+    v=maybeParse(v);
+    return Array.isArray(v) ? v : [];
+  }
+
+  function looksItem(o){
+    if(!o || typeof o!=="object" || Array.isArray(o)) return false;
+    const keys=Object.keys(o).join(" ").toLowerCase();
+    return /title|name|item|description|cost|price|list|sold|profit|platform|marketplace|notes|qty|quantity|sku|category|comic/.test(keys);
+  }
+
+  function looksSold(o){
+    if(!looksItem(o)) return false;
+    const s=JSON.stringify(o).toLowerCase();
+    return /solddate|sold_date|saleprice|soldprice|profit|fees|shipping|status["']?\s*:\s*["']?sold|date sold/.test(s);
+  }
+
+  function looksHold(o){
+    if(!looksItem(o)) return false;
+    const s=JSON.stringify(o).toLowerCase();
+    return /holddate|hold_date|status["']?\s*:\s*["']?hold|held/.test(s);
+  }
+
+  function getByKeys(obj,keys){
+    if(!obj || typeof obj!=="object") return [];
+    for(const k of keys){
+      if(Object.prototype.hasOwnProperty.call(obj,k)){
+        const a=asArray(obj[k]);
+        if(a.length) return a;
+      }
+    }
+    return [];
+  }
+
+  function restoreLocalStorageObject(obj){
+    // Handles backups that are literally localStorage dumps:
+    // { "activeInventory": "[...]", "soldInventory": "[...]" }
+    // or { "localStorage": { "activeInventory": "[...]" } }
+    if(!obj || typeof obj!=="object" || Array.isArray(obj)) return false;
+
+    let source=obj.localStorage || obj.storage || obj.local_storage || obj.database || obj.db || obj;
+    if(!source || typeof source!=="object") return false;
+
+    const keys=Object.keys(source);
+    let wrote=0;
+
+    keys.forEach(k=>{
+      const v=source[k];
+      const parsed=maybeParse(v);
+
+      // Write raw localStorage keys back exactly too, in case app uses a custom key.
+      if(typeof v==="string"){
+        try{localStorage.setItem(k,v); wrote++;}catch(e){}
+      }else{
+        try{localStorage.setItem(k,JSON.stringify(v)); wrote++;}catch(e){}
+      }
+
+      // Also mirror known database buckets.
+      if(ACTIVE_KEYS.includes(k)){
+        const a=asArray(parsed);
+        if(a.length){setActive(a);}
+      }
+      if(SOLD_KEYS.includes(k)){
+        const s=asArray(parsed);
+        if(s.length){setSold(s);}
+      }
+      if(HOLD_KEYS.includes(k)){
+        const h=asArray(parsed);
+        if(h.length){setHolds(h);}
+      }
+    });
+
+    // If it had many storage keys, treat it as restored even if bucket names were custom.
+    return wrote > 0;
+  }
+
+  function deepFind(obj,depth,found){
+    found = found || {active:[],sold:[],holds:[],arrays:[],keys:[]};
+    if(!obj || typeof obj!=="object" || depth>9) return found;
+
+    if(Array.isArray(obj)){
+      if(obj.length && obj.some(looksItem)) found.arrays.push(obj);
+      return found;
+    }
+
+    found.keys.push(...Object.keys(obj).slice(0,30));
+
+    const a=getByKeys(obj,ACTIVE_KEYS), s=getByKeys(obj,SOLD_KEYS), h=getByKeys(obj,HOLD_KEYS);
+    if(a.length && !found.active.length) found.active=a;
+    if(s.length && !found.sold.length) found.sold=s;
+    if(h.length && !found.holds.length) found.holds=h;
+
+    for(const [k,v0] of Object.entries(obj)){
+      const v=maybeParse(v0);
+      if(v && typeof v==="object"){
+        deepFind(v,depth+1,found);
+      }
+    }
+
+    return found;
+  }
+
+  function classifyArrays(arrays){
+    const out={active:[],sold:[],holds:[]};
+    const seen=new Set();
+
+    function add(type,row){
+      const key=JSON.stringify(row);
+      if(!seen.has(type+key)){
+        seen.add(type+key);
+        out[type].push(row);
+      }
+    }
+
+    arrays.forEach(rows=>{
+      const itemRows=rows.filter(looksItem);
+      if(!itemRows.length) return;
+
+      itemRows.forEach(r=>{
+        if(looksSold(r)) add("sold",r);
+        else if(looksHold(r)) add("holds",r);
+        else add("active",r);
+      });
+    });
+
+    return out;
+  }
+
+  function normalize(data){
+    if(Array.isArray(data)){
+      const classified=classifyArrays([data]);
+      if(classified.active.length || classified.sold.length || classified.holds.length) return classified;
+      return {active:data,sold:[],holds:[]};
+    }
+
+    const found=deepFind(data,0);
+    let active=found.active, sold=found.sold, holds=found.holds;
+
+    if(!active.length && !sold.length && !holds.length){
+      const c=classifyArrays(found.arrays);
+      active=c.active; sold=c.sold; holds=c.holds;
+    }
+
+    return {active,sold,holds,debugKeys:[...new Set(found.keys)].slice(0,80)};
+  }
+
+  function parseCSV(text){
+    const rows=[]; let cur="", row=[], quote=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i], nx=text[i+1];
+      if(c==='"' && quote && nx==='"'){cur+='"'; i++;}
+      else if(c==='"'){quote=!quote;}
+      else if(c==="," && !quote){row.push(cur); cur="";}
+      else if((c==="\n" || c==="\r") && !quote){
+        if(cur!=="" || row.length){row.push(cur); rows.push(row); row=[]; cur="";}
+        if(c==="\r" && nx==="\n") i++;
+      }else cur+=c;
+    }
+    if(cur!=="" || row.length){row.push(cur); rows.push(row);}
+    if(!rows.length) return [];
+    const headers=rows.shift().map(h=>String(h).trim());
+    return rows.filter(r=>r.some(x=>String(x).trim()!=="")).map(r=>{
+      const o={}; headers.forEach((h,i)=>o[h]=r[i]??""); return o;
+    });
+  }
+
+  function parseText(text){
+    try{return JSON.parse(text)}
+    catch(e){return parseCSV(text)}
+  }
+
+  function restore(data,mode){
+    // First: restore exact localStorage/database dumps.
+    if(mode==="backup"){
+      const localStorageRestored = restoreLocalStorageObject(data);
+      const normalized=normalize(data);
+
+      // If recognizable buckets exist, mirror them into all known keys.
+      if(normalized.active.length) setActive(normalized.active);
+      if(normalized.sold.length) setSold(normalized.sold);
+      if(normalized.holds.length) setHolds(normalized.holds);
+
+      const afterA=currentActive().length;
+      const afterS=currentSold().length;
+      const afterH=currentHolds().length;
+
+      if(afterA || afterS || afterH || localStorageRestored){
+        localStorage.setItem("rsLastRestoreAt",new Date().toISOString());
+        status("Restore complete.\nActive: "+afterA+"\nSold: "+afterS+"\nHolds: "+afterH+"\nReloading now...", "good");
+        setTimeout(()=>location.reload(),1000);
+        return;
+      }
+
+      status(
+        "Restore did not find inventory buckets.\nTop keys found:\n" +
+        (normalized.debugKeys||[]).join(", "),
+        "bad"
+      );
+      return;
+    }
+
+    const normalized=normalize(data);
+    if(mode==="sold"){
+      const arr=Array.isArray(data)?data:normalized.sold;
+      setSold(arr);
+      status("Imported sold: "+arr.length+" records. Reloading...", "good");
+      setTimeout(()=>location.reload(),900);
+      return;
+    }
+
+    const arr=Array.isArray(data)?data:normalized.active;
+    setActive(arr);
+    status("Imported active: "+arr.length+" records. Reloading...", "good");
+    setTimeout(()=>location.reload(),900);
+  }
+
+  function choose(mode){
+    let input=document.getElementById("rs158RestoreFile");
+    if(input) input.remove();
+
+    input=document.createElement("input");
+    input.id="rs158RestoreFile";
+    input.type="file";
+    input.accept=".json,.csv,text/csv,application/json";
+    document.body.appendChild(input);
+
+    input.addEventListener("change",function(){
+      const file=input.files && input.files[0];
+      if(!file) return;
+
+      status("Reading file: "+file.name+" ...","warn");
+
+      const reader=new FileReader();
+      reader.onload=function(){
+        try{
+          restore(parseText(String(reader.result||"")), mode||"backup");
+        }catch(err){
+          status("Restore failed: "+(err&&err.message?err.message:"unknown error"),"bad");
+        }
+      };
+      reader.readAsText(file);
+    },{once:true});
+
+    input.click();
+  }
+
+  function exportBackup(){
+    const data={
+      exportedAt:new Date().toISOString(),
+      activeInventory:currentActive(),
+      soldInventory:currentSold(),
+      inventoryHolds:currentHolds()
+    };
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+  }
+
+  function renderImport(){
+    const p=document.getElementById("rs146Panel") || document.getElementById("rs142Panel") || document.getElementById("rs136DataPanel");
+    if(!p) return;
+
+    p.innerHTML =
+      '<div class="rs146Header"><div><h2>Import / Data</h2><p>Database restore now supports exact localStorage/database exports.</p></div><button id="rs146Close" type="button">×</button></div>'+
+      '<div class="rs146Grid">'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Active</div><div class="rs146MetricValue">'+currentActive().length+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Sold</div><div class="rs146MetricValue">'+currentSold().length+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+currentHolds().length+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Restore mode</div><div class="rs146MetricValue" style="font-size:20px">Database</div><div class="rs146MetricNote">JSON / CSV / localStorage dump</div></div>'+
+        '<div class="rs146ImportGrid">'+
+          '<button class="rs146ImportBtn" data-rs158-import="active" type="button"><strong>Import active</strong><span>Active inventory only.</span></button>'+
+          '<button class="rs146ImportBtn" data-rs158-import="sold" type="button"><strong>Import sold</strong><span>Sold items only.</span></button>'+
+          '<button class="rs146ImportBtn" data-rs158-import="backup" type="button"><strong>Restore database</strong><span>Restore your full RESELLr database backup.</span></button>'+
+          '<button class="rs146ImportBtn" data-rs158-import="export" type="button"><strong>Export backup</strong><span>Download all current data.</span></button>'+
+        '</div>'+
+      '</div>';
+    p.classList.add("open");
+    document.getElementById("rs146Close")?.addEventListener("click",()=>p.classList.remove("open"),{once:true});
+  }
+
+  window.addEventListener("pointerdown",function(e){
+    const dock=e.target.closest && e.target.closest(".rs146DockBtn[data-panel='import'],.rs142DockBtn[data-panel='import'],.rs136DockBtn[data-panel='import']");
+    if(dock && !document.body.classList.contains("rs154-locked")){
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      document.querySelectorAll(".rs146DockBtn,.rs142DockBtn,.rs136DockBtn").forEach(b=>b.classList.remove("active"));
+      dock.classList.add("active");
+      renderImport();
+      return;
+    }
+
+    const btn=e.target.closest && e.target.closest("[data-rs158-import],[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import]");
+    if(!btn || document.body.classList.contains("rs154-locked")) return;
+
+    const mode=btn.getAttribute("data-rs158-import") || btn.getAttribute("data-rs157-import") || btn.getAttribute("data-rs149-import") || btn.getAttribute("data-rs146-import") || btn.getAttribute("data-import");
+    if(!mode) return;
+
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    if(mode==="export") exportBackup();
+    else choose(mode==="active"?"active":mode==="sold"?"sold":"backup");
+  },true);
+
+  window.addEventListener("click",function(e){
+    const btn=e.target.closest && e.target.closest("[data-rs158-import],[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import],.rs146DockBtn[data-panel='import']");
+    if(btn && !document.body.classList.contains("rs154-locked")){
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    }
+  },true);
+})();
+</script>
