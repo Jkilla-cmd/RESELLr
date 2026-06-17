@@ -34786,257 +34786,6 @@ body{margin-left:0 !important;}
   .rs149Status.good{border-color:rgba(134,239,172,.35);color:#bbf7d0;}
   .rs149Status.bad{border-color:rgba(248,113,113,.35);color:#fecaca;}
 </style>
-
-<script id="rs-v149-restore-lock-js">
-(function(){
-  if(window.__rsV149RestoreLock) return;
-  window.__rsV149RestoreLock = true;
-
-  var rs149Mode = "backup";
-
-  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
-  function write(k,v){localStorage.setItem(k,JSON.stringify(Array.isArray(v)?v:[]))}
-  function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(2)}}
-  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-
-  function active(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
-  function sold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
-  function holds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
-
-  function setActive(v){
-    write("activeInventory",v); write("inventory",v); write("inventoryData",v);
-  }
-  function setSold(v){
-    write("soldInventory",v); write("sold",v); write("soldData",v);
-  }
-  function setHolds(v){
-    write("inventoryHolds",v); write("holds",v); write("holdData",v);
-  }
-
-  function firstArray(obj, keys){
-    if(!obj || typeof obj !== "object") return [];
-    for(var i=0;i<keys.length;i++){
-      var k=keys[i];
-      if(Array.isArray(obj[k])) return obj[k];
-      if(typeof obj[k]==="string"){
-        try{
-          var parsed=JSON.parse(obj[k]);
-          if(Array.isArray(parsed)) return parsed;
-        }catch(e){}
-      }
-    }
-    return [];
-  }
-
-  function normalize(data, depth){
-    depth = depth || 0;
-
-    if(Array.isArray(data)){
-      return {active:data, sold:[], holds:[]};
-    }
-
-    if(!data || typeof data !== "object"){
-      return {active:[], sold:[], holds:[]};
-    }
-
-    var activeArr = firstArray(data, [
-      "activeInventory","inventory","inventoryData","active","items","listings","activeItems","inventoryItems"
-    ]);
-    var soldArr = firstArray(data, [
-      "soldInventory","sold","soldData","soldItems","sales","salesData"
-    ]);
-    var holdArr = firstArray(data, [
-      "inventoryHolds","holds","holdData","holdItems","heldItems"
-    ]);
-
-    if(activeArr.length || soldArr.length || holdArr.length){
-      return {active:activeArr, sold:soldArr, holds:holdArr};
-    }
-
-    var nestedKeys = ["data","app","state","backup","store","payload","RESELLr","resellr","localStorage","storage"];
-    for(var n=0;n<nestedKeys.length;n++){
-      var child=data[nestedKeys[n]];
-      if(child && typeof child === "object" && depth < 6){
-        var found=normalize(child, depth+1);
-        if(found.active.length || found.sold.length || found.holds.length) return found;
-      }
-    }
-
-    if(depth < 3){
-      for(var key in data){
-        if(data[key] && typeof data[key] === "object" && !Array.isArray(data[key])){
-          var deep=normalize(data[key], depth+1);
-          if(deep.active.length || deep.sold.length || deep.holds.length) return deep;
-        }
-      }
-    }
-
-    return {active:[], sold:[], holds:[]};
-  }
-
-  function csv(text){
-    var lines=text.split(/\r?\n/).filter(function(x){return x.trim()!==""});
-    if(!lines.length) return [];
-    var headers=lines.shift().split(",").map(function(x){return x.trim().replace(/^"|"$/g,"")});
-    return lines.map(function(line){
-      var vals=line.split(",");
-      var o={};
-      headers.forEach(function(h,i){o[h]=(vals[i]||"").replace(/^"|"$/g,"")});
-      return o;
-    });
-  }
-
-  function parseText(text){
-    try{return JSON.parse(text)}
-    catch(e){return csv(text)}
-  }
-
-  function status(msg, good){
-    var el=document.querySelector(".rs149Status");
-    var grid=document.querySelector("#rs146Panel .rs146Grid") || document.querySelector("#rs142Panel .rs142Grid");
-    if(!el && grid){
-      el=document.createElement("div");
-      el.className="rs149Status";
-      grid.prepend(el);
-    }
-    if(el){
-      el.className="rs149Status "+(good?"good":"bad");
-      el.textContent=msg;
-    }else{
-      alert(msg);
-    }
-  }
-
-  function restoreParsed(data){
-    if(rs149Mode === "backup"){
-      var n=normalize(data);
-      setActive(n.active);
-      setSold(n.sold);
-      setHolds(n.holds);
-
-      localStorage.setItem("rsLastRestoreAt",new Date().toISOString());
-
-      status("Backup restored: "+n.active.length+" active, "+n.sold.length+" sold, "+n.holds.length+" holds. Reloading...", true);
-      setTimeout(function(){location.reload()},900);
-      return;
-    }
-
-    var arr=Array.isArray(data)?data:normalize(data)[rs149Mode==="sold"?"sold":"active"];
-
-    if(rs149Mode==="sold"){
-      setSold(arr);
-      status("Sold data imported: "+arr.length+" records. Reloading...", true);
-    }else{
-      setActive(arr);
-      status("Active inventory imported: "+arr.length+" records. Reloading...", true);
-    }
-    setTimeout(function(){location.reload()},900);
-  }
-
-  function chooseFile(mode){
-    rs149Mode = mode || "backup";
-
-    var old=document.getElementById("rs149File");
-    if(old) old.remove();
-
-    var input=document.createElement("input");
-    input.type="file";
-    input.id="rs149File";
-    input.accept=".json,.csv,text/csv,application/json";
-    document.body.appendChild(input);
-
-    input.addEventListener("change",function(){
-      var file=input.files && input.files[0];
-      if(!file) return;
-      var reader=new FileReader();
-      reader.onload=function(){
-        try{
-          restoreParsed(parseText(String(reader.result||"")));
-        }catch(err){
-          status("Restore failed: "+(err&&err.message?err.message:"Could not read file."), false);
-        }
-      };
-      reader.readAsText(file);
-    },{once:true});
-
-    input.click();
-  }
-
-  function backup(){
-    var data={
-      exportedAt:new Date().toISOString(),
-      activeInventory:active(),
-      soldInventory:sold(),
-      inventoryHolds:holds()
-    };
-    var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-    var a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
-  }
-
-  function header(t,s){
-    return '<div class="rs146Header"><div><h2>'+esc(t)+'</h2><p>'+esc(s)+'</p></div><button id="rs146Close" type="button">×</button></div>';
-  }
-
-  function renderImport(){
-    var panel=document.getElementById("rs146Panel") || document.getElementById("rs142Panel");
-    if(!panel) return;
-
-    panel.innerHTML = header("Import / Data","Restore backups directly here. This version bypasses the old broken restore handlers.")+
-      '<div class="rs146Grid">'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Active</div><div class="rs146MetricValue">'+active().length+'</div></div>'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Sold</div><div class="rs146MetricValue">'+sold().length+'</div></div>'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+holds().length+'</div></div>'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Backup status</div><div class="rs146MetricValue" style="font-size:20px">Ready</div><div class="rs146MetricNote">JSON and CSV supported</div></div>'+
-        '<div class="rs146ImportGrid">'+
-          '<button class="rs146ImportBtn" data-rs149-import="active" type="button"><strong>Import active</strong><span>Load active inventory from JSON or CSV.</span></button>'+
-          '<button class="rs146ImportBtn" data-rs149-import="sold" type="button"><strong>Import sold</strong><span>Load sold items from JSON or CSV.</span></button>'+
-          '<button class="rs146ImportBtn" data-rs149-import="backup" type="button"><strong>Restore backup</strong><span>Restore active, sold, and holds from a RESELLr backup.</span></button>'+
-          '<button class="rs146ImportBtn" data-rs149-import="export" type="button"><strong>Export backup</strong><span>Download all current data.</span></button>'+
-        '</div>'+
-      '</div>';
-    panel.classList.add("open");
-    document.getElementById("rs146Close")?.addEventListener("click",function(){panel.classList.remove("open")},{once:true});
-  }
-
-  // Capture before older document handlers can run.
-  window.addEventListener("click",function(e){
-    var importDock=e.target.closest && e.target.closest(".rs146DockBtn[data-panel='import'], .rs142DockBtn[data-panel='import']");
-    if(importDock){
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      document.querySelectorAll(".rs146DockBtn,.rs142DockBtn").forEach(function(b){b.classList.remove("active")});
-      importDock.classList.add("active");
-      renderImport();
-      return;
-    }
-
-    var btn=e.target.closest && e.target.closest("[data-rs149-import]");
-    if(btn){
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      var m=btn.getAttribute("data-rs149-import");
-      if(m==="export") backup();
-      else chooseFile(m);
-      return;
-    }
-
-    var oldBtn=e.target.closest && e.target.closest("[data-rs146-import], [data-import]");
-    if(oldBtn){
-      var oldMode=oldBtn.getAttribute("data-rs146-import") || oldBtn.getAttribute("data-import");
-      if(oldMode==="export") return;
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      chooseFile(oldMode==="active"?"active":oldMode==="sold"?"sold":"backup");
-      return;
-    }
-  },true);
-
-})();
-</script>
-
-
 <!-- ===== v150: dashboard extras + skinny inventory/date added + reset moved to Import/Data ===== -->
 <style id="rs-v150-dashboard-inventory-reset-css">
   /* Make Inventory rows slimmer like Sold */
@@ -35886,168 +35635,6 @@ body{margin-left:0 !important;}
 
   #rs156RestoreFile{display:none!important;}
 </style>
-
-<script id="rs-v156-restore-click-fix-js">
-(function(){
-  if(window.__rsV156RestoreClickFix) return;
-  window.__rsV156RestoreClickFix = true;
-
-  function isReallyLocked(){
-    const txt=(document.body.innerText||"").toLowerCase();
-    const hasText=txt.includes("dashboard locked") && txt.includes("enter your passcode");
-    const unlockedHints=txt.includes("passcode settings") && !document.querySelector("#rs146Dock");
-    return hasText && !unlockedHints ? true : hasText;
-  }
-
-  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
-  function write(k,v){localStorage.setItem(k,JSON.stringify(Array.isArray(v)?v:[]))}
-  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v)}
-  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v)}
-  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
-
-  function firstArray(obj,keys){
-    if(!obj || typeof obj!=="object") return [];
-    for(const k of keys){
-      if(Array.isArray(obj[k])) return obj[k];
-      if(typeof obj[k]==="string"){
-        try{const p=JSON.parse(obj[k]); if(Array.isArray(p)) return p;}catch(e){}
-      }
-    }
-    return [];
-  }
-
-  function normalize(data, depth){
-    depth=depth||0;
-    if(Array.isArray(data)) return {active:data,sold:[],holds:[]};
-    if(!data || typeof data!=="object") return {active:[],sold:[],holds:[]};
-
-    let out={
-      active:firstArray(data,["activeInventory","inventory","inventoryData","active","items","listings","activeItems","inventoryItems"]),
-      sold:firstArray(data,["soldInventory","sold","soldData","soldItems","sales","salesData"]),
-      holds:firstArray(data,["inventoryHolds","holds","holdData","holdItems","heldItems"])
-    };
-    if(out.active.length || out.sold.length || out.holds.length) return out;
-
-    const nestedKeys=["data","app","state","backup","store","payload","RESELLr","resellr","localStorage","storage"];
-    for(const k of nestedKeys){
-      if(data[k] && typeof data[k]==="object" && depth<6){
-        const found=normalize(data[k],depth+1);
-        if(found.active.length || found.sold.length || found.holds.length) return found;
-      }
-    }
-    return out;
-  }
-
-  function parseCSV(text){
-    const lines=text.split(/\r?\n/).filter(x=>x.trim()!=="");
-    if(!lines.length) return [];
-    const headers=lines.shift().split(",").map(x=>x.trim().replace(/^"|"$/g,""));
-    return lines.map(line=>{
-      const vals=line.split(",");
-      const o={};
-      headers.forEach((h,i)=>o[h]=(vals[i]||"").replace(/^"|"$/g,""));
-      return o;
-    });
-  }
-
-  function parseText(text){
-    try{return JSON.parse(text)}catch(e){return parseCSV(text)}
-  }
-
-  function chooseRestore(mode){
-    mode=mode||"backup";
-    let input=document.getElementById("rs156RestoreFile");
-    if(input) input.remove();
-
-    input=document.createElement("input");
-    input.id="rs156RestoreFile";
-    input.type="file";
-    input.accept=".json,.csv,text/csv,application/json";
-    document.body.appendChild(input);
-
-    input.addEventListener("change",function(){
-      const file=input.files && input.files[0];
-      if(!file) return;
-      const reader=new FileReader();
-      reader.onload=function(){
-        try{
-          const data=parseText(String(reader.result||""));
-          if(mode==="backup"){
-            const d=normalize(data);
-            setActive(d.active);
-            setSold(d.sold);
-            setHolds(d.holds);
-            alert("Restored: "+d.active.length+" active, "+d.sold.length+" sold, "+d.holds.length+" holds.");
-            location.reload();
-            return;
-          }
-          if(mode==="sold"){
-            const arr=Array.isArray(data)?data:normalize(data).sold;
-            setSold(arr);
-            alert("Imported sold: "+arr.length+" records.");
-            location.reload();
-            return;
-          }
-          const arr=Array.isArray(data)?data:normalize(data).active;
-          setActive(arr);
-          alert("Imported active: "+arr.length+" records.");
-          location.reload();
-        }catch(err){
-          alert("Restore failed: "+(err && err.message ? err.message : "Could not read file."));
-        }
-      };
-      reader.readAsText(file);
-    },{once:true});
-
-    input.click();
-  }
-
-  function exportBackup(){
-    const data={
-      exportedAt:new Date().toISOString(),
-      activeInventory:read("activeInventory").length?read("activeInventory"):read("inventory"),
-      soldInventory:read("soldInventory").length?read("soldInventory"):read("sold"),
-      inventoryHolds:read("inventoryHolds").length?read("inventoryHolds"):read("holds")
-    };
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
-  }
-
-  // Highest priority handler for Import/Data buttons.
-  window.addEventListener("pointerdown",function(e){
-    const btn=e.target.closest && e.target.closest("[data-rs149-import],[data-rs146-import],[data-import]");
-    if(!btn) return;
-    if(document.body.classList.contains("rs154-locked")) return;
-
-    const mode=btn.getAttribute("data-rs149-import") || btn.getAttribute("data-rs146-import") || btn.getAttribute("data-import");
-    if(!mode) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
-    if(mode==="export") exportBackup();
-    else chooseRestore(mode==="active"?"active":mode==="sold"?"sold":"backup");
-  },true);
-
-  window.addEventListener("click",function(e){
-    const btn=e.target.closest && e.target.closest("[data-rs149-import],[data-rs146-import],[data-import]");
-    if(!btn) return;
-    if(document.body.classList.contains("rs154-locked")) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-  },true);
-})();
-</script>
-
-
 <!-- ===== v157: universal backup restore that recognizes old RESELLr backup shapes ===== -->
 <style id="rs-v157-universal-restore-css">
   #rs157RestoreFile{display:none!important;}
@@ -36064,327 +35651,6 @@ body{margin-left:0 !important;}
   .rs157RestoreStatus.good{border-color:rgba(134,239,172,.35);color:#bbf7d0;}
   .rs157RestoreStatus.bad{border-color:rgba(248,113,113,.35);color:#fecaca;}
 </style>
-
-<script id="rs-v157-universal-restore-js">
-(function(){
-  if(window.__rsV157UniversalRestore) return;
-  window.__rsV157UniversalRestore = true;
-
-  const ACTIVE_KEYS = ["activeInventory","inventory","inventoryData","active","items","listings","activeItems","inventoryItems","forSale","forSaleInventory"];
-  const SOLD_KEYS = ["soldInventory","sold","soldData","soldItems","sales","salesData","soldListings","soldRecords"];
-  const HOLD_KEYS = ["inventoryHolds","holds","holdData","holdItems","heldItems","holdInventory"];
-
-  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
-  function write(k,v){localStorage.setItem(k,JSON.stringify(Array.isArray(v)?v:[]))}
-  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v)}
-  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v)}
-  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
-  function currentActive(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
-  function currentSold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
-  function currentHolds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
-
-  function status(msg, good){
-    let el=document.querySelector(".rs157RestoreStatus");
-    const grid=document.querySelector("#rs146Panel .rs146Grid") || document.querySelector("#rs142Panel .rs142Grid") || document.querySelector("#rs136DataPanel .rs136Grid");
-    if(!el && grid){
-      el=document.createElement("div");
-      el.className="rs157RestoreStatus";
-      grid.prepend(el);
-    }
-    if(el){
-      el.className="rs157RestoreStatus "+(good?"good":"bad");
-      el.textContent=msg;
-    }else{
-      alert(msg);
-    }
-  }
-
-  function arr(v){
-    if(Array.isArray(v)) return v;
-    if(typeof v === "string"){
-      const s=v.trim();
-      if(!s) return [];
-      try{
-        const p=JSON.parse(s);
-        return Array.isArray(p)?p:[];
-      }catch(e){return []}
-    }
-    return [];
-  }
-
-  function looksItem(o){
-    if(!o || typeof o!=="object" || Array.isArray(o)) return false;
-    const s=Object.keys(o).join(" ").toLowerCase();
-    return /title|name|item|description|cost|price|list|sold|profit|platform|marketplace|notes|qty|quantity/.test(s);
-  }
-
-  function looksSold(o){
-    if(!looksItem(o)) return false;
-    const s=JSON.stringify(o).toLowerCase();
-    return /solddate|sold_date|saleprice|soldprice|profit|fees|shipping|status["']?\s*:\s*["']?sold/.test(s);
-  }
-
-  function looksHold(o){
-    if(!looksItem(o)) return false;
-    const s=JSON.stringify(o).toLowerCase();
-    return /holddate|hold_date|status["']?\s*:\s*["']?hold|held/.test(s);
-  }
-
-  function pickByKeys(obj, keys){
-    if(!obj || typeof obj!=="object") return [];
-    for(const k of keys){
-      if(Object.prototype.hasOwnProperty.call(obj,k)){
-        const a=arr(obj[k]);
-        if(a.length) return a;
-      }
-    }
-    return [];
-  }
-
-  function deepScan(obj, depth, found){
-    found = found || {active:[],sold:[],holds:[],allArrays:[]};
-    if(!obj || typeof obj!=="object" || depth>8) return found;
-
-    if(Array.isArray(obj)){
-      if(obj.length && obj.some(looksItem)) found.allArrays.push(obj);
-      return found;
-    }
-
-    const active=pickByKeys(obj, ACTIVE_KEYS);
-    const sold=pickByKeys(obj, SOLD_KEYS);
-    const holds=pickByKeys(obj, HOLD_KEYS);
-    if(active.length && !found.active.length) found.active=active;
-    if(sold.length && !found.sold.length) found.sold=sold;
-    if(holds.length && !found.holds.length) found.holds=holds;
-
-    // Handles backups like { "localStorage": { "activeInventory": "[...]" } }
-    for(const [k,v] of Object.entries(obj)){
-      if(typeof v==="string" && /^[\[{]/.test(v.trim())){
-        try{
-          const parsed=JSON.parse(v);
-          deepScan(parsed, depth+1, found);
-        }catch(e){}
-      }else if(v && typeof v==="object"){
-        deepScan(v, depth+1, found);
-      }
-    }
-
-    return found;
-  }
-
-  function classifyFallback(allArrays){
-    const out={active:[],sold:[],holds:[]};
-    const seen=new Set();
-
-    function addMany(type, rows){
-      rows.forEach(r=>{
-        const key=JSON.stringify(r);
-        if(!seen.has(key)){
-          seen.add(key);
-          out[type].push(r);
-        }
-      });
-    }
-
-    allArrays.forEach(rows=>{
-      const items=rows.filter(looksItem);
-      if(!items.length) return;
-      const soldRows=items.filter(looksSold);
-      const holdRows=items.filter(looksHold);
-      const activeRows=items.filter(r=>!looksSold(r)&&!looksHold(r));
-
-      if(soldRows.length >= items.length*.6) addMany("sold",items);
-      else if(holdRows.length >= items.length*.6) addMany("holds",items);
-      else addMany("active",activeRows.length?activeRows:items);
-
-      if(soldRows.length && soldRows.length < items.length*.6) addMany("sold",soldRows);
-      if(holdRows.length && holdRows.length < items.length*.6) addMany("holds",holdRows);
-    });
-
-    return out;
-  }
-
-  function normalize(data){
-    if(Array.isArray(data)){
-      const soldRows=data.filter(looksSold);
-      const holdRows=data.filter(looksHold);
-      if(soldRows.length >= data.length*.6) return {active:[],sold:data,holds:[]};
-      if(holdRows.length >= data.length*.6) return {active:[],sold:[],holds:data};
-      return {active:data,sold:[],holds:[]};
-    }
-
-    const found=deepScan(data,0);
-    let active=found.active, sold=found.sold, holds=found.holds;
-
-    if(!active.length && !sold.length && !holds.length){
-      const fb=classifyFallback(found.allArrays);
-      active=fb.active; sold=fb.sold; holds=fb.holds;
-    }
-
-    return {active:active||[], sold:sold||[], holds:holds||[]};
-  }
-
-  function parseCSV(text){
-    const rows=[]; let cur="", row=[], quote=false;
-    for(let i=0;i<text.length;i++){
-      const c=text[i], nx=text[i+1];
-      if(c==='"' && quote && nx==='"'){cur+='"'; i++;}
-      else if(c==='"'){quote=!quote;}
-      else if(c==="," && !quote){row.push(cur); cur="";}
-      else if((c==="\n" || c==="\r") && !quote){
-        if(cur!=="" || row.length){row.push(cur); rows.push(row); row=[]; cur="";}
-        if(c==="\r" && nx==="\n") i++;
-      }else cur+=c;
-    }
-    if(cur!=="" || row.length){row.push(cur); rows.push(row);}
-    if(!rows.length) return [];
-    const headers=rows.shift().map(h=>String(h).trim());
-    return rows.filter(r=>r.some(x=>String(x).trim()!=="")).map(r=>{
-      const o={}; headers.forEach((h,i)=>o[h]=r[i]??""); return o;
-    });
-  }
-
-  function parseText(text){
-    try{return JSON.parse(text)}
-    catch(e){return parseCSV(text)}
-  }
-
-  function restoreData(data, mode){
-    const normalized=normalize(data);
-
-    if(mode==="active"){
-      const activeRows=Array.isArray(data)?data:normalized.active;
-      setActive(activeRows);
-      status("Imported active inventory: "+activeRows.length+" records. Reloading...", true);
-      setTimeout(()=>location.reload(),900);
-      return;
-    }
-
-    if(mode==="sold"){
-      const soldRows=Array.isArray(data)?data:normalized.sold;
-      setSold(soldRows);
-      status("Imported sold items: "+soldRows.length+" records. Reloading...", true);
-      setTimeout(()=>location.reload(),900);
-      return;
-    }
-
-    // Backup restore should replace all buckets, but preserve existing bucket only when backup omits that bucket
-    // AND at least one other bucket was found. This prevents accidental blank restore.
-    const anyFound=normalized.active.length || normalized.sold.length || normalized.holds.length;
-    if(!anyFound){
-      status("No RESELLr data was found inside this backup. Try opening the file and checking the top-level names.", false);
-      return;
-    }
-
-    setActive(normalized.active);
-    setSold(normalized.sold);
-    setHolds(normalized.holds);
-    localStorage.setItem("rsLastRestoreAt",new Date().toISOString());
-
-    status("Backup restored: "+normalized.active.length+" active, "+normalized.sold.length+" sold, "+normalized.holds.length+" holds. Reloading...", true);
-    setTimeout(()=>location.reload(),1000);
-  }
-
-  function chooseFile(mode){
-    let input=document.getElementById("rs157RestoreFile");
-    if(input) input.remove();
-
-    input=document.createElement("input");
-    input.id="rs157RestoreFile";
-    input.type="file";
-    input.accept=".json,.csv,text/csv,application/json";
-    document.body.appendChild(input);
-
-    input.addEventListener("change",function(){
-      const file=input.files && input.files[0];
-      if(!file) return;
-
-      const reader=new FileReader();
-      reader.onload=function(){
-        try{
-          restoreData(parseText(String(reader.result||"")), mode||"backup");
-        }catch(err){
-          status("Restore failed: "+(err&&err.message?err.message:"Could not read file."), false);
-        }
-      };
-      reader.readAsText(file);
-    },{once:true});
-
-    input.click();
-  }
-
-  function exportBackup(){
-    const data={
-      exportedAt:new Date().toISOString(),
-      activeInventory:currentActive(),
-      soldInventory:currentSold(),
-      inventoryHolds:currentHolds()
-    };
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
-  }
-
-  function renderImportPanel(){
-    const panel=document.getElementById("rs146Panel") || document.getElementById("rs142Panel") || document.getElementById("rs136DataPanel");
-    if(!panel) return false;
-
-    panel.innerHTML =
-      '<div class="rs146Header"><div><h2>Import / Data</h2><p>Universal restore reads new and old RESELLr backup formats.</p></div><button id="rs146Close" type="button">×</button></div>'+
-      '<div class="rs146Grid">'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Active</div><div class="rs146MetricValue">'+currentActive().length+'</div></div>'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Sold</div><div class="rs146MetricValue">'+currentSold().length+'</div></div>'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+currentHolds().length+'</div></div>'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Restore</div><div class="rs146MetricValue" style="font-size:20px">Ready</div><div class="rs146MetricNote">JSON / CSV</div></div>'+
-        '<div class="rs146ImportGrid">'+
-          '<button class="rs146ImportBtn" data-rs157-import="active" type="button"><strong>Import active</strong><span>Import active inventory only.</span></button>'+
-          '<button class="rs146ImportBtn" data-rs157-import="sold" type="button"><strong>Import sold</strong><span>Import sold items only.</span></button>'+
-          '<button class="rs146ImportBtn" data-rs157-import="backup" type="button"><strong>Restore backup</strong><span>Restore active, sold, and holds.</span></button>'+
-          '<button class="rs146ImportBtn" data-rs157-import="export" type="button"><strong>Export backup</strong><span>Download all data.</span></button>'+
-        '</div>'+
-      '</div>';
-
-    panel.classList.add("open");
-    document.getElementById("rs146Close")?.addEventListener("click",()=>panel.classList.remove("open"),{once:true});
-    return true;
-  }
-
-  window.addEventListener("pointerdown",function(e){
-    const importDock=e.target.closest && e.target.closest(".rs146DockBtn[data-panel='import'],.rs142DockBtn[data-panel='import'],.rs136DockBtn[data-panel='import']");
-    if(importDock && !document.body.classList.contains("rs154-locked")){
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      document.querySelectorAll(".rs146DockBtn,.rs142DockBtn,.rs136DockBtn").forEach(b=>b.classList.remove("active"));
-      importDock.classList.add("active");
-      renderImportPanel();
-      return;
-    }
-
-    const btn=e.target.closest && e.target.closest("[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import]");
-    if(!btn || document.body.classList.contains("rs154-locked")) return;
-
-    const mode=btn.getAttribute("data-rs157-import") || btn.getAttribute("data-rs149-import") || btn.getAttribute("data-rs146-import") || btn.getAttribute("data-import");
-    if(!mode) return;
-
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-
-    if(mode==="export") exportBackup();
-    else chooseFile(mode==="active"?"active":mode==="sold"?"sold":"backup");
-  },true);
-
-  window.addEventListener("click",function(e){
-    const btn=e.target.closest && e.target.closest("[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import],.rs146DockBtn[data-panel='import']");
-    if(btn && !document.body.classList.contains("rs154-locked")){
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-    }
-  },true);
-})();
-</script>
-
-
 <!-- ===== v158: database restore fix - supports full localStorage/database exports + diagnostics ===== -->
 <style id="rs-v158-database-restore-debug-css">
   #rs158RestoreFile{display:none!important;}
@@ -36403,378 +35669,6 @@ body{margin-left:0 !important;}
   .rs158Status.bad{border-color:rgba(248,113,113,.35);color:#fecaca;}
   .rs158Status.warn{border-color:rgba(250,204,21,.35);color:#fef3c7;}
 </style>
-
-<script id="rs-v158-database-restore-debug-js">
-(function(){
-  if(window.__rsV158DatabaseRestoreDebug) return;
-  window.__rsV158DatabaseRestoreDebug = true;
-
-  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
-  function write(k,v){localStorage.setItem(k,JSON.stringify(Array.isArray(v)?v:[]))}
-  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-
-  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v)}
-  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v)}
-  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
-  function currentActive(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
-  function currentSold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
-  function currentHolds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
-
-  const ACTIVE_KEYS = [
-    "activeInventory","inventory","inventoryData","active","items","listings",
-    "activeItems","inventoryItems","forSale","forSaleInventory","products"
-  ];
-  const SOLD_KEYS = [
-    "soldInventory","sold","soldData","soldItems","sales","salesData",
-    "soldListings","soldRecords","completedSales"
-  ];
-  const HOLD_KEYS = [
-    "inventoryHolds","holds","holdData","holdItems","heldItems","holdInventory"
-  ];
-
-  function status(msg,type){
-    let el=document.querySelector(".rs158Status");
-    const grid=document.querySelector("#rs146Panel .rs146Grid") || document.querySelector("#rs142Panel .rs142Grid") || document.querySelector("#rs136DataPanel .rs136Grid");
-    if(!el && grid){
-      el=document.createElement("div");
-      el.className="rs158Status";
-      grid.prepend(el);
-    }
-    if(el){
-      el.className="rs158Status "+(type||"");
-      el.textContent=msg;
-    }else{
-      alert(msg);
-    }
-  }
-
-  function maybeParse(v){
-    if(Array.isArray(v)) return v;
-    if(v && typeof v==="object") return v;
-    if(typeof v==="string"){
-      const s=v.trim();
-      if(!s) return v;
-      try{return JSON.parse(s)}catch(e){return v}
-    }
-    return v;
-  }
-
-  function asArray(v){
-    v=maybeParse(v);
-    return Array.isArray(v) ? v : [];
-  }
-
-  function looksItem(o){
-    if(!o || typeof o!=="object" || Array.isArray(o)) return false;
-    const keys=Object.keys(o).join(" ").toLowerCase();
-    return /title|name|item|description|cost|price|list|sold|profit|platform|marketplace|notes|qty|quantity|sku|category|comic/.test(keys);
-  }
-
-  function looksSold(o){
-    if(!looksItem(o)) return false;
-    const s=JSON.stringify(o).toLowerCase();
-    return /solddate|sold_date|saleprice|soldprice|profit|fees|shipping|status["']?\s*:\s*["']?sold|date sold/.test(s);
-  }
-
-  function looksHold(o){
-    if(!looksItem(o)) return false;
-    const s=JSON.stringify(o).toLowerCase();
-    return /holddate|hold_date|status["']?\s*:\s*["']?hold|held/.test(s);
-  }
-
-  function getByKeys(obj,keys){
-    if(!obj || typeof obj!=="object") return [];
-    for(const k of keys){
-      if(Object.prototype.hasOwnProperty.call(obj,k)){
-        const a=asArray(obj[k]);
-        if(a.length) return a;
-      }
-    }
-    return [];
-  }
-
-  function restoreLocalStorageObject(obj){
-    // Handles backups that are literally localStorage dumps:
-    // { "activeInventory": "[...]", "soldInventory": "[...]" }
-    // or { "localStorage": { "activeInventory": "[...]" } }
-    if(!obj || typeof obj!=="object" || Array.isArray(obj)) return false;
-
-    let source=obj.localStorage || obj.storage || obj.local_storage || obj.database || obj.db || obj;
-    if(!source || typeof source!=="object") return false;
-
-    const keys=Object.keys(source);
-    let wrote=0;
-
-    keys.forEach(k=>{
-      const v=source[k];
-      const parsed=maybeParse(v);
-
-      // Write raw localStorage keys back exactly too, in case app uses a custom key.
-      if(typeof v==="string"){
-        try{localStorage.setItem(k,v); wrote++;}catch(e){}
-      }else{
-        try{localStorage.setItem(k,JSON.stringify(v)); wrote++;}catch(e){}
-      }
-
-      // Also mirror known database buckets.
-      if(ACTIVE_KEYS.includes(k)){
-        const a=asArray(parsed);
-        if(a.length){setActive(a);}
-      }
-      if(SOLD_KEYS.includes(k)){
-        const s=asArray(parsed);
-        if(s.length){setSold(s);}
-      }
-      if(HOLD_KEYS.includes(k)){
-        const h=asArray(parsed);
-        if(h.length){setHolds(h);}
-      }
-    });
-
-    // If it had many storage keys, treat it as restored even if bucket names were custom.
-    return wrote > 0;
-  }
-
-  function deepFind(obj,depth,found){
-    found = found || {active:[],sold:[],holds:[],arrays:[],keys:[]};
-    if(!obj || typeof obj!=="object" || depth>9) return found;
-
-    if(Array.isArray(obj)){
-      if(obj.length && obj.some(looksItem)) found.arrays.push(obj);
-      return found;
-    }
-
-    found.keys.push(...Object.keys(obj).slice(0,30));
-
-    const a=getByKeys(obj,ACTIVE_KEYS), s=getByKeys(obj,SOLD_KEYS), h=getByKeys(obj,HOLD_KEYS);
-    if(a.length && !found.active.length) found.active=a;
-    if(s.length && !found.sold.length) found.sold=s;
-    if(h.length && !found.holds.length) found.holds=h;
-
-    for(const [k,v0] of Object.entries(obj)){
-      const v=maybeParse(v0);
-      if(v && typeof v==="object"){
-        deepFind(v,depth+1,found);
-      }
-    }
-
-    return found;
-  }
-
-  function classifyArrays(arrays){
-    const out={active:[],sold:[],holds:[]};
-    const seen=new Set();
-
-    function add(type,row){
-      const key=JSON.stringify(row);
-      if(!seen.has(type+key)){
-        seen.add(type+key);
-        out[type].push(row);
-      }
-    }
-
-    arrays.forEach(rows=>{
-      const itemRows=rows.filter(looksItem);
-      if(!itemRows.length) return;
-
-      itemRows.forEach(r=>{
-        if(looksSold(r)) add("sold",r);
-        else if(looksHold(r)) add("holds",r);
-        else add("active",r);
-      });
-    });
-
-    return out;
-  }
-
-  function normalize(data){
-    if(Array.isArray(data)){
-      const classified=classifyArrays([data]);
-      if(classified.active.length || classified.sold.length || classified.holds.length) return classified;
-      return {active:data,sold:[],holds:[]};
-    }
-
-    const found=deepFind(data,0);
-    let active=found.active, sold=found.sold, holds=found.holds;
-
-    if(!active.length && !sold.length && !holds.length){
-      const c=classifyArrays(found.arrays);
-      active=c.active; sold=c.sold; holds=c.holds;
-    }
-
-    return {active,sold,holds,debugKeys:[...new Set(found.keys)].slice(0,80)};
-  }
-
-  function parseCSV(text){
-    const rows=[]; let cur="", row=[], quote=false;
-    for(let i=0;i<text.length;i++){
-      const c=text[i], nx=text[i+1];
-      if(c==='"' && quote && nx==='"'){cur+='"'; i++;}
-      else if(c==='"'){quote=!quote;}
-      else if(c==="," && !quote){row.push(cur); cur="";}
-      else if((c==="\n" || c==="\r") && !quote){
-        if(cur!=="" || row.length){row.push(cur); rows.push(row); row=[]; cur="";}
-        if(c==="\r" && nx==="\n") i++;
-      }else cur+=c;
-    }
-    if(cur!=="" || row.length){row.push(cur); rows.push(row);}
-    if(!rows.length) return [];
-    const headers=rows.shift().map(h=>String(h).trim());
-    return rows.filter(r=>r.some(x=>String(x).trim()!=="")).map(r=>{
-      const o={}; headers.forEach((h,i)=>o[h]=r[i]??""); return o;
-    });
-  }
-
-  function parseText(text){
-    try{return JSON.parse(text)}
-    catch(e){return parseCSV(text)}
-  }
-
-  function restore(data,mode){
-    // First: restore exact localStorage/database dumps.
-    if(mode==="backup"){
-      const localStorageRestored = restoreLocalStorageObject(data);
-      const normalized=normalize(data);
-
-      // If recognizable buckets exist, mirror them into all known keys.
-      if(normalized.active.length) setActive(normalized.active);
-      if(normalized.sold.length) setSold(normalized.sold);
-      if(normalized.holds.length) setHolds(normalized.holds);
-
-      const afterA=currentActive().length;
-      const afterS=currentSold().length;
-      const afterH=currentHolds().length;
-
-      if(afterA || afterS || afterH || localStorageRestored){
-        localStorage.setItem("rsLastRestoreAt",new Date().toISOString());
-        status("Restore complete.\nActive: "+afterA+"\nSold: "+afterS+"\nHolds: "+afterH+"\nReloading now...", "good");
-        setTimeout(()=>location.reload(),1000);
-        return;
-      }
-
-      status(
-        "Restore did not find inventory buckets.\nTop keys found:\n" +
-        (normalized.debugKeys||[]).join(", "),
-        "bad"
-      );
-      return;
-    }
-
-    const normalized=normalize(data);
-    if(mode==="sold"){
-      const arr=Array.isArray(data)?data:normalized.sold;
-      setSold(arr);
-      status("Imported sold: "+arr.length+" records. Reloading...", "good");
-      setTimeout(()=>location.reload(),900);
-      return;
-    }
-
-    const arr=Array.isArray(data)?data:normalized.active;
-    setActive(arr);
-    status("Imported active: "+arr.length+" records. Reloading...", "good");
-    setTimeout(()=>location.reload(),900);
-  }
-
-  function choose(mode){
-    let input=document.getElementById("rs158RestoreFile");
-    if(input) input.remove();
-
-    input=document.createElement("input");
-    input.id="rs158RestoreFile";
-    input.type="file";
-    input.accept=".json,.csv,text/csv,application/json";
-    document.body.appendChild(input);
-
-    input.addEventListener("change",function(){
-      const file=input.files && input.files[0];
-      if(!file) return;
-
-      status("Reading file: "+file.name+" ...","warn");
-
-      const reader=new FileReader();
-      reader.onload=function(){
-        try{
-          restore(parseText(String(reader.result||"")), mode||"backup");
-        }catch(err){
-          status("Restore failed: "+(err&&err.message?err.message:"unknown error"),"bad");
-        }
-      };
-      reader.readAsText(file);
-    },{once:true});
-
-    input.click();
-  }
-
-  function exportBackup(){
-    const data={
-      exportedAt:new Date().toISOString(),
-      activeInventory:currentActive(),
-      soldInventory:currentSold(),
-      inventoryHolds:currentHolds()
-    };
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
-  }
-
-  function renderImport(){
-    const p=document.getElementById("rs146Panel") || document.getElementById("rs142Panel") || document.getElementById("rs136DataPanel");
-    if(!p) return;
-
-    p.innerHTML =
-      '<div class="rs146Header"><div><h2>Import / Data</h2><p>Database restore now supports exact localStorage/database exports.</p></div><button id="rs146Close" type="button">×</button></div>'+
-      '<div class="rs146Grid">'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Active</div><div class="rs146MetricValue">'+currentActive().length+'</div></div>'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Sold</div><div class="rs146MetricValue">'+currentSold().length+'</div></div>'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+currentHolds().length+'</div></div>'+
-        '<div class="rs146Metric"><div class="rs146MetricLabel">Restore mode</div><div class="rs146MetricValue" style="font-size:20px">Database</div><div class="rs146MetricNote">JSON / CSV / localStorage dump</div></div>'+
-        '<div class="rs146ImportGrid">'+
-          '<button class="rs146ImportBtn" data-rs158-import="active" type="button"><strong>Import active</strong><span>Active inventory only.</span></button>'+
-          '<button class="rs146ImportBtn" data-rs158-import="sold" type="button"><strong>Import sold</strong><span>Sold items only.</span></button>'+
-          '<button class="rs146ImportBtn" data-rs158-import="backup" type="button"><strong>Restore database</strong><span>Restore your full RESELLr database backup.</span></button>'+
-          '<button class="rs146ImportBtn" data-rs158-import="export" type="button"><strong>Export backup</strong><span>Download all current data.</span></button>'+
-        '</div>'+
-      '</div>';
-    p.classList.add("open");
-    document.getElementById("rs146Close")?.addEventListener("click",()=>p.classList.remove("open"),{once:true});
-  }
-
-  window.addEventListener("pointerdown",function(e){
-    const dock=e.target.closest && e.target.closest(".rs146DockBtn[data-panel='import'],.rs142DockBtn[data-panel='import'],.rs136DockBtn[data-panel='import']");
-    if(dock && !document.body.classList.contains("rs154-locked")){
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      document.querySelectorAll(".rs146DockBtn,.rs142DockBtn,.rs136DockBtn").forEach(b=>b.classList.remove("active"));
-      dock.classList.add("active");
-      renderImport();
-      return;
-    }
-
-    const btn=e.target.closest && e.target.closest("[data-rs158-import],[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import]");
-    if(!btn || document.body.classList.contains("rs154-locked")) return;
-
-    const mode=btn.getAttribute("data-rs158-import") || btn.getAttribute("data-rs157-import") || btn.getAttribute("data-rs149-import") || btn.getAttribute("data-rs146-import") || btn.getAttribute("data-import");
-    if(!mode) return;
-
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-
-    if(mode==="export") exportBackup();
-    else choose(mode==="active"?"active":mode==="sold"?"sold":"backup");
-  },true);
-
-  window.addEventListener("click",function(e){
-    const btn=e.target.closest && e.target.closest("[data-rs158-import],[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import],.rs146DockBtn[data-panel='import']");
-    if(btn && !document.body.classList.contains("rs154-locked")){
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-    }
-  },true);
-})();
-</script>
-
-
 <!-- ===== v159: smart restore for database exports, object maps, table rows, and nested records ===== -->
 <style id="rs-v159-smart-restore-css">
   #rs159RestoreFile{display:none!important;}
@@ -36794,39 +35688,49 @@ body{margin-left:0 !important;}
   .rs159Status.warn{border-color:rgba(250,204,21,.35);color:#fef3c7;}
 </style>
 
-<script id="rs-v159-smart-restore-js">
-(function(){
-  if(window.__rsV159SmartRestore) return;
-  window.__rsV159SmartRestore = true;
 
-  const ACTIVE_RE = /(active|inventory|inventor|listing|listings|for.?sale|items|products)/i;
-  const SOLD_RE = /(sold|sales|sale.?records|completed|sold.?items)/i;
-  const HOLD_RE = /(hold|holds|held)/i;
+<!-- ===== v160: final restore - removes old broken restore handlers and owns Import/Data ===== -->
+<style id="rs-v160-final-restore-css">
+  #rs160File{display:none!important}
+  .rs160Status{
+    grid-column:1/-1;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.075);
+    border-radius:18px;
+    padding:12px 14px;
+    color:rgba(248,250,252,.92);
+    font-size:12px;
+    line-height:1.45;
+    white-space:pre-wrap;
+  }
+  .rs160Status.good{border-color:rgba(134,239,172,.36);color:#bbf7d0}
+  .rs160Status.bad{border-color:rgba(248,113,113,.36);color:#fecaca}
+  .rs160Status.warn{border-color:rgba(250,204,21,.36);color:#fef3c7}
+</style>
+
+<script id="rs-v160-final-restore-js">
+(function(){
+  if(window.__rsV160FinalRestore) return;
+  window.__rsV160FinalRestore = true;
 
   function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
   function write(k,v){localStorage.setItem(k,JSON.stringify(Array.isArray(v)?v:[]))}
   function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v);write("items",v)}
   function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v);write("sales",v)}
   function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
-  function currentActive(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
-  function currentSold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
-  function currentHolds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+  function active(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function sold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function holds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 
   function status(msg,type){
-    let el=document.querySelector(".rs159Status");
+    let el=document.querySelector(".rs160Status");
     const grid=document.querySelector("#rs146Panel .rs146Grid") || document.querySelector("#rs142Panel .rs142Grid") || document.querySelector("#rs136DataPanel .rs136Grid");
-    if(!el && grid){
-      el=document.createElement("div");
-      el.className="rs159Status";
-      grid.prepend(el);
-    }
-    if(el){
-      el.className="rs159Status "+(type||"");
-      el.textContent=msg;
-    }else alert(msg);
+    if(!el && grid){el=document.createElement("div");el.className="rs160Status";grid.prepend(el)}
+    if(el){el.className="rs160Status "+(type||"");el.textContent=msg}else alert(msg)
   }
 
-  function parseMaybe(v){
+  function maybeParse(v){
     if(typeof v==="string"){
       const s=v.trim();
       if(!s) return v;
@@ -36835,228 +35739,147 @@ body{margin-left:0 !important;}
     return v;
   }
 
-  function objectValuesIfItems(v){
-    v=parseMaybe(v);
+  function isItem(o){
+    if(!o||typeof o!=="object"||Array.isArray(o))return false;
+    const txt=(Object.keys(o).join(" ")+" "+JSON.stringify(o).slice(0,1000)).toLowerCase();
+    return /title|name|item|description|cost|price|list|sold|profit|platform|marketplace|mercari|ebay|notes|qty|quantity|comic|variant|issue/.test(txt);
+  }
+
+  function isSold(o){
+    const txt=JSON.stringify(o||{}).toLowerCase();
+    return /sold|saleprice|soldprice|profit|fee|shipping|date sold|sold date/.test(txt);
+  }
+
+  function isHold(o){
+    const txt=JSON.stringify(o||{}).toLowerCase();
+    return /hold|held/.test(txt);
+  }
+
+  function rowsFrom(v){
+    v=maybeParse(v);
     if(Array.isArray(v)) return v;
-    if(v && typeof v==="object"){
-      const vals=Object.values(v);
-      if(vals.length && vals.some(looksItem)) return vals;
-      if(Array.isArray(v.rows)) return v.rows;
-      if(Array.isArray(v.records)) return v.records;
-      if(Array.isArray(v.data)) return v.data;
-      if(Array.isArray(v.items)) return v.items;
-      if(Array.isArray(v.value)) return v.value;
-      if(v.value && typeof v.value==="string"){
-        try{
-          const p=JSON.parse(v.value);
-          if(Array.isArray(p)) return p;
-        }catch(e){}
+    if(v&&typeof v==="object"){
+      for(const k of ["rows","records","data","items","value","values"]){
+        const r=rowsFrom(v[k]);
+        if(r.length) return r;
       }
+      const vals=Object.values(v);
+      if(vals.length && vals.some(isItem)) return vals;
     }
     return [];
   }
 
-  function looksItem(o){
-    if(!o || typeof o!=="object" || Array.isArray(o)) return false;
-    const keys=Object.keys(o).join(" ").toLowerCase();
-    const text=JSON.stringify(o).slice(0,1200).toLowerCase();
-    return /title|name|item|description|cost|price|list|sold|profit|platform|marketplace|notes|qty|quantity|sku|category|comic|barcode|variant|issue/.test(keys+" "+text);
-  }
-
-  function looksSold(o){
-    if(!looksItem(o)) return false;
-    const s=JSON.stringify(o).toLowerCase();
-    return /solddate|sold_date|sold date|saleprice|soldprice|sold price|profit|fees|shipping|date sold|status["']?\s*:\s*["']?sold/.test(s);
-  }
-
-  function looksHold(o){
-    if(!looksItem(o)) return false;
-    const s=JSON.stringify(o).toLowerCase();
-    return /holddate|hold_date|hold date|status["']?\s*:\s*["']?hold|held/.test(s);
-  }
-
-  function addUnique(arr,row){
-    const key=JSON.stringify(row);
-    if(!arr.__seen) Object.defineProperty(arr,"__seen",{value:new Set(),enumerable:false});
-    if(!arr.__seen.has(key)){arr.__seen.add(key);arr.push(row);}
-  }
-
-  function scan(node,path,out,depth){
-    if(depth>12 || node==null) return;
-    node=parseMaybe(node);
-
-    if(Array.isArray(node)){
-      const items=node.filter(looksItem);
-      if(items.length){
-        const p=path.join(".").toLowerCase();
-        let target="active";
-        if(SOLD_RE.test(p) || items.filter(looksSold).length >= Math.max(1,items.length*.45)) target="sold";
-        else if(HOLD_RE.test(p) || items.filter(looksHold).length >= Math.max(1,items.length*.45)) target="holds";
-        items.forEach(r=>addUnique(out[target],r));
-      }
-      node.forEach((v,i)=>scan(v,path.concat(String(i)),out,depth+1));
-      return;
-    }
-
-    if(typeof node==="object"){
-      // common table export shapes: [{name:"soldInventory", rows:[...]}]
-      const tableName=String(node.name||node.table||node.store||node.objectStore||node.key||node.id||"");
-      const rowArrays=[
-        objectValuesIfItems(node.rows),
-        objectValuesIfItems(node.records),
-        objectValuesIfItems(node.data),
-        objectValuesIfItems(node.value),
-        objectValuesIfItems(node.items)
-      ].filter(a=>a.length);
-
-      rowArrays.forEach(rows=>{
-        const items=rows.filter(looksItem);
-        if(!items.length) return;
-        const p=(path.join(".")+"."+tableName).toLowerCase();
-        let target="active";
-        if(SOLD_RE.test(p) || items.filter(looksSold).length >= Math.max(1,items.length*.45)) target="sold";
-        else if(HOLD_RE.test(p) || items.filter(looksHold).length >= Math.max(1,items.length*.45)) target="holds";
-        items.forEach(r=>addUnique(out[target],r));
-      });
-
-      // localStorage exact key dump
-      Object.entries(node).forEach(([k,v])=>{
-        const rows=objectValuesIfItems(v);
-        if(rows.length && rows.some(looksItem)){
-          const key=String(k).toLowerCase();
-          let target="active";
-          if(SOLD_RE.test(key)) target="sold";
-          else if(HOLD_RE.test(key)) target="holds";
-          rows.filter(looksItem).forEach(r=>addUnique(out[target],r));
-        }
-      });
-
-      Object.entries(node).forEach(([k,v])=>scan(v,path.concat(k),out,depth+1));
-    }
-  }
-
-  function normalize(data){
+  function collect(data){
     const out={active:[],sold:[],holds:[]};
-    scan(data,[],out,0);
-
-    // If everything landed active but some rows look sold/hold, split them.
-    const stillActive=[];
-    out.active.forEach(r=>{
-      if(looksSold(r)) addUnique(out.sold,r);
-      else if(looksHold(r)) addUnique(out.holds,r);
-      else stillActive.push(r);
-    });
-    out.active=stillActive;
+    const seen={active:new Set(),sold:new Set(),holds:new Set()};
+    function add(type,row){
+      const key=JSON.stringify(row);
+      if(!seen[type].has(key)){seen[type].add(key);out[type].push(row)}
+    }
+    function scan(node,path,depth){
+      if(depth>12||node==null)return;
+      node=maybeParse(node);
+      if(Array.isArray(node)){
+        const items=node.filter(isItem);
+        if(items.length){
+          const p=path.join(".").toLowerCase();
+          let type=/sold|sales|completed/.test(p)?"sold":/hold|held/.test(p)?"holds":"active";
+          items.forEach(r=>add(isSold(r)?"sold":isHold(r)?"holds":type,r));
+        }
+        node.forEach((v,i)=>scan(v,path.concat(String(i)),depth+1));
+        return;
+      }
+      if(typeof node==="object"){
+        for(const [k,v] of Object.entries(node)){
+          const r=rowsFrom(v).filter(isItem);
+          if(r.length){
+            const key=k.toLowerCase();
+            let type=/sold|sales|completed/.test(key)?"sold":/hold|held/.test(key)?"holds":"active";
+            r.forEach(row=>add(isSold(row)?"sold":isHold(row)?"holds":type,row));
+          }
+        }
+        for(const [k,v] of Object.entries(node)) scan(v,path.concat(k),depth+1);
+      }
+    }
+    scan(data,[],0);
     return out;
   }
 
   function parseCSV(text){
-    const rows=[]; let cur="", row=[], quote=false;
+    const rows=[];let cur="",row=[],quote=false;
     for(let i=0;i<text.length;i++){
-      const c=text[i], nx=text[i+1];
-      if(c==='"' && quote && nx==='"'){cur+='"'; i++;}
-      else if(c==='"'){quote=!quote;}
-      else if(c==="," && !quote){row.push(cur); cur="";}
-      else if((c==="\n" || c==="\r") && !quote){
-        if(cur!=="" || row.length){row.push(cur); rows.push(row); row=[]; cur="";}
-        if(c==="\r" && nx==="\n") i++;
-      }else cur+=c;
+      const c=text[i],n=text[i+1];
+      if(c=='"'&&quote&&n=='"'){cur+='"';i++}
+      else if(c=='"')quote=!quote;
+      else if(c==","&&!quote){row.push(cur);cur=""}
+      else if((c=="\n"||c=="\r")&&!quote){if(cur!==""||row.length){row.push(cur);rows.push(row);row=[];cur=""} if(c=="\r"&&n=="\n")i++}
+      else cur+=c;
     }
-    if(cur!=="" || row.length){row.push(cur); rows.push(row);}
-    if(!rows.length) return [];
-    const headers=rows.shift().map(h=>String(h).trim());
-    return rows.filter(r=>r.some(x=>String(x).trim()!=="")).map(r=>{
-      const o={}; headers.forEach((h,i)=>o[h]=r[i]??""); return o;
-    });
+    if(cur!==""||row.length){row.push(cur);rows.push(row)}
+    if(!rows.length)return [];
+    const heads=rows.shift().map(h=>String(h).trim());
+    return rows.filter(r=>r.some(x=>String(x).trim()!=="")).map(r=>{const o={};heads.forEach((h,i)=>o[h]=r[i]??"");return o})
   }
 
-  function parseText(text){
-    try{return JSON.parse(text)}
-    catch(e){return parseCSV(text)}
-  }
+  function parseText(text){try{return JSON.parse(text)}catch(e){return parseCSV(text)}}
 
   function restore(data,mode){
-    const found=normalize(data);
-
+    const found=Array.isArray(data)?collect({activeInventory:data}):collect(data);
     if(mode==="active"){
       const rows=Array.isArray(data)?data:found.active;
-      setActive(rows);
-      status("Imported active inventory: "+rows.length+" records. Reloading...","good");
-      setTimeout(()=>location.reload(),900);
-      return;
+      setActive(rows); status("Imported active: "+rows.length+" records. Reloading...","good"); setTimeout(()=>location.reload(),900); return;
     }
-
     if(mode==="sold"){
       const rows=Array.isArray(data)?data:found.sold;
-      setSold(rows);
-      status("Imported sold items: "+rows.length+" records. Reloading...","good");
-      setTimeout(()=>location.reload(),900);
-      return;
+      setSold(rows); status("Imported sold: "+rows.length+" records. Reloading...","good"); setTimeout(()=>location.reload(),900); return;
     }
-
     const total=found.active.length+found.sold.length+found.holds.length;
     if(!total){
-      status("I could open the file, but could not identify inventory records inside it.\n\nPlease upload the JSON backup file here so I can match its exact structure.", "bad");
+      const keys=data&&typeof data==="object"?Object.keys(data).slice(0,40).join(", "):"not an object";
+      status("No records found in this file.\nTop keys detected: "+keys+"\n\nPlease upload the JSON backup file here next so I can match its exact structure.", "bad");
       return;
     }
-
-    setActive(found.active);
-    setSold(found.sold);
-    setHolds(found.holds);
+    setActive(found.active); setSold(found.sold); setHolds(found.holds);
     localStorage.setItem("rsLastRestoreAt",new Date().toISOString());
-
     status("Database restored:\nActive: "+found.active.length+"\nSold: "+found.sold.length+"\nHolds: "+found.holds.length+"\nReloading...","good");
     setTimeout(()=>location.reload(),1000);
   }
 
   function choose(mode){
-    let input=document.getElementById("rs159RestoreFile");
-    if(input) input.remove();
-    input=document.createElement("input");
-    input.id="rs159RestoreFile";
-    input.type="file";
-    input.accept=".json,.csv,text/csv,application/json";
-    document.body.appendChild(input);
+    let input=document.getElementById("rs160File"); if(input)input.remove();
+    input=document.createElement("input"); input.id="rs160File"; input.type="file"; input.accept=".json,.csv,text/csv,application/json"; document.body.appendChild(input);
     input.addEventListener("change",function(){
-      const file=input.files&&input.files[0];
-      if(!file) return;
+      const file=input.files&&input.files[0]; if(!file)return;
       status("Reading "+file.name+" ...","warn");
       const reader=new FileReader();
-      reader.onload=function(){
-        try{restore(parseText(String(reader.result||"")),mode||"backup")}
-        catch(err){status("Restore failed: "+(err&&err.message?err.message:"unknown error"),"bad")}
-      };
+      reader.onload=function(){try{restore(parseText(String(reader.result||"")),mode||"backup")}catch(err){status("Restore failed: "+(err&&err.message?err.message:"unknown error"),"bad")}};
       reader.readAsText(file);
     },{once:true});
     input.click();
   }
 
   function exportBackup(){
-    const data={exportedAt:new Date().toISOString(),activeInventory:currentActive(),soldInventory:currentSold(),inventoryHolds:currentHolds()};
+    const data={exportedAt:new Date().toISOString(),activeInventory:active(),soldInventory:sold(),inventoryHolds:holds()};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
-    document.body.appendChild(a);
-    a.click();
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json"; document.body.appendChild(a); a.click();
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
   }
 
   function renderImport(){
     const p=document.getElementById("rs146Panel")||document.getElementById("rs142Panel")||document.getElementById("rs136DataPanel");
-    if(!p) return;
-    p.innerHTML='<div class="rs146Header"><div><h2>Import / Data</h2><p>Smart restore finds inventory inside database exports, table rows, object maps, and old backups.</p></div><button id="rs146Close" type="button">×</button></div>'+
-      '<div class="rs146Grid">'+
-      '<div class="rs146Metric"><div class="rs146MetricLabel">Active</div><div class="rs146MetricValue">'+currentActive().length+'</div></div>'+
-      '<div class="rs146Metric"><div class="rs146MetricLabel">Sold</div><div class="rs146MetricValue">'+currentSold().length+'</div></div>'+
-      '<div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+currentHolds().length+'</div></div>'+
-      '<div class="rs146Metric"><div class="rs146MetricLabel">Restore mode</div><div class="rs146MetricValue" style="font-size:20px">Smart scan</div><div class="rs146MetricNote">JSON / CSV / DB export</div></div>'+
-      '<div class="rs146ImportGrid">'+
-      '<button class="rs146ImportBtn" data-rs159-import="active" type="button"><strong>Import active</strong><span>Active inventory only.</span></button>'+
-      '<button class="rs146ImportBtn" data-rs159-import="sold" type="button"><strong>Import sold</strong><span>Sold items only.</span></button>'+
-      '<button class="rs146ImportBtn" data-rs159-import="backup" type="button"><strong>Restore database</strong><span>Smart scan and restore all data.</span></button>'+
-      '<button class="rs146ImportBtn" data-rs159-import="export" type="button"><strong>Export backup</strong><span>Download all current data.</span></button>'+
-      '</div></div>';
+    if(!p)return;
+    p.innerHTML='<div class="rs146Header"><div><h2>Import / Data</h2><p>Final restore handler only. Old broken handlers removed from this file.</p></div><button id="rs146Close" type="button">×</button></div>'+
+    '<div class="rs146Grid">'+
+    '<div class="rs146Metric"><div class="rs146MetricLabel">Active</div><div class="rs146MetricValue">'+active().length+'</div></div>'+
+    '<div class="rs146Metric"><div class="rs146MetricLabel">Sold</div><div class="rs146MetricValue">'+sold().length+'</div></div>'+
+    '<div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+holds().length+'</div></div>'+
+    '<div class="rs146Metric"><div class="rs146MetricLabel">Restore</div><div class="rs146MetricValue" style="font-size:20px">v160</div><div class="rs146MetricNote">JSON / CSV</div></div>'+
+    '<div class="rs146ImportGrid">'+
+    '<button class="rs146ImportBtn" data-rs160-import="active" type="button"><strong>Import active</strong><span>Active inventory only.</span></button>'+
+    '<button class="rs146ImportBtn" data-rs160-import="sold" type="button"><strong>Import sold</strong><span>Sold items only.</span></button>'+
+    '<button class="rs146ImportBtn" data-rs160-import="backup" type="button"><strong>Restore database</strong><span>Restore active, sold, and holds.</span></button>'+
+    '<button class="rs146ImportBtn" data-rs160-import="export" type="button"><strong>Export backup</strong><span>Download all current data.</span></button>'+
+    '</div></div>';
     p.classList.add("open");
     document.getElementById("rs146Close")?.addEventListener("click",()=>p.classList.remove("open"),{once:true});
   }
@@ -37066,22 +35889,19 @@ body{margin-left:0 !important;}
     if(dock&&!document.body.classList.contains("rs154-locked")){
       e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
       document.querySelectorAll(".rs146DockBtn,.rs142DockBtn,.rs136DockBtn").forEach(b=>b.classList.remove("active"));
-      dock.classList.add("active");
-      renderImport();
-      return;
+      dock.classList.add("active"); renderImport(); return;
     }
-    const btn=e.target.closest&&e.target.closest("[data-rs159-import],[data-rs158-import],[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import]");
-    if(!btn||document.body.classList.contains("rs154-locked")) return;
-    const mode=btn.getAttribute("data-rs159-import")||btn.getAttribute("data-rs158-import")||btn.getAttribute("data-rs157-import")||btn.getAttribute("data-rs149-import")||btn.getAttribute("data-rs146-import")||btn.getAttribute("data-import");
-    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-    if(mode==="export") exportBackup(); else choose(mode==="active"?"active":mode==="sold"?"sold":"backup");
+    const btn=e.target.closest&&e.target.closest("[data-rs160-import]");
+    if(btn&&!document.body.classList.contains("rs154-locked")){
+      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+      const mode=btn.getAttribute("data-rs160-import");
+      if(mode==="export")exportBackup(); else choose(mode==="active"?"active":mode==="sold"?"sold":"backup");
+    }
   },true);
 
   window.addEventListener("click",function(e){
-    const btn=e.target.closest&&e.target.closest("[data-rs159-import],[data-rs158-import],[data-rs157-import],[data-rs149-import],[data-rs146-import],[data-import],.rs146DockBtn[data-panel='import']");
-    if(btn&&!document.body.classList.contains("rs154-locked")){
-      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-    }
+    const btn=e.target.closest&&e.target.closest("[data-rs160-import],.rs146DockBtn[data-panel='import']");
+    if(btn&&!document.body.classList.contains("rs154-locked")){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()}
   },true);
 })();
 </script>
