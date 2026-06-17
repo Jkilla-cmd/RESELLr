@@ -34768,3 +34768,270 @@ body{margin-left:0 !important;}
   patchSoldButton();
 })();
 </script>
+
+
+<!-- ===== v149: locked backup restore for bottom Import/Data menu ===== -->
+<style id="rs-v149-restore-lock-css">
+  #rs149File{display:none!important;}
+  .rs149Status{
+    grid-column:1 / -1;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.065);
+    border-radius:18px;
+    padding:12px 14px;
+    color:rgba(248,250,252,.88);
+    font-size:12px;
+    line-height:1.45;
+  }
+  .rs149Status.good{border-color:rgba(134,239,172,.35);color:#bbf7d0;}
+  .rs149Status.bad{border-color:rgba(248,113,113,.35);color:#fecaca;}
+</style>
+
+<script id="rs-v149-restore-lock-js">
+(function(){
+  if(window.__rsV149RestoreLock) return;
+  window.__rsV149RestoreLock = true;
+
+  var rs149Mode = "backup";
+
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){localStorage.setItem(k,JSON.stringify(Array.isArray(v)?v:[]))}
+  function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(2)}}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+  function active(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function sold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function holds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+
+  function setActive(v){
+    write("activeInventory",v); write("inventory",v); write("inventoryData",v);
+  }
+  function setSold(v){
+    write("soldInventory",v); write("sold",v); write("soldData",v);
+  }
+  function setHolds(v){
+    write("inventoryHolds",v); write("holds",v); write("holdData",v);
+  }
+
+  function firstArray(obj, keys){
+    if(!obj || typeof obj !== "object") return [];
+    for(var i=0;i<keys.length;i++){
+      var k=keys[i];
+      if(Array.isArray(obj[k])) return obj[k];
+      if(typeof obj[k]==="string"){
+        try{
+          var parsed=JSON.parse(obj[k]);
+          if(Array.isArray(parsed)) return parsed;
+        }catch(e){}
+      }
+    }
+    return [];
+  }
+
+  function normalize(data, depth){
+    depth = depth || 0;
+
+    if(Array.isArray(data)){
+      return {active:data, sold:[], holds:[]};
+    }
+
+    if(!data || typeof data !== "object"){
+      return {active:[], sold:[], holds:[]};
+    }
+
+    var activeArr = firstArray(data, [
+      "activeInventory","inventory","inventoryData","active","items","listings","activeItems","inventoryItems"
+    ]);
+    var soldArr = firstArray(data, [
+      "soldInventory","sold","soldData","soldItems","sales","salesData"
+    ]);
+    var holdArr = firstArray(data, [
+      "inventoryHolds","holds","holdData","holdItems","heldItems"
+    ]);
+
+    if(activeArr.length || soldArr.length || holdArr.length){
+      return {active:activeArr, sold:soldArr, holds:holdArr};
+    }
+
+    var nestedKeys = ["data","app","state","backup","store","payload","RESELLr","resellr","localStorage","storage"];
+    for(var n=0;n<nestedKeys.length;n++){
+      var child=data[nestedKeys[n]];
+      if(child && typeof child === "object" && depth < 6){
+        var found=normalize(child, depth+1);
+        if(found.active.length || found.sold.length || found.holds.length) return found;
+      }
+    }
+
+    if(depth < 3){
+      for(var key in data){
+        if(data[key] && typeof data[key] === "object" && !Array.isArray(data[key])){
+          var deep=normalize(data[key], depth+1);
+          if(deep.active.length || deep.sold.length || deep.holds.length) return deep;
+        }
+      }
+    }
+
+    return {active:[], sold:[], holds:[]};
+  }
+
+  function csv(text){
+    var lines=text.split(/\r?\n/).filter(function(x){return x.trim()!==""});
+    if(!lines.length) return [];
+    var headers=lines.shift().split(",").map(function(x){return x.trim().replace(/^"|"$/g,"")});
+    return lines.map(function(line){
+      var vals=line.split(",");
+      var o={};
+      headers.forEach(function(h,i){o[h]=(vals[i]||"").replace(/^"|"$/g,"")});
+      return o;
+    });
+  }
+
+  function parseText(text){
+    try{return JSON.parse(text)}
+    catch(e){return csv(text)}
+  }
+
+  function status(msg, good){
+    var el=document.querySelector(".rs149Status");
+    var grid=document.querySelector("#rs146Panel .rs146Grid") || document.querySelector("#rs142Panel .rs142Grid");
+    if(!el && grid){
+      el=document.createElement("div");
+      el.className="rs149Status";
+      grid.prepend(el);
+    }
+    if(el){
+      el.className="rs149Status "+(good?"good":"bad");
+      el.textContent=msg;
+    }else{
+      alert(msg);
+    }
+  }
+
+  function restoreParsed(data){
+    if(rs149Mode === "backup"){
+      var n=normalize(data);
+      setActive(n.active);
+      setSold(n.sold);
+      setHolds(n.holds);
+
+      localStorage.setItem("rsLastRestoreAt",new Date().toISOString());
+
+      status("Backup restored: "+n.active.length+" active, "+n.sold.length+" sold, "+n.holds.length+" holds. Reloading...", true);
+      setTimeout(function(){location.reload()},900);
+      return;
+    }
+
+    var arr=Array.isArray(data)?data:normalize(data)[rs149Mode==="sold"?"sold":"active"];
+
+    if(rs149Mode==="sold"){
+      setSold(arr);
+      status("Sold data imported: "+arr.length+" records. Reloading...", true);
+    }else{
+      setActive(arr);
+      status("Active inventory imported: "+arr.length+" records. Reloading...", true);
+    }
+    setTimeout(function(){location.reload()},900);
+  }
+
+  function chooseFile(mode){
+    rs149Mode = mode || "backup";
+
+    var old=document.getElementById("rs149File");
+    if(old) old.remove();
+
+    var input=document.createElement("input");
+    input.type="file";
+    input.id="rs149File";
+    input.accept=".json,.csv,text/csv,application/json";
+    document.body.appendChild(input);
+
+    input.addEventListener("change",function(){
+      var file=input.files && input.files[0];
+      if(!file) return;
+      var reader=new FileReader();
+      reader.onload=function(){
+        try{
+          restoreParsed(parseText(String(reader.result||"")));
+        }catch(err){
+          status("Restore failed: "+(err&&err.message?err.message:"Could not read file."), false);
+        }
+      };
+      reader.readAsText(file);
+    },{once:true});
+
+    input.click();
+  }
+
+  function backup(){
+    var data={
+      exportedAt:new Date().toISOString(),
+      activeInventory:active(),
+      soldInventory:sold(),
+      inventoryHolds:holds()
+    };
+    var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
+  }
+
+  function header(t,s){
+    return '<div class="rs146Header"><div><h2>'+esc(t)+'</h2><p>'+esc(s)+'</p></div><button id="rs146Close" type="button">×</button></div>';
+  }
+
+  function renderImport(){
+    var panel=document.getElementById("rs146Panel") || document.getElementById("rs142Panel");
+    if(!panel) return;
+
+    panel.innerHTML = header("Import / Data","Restore backups directly here. This version bypasses the old broken restore handlers.")+
+      '<div class="rs146Grid">'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Active</div><div class="rs146MetricValue">'+active().length+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Sold</div><div class="rs146MetricValue">'+sold().length+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Holds</div><div class="rs146MetricValue">'+holds().length+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Backup status</div><div class="rs146MetricValue" style="font-size:20px">Ready</div><div class="rs146MetricNote">JSON and CSV supported</div></div>'+
+        '<div class="rs146ImportGrid">'+
+          '<button class="rs146ImportBtn" data-rs149-import="active" type="button"><strong>Import active</strong><span>Load active inventory from JSON or CSV.</span></button>'+
+          '<button class="rs146ImportBtn" data-rs149-import="sold" type="button"><strong>Import sold</strong><span>Load sold items from JSON or CSV.</span></button>'+
+          '<button class="rs146ImportBtn" data-rs149-import="backup" type="button"><strong>Restore backup</strong><span>Restore active, sold, and holds from a RESELLr backup.</span></button>'+
+          '<button class="rs146ImportBtn" data-rs149-import="export" type="button"><strong>Export backup</strong><span>Download all current data.</span></button>'+
+        '</div>'+
+      '</div>';
+    panel.classList.add("open");
+    document.getElementById("rs146Close")?.addEventListener("click",function(){panel.classList.remove("open")},{once:true});
+  }
+
+  // Capture before older document handlers can run.
+  window.addEventListener("click",function(e){
+    var importDock=e.target.closest && e.target.closest(".rs146DockBtn[data-panel='import'], .rs142DockBtn[data-panel='import']");
+    if(importDock){
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      document.querySelectorAll(".rs146DockBtn,.rs142DockBtn").forEach(function(b){b.classList.remove("active")});
+      importDock.classList.add("active");
+      renderImport();
+      return;
+    }
+
+    var btn=e.target.closest && e.target.closest("[data-rs149-import]");
+    if(btn){
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      var m=btn.getAttribute("data-rs149-import");
+      if(m==="export") backup();
+      else chooseFile(m);
+      return;
+    }
+
+    var oldBtn=e.target.closest && e.target.closest("[data-rs146-import], [data-import]");
+    if(oldBtn){
+      var oldMode=oldBtn.getAttribute("data-rs146-import") || oldBtn.getAttribute("data-import");
+      if(oldMode==="export") return;
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+      chooseFile(oldMode==="active"?"active":oldMode==="sold"?"sold":"backup");
+      return;
+    }
+  },true);
+
+})();
+</script>
