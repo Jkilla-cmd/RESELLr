@@ -35035,3 +35035,326 @@ body{margin-left:0 !important;}
 
 })();
 </script>
+
+
+<!-- ===== v150: dashboard extras + skinny inventory/date added + reset moved to Import/Data ===== -->
+<style id="rs-v150-dashboard-inventory-reset-css">
+  /* Make Inventory rows slimmer like Sold */
+  #rs146Panel.rs150-inventory-mode .rs146Table td,
+  #rs146Panel.rs150-inventory-mode .rs146Table th{
+    padding:8px 9px !important;
+    font-size:11px !important;
+  }
+
+  #rs146Panel.rs150-inventory-mode .rs146Sub{
+    font-size:10px !important;
+    margin-top:2px !important;
+  }
+
+  #rs146Panel.rs150-inventory-mode .rs146ActionBtn{
+    height:26px !important;
+    padding:0 8px !important;
+    font-size:10px !important;
+  }
+
+  #rs146Panel.rs150-inventory-mode .rs146TableCard{
+    min-height:360px !important;
+  }
+
+  .rs150DashWide{
+    grid-column:span 2;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.065);
+    border-radius:22px;
+    padding:14px;
+  }
+
+  .rs150DashFull{
+    grid-column:1 / -1;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.065);
+    border-radius:22px;
+    padding:14px;
+  }
+
+  .rs150GoalRingWrap{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+
+  .rs150GoalRing{
+    width:92px;
+    height:92px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    background:conic-gradient(#bbf7d0 var(--pct,0%), rgba(255,255,255,.08) 0);
+    position:relative;
+    flex:0 0 auto;
+  }
+
+  .rs150GoalRing::after{
+    content:"";
+    position:absolute;
+    inset:8px;
+    border-radius:50%;
+    background:rgba(8,12,20,.96);
+  }
+
+  .rs150GoalRing b{
+    position:relative;
+    z-index:1;
+    color:#fff;
+    font-size:22px;
+    font-weight:950;
+  }
+
+  .rs150List{
+    display:grid;
+    gap:8px;
+    margin-top:10px;
+  }
+
+  .rs150ListRow{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(2,6,23,.20);
+    border-radius:16px;
+    padding:9px 10px;
+  }
+
+  .rs150ListTitle{
+    color:#fff;
+    font-size:12px;
+    font-weight:850;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+  }
+
+  .rs150ListSub{
+    color:rgba(226,232,240,.58);
+    font-size:11px;
+    margin-top:2px;
+  }
+
+  .rs150Money{
+    color:#bbf7d0;
+    font-size:12px;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .rs150SnapshotGrid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:8px;
+    margin-top:10px;
+  }
+
+  .rs150Snap{
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(2,6,23,.18);
+    border-radius:16px;
+    padding:10px;
+  }
+
+  .rs150Snap b{
+    color:#fff;
+    display:block;
+    font-size:18px;
+    letter-spacing:-.035em;
+  }
+
+  .rs150Snap span{
+    color:rgba(226,232,240,.60);
+    display:block;
+    font-size:10px;
+    margin-top:2px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    font-weight:900;
+  }
+
+  .rs150ResetBlock{
+    grid-column:1 / -1;
+    border:1px solid rgba(248,113,113,.22);
+    background:rgba(248,113,113,.075);
+    border-radius:22px;
+    padding:14px;
+  }
+
+  .rs150ResetBlock .rs146ActionBtn{
+    margin-top:10px;
+    height:36px !important;
+    color:#fecaca !important;
+    border-color:rgba(248,113,113,.28) !important;
+  }
+
+  @media(max-width:900px){
+    .rs150DashWide{grid-column:1 / -1;}
+    .rs150SnapshotGrid{grid-template-columns:1fr 1fr;}
+  }
+</style>
+
+<script id="rs-v150-dashboard-inventory-reset-js">
+(function(){
+  if(window.__rsV150DashboardInventoryReset) return;
+  window.__rsV150DashboardInventoryReset = true;
+
+  function n(v){const x=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(x)?x:0;}
+  function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(2)}}
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v||[]));}catch(e){}}
+  function active(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function sold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function holds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v)}
+  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v)}
+  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
+  function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return 0}
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim()}
+  function platform(r){return String(r.platform||r.marketplace||r.source||r.store||"").trim()}
+  function qty(r){return val(r,["qty","quantity","count"])||1}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"])}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"])}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
+  function profit(r){for(const k of["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+  function addedDate(r){const raw=r.addedAt||r.createdAt||r.dateAdded||r.addedDate||r.created||r.timestamp||r.date||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function soldDate(r){const raw=r.soldDate||r.date||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function fmt(d){return d?d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"2-digit"}):""}
+  function withIndex(rows){return rows.map((row,index)=>({row,index}))}
+  function sortActive(rows){return rows.slice().sort((a,b)=>{const da=addedDate(a.row),db=addedDate(b.row);if(da&&db)return db-da;if(db&&!da)return 1;if(da&&!db)return -1;return b.index-a.index})}
+  function sortSold(rows){return rows.slice().sort((a,b)=>{const da=soldDate(a.row),db=soldDate(b.row);if(da&&db)return db-da;if(db&&!da)return 1;if(da&&!db)return -1;return b.index-a.index})}
+  function filter(rows,q){q=String(q||"").toLowerCase().trim();if(!q)return rows;return rows.filter(x=>JSON.stringify(x.row||x).toLowerCase().includes(q))}
+  function header(t,s){return '<div class="rs146Header"><div><h2>'+esc(t)+'</h2><p>'+esc(s)+'</p></div><button id="rs146Close" type="button">×</button></div>'}
+  function open(c,mode){const p=document.getElementById("rs146Panel");if(!p)return;p.classList.remove("rs150-inventory-mode");if(mode==="inventory")p.classList.add("rs150-inventory-mode");p.innerHTML=c;p.classList.add("open");document.getElementById("rs146Close")?.addEventListener("click",()=>p.classList.remove("open"),{once:true})}
+
+  function monthStart(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1)}
+  function thisMonthSold(){const start=monthStart();return sold().filter(r=>{const d=soldDate(r);return d&&d>=start})}
+  function lastNDaysSold(days){const d=new Date();d.setDate(d.getDate()-days);d.setHours(0,0,0,0);return sold().filter(r=>{const sd=soldDate(r);return sd&&sd>=d})}
+
+  function graphCards(prefix){
+    return '<div class="rs146GraphCard"><div class="rs146MetricLabel">Business growth</div><canvas id="'+prefix+'Growth"></canvas></div><div class="rs146GraphCard"><div class="rs146MetricLabel">Monthly profit view</div><canvas id="'+prefix+'Monthly"></canvas></div>';
+  }
+
+  function dayKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+  function monthKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+  function dailyRows(){const by=new Map();sold().forEach(r=>{const d=soldDate(r);if(!d)return;const k=dayKey(d);if(!by.has(k))by.set(k,{date:new Date(d.getFullYear(),d.getMonth(),d.getDate()),income:0,profit:0,costProfit:0});const b=by.get(k);b.income+=sale(r);b.profit+=profit(r);b.costProfit+=cost(r)+profit(r)});let income=0,prof=0,cp=0;return Array.from(by.values()).sort((a,b)=>a.date-b.date).map(x=>{income+=x.income;prof+=x.profit;cp+=x.costProfit;return{label:x.date.toLocaleDateString("en-US",{month:"short",day:"numeric"}),income:+income.toFixed(2),profit:+prof.toFixed(2),costProfit:+cp.toFixed(2)}})}
+  function monthlyRows(){const by=new Map();sold().forEach(r=>{const d=soldDate(r);if(!d)return;const k=monthKey(d);if(!by.has(k))by.set(k,{date:new Date(d.getFullYear(),d.getMonth(),1),income:0,profit:0,cost:0,costProfit:0});const b=by.get(k);b.income+=sale(r);b.profit+=profit(r);b.cost+=cost(r);b.costProfit+=cost(r)+profit(r)});return Array.from(by.values()).sort((a,b)=>a.date-b.date).map(x=>({label:x.date.toLocaleDateString("en-US",{month:"short",year:"2-digit"}),income:+x.income.toFixed(2),profit:+x.profit.toFixed(2),cost:+x.cost.toFixed(2),costProfit:+x.costProfit.toFixed(2)}))}
+  function drawGraphs(prefix){
+    if(!window.Chart)return;
+    const g=document.getElementById(prefix+"Growth"); if(g){const rows=dailyRows();try{const old=Chart.getChart&&Chart.getChart(g);if(old)old.destroy()}catch(e){}new Chart(g,{type:"line",data:{labels:rows.map(x=>x.label),datasets:[{label:"Total Income",data:rows.map(x=>x.income),borderWidth:3,pointRadius:0,tension:.25,fill:false},{label:"Total Profit",data:rows.map(x=>x.profit),borderWidth:3,pointRadius:0,tension:.25,fill:false},{label:"Cost + Profit",data:rows.map(x=>x.costProfit),borderWidth:4,pointRadius:0,tension:.25,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top"},tooltip:{callbacks:{label:function(ctx){return" "+ctx.dataset.label+": "+money(ctx.parsed.y)}}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.10)"}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}},grid:{color:"rgba(255,255,255,.10)"}}}}})}
+    const m=document.getElementById(prefix+"Monthly"); if(m){const rows=monthlyRows();try{const old=Chart.getChart&&Chart.getChart(m);if(old)old.destroy()}catch(e){}new Chart(m,{type:"line",data:{labels:rows.map(x=>x.label),datasets:[{label:"Total Income",data:rows.map(x=>x.income),borderWidth:3,pointRadius:2,tension:.30,fill:false},{label:"Cost of Sold",data:rows.map(x=>x.cost),borderWidth:3,pointRadius:2,tension:.30,fill:false},{label:"Profit",data:rows.map(x=>x.profit),borderWidth:3,pointRadius:2,tension:.30,fill:false},{label:"Cost + Profit",data:rows.map(x=>x.costProfit),borderWidth:4,pointRadius:2,tension:.30,fill:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},plugins:{legend:{position:"top"},tooltip:{callbacks:{label:function(ctx){return" "+ctx.dataset.label+": "+money(ctx.parsed.y)}}}},scales:{x:{ticks:{maxTicksLimit:8},grid:{color:"rgba(255,255,255,.10)"}},y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}},grid:{color:"rgba(255,255,255,.10)"}}}}})}
+  }
+
+  function renderDashboard(){
+    const a=active(),s=sold(),h=holds(),m=thisMonthSold(),last7=lastNDaysSold(7),last30=lastNDaysSold(30);
+    const income=s.reduce((x,r)=>x+sale(r),0),prof=s.reduce((x,r)=>x+profit(r),0),cp=s.reduce((x,r)=>x+cost(r)+profit(r),0),av=a.reduce((x,r)=>x+list(r),0);
+    const monthProfit=m.reduce((x,r)=>x+profit(r),0), goal=300, pct=Math.max(0,Math.min(100,Math.round(monthProfit/goal*100)));
+    const recent=sortSold(withIndex(s)).slice(0,6);
+    const recentRows=recent.map(x=>'<div class="rs150ListRow"><div><div class="rs150ListTitle">'+esc(title(x.row))+'</div><div class="rs150ListSub">'+esc(platform(x.row)||"Sold item")+' · '+esc(fmt(soldDate(x.row)))+'</div></div><div class="rs150Money">'+money(profit(x.row))+'</div></div>').join("") || '<div class="rs146MetricNote">No recent sold items yet.</div>';
+    open(header("Dashboard","Daily goals, sold snapshot, recent sold items, and graphs.")+
+      '<div class="rs146Grid">'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Active value</div><div class="rs146MetricValue">'+money(av)+'</div><div class="rs146MetricNote">'+a.length+' active listings</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Total income</div><div class="rs146MetricValue">'+money(income)+'</div><div class="rs146MetricNote">'+s.length+' sold items</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Total profit</div><div class="rs146MetricValue">'+money(prof)+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Cost + Profit</div><div class="rs146MetricValue">'+money(cp)+'</div></div>'+
+
+        '<div class="rs150DashWide"><div class="rs146MetricLabel">Monthly profit goal</div><div class="rs150GoalRingWrap"><div class="rs150GoalRing" style="--pct:'+pct+'%"><b>'+pct+'%</b></div><div><div class="rs146MetricValue">'+money(monthProfit)+'</div><div class="rs146MetricNote">Toward '+money(goal)+' goal · '+m.length+' sale(s) this month</div></div></div></div>'+
+        '<div class="rs150DashWide"><div class="rs146MetricLabel">Sold snapshot</div><div class="rs150SnapshotGrid"><div class="rs150Snap"><b>'+last7.length+'</b><span>7 days</span></div><div class="rs150Snap"><b>'+last30.length+'</b><span>30 days</span></div><div class="rs150Snap"><b>'+m.length+'</b><span>This month</span></div><div class="rs150Snap"><b>'+h.length+'</b><span>Holds</span></div></div></div>'+
+        '<div class="rs150DashFull"><div class="rs146MetricLabel">Recently sold</div><div class="rs150List">'+recentRows+'</div></div>'+
+        graphCards("rs150Dash")+
+      '</div>');
+    setTimeout(()=>drawGraphs("rs150Dash"),80);setTimeout(()=>drawGraphs("rs150Dash"),420);
+  }
+
+  function bindSearch(type){const inp=document.getElementById("rs146Search");if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);inp.addEventListener("input",()=>{clearTimeout(inp.__t);const v=inp.value;inp.__t=setTimeout(()=>renderInventory(v),180)})}}
+
+  function renderInventory(q){
+    const rows=filter(sortActive(withIndex(active())),q),tv=rows.reduce((x,i)=>x+list(i.row),0),tc=rows.reduce((x,i)=>x+cost(i.row),0);
+    const body=rows.map(x=>{const r=x.row,i=x.index;return '<tr><td>'+esc(title(r))+'<div class="rs146Sub">'+esc(platform(r)||"Active listing")+'</div></td><td>'+esc(fmt(addedDate(r))||"—")+'</td><td class="rs146Money">'+money(cost(r))+'</td><td class="rs146Money">'+money(list(r))+'</td><td>'+qty(r)+'</td><td><div class="rs146Actions"><button class="rs146ActionBtn" data-rs146-act="edit-active" data-index="'+i+'">Edit</button><button class="rs146ActionBtn" data-rs146-act="comps" data-index="'+i+'">Comps</button><button class="rs146ActionBtn" data-rs146-act="move-sold" data-index="'+i+'">Move to sold</button><button class="rs146ActionBtn rs146Danger" data-rs146-act="delete-active" data-index="'+i+'">Delete</button></div></td></tr>'}).join("");
+    open(header("Inventory","Newest additions first. Date added is now shown, with slimmer rows.")+
+      '<div class="rs146Grid"><div class="rs146Metric"><div class="rs146MetricLabel">Active listings</div><div class="rs146MetricValue">'+rows.length+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Listed value</div><div class="rs146MetricValue">'+money(tv)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Inventory cost</div><div class="rs146MetricValue">'+money(tc)+'</div></div><div class="rs146Metric"><div class="rs146MetricLabel">Avg list</div><div class="rs146MetricValue">'+money(rows.length?tv/rows.length:0)+'</div></div><div class="rs146SearchRow"><input id="rs146Search" class="rs146Search" placeholder="Search inventory..." value="'+esc(q||"")+'"></div><div class="rs146TableCard"><table class="rs146Table"><thead><tr><th>Item</th><th>Date added</th><th>Cost</th><th>List</th><th>Qty</th><th>Actions</th></tr></thead><tbody>'+(body||'<tr><td colspan="6">No active inventory found.</td></tr>')+'</tbody></table></div></div>',
+      "inventory");
+    bindSearch("inventory");
+  }
+
+  function fullResetConfirm(){
+    const ok1=confirm("Full reset RESELLr? This clears active inventory, sold items, holds, filters, dashboard cache, backgrounds, and old duplicate storage keys. Export a backup first.");
+    if(!ok1) return;
+    const ok2=confirm("Are you sure? This cannot be undone without a backup.");
+    if(!ok2) return;
+
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++) keys.push(localStorage.key(i));
+    keys.forEach(k=>{
+      if(/inventory|sold|hold|resellr|rs15|rs136|rs142|rs146|rs147|rs148|rs149|rs150|chart|backup|tax|dashboard|commandbg|bg|filter|goal/i.test(k)){
+        localStorage.removeItem(k);
+      }
+    });
+    ["activeInventory","inventory","inventoryData","soldInventory","sold","soldData","inventoryHolds","holds","holdData"].forEach(k=>localStorage.setItem(k,"[]"));
+    alert("RESELLr fully reset. Reloading...");
+    location.reload();
+  }
+
+  function renderImportAddReset(){
+    setTimeout(()=>{
+      const panel=document.getElementById("rs146Panel");
+      if(!panel || !panel.classList.contains("open")) return;
+      if(!/Import \/ Data/i.test(panel.textContent||"")) return;
+      if(panel.querySelector("#rs150FullResetBtn")) return;
+
+      const grid=panel.querySelector(".rs146Grid");
+      if(!grid) return;
+      const block=document.createElement("div");
+      block.className="rs150ResetBlock";
+      block.innerHTML='<div class="rs146MetricLabel">Danger zone</div><div class="rs146MetricValue" style="font-size:20px">Full reset</div><div class="rs146MetricNote">Moved here from Tax Reports. Clears all RESELLr local data and old duplicate keys.</div><button id="rs150FullResetBtn" class="rs146ActionBtn rs146Danger" type="button">Full reset RESELLr</button>';
+      grid.appendChild(block);
+      document.getElementById("rs150FullResetBtn").addEventListener("click",fullResetConfirm);
+    },120);
+  }
+
+  function patchClicks(){
+    window.addEventListener("click",function(e){
+      const dock=e.target.closest&&e.target.closest(".rs146DockBtn");
+      if(dock && dock.dataset.panel==="dashboard"){
+        e.preventDefault();e.stopImmediatePropagation();
+        document.querySelectorAll(".rs146DockBtn").forEach(b=>b.classList.remove("active"));
+        dock.classList.add("active");
+        renderDashboard();
+        return;
+      }
+      if(dock && dock.dataset.panel==="inventory"){
+        e.preventDefault();e.stopImmediatePropagation();
+        document.querySelectorAll(".rs146DockBtn").forEach(b=>b.classList.remove("active"));
+        dock.classList.add("active");
+        renderInventory("");
+        return;
+      }
+      if(dock && dock.dataset.panel==="import"){
+        setTimeout(renderImportAddReset,250);
+      }
+      if(dock && dock.dataset.panel==="tax"){
+        // Remove duplicate reset from tax, if earlier patch created it.
+        setTimeout(()=>document.querySelectorAll("#rs147ResetAll,.rs147ResetZone").forEach(el=>el.remove()),250);
+      }
+    },true);
+  }
+
+  patchClicks();
+
+  // Enhance current dashboard shortly after load
+  setTimeout(()=>{
+    const activeDash=document.querySelector(".rs146DockBtn[data-panel='dashboard'].active");
+    if(activeDash) renderDashboard();
+  },900);
+})();
+</script>
