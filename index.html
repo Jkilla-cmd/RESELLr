@@ -34471,3 +34471,300 @@ body{margin-left:0 !important;}
   patchClicks();
 })();
 </script>
+
+
+<!-- ===== v148: Sold monthly bar graphs + item/platform/month/year filters ===== -->
+<style id="rs-v148-sold-monthly-bars-filters-css">
+  .rs148FilterBar{
+    grid-column:1 / -1;
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr 1fr auto;
+    gap:10px;
+    align-items:center;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.055);
+    border-radius:22px;
+    padding:12px;
+  }
+
+  .rs148FilterBar input,
+  .rs148FilterBar select{
+    width:100%;
+    height:42px;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.075) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    color:#fff !important;
+    padding:0 13px !important;
+  }
+
+  .rs148FilterBar button{
+    height:42px !important;
+    border-radius:999px !important;
+    padding:0 14px !important;
+    font-weight:950 !important;
+    white-space:nowrap;
+  }
+
+  .rs148MonthlyBars{
+    grid-column:1 / -1;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .rs148BarCard{
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.065);
+    border-radius:22px;
+    padding:14px;
+    min-height:340px;
+  }
+
+  .rs148BarCard canvas{
+    width:100% !important;
+    height:300px !important;
+    display:block !important;
+  }
+
+  .rs148FilterNote{
+    color:rgba(226,232,240,.58);
+    font-size:11px;
+    margin-top:6px;
+  }
+
+  @media(max-width:1000px){
+    .rs148FilterBar{
+      grid-template-columns:1fr 1fr;
+    }
+    .rs148MonthlyBars{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media(max-width:620px){
+    .rs148FilterBar{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+
+<script id="rs-v148-sold-monthly-bars-filters-js">
+(function(){
+  if(window.__rsV148SoldMonthlyBarsFilters) return;
+  window.__rsV148SoldMonthlyBarsFilters = true;
+
+  function n(v){const x=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(x)?x:0;}
+  function money(v){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(2)}}
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v||[]));}catch(e){}}
+  function sold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function active(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v)}
+  function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return 0}
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim()}
+  function platform(r){return String(r.platform||r.marketplace||r.source||r.store||"Unspecified").trim()||"Unspecified"}
+  function cost(r){return val(r,["cost","Cost","itemCost","item_cost","cogs","costOfSold","cost_of_sold","buyCost","purchasePrice"])}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee","ebayFee","mercariFee"])}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
+  function profit(r){for(const k of["profit","netProfit","totalProfit","net","netIncome"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+  function soldDate(r){const raw=r.soldDate||r.date||r.Date||r["Sold Date"]||r.sold_date||r.saleDate||r.createdAt||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function monthNum(r){const d=soldDate(r);return d?d.getMonth()+1:""}
+  function yearNum(r){const d=soldDate(r);return d?d.getFullYear():"Unknown"}
+  function monthLabel(y,m){return new Date(Number(y),Number(m)-1,1).toLocaleDateString("en-US",{month:"short",year:"2-digit"})}
+  function fmt(d){return d?d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"2-digit"}):""}
+  function withIndex(rows){return rows.map((row,index)=>({row,index}))}
+  function sortSold(rows){return rows.slice().sort((a,b)=>{const da=soldDate(a.row),db=soldDate(b.row);if(da&&db)return db-da;if(db&&!da)return 1;if(da&&!db)return -1;return b.index-a.index})}
+
+  function getFilters(){
+    return {
+      q: document.getElementById("rs148ItemFilter")?.value || localStorage.getItem("rs148SoldItemFilter") || "",
+      platform: document.getElementById("rs148PlatformFilter")?.value || localStorage.getItem("rs148SoldPlatformFilter") || "All",
+      month: document.getElementById("rs148MonthFilter")?.value || localStorage.getItem("rs148SoldMonthFilter") || "All",
+      year: document.getElementById("rs148YearFilter")?.value || localStorage.getItem("rs148SoldYearFilter") || "All"
+    };
+  }
+
+  function saveFilters(f){
+    localStorage.setItem("rs148SoldItemFilter",f.q||"");
+    localStorage.setItem("rs148SoldPlatformFilter",f.platform||"All");
+    localStorage.setItem("rs148SoldMonthFilter",f.month||"All");
+    localStorage.setItem("rs148SoldYearFilter",f.year||"All");
+  }
+
+  function filteredSold(){
+    const f=getFilters();
+    saveFilters(f);
+    return withIndex(sold()).filter(x=>{
+      const r=x.row;
+      const q=String(f.q||"").toLowerCase().trim();
+      if(q && !JSON.stringify(r).toLowerCase().includes(q)) return false;
+      if(f.platform && f.platform!=="All" && platform(r)!==f.platform) return false;
+      if(f.year && f.year!=="All" && String(yearNum(r))!==String(f.year)) return false;
+      if(f.month && f.month!=="All" && String(monthNum(r))!==String(f.month)) return false;
+      return true;
+    });
+  }
+
+  function options(values,current){
+    return values.map(v=>'<option value="'+esc(v)+'" '+(String(v)===String(current)?'selected':'')+'>'+esc(v)+'</option>').join("");
+  }
+
+  function filterBar(){
+    const f=getFilters();
+    const all=sold();
+    const platforms=["All",...Array.from(new Set(all.map(platform))).sort()];
+    const years=["All",...Array.from(new Set(all.map(yearNum).filter(Boolean))).sort((a,b)=>String(b).localeCompare(String(a)))];
+    const months=["All",["1","January"],["2","February"],["3","March"],["4","April"],["5","May"],["6","June"],["7","July"],["8","August"],["9","September"],["10","October"],["11","November"],["12","December"]];
+    const monthOpts=months.map(m=>{
+      if(m==="All") return '<option value="All" '+(f.month==="All"?'selected':'')+'>All months</option>';
+      return '<option value="'+m[0]+'" '+(String(f.month)===m[0]?'selected':'')+'>'+m[1]+'</option>';
+    }).join("");
+
+    return '<div class="rs148FilterBar">'+
+      '<div><input id="rs148ItemFilter" placeholder="Filter sold items..." value="'+esc(f.q||"")+'"><div class="rs148FilterNote">Search by item name, notes, platform, or any saved field.</div></div>'+
+      '<select id="rs148PlatformFilter">'+options(platforms,f.platform)+'</select>'+
+      '<select id="rs148MonthFilter">'+monthOpts+'</select>'+
+      '<select id="rs148YearFilter">'+options(years,f.year)+'</select>'+
+      '<button id="rs148ClearFilters" type="button">Clear</button>'+
+    '</div>';
+  }
+
+  function monthlyAgg(rows){
+    const by=new Map();
+    rows.forEach(x=>{
+      const r=x.row, d=soldDate(r);
+      if(!d) return;
+      const y=d.getFullYear(), m=d.getMonth()+1, k=y+"-"+String(m).padStart(2,"0");
+      if(!by.has(k)) by.set(k,{key:k,year:y,month:m,label:monthLabel(y,m),profit:0,income:0,cost:0,count:0});
+      const b=by.get(k);
+      b.profit+=profit(r);
+      b.income+=sale(r);
+      b.cost+=cost(r);
+      b.count+=1;
+    });
+    return Array.from(by.values()).sort((a,b)=>a.key.localeCompare(b.key)).map(x=>({
+      label:x.label,
+      profit:+x.profit.toFixed(2),
+      income:+x.income.toFixed(2),
+      cost:+x.cost.toFixed(2),
+      count:x.count
+    }));
+  }
+
+  function monthlyBars(){
+    return '<div class="rs148MonthlyBars">'+
+      '<div class="rs148BarCard"><div class="rs146MetricLabel">Monthly profit</div><canvas id="rs148MonthlyProfitBar"></canvas></div>'+
+      '<div class="rs148BarCard"><div class="rs146MetricLabel">Items sold monthly</div><canvas id="rs148MonthlyCountBar"></canvas></div>'+
+    '</div>';
+  }
+
+  function drawMonthlyBars(){
+    if(!window.Chart) return;
+    const rows=monthlyAgg(filteredSold());
+
+    const profitCanvas=document.getElementById("rs148MonthlyProfitBar");
+    if(profitCanvas){
+      try{const old=Chart.getChart&&Chart.getChart(profitCanvas); if(old)old.destroy();}catch(e){}
+      new Chart(profitCanvas,{
+        type:"bar",
+        data:{labels:rows.map(x=>x.label),datasets:[{label:"Profit",data:rows.map(x=>x.profit),borderWidth:1}]},
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          animation:false,
+          plugins:{legend:{position:"top"},tooltip:{callbacks:{label:function(ctx){return" Profit: "+money(ctx.parsed.y)}}}},
+          scales:{
+            x:{grid:{color:"rgba(255,255,255,.08)"}},
+            y:{beginAtZero:true,ticks:{callback:function(v){return money(v)}},grid:{color:"rgba(255,255,255,.10)"}}
+          }
+        }
+      });
+    }
+
+    const countCanvas=document.getElementById("rs148MonthlyCountBar");
+    if(countCanvas){
+      try{const old=Chart.getChart&&Chart.getChart(countCanvas); if(old)old.destroy();}catch(e){}
+      new Chart(countCanvas,{
+        type:"bar",
+        data:{labels:rows.map(x=>x.label),datasets:[{label:"Items sold",data:rows.map(x=>x.count),borderWidth:1}]},
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          animation:false,
+          plugins:{legend:{position:"top"},tooltip:{callbacks:{label:function(ctx){return" Items sold: "+ctx.parsed.y}}}},
+          scales:{
+            x:{grid:{color:"rgba(255,255,255,.08)"}},
+            y:{beginAtZero:true,ticks:{precision:0},grid:{color:"rgba(255,255,255,.10)"}}
+          }
+        }
+      });
+    }
+  }
+
+  function header(t,s){return '<div class="rs146Header"><div><h2>'+esc(t)+'</h2><p>'+esc(s)+'</p></div><button id="rs146Close" type="button">×</button></div>'}
+  function open(c){const p=document.getElementById("rs146Panel");if(!p)return;p.innerHTML=c;p.classList.add("open");document.getElementById("rs146Close")?.addEventListener("click",()=>p.classList.remove("open"),{once:true})}
+
+  function renderSoldOverride(){
+    const rows=sortSold(filteredSold());
+    const income=rows.reduce((x,i)=>x+sale(i.row),0);
+    const prof=rows.reduce((x,i)=>x+profit(i.row),0);
+    const costs=rows.reduce((x,i)=>x+cost(i.row),0);
+    const body=rows.map(x=>{
+      const r=x.row,i=x.index;
+      return '<tr><td>'+esc(title(r))+'<div class="rs146Sub">'+esc(platform(r)||"Sold item")+'</div></td><td>'+esc(fmt(soldDate(r)))+'</td><td class="rs146Money">'+money(sale(r))+'</td><td class="rs146Money">'+money(cost(r))+'</td><td class="rs146Money">'+money(profit(r))+'</td><td><div class="rs146Actions"><button class="rs146ActionBtn" data-rs146-act="edit-sold" data-index="'+i+'">Edit</button><button class="rs146ActionBtn rs146Danger" data-rs146-act="delete-sold" data-index="'+i+'">Delete</button></div></td></tr>';
+    }).join("");
+
+    open(header("Sold","Monthly bar graphs are back, with item, platform, month, and year filters.")+
+      '<div class="rs146Grid">'+
+        filterBar()+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Filtered sold</div><div class="rs146MetricValue">'+rows.length+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Filtered income</div><div class="rs146MetricValue">'+money(income)+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Filtered profit</div><div class="rs146MetricValue">'+money(prof)+'</div></div>'+
+        '<div class="rs146Metric"><div class="rs146MetricLabel">Filtered cost</div><div class="rs146MetricValue">'+money(costs)+'</div></div>'+
+        monthlyBars()+
+        '<div class="rs146TableCard"><table class="rs146Table"><thead><tr><th>Item</th><th>Date</th><th>Sale</th><th>Cost</th><th>Profit</th><th>Actions</th></tr></thead><tbody>'+(body||'<tr><td colspan="6">No sold items match these filters.</td></tr>')+'</tbody></table></div>'+
+      '</div>'
+    );
+
+    bindFilters();
+    setTimeout(drawMonthlyBars,80);
+    setTimeout(drawMonthlyBars,380);
+  }
+
+  function bindFilters(){
+    ["rs148ItemFilter","rs148PlatformFilter","rs148MonthFilter","rs148YearFilter"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el) return;
+      el.addEventListener(id==="rs148ItemFilter"?"input":"change",()=>{
+        clearTimeout(el.__rs148Timer);
+        el.__rs148Timer=setTimeout(renderSoldOverride, id==="rs148ItemFilter"?180:0);
+      });
+    });
+    document.getElementById("rs148ClearFilters")?.addEventListener("click",()=>{
+      localStorage.removeItem("rs148SoldItemFilter");
+      localStorage.removeItem("rs148SoldPlatformFilter");
+      localStorage.removeItem("rs148SoldMonthFilter");
+      localStorage.removeItem("rs148SoldYearFilter");
+      renderSoldOverride();
+    });
+  }
+
+  function patchSoldButton(){
+    window.addEventListener("click",function(e){
+      const dock=e.target.closest&&e.target.closest(".rs146DockBtn[data-panel='sold']");
+      if(dock){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        document.querySelectorAll(".rs146DockBtn").forEach(b=>b.classList.remove("active"));
+        dock.classList.add("active");
+        renderSoldOverride();
+      }
+    },true);
+  }
+
+  patchSoldButton();
+})();
+</script>
