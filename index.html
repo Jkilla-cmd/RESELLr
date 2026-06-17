@@ -35864,3 +35864,185 @@ body{margin-left:0 !important;}
   sync();
 })();
 </script>
+
+
+<!-- ===== v156: Restore Backup click/select fix ===== -->
+<style id="rs-v156-restore-click-fix-css">
+  body:not(.rs154-locked) #rs146Panel.open,
+  body:not(.rs154-locked) #rs142Panel.open,
+  body:not(.rs154-locked) #rs136DataPanel.open{
+    pointer-events:auto !important;
+  }
+
+  body:not(.rs154-locked) #rs146Panel .rs146ImportBtn,
+  body:not(.rs154-locked) #rs146Panel [data-rs149-import],
+  body:not(.rs154-locked) #rs146Panel [data-rs146-import],
+  body:not(.rs154-locked) #rs146Panel [data-import]{
+    pointer-events:auto !important;
+    cursor:pointer !important;
+    position:relative !important;
+    z-index:5 !important;
+  }
+
+  #rs156RestoreFile{display:none!important;}
+</style>
+
+<script id="rs-v156-restore-click-fix-js">
+(function(){
+  if(window.__rsV156RestoreClickFix) return;
+  window.__rsV156RestoreClickFix = true;
+
+  function isReallyLocked(){
+    const txt=(document.body.innerText||"").toLowerCase();
+    const hasText=txt.includes("dashboard locked") && txt.includes("enter your passcode");
+    const unlockedHints=txt.includes("passcode settings") && !document.querySelector("#rs146Dock");
+    return hasText && !unlockedHints ? true : hasText;
+  }
+
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){localStorage.setItem(k,JSON.stringify(Array.isArray(v)?v:[]))}
+  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v)}
+  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v)}
+  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
+
+  function firstArray(obj,keys){
+    if(!obj || typeof obj!=="object") return [];
+    for(const k of keys){
+      if(Array.isArray(obj[k])) return obj[k];
+      if(typeof obj[k]==="string"){
+        try{const p=JSON.parse(obj[k]); if(Array.isArray(p)) return p;}catch(e){}
+      }
+    }
+    return [];
+  }
+
+  function normalize(data, depth){
+    depth=depth||0;
+    if(Array.isArray(data)) return {active:data,sold:[],holds:[]};
+    if(!data || typeof data!=="object") return {active:[],sold:[],holds:[]};
+
+    let out={
+      active:firstArray(data,["activeInventory","inventory","inventoryData","active","items","listings","activeItems","inventoryItems"]),
+      sold:firstArray(data,["soldInventory","sold","soldData","soldItems","sales","salesData"]),
+      holds:firstArray(data,["inventoryHolds","holds","holdData","holdItems","heldItems"])
+    };
+    if(out.active.length || out.sold.length || out.holds.length) return out;
+
+    const nestedKeys=["data","app","state","backup","store","payload","RESELLr","resellr","localStorage","storage"];
+    for(const k of nestedKeys){
+      if(data[k] && typeof data[k]==="object" && depth<6){
+        const found=normalize(data[k],depth+1);
+        if(found.active.length || found.sold.length || found.holds.length) return found;
+      }
+    }
+    return out;
+  }
+
+  function parseCSV(text){
+    const lines=text.split(/\r?\n/).filter(x=>x.trim()!=="");
+    if(!lines.length) return [];
+    const headers=lines.shift().split(",").map(x=>x.trim().replace(/^"|"$/g,""));
+    return lines.map(line=>{
+      const vals=line.split(",");
+      const o={};
+      headers.forEach((h,i)=>o[h]=(vals[i]||"").replace(/^"|"$/g,""));
+      return o;
+    });
+  }
+
+  function parseText(text){
+    try{return JSON.parse(text)}catch(e){return parseCSV(text)}
+  }
+
+  function chooseRestore(mode){
+    mode=mode||"backup";
+    let input=document.getElementById("rs156RestoreFile");
+    if(input) input.remove();
+
+    input=document.createElement("input");
+    input.id="rs156RestoreFile";
+    input.type="file";
+    input.accept=".json,.csv,text/csv,application/json";
+    document.body.appendChild(input);
+
+    input.addEventListener("change",function(){
+      const file=input.files && input.files[0];
+      if(!file) return;
+      const reader=new FileReader();
+      reader.onload=function(){
+        try{
+          const data=parseText(String(reader.result||""));
+          if(mode==="backup"){
+            const d=normalize(data);
+            setActive(d.active);
+            setSold(d.sold);
+            setHolds(d.holds);
+            alert("Restored: "+d.active.length+" active, "+d.sold.length+" sold, "+d.holds.length+" holds.");
+            location.reload();
+            return;
+          }
+          if(mode==="sold"){
+            const arr=Array.isArray(data)?data:normalize(data).sold;
+            setSold(arr);
+            alert("Imported sold: "+arr.length+" records.");
+            location.reload();
+            return;
+          }
+          const arr=Array.isArray(data)?data:normalize(data).active;
+          setActive(arr);
+          alert("Imported active: "+arr.length+" records.");
+          location.reload();
+        }catch(err){
+          alert("Restore failed: "+(err && err.message ? err.message : "Could not read file."));
+        }
+      };
+      reader.readAsText(file);
+    },{once:true});
+
+    input.click();
+  }
+
+  function exportBackup(){
+    const data={
+      exportedAt:new Date().toISOString(),
+      activeInventory:read("activeInventory").length?read("activeInventory"):read("inventory"),
+      soldInventory:read("soldInventory").length?read("soldInventory"):read("sold"),
+      inventoryHolds:read("inventoryHolds").length?read("inventoryHolds"):read("holds")
+    };
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+  }
+
+  // Highest priority handler for Import/Data buttons.
+  window.addEventListener("pointerdown",function(e){
+    const btn=e.target.closest && e.target.closest("[data-rs149-import],[data-rs146-import],[data-import]");
+    if(!btn) return;
+    if(document.body.classList.contains("rs154-locked")) return;
+
+    const mode=btn.getAttribute("data-rs149-import") || btn.getAttribute("data-rs146-import") || btn.getAttribute("data-import");
+    if(!mode) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    if(mode==="export") exportBackup();
+    else chooseRestore(mode==="active"?"active":mode==="sold"?"sold":"backup");
+  },true);
+
+  window.addEventListener("click",function(e){
+    const btn=e.target.closest && e.target.closest("[data-rs149-import],[data-rs146-import],[data-import]");
+    if(!btn) return;
+    if(document.body.classList.contains("rs154-locked")) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  },true);
+})();
+</script>
