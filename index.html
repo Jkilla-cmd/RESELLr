@@ -19833,6 +19833,905 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+<!-- ===== v180: RESELLr 3.0 Ambient Workspace UI ===== -->
+<style id="rs-v180-workspace-css">
+  :root{
+    --rs180-bg:#050914;
+    --rs180-text:#f8fafc;
+    --rs180-muted:rgba(226,232,240,.58);
+    --rs180-line:rgba(255,255,255,.075);
+    --rs180-glass:rgba(8,12,20,.48);
+    --rs180-glass2:rgba(255,255,255,.055);
+    --rs180-accent:#2dd4bf;
+    --rs180-good:#86efac;
+    --rs180-bad:#fecaca;
+  }
+
+  body.rs180-ui{
+    background:
+      radial-gradient(circle at 20% 75%, rgba(45,212,191,.16), transparent 32%),
+      radial-gradient(circle at 78% 26%, rgba(59,130,246,.12), transparent 34%),
+      linear-gradient(145deg,#030712,#07111b 52%,#0b1020) !important;
+    color:var(--rs180-text) !important;
+    font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+    padding:0 !important;
+    overflow-x:hidden !important;
+  }
+
+  body.rs180-ui::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:-2;
+    background:
+      radial-gradient(circle at 52% 110%, rgba(45,212,191,.10), transparent 36%),
+      linear-gradient(115deg, transparent 0 42%, rgba(255,255,255,.035) 50%, transparent 58%);
+    animation:rs180Ambient 16s ease-in-out infinite alternate;
+  }
+
+  body.rs180-ui::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:-1;
+    opacity:.06;
+    background:repeating-linear-gradient(90deg, #fff 0 1px, transparent 1px 120px);
+  }
+
+  @keyframes rs180Ambient{
+    from{transform:translate3d(-1.5%,0,0) scale(1)}
+    to{transform:translate3d(1.5%,-1%,0) scale(1.03)}
+  }
+
+  /* Hide old shell chrome but keep data/functions available */
+  body.rs180-ui .sidebar,
+  body.rs180-ui .topbar,
+  body.rs180-ui .drawer-scrim,
+  body.rs180-ui .bmc-float{
+    display:none !important;
+  }
+
+  body.rs180-ui .app{
+    display:block !important;
+    max-width:none !important;
+    margin:0 !important;
+  }
+
+  body.rs180-ui .canvas{
+    min-width:0 !important;
+  }
+
+  body.rs180-ui .section{
+    display:none !important;
+  }
+
+  body.rs180-ui #secDashboard.section.active{
+    display:block !important;
+  }
+
+  /* Keep old pages hidden; v180 panels handle the workflow */
+  body.rs180-ui #secInventory,
+  body.rs180-ui #secSold,
+  body.rs180-ui #secHolds,
+  body.rs180-ui #secTaxes,
+  body.rs180-ui #secImport{
+    display:none !important;
+  }
+
+  /* Ambient home */
+  #rs180Home{
+    min-height:100vh;
+    width:100%;
+    padding:72px 22px 120px;
+    display:grid;
+    align-content:start;
+    gap:34px;
+  }
+
+  .rs180Hero{
+    text-align:center;
+    margin:0 auto;
+    width:min(980px,100%);
+  }
+
+  .rs180Brand{
+    color:rgba(248,250,252,.72);
+    font-size:13px;
+    font-weight:950;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    margin-bottom:24px;
+  }
+
+  .rs180HeroMoney{
+    font-size:clamp(52px,10vw,112px);
+    line-height:.92;
+    color:#fff;
+    font-weight:950;
+    letter-spacing:-.085em;
+    text-shadow:0 24px 80px rgba(0,0,0,.42);
+  }
+
+  .rs180HeroLabel{
+    color:var(--rs180-muted);
+    margin-top:12px;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+  }
+
+  .rs180Stats{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:28px;
+    flex-wrap:wrap;
+    margin-top:28px;
+  }
+
+  .rs180Stat{
+    min-width:118px;
+    text-align:center;
+  }
+
+  .rs180Stat b{
+    display:block;
+    color:#fff;
+    font-size:clamp(22px,3vw,34px);
+    font-weight:950;
+    letter-spacing:-.055em;
+  }
+
+  .rs180Stat span{
+    display:block;
+    color:var(--rs180-muted);
+    font-size:10px;
+    font-weight:950;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-top:4px;
+  }
+
+  .rs180Quick{
+    display:flex;
+    justify-content:center;
+    gap:9px;
+    flex-wrap:wrap;
+    margin-top:26px;
+  }
+
+  .rs180Chip{
+    width:auto !important;
+    min-width:0 !important;
+    height:36px !important;
+    border-radius:999px !important;
+    padding:0 14px !important;
+    background:rgba(255,255,255,.06) !important;
+    border:1px solid rgba(255,255,255,.09) !important;
+    color:#fff !important;
+    font-size:12px !important;
+    font-weight:950 !important;
+    backdrop-filter:blur(18px) !important;
+    -webkit-backdrop-filter:blur(18px) !important;
+  }
+
+  .rs180GraphWrap{
+    width:min(1120px,100%);
+    margin:0 auto;
+    padding:0 4px;
+  }
+
+  .rs180GraphTop{
+    display:flex;
+    align-items:end;
+    justify-content:space-between;
+    gap:12px;
+    margin:0 0 10px;
+    color:#fff;
+  }
+
+  .rs180GraphTop h2{
+    margin:0;
+    font-size:16px;
+    letter-spacing:-.025em;
+    font-weight:950;
+  }
+
+  .rs180GraphTop span{
+    color:var(--rs180-muted);
+    font-size:11px;
+    font-weight:850;
+  }
+
+  .rs180Graph{
+    height:320px;
+    border-top:1px solid var(--rs180-line);
+    border-bottom:1px solid var(--rs180-line);
+    padding:16px 0;
+  }
+
+  .rs180Graph canvas{
+    width:100% !important;
+    height:100% !important;
+  }
+
+  .rs180Recent{
+    width:min(1120px,100%);
+    margin:0 auto;
+  }
+
+  .rs180Recent h2{
+    margin:0 0 10px;
+    color:#fff;
+    font-size:16px;
+    font-weight:950;
+    letter-spacing:-.025em;
+  }
+
+  .rs180Rows{
+    display:grid;
+    gap:0;
+    border-top:1px solid var(--rs180-line);
+  }
+
+  .rs180Row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 92px 92px;
+    gap:18px;
+    align-items:center;
+    min-height:48px;
+    border-bottom:1px solid var(--rs180-line);
+    color:#fff;
+    position:relative;
+  }
+
+  .rs180RowTitle{
+    min-width:0;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    font-size:13px;
+    font-weight:850;
+  }
+
+  .rs180RowSub{
+    color:var(--rs180-muted);
+    font-size:10px;
+    margin-top:2px;
+  }
+
+  .rs180Money{
+    text-align:right;
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .rs180ProfitPos{color:var(--rs180-good)}
+  .rs180ProfitNeg{color:var(--rs180-bad)}
+
+  /* Icon-only dock */
+  #rs180Dock{
+    position:fixed;
+    left:50%;
+    bottom:16px;
+    transform:translateX(-50%);
+    z-index:2147481000;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:6px;
+    border-radius:999px;
+    background:rgba(8,12,20,.50);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 24px 70px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(26px) saturate(1.12);
+    -webkit-backdrop-filter:blur(26px) saturate(1.12);
+  }
+
+  .rs180DockBtn{
+    width:36px !important;
+    min-width:36px !important;
+    height:36px !important;
+    border-radius:999px !important;
+    display:grid !important;
+    place-items:center !important;
+    padding:0 !important;
+    border:1px solid transparent !important;
+    background:transparent !important;
+    color:rgba(248,250,252,.86) !important;
+    font-size:16px !important;
+    font-weight:950 !important;
+    position:relative !important;
+    box-shadow:none !important;
+  }
+
+  .rs180DockBtn:hover,
+  .rs180DockBtn.active{
+    background:rgba(255,255,255,.12) !important;
+    border-color:rgba(255,255,255,.10) !important;
+    transform:none !important;
+  }
+
+  .rs180DockBtn::after{
+    content:attr(data-label);
+    position:absolute;
+    bottom:46px;
+    left:50%;
+    transform:translateX(-50%) translateY(5px);
+    opacity:0;
+    pointer-events:none;
+    white-space:nowrap;
+    font-size:10px;
+    font-weight:950;
+    color:#fff;
+    background:rgba(8,12,20,.78);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:999px;
+    padding:6px 9px;
+    transition:.14s ease;
+  }
+
+  .rs180DockBtn:hover::after{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+
+  .rs180Cmd{
+    position:fixed;
+    top:16px;
+    left:16px;
+    z-index:2147481000;
+    width:auto !important;
+    height:38px !important;
+    padding:0 13px !important;
+    border-radius:999px !important;
+    background:rgba(8,12,20,.46) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    color:#fff !important;
+    font-size:12px !important;
+    font-weight:950 !important;
+    backdrop-filter:blur(24px) !important;
+    -webkit-backdrop-filter:blur(24px) !important;
+  }
+
+  /* v180 panels */
+  .rs180Panel{
+    position:fixed;
+    inset:54px 16px 74px;
+    z-index:2147480900;
+    display:none;
+    border-radius:26px;
+    background:rgba(8,12,20,.68);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 34px 100px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(30px) saturate(1.12);
+    -webkit-backdrop-filter:blur(30px) saturate(1.12);
+    overflow:hidden;
+  }
+
+  .rs180Panel.open{
+    display:grid;
+    grid-template-rows:auto 1fr;
+  }
+
+  .rs180PanelHeader{
+    height:58px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:0 18px;
+    border-bottom:1px solid var(--rs180-line);
+  }
+
+  .rs180PanelHeader h2{
+    margin:0;
+    color:#fff;
+    font-size:15px;
+    font-weight:950;
+    letter-spacing:-.025em;
+  }
+
+  .rs180Close{
+    width:34px !important;
+    height:34px !important;
+    min-width:34px !important;
+    padding:0 !important;
+    border-radius:999px !important;
+    display:grid !important;
+    place-items:center !important;
+    background:rgba(255,255,255,.07) !important;
+    border:1px solid rgba(255,255,255,.10) !important;
+    color:#fff !important;
+  }
+
+  .rs180PanelBody{
+    overflow:auto;
+    padding:18px;
+  }
+
+  .rs180Search{
+    width:100% !important;
+    height:42px !important;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.07) !important;
+    border:1px solid rgba(255,255,255,.11) !important;
+    color:#fff !important;
+    margin:0 0 14px !important;
+    padding:0 15px !important;
+  }
+
+  .rs180List{
+    border-top:1px solid var(--rs180-line);
+  }
+
+  .rs180ActionRow{
+    opacity:0;
+    display:flex;
+    gap:6px;
+    justify-content:flex-end;
+  }
+
+  .rs180List .rs180Row{
+    grid-template-columns:minmax(0,1fr) 80px 80px 210px;
+  }
+
+  .rs180List .rs180Row:hover .rs180ActionRow{
+    opacity:1;
+  }
+
+  .rs180MiniBtn{
+    width:auto !important;
+    min-width:0 !important;
+    height:28px !important;
+    padding:0 9px !important;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.06) !important;
+    border:1px solid rgba(255,255,255,.10) !important;
+    color:#fff !important;
+    font-size:10px !important;
+    font-weight:950 !important;
+  }
+
+  .rs180TaxGrid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+    margin-bottom:16px;
+  }
+
+  .rs180TaxBox{
+    border-bottom:1px solid var(--rs180-line);
+    padding:4px 0 12px;
+  }
+
+  .rs180TaxBox b{
+    display:block;
+    color:#fff;
+    font-size:24px;
+    font-weight:950;
+    letter-spacing:-.055em;
+  }
+
+  .rs180TaxBox span{
+    display:block;
+    color:var(--rs180-muted);
+    font-size:10px;
+    font-weight:950;
+    text-transform:uppercase;
+    margin-top:3px;
+  }
+
+  .rs180Palette{
+    position:fixed;
+    inset:0;
+    z-index:2147482500;
+    display:none;
+    align-items:flex-start;
+    justify-content:center;
+    padding-top:90px;
+    background:rgba(0,0,0,.28);
+  }
+
+  .rs180Palette.open{display:flex}
+
+  .rs180PaletteBox{
+    width:min(620px,92vw);
+    border-radius:24px;
+    background:rgba(8,12,20,.84);
+    border:1px solid rgba(255,255,255,.13);
+    box-shadow:0 34px 100px rgba(0,0,0,.55);
+    backdrop-filter:blur(30px);
+    -webkit-backdrop-filter:blur(30px);
+    padding:14px;
+  }
+
+  .rs180PaletteInput{
+    width:100% !important;
+    height:48px !important;
+    margin:0 0 10px !important;
+    border-radius:16px !important;
+    background:rgba(255,255,255,.08) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    color:#fff !important;
+    padding:0 14px !important;
+    font-size:15px !important;
+  }
+
+  .rs180PaletteResults{
+    display:grid;
+    gap:4px;
+    max-height:360px;
+    overflow:auto;
+  }
+
+  .rs180PaletteItem{
+    display:grid;
+    grid-template-columns:34px 1fr auto;
+    gap:10px;
+    align-items:center;
+    min-height:44px;
+    padding:6px 8px;
+    border-radius:14px;
+    color:#fff;
+    cursor:pointer;
+  }
+
+  .rs180PaletteItem:hover{
+    background:rgba(255,255,255,.08);
+  }
+
+  body.rs180-ui #lockScreen{
+    background:
+      radial-gradient(circle at 24% 76%, rgba(45,212,191,.14), transparent 34%),
+      radial-gradient(circle at 80% 20%, rgba(59,130,246,.10), transparent 34%),
+      rgba(3,7,12,.94) !important;
+  }
+
+  body.rs180-ui #lockScreen .lockBox{
+    width:min(380px,92vw) !important;
+    border-radius:28px !important;
+    padding:28px !important;
+    background:rgba(8,12,20,.58) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    box-shadow:0 34px 100px rgba(0,0,0,.55) !important;
+  }
+
+  body.rs180-ui #lockScreen .lockTitle{
+    font-size:20px !important;
+    letter-spacing:-.035em !important;
+  }
+
+  body.rs180-ui.rs175-lock-visible #rs180Dock,
+  body.rs180-ui.rs175-lock-visible #rs180Command,
+  body.rs180-ui.rs175-lock-visible #rs180Panel,
+  body.rs180-ui.rs175-lock-visible #rs180Palette{
+    display:none !important;
+  }
+
+  @media(max-width:850px){
+    #rs180Home{padding-top:58px}
+    .rs180Stats{gap:18px}
+    .rs180List .rs180Row{
+      grid-template-columns:minmax(0,1fr) 72px 72px;
+    }
+    .rs180ActionRow{
+      grid-column:1 / -1;
+      opacity:1;
+      justify-content:flex-start;
+      padding-bottom:8px;
+    }
+    .rs180TaxGrid{grid-template-columns:1fr 1fr}
+    .rs180Graph{height:260px}
+  }
+</style>
+
+<script id="rs-v180-workspace-js">
+(function(){
+  if(window.__rsV180Workspace) return;
+  window.__rsV180Workspace = true;
+
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function write(k,v){try{localStorage.setItem(k,JSON.stringify(v||[]));}catch(e){}}
+  function active(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function sold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function holds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+  function setActive(v){write("activeInventory",v);write("inventory",v);write("inventoryData",v);write("items",v)}
+  function setSold(v){write("soldInventory",v);write("sold",v);write("soldData",v);write("sales",v)}
+  function setHolds(v){write("inventoryHolds",v);write("holds",v);write("holdData",v)}
+  function n(v){const x=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(x)?x:0}
+  function money(v,d=0){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:d}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(d)}}
+  function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return 0}
+  function title(r){return String(r.title||r.name||r.item||r.description||r.notes||"Untitled item").trim()}
+  function platform(r){return String(r.platform||r.marketplace||r.source||r.store||"Other").trim()||"Other"}
+  function cost(r){return val(r,["cost","Cost","itemCost","cogs","costOfSold","purchasePrice"])}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"])}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","sold_price","revenue","income","amount","totalIncome","total"])}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee"])}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
+  function profit(r){for(const k of["profit","netProfit","totalProfit","net"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
+  function soldDate(r){const raw=r.soldDate||r.date||r.Date||r["Sold Date"]||r.saleDate||r.createdAt||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function addedDate(r){const raw=r.addedAt||r.createdAt||r.dateAdded||r.addedDate||r.created||r.timestamp||r.date||"";const d=new Date(raw);return isNaN(d)?null:d}
+  function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+  function fmt(d){return d?d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"2-digit"}):""}
+
+  function ensureShell(){
+    if(document.getElementById("rs180Home")) return;
+    document.body.classList.add("rs180-ui");
+
+    const home=document.createElement("main");
+    home.id="rs180Home";
+    home.innerHTML='<section class="rs180Hero"><div class="rs180Brand">RESELLr</div><div class="rs180HeroMoney" id="rs180TotalProfit">$0</div><div class="rs180HeroLabel">Total Profit</div><div class="rs180Stats"><div class="rs180Stat"><b id="rs180ActiveCount">0</b><span>Active</span></div><div class="rs180Stat"><b id="rs180SalesCount">0</b><span>Sales</span></div><div class="rs180Stat"><b id="rs180InventoryValue">$0</b><span>Inventory</span></div><div class="rs180Stat"><b id="rs180HoldsCount">0</b><span>Holds</span></div></div><div class="rs180Quick"><button class="rs180Chip" data-rs180-open="inventory">Inventory</button><button class="rs180Chip" data-rs180-open="sold">Sold</button><button class="rs180Chip" data-rs180-open="tax">Tax</button><button class="rs180Chip" data-rs180-cmd>⌘K Search</button></div></section><section class="rs180GraphWrap"><div class="rs180GraphTop"><h2>Business Growth</h2><span>Total income · profit · cost + profit</span></div><div class="rs180Graph"><canvas id="rs180Growth"></canvas></div></section><section class="rs180Recent"><h2>Recently Sold</h2><div class="rs180Rows" id="rs180RecentRows"></div></section>';
+    document.body.appendChild(home);
+
+    const dock=document.createElement("nav");
+    dock.id="rs180Dock";
+    dock.innerHTML='<button class="rs180DockBtn active" data-rs180-home data-label="Home">⌂</button><button class="rs180DockBtn" data-rs180-open="inventory" data-label="Inventory">◈</button><button class="rs180DockBtn" data-rs180-open="holds" data-label="Holds">◇</button><button class="rs180DockBtn" data-rs180-open="sold" data-label="Sold">$</button><button class="rs180DockBtn" data-rs180-open="tax" data-label="Tax">◷</button><button class="rs180DockBtn" data-rs180-open="data" data-label="Data">⇅</button>';
+    document.body.appendChild(dock);
+
+    const cmd=document.createElement("button");
+    cmd.id="rs180Command";
+    cmd.className="rs180Cmd";
+    cmd.type="button";
+    cmd.textContent="⌘K Search";
+    cmd.setAttribute("data-rs180-cmd","");
+    document.body.appendChild(cmd);
+
+    const panel=document.createElement("section");
+    panel.id="rs180Panel";
+    panel.className="rs180Panel";
+    document.body.appendChild(panel);
+
+    const palette=document.createElement("div");
+    palette.id="rs180Palette";
+    palette.className="rs180Palette";
+    palette.innerHTML='<div class="rs180PaletteBox"><input id="rs180PaletteInput" class="rs180PaletteInput" placeholder="Search inventory, holds, sold, tax..."><div id="rs180PaletteResults" class="rs180PaletteResults"></div></div>';
+    document.body.appendChild(palette);
+
+    bindEvents();
+  }
+
+  function refreshHome(){
+    ensureShell();
+    const a=active(), s=sold(), h=holds();
+    const totalProfit=s.reduce((x,r)=>x+profit(r),0);
+    const invValue=a.reduce((x,r)=>x+(list(r)||cost(r)),0);
+    document.getElementById("rs180TotalProfit").textContent=money(totalProfit,0);
+    document.getElementById("rs180ActiveCount").textContent=a.length;
+    document.getElementById("rs180SalesCount").textContent=s.length;
+    document.getElementById("rs180InventoryValue").textContent=money(invValue,0);
+    document.getElementById("rs180HoldsCount").textContent=h.length;
+
+    const recent=s.slice().sort((a,b)=>(soldDate(b)||0)-(soldDate(a)||0)).slice(0,8);
+    document.getElementById("rs180RecentRows").innerHTML=recent.map(r=>rowHtml(r,{sold:true})).join("") || '<div class="rs180Row"><div><div class="rs180RowTitle">No sold items yet</div><div class="rs180RowSub">Move inventory to sold to populate this feed.</div></div><div></div><div></div></div>';
+
+    drawGraph();
+  }
+
+  function rowHtml(r,opt={}){
+    const amount=opt.sold?sale(r):(list(r)||cost(r));
+    const p=opt.sold?profit(r):(amount-cost(r));
+    const d=opt.sold?soldDate(r):addedDate(r);
+    return '<div class="rs180Row"><div><div class="rs180RowTitle">'+esc(title(r))+'</div><div class="rs180RowSub">'+esc(platform(r))+(d?' · '+fmt(d):'')+'</div></div><div class="rs180Money">'+money(amount,0)+'</div><div class="rs180Money '+(p<0?'rs180ProfitNeg':'rs180ProfitPos')+'">'+(p<0?'-':'+')+money(Math.abs(p),0)+'</div></div>';
+  }
+
+  function drawGraph(){
+    if(!window.Chart) return;
+    const c=document.getElementById("rs180Growth");
+    if(!c) return;
+    const by=new Map();
+    sold().forEach(r=>{
+      const d=soldDate(r);
+      if(!d) return;
+      const k=d.toISOString().slice(0,10);
+      if(!by.has(k)) by.set(k,{d,income:0,profit:0,costProfit:0});
+      const b=by.get(k);
+      b.income+=sale(r); b.profit+=profit(r); b.costProfit+=cost(r)+profit(r);
+    });
+    let income=0,prof=0,cp=0;
+    const rows=[...by.values()].sort((a,b)=>a.d-b.d).map(x=>{
+      income+=x.income; prof+=x.profit; cp+=x.costProfit;
+      return {label:x.d.toLocaleDateString("en-US",{month:"short",day:"numeric"}),income,prof,cp};
+    });
+    try{const old=Chart.getChart&&Chart.getChart(c); if(old) old.destroy();}catch(e){}
+    new Chart(c,{type:"line",data:{labels:rows.map(r=>r.label),datasets:[{label:"Total Income",data:rows.map(r=>r.income),borderWidth:3,pointRadius:0,tension:.28},{label:"Profit",data:rows.map(r=>r.prof),borderWidth:3,pointRadius:0,tension:.28},{label:"Cost + Profit",data:rows.map(r=>r.cp),borderWidth:3,pointRadius:0,tension:.28}]},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"index",intersect:false},plugins:{legend:{display:true,labels:{color:"rgba(248,250,252,.72)",boxWidth:10}},tooltip:{callbacks:{label:ctx=>" "+ctx.dataset.label+": "+money(ctx.parsed.y,0)}}},scales:{x:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"rgba(226,232,240,.55)",maxTicksLimit:8}},y:{grid:{color:"rgba(255,255,255,.06)"},ticks:{color:"rgba(226,232,240,.55)",callback:v=>money(v,0)}}}}});
+  }
+
+  function openPanel(kind){
+    const p=document.getElementById("rs180Panel");
+    if(!p) return;
+    document.querySelectorAll(".rs180DockBtn").forEach(b=>b.classList.toggle("active",b.dataset.rs180Open===kind));
+    if(kind==="inventory") renderList("Inventory",active(),"inventory");
+    if(kind==="holds") renderList("Holds",holds(),"holds");
+    if(kind==="sold") renderList("Sold",sold().slice().sort((a,b)=>(soldDate(b)||0)-(soldDate(a)||0)),"sold");
+    if(kind==="tax") renderTax();
+    if(kind==="data") renderData();
+    p.classList.add("open");
+  }
+
+  function panelHeader(title){
+    return '<div class="rs180PanelHeader"><h2>'+esc(title)+'</h2><button class="rs180Close" data-rs180-close type="button">×</button></div>';
+  }
+
+  function renderList(titleText, rows, kind){
+    const p=document.getElementById("rs180Panel");
+    rows=rows||[];
+    p.innerHTML=panelHeader(titleText)+'<div class="rs180PanelBody"><input class="rs180Search" id="rs180Search" placeholder="Search '+esc(titleText.toLowerCase())+'..."><div class="rs180List" id="rs180List">'+listRows(rows,kind,"")+'</div></div>';
+    const input=document.getElementById("rs180Search");
+    input.addEventListener("input",()=>{document.getElementById("rs180List").innerHTML=listRows(rows,kind,input.value)});
+  }
+
+  function listRows(rows,kind,q){
+    q=String(q||"").toLowerCase().trim();
+    const filtered=rows.map((row,index)=>({row,index})).filter(x=>!q||JSON.stringify(x.row).toLowerCase().includes(q));
+    return filtered.map(({row,index})=>{
+      const amount=kind==="sold"?sale(row):(list(row)||cost(row));
+      const p=kind==="sold"?profit(row):(amount-cost(row));
+      const sub=platform(row)+(kind==="sold"&&soldDate(row)?" · "+fmt(soldDate(row)):"");
+      const actions=kind==="inventory"
+        ? '<button class="rs180MiniBtn" data-rs180-action="hold" data-index="'+index+'">Hold</button><button class="rs180MiniBtn" data-rs180-action="sold" data-index="'+index+'">Sold</button><button class="rs180MiniBtn" data-rs180-action="delete-active" data-index="'+index+'">Delete</button>'
+        : kind==="holds"
+        ? '<button class="rs180MiniBtn" data-rs180-action="unhold" data-index="'+index+'">To inventory</button><button class="rs180MiniBtn" data-rs180-action="delete-hold" data-index="'+index+'">Delete</button>'
+        : '<button class="rs180MiniBtn" data-rs180-action="delete-sold" data-index="'+index+'">Delete</button>';
+      return '<div class="rs180Row"><div><div class="rs180RowTitle">'+esc(title(row))+'</div><div class="rs180RowSub">'+esc(sub)+'</div></div><div class="rs180Money">'+money(amount,0)+'</div><div class="rs180Money '+(p<0?'rs180ProfitNeg':'rs180ProfitPos')+'">'+(p<0?'-':'+')+money(Math.abs(p),0)+'</div><div class="rs180ActionRow">'+actions+'</div></div>';
+    }).join("") || '<div class="rs180Row"><div><div class="rs180RowTitle">No records found</div><div class="rs180RowSub">Try importing data or changing your search.</div></div><div></div><div></div></div>';
+  }
+
+  function renderTax(){
+    const s=sold();
+    const gross=s.reduce((x,r)=>x+sale(r),0);
+    const cogs=s.reduce((x,r)=>x+cost(r),0);
+    const fees=s.reduce((x,r)=>x+fee(r),0);
+    const shipping=s.reduce((x,r)=>x+ship(r),0);
+    const prof=s.reduce((x,r)=>x+profit(r),0);
+    const p=document.getElementById("rs180Panel");
+    p.innerHTML=panelHeader("Tax Report")+'<div class="rs180PanelBody"><div class="rs180TaxGrid"><div class="rs180TaxBox"><b>'+money(gross,0)+'</b><span>Gross Sales</span></div><div class="rs180TaxBox"><b>'+money(cogs,0)+'</b><span>Cost of Goods</span></div><div class="rs180TaxBox"><b>'+money(fees+shipping,0)+'</b><span>Fees + Shipping</span></div><div class="rs180TaxBox"><b>'+money(prof,0)+'</b><span>Estimated Profit</span></div></div><div class="rs180List">'+s.slice().sort((a,b)=>(soldDate(b)||0)-(soldDate(a)||0)).map(r=>rowHtml(r,{sold:true})).join("")+'</div></div>';
+  }
+
+  function renderData(){
+    const p=document.getElementById("rs180Panel");
+    p.innerHTML=panelHeader("Data")+'<div class="rs180PanelBody"><div class="rs180Quick" style="justify-content:flex-start;margin:0"><button class="rs180Chip" data-rs180-export>Export backup</button><button class="rs180Chip" data-rs180-old-import>Open old import page</button><button class="rs180Chip" data-rs180-close>Close</button></div><p style="color:var(--rs180-muted);font-size:12px;margin-top:18px">Use export for a safety backup. The original import tools are still available in the old UI behind this workspace layer.</p></div>';
+  }
+
+  function moveToHold(index){
+    const a=active(), h=holds();
+    if(!a[index]) return;
+    h.push(Object.assign({},a[index],{status:"hold",holdDate:new Date().toISOString()}));
+    a.splice(index,1);
+    setActive(a); setHolds(h);
+    openPanel("inventory"); refreshHome();
+  }
+
+  function unhold(index){
+    const a=active(), h=holds();
+    if(!h[index]) return;
+    a.push(Object.assign({},h[index],{status:"active",addedAt:new Date().toISOString()}));
+    h.splice(index,1);
+    setActive(a); setHolds(h);
+    openPanel("holds"); refreshHome();
+  }
+
+  function deleteRow(type,index){
+    if(!confirm("Delete this record?")) return;
+    const arr=type==="active"?active():type==="hold"?holds():sold();
+    arr.splice(index,1);
+    if(type==="active") setActive(arr);
+    if(type==="hold") setHolds(arr);
+    if(type==="sold") setSold(arr);
+    openPanel(type==="active"?"inventory":type==="hold"?"holds":"sold");
+    refreshHome();
+  }
+
+  function moveToSold(index){
+    const a=active(), s=sold();
+    if(!a[index]) return;
+    const row=Object.assign({},a[index],{soldDate:new Date().toISOString(),status:"sold"});
+    if(!row.salePrice && !row.soldPrice && !row.sale) row.salePrice=list(row)||cost(row);
+    s.push(row);
+    a.splice(index,1);
+    setActive(a); setSold(s);
+    openPanel("inventory"); refreshHome();
+  }
+
+  function exportBackup(){
+    const data={exportedAt:new Date().toISOString(),activeInventory:active(),soldInventory:sold(),inventoryHolds:holds()};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="RESELLr-backup-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+  }
+
+  function openPalette(){
+    const pal=document.getElementById("rs180Palette");
+    pal.classList.add("open");
+    const input=document.getElementById("rs180PaletteInput");
+    input.value="";
+    renderPalette("");
+    setTimeout(()=>input.focus(),40);
+  }
+
+  function renderPalette(q){
+    q=String(q||"").toLowerCase().trim();
+    const items=[];
+    active().forEach((r,i)=>items.push({icon:"◈",kind:"inventory",label:title(r),sub:"Inventory · "+platform(r),open:()=>openPanel("inventory")}));
+    holds().forEach((r,i)=>items.push({icon:"◇",kind:"holds",label:title(r),sub:"Hold · "+platform(r),open:()=>openPanel("holds")}));
+    sold().forEach((r,i)=>items.push({icon:"$",kind:"sold",label:title(r),sub:"Sold · "+platform(r)+" · "+money(profit(r),0),open:()=>openPanel("sold")}));
+    items.unshift({icon:"⌂",label:"Home",sub:"Dashboard overview",open:()=>closePanel()});
+    items.unshift({icon:"◷",label:"Tax Report",sub:"Gross, COGS, profit",open:()=>openPanel("tax")});
+    const filtered=items.filter(x=>!q||(x.label+" "+x.sub).toLowerCase().includes(q)).slice(0,60);
+    document.getElementById("rs180PaletteResults").innerHTML=filtered.map((x,i)=>'<div class="rs180PaletteItem" data-rs180-palette-index="'+i+'"><span>'+x.icon+'</span><div><div class="rs180RowTitle">'+esc(x.label)+'</div><div class="rs180RowSub">'+esc(x.sub)+'</div></div><span>↵</span></div>').join("");
+    window.__rs180PaletteItems=filtered;
+  }
+
+  function closePanel(){
+    document.getElementById("rs180Panel")?.classList.remove("open");
+    document.querySelectorAll(".rs180DockBtn").forEach(b=>b.classList.remove("active"));
+    document.querySelector("[data-rs180-home]")?.classList.add("active");
+    refreshHome();
+  }
+
+  function bindEvents(){
+    document.addEventListener("click",function(e){
+      const openBtn=e.target.closest&&e.target.closest("[data-rs180-open]");
+      if(openBtn){e.preventDefault();openPanel(openBtn.dataset.rs180Open);return;}
+      if(e.target.closest&&e.target.closest("[data-rs180-home]")){e.preventDefault();closePanel();return;}
+      if(e.target.closest&&e.target.closest("[data-rs180-close]")){e.preventDefault();closePanel();return;}
+      if(e.target.closest&&e.target.closest("[data-rs180-cmd],#rs180Command")){e.preventDefault();openPalette();return;}
+      if(e.target.closest&&e.target.closest("[data-rs180-export]")){e.preventDefault();exportBackup();return;}
+      if(e.target.closest&&e.target.closest("[data-rs180-old-import]")){e.preventDefault();document.querySelector('.rs146DockBtn[data-panel="import"]')?.click();return;}
+
+      const act=e.target.closest&&e.target.closest("[data-rs180-action]");
+      if(act){
+        e.preventDefault();
+        const i=Number(act.dataset.index);
+        const a=act.dataset.rs180Action;
+        if(a==="hold") moveToHold(i);
+        if(a==="unhold") unhold(i);
+        if(a==="sold") moveToSold(i);
+        if(a==="delete-active") deleteRow("active",i);
+        if(a==="delete-hold") deleteRow("hold",i);
+        if(a==="delete-sold") deleteRow("sold",i);
+        return;
+      }
+
+      const palItem=e.target.closest&&e.target.closest("[data-rs180-palette-index]");
+      if(palItem){
+        const item=window.__rs180PaletteItems?.[Number(palItem.dataset.rs180PaletteIndex)];
+        document.getElementById("rs180Palette")?.classList.remove("open");
+        item&&item.open&&item.open();
+      }
+
+      if(e.target.id==="rs180Palette") e.target.classList.remove("open");
+    },true);
+
+    document.addEventListener("keydown",function(e){
+      if((e.metaKey||e.ctrlKey)&&String(e.key).toLowerCase()==="k"){e.preventDefault();openPalette();}
+      if(e.key==="Escape"){document.getElementById("rs180Palette")?.classList.remove("open");document.getElementById("rs180Panel")?.classList.remove("open");}
+    });
+
+    document.addEventListener("input",function(e){
+      if(e.target&&e.target.id==="rs180PaletteInput") renderPalette(e.target.value);
+    });
+  }
+
+  function start(){
+    ensureShell();
+    refreshHome();
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+
+  window.addEventListener("load",()=>setTimeout(refreshHome,300));
+})();
+</script>
+
 </body></html><!-- ===== PATCH: Topbar eBay logo button + private sales dashboard reliability ===== --><style id="resellrTopbarEbayLogoPatchCss">
   #ebayPriceTopButton.ebay-top-logo-button,
   #ebayPriceTopButton.resellr-ebay-logo-button{
