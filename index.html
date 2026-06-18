@@ -1,4 +1,140 @@
-<!DOCTYPE html><html lang="en" data-theme="hackercyan"><head><script>
+<!DOCTYPE html><html lang="en" data-theme="hackercyan"><head>
+
+<style id="rs-v173-startup-lock-gate-css">
+  html.rs173-locked #rs146Dock,
+  html.rs173-locked #rs142Dock,
+  html.rs173-locked #rs136PullDock,
+  html.rs173-locked #rs161LofiPlayer,
+  html.rs173-locked #rs162StatsPill,
+  html.rs173-locked #rs146Panel,
+  html.rs173-locked #rs142Panel,
+  html.rs173-locked #rs136DataPanel,
+  html.rs173-locked #rs147Overlay,
+  html.rs173-locked #rs165LogoBtn,
+  html.rs173-locked #rs165BgPanel{
+    display:none!important;
+    visibility:hidden!important;
+    opacity:0!important;
+    pointer-events:none!important;
+  }
+</style>
+<script id="rs-v173-startup-lock-gate-js">
+(function(){
+  if(window.__rsV173StartupLockGate)return;
+  window.__rsV173StartupLockGate=true;
+
+  function hasPasscodeKey(){
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++) keys.push(localStorage.key(i)||"");
+    return keys.some(k=>/passcode|password|pin|lock/i.test(k) && localStorage.getItem(k));
+  }
+
+  function hasUnlockFlag(){
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++) keys.push(localStorage.key(i)||"");
+    return keys.some(k=>{
+      if(!/unlock|authenticated|logged|session|lock/i.test(k)) return false;
+      const v=String(localStorage.getItem(k)||"").toLowerCase();
+      return v==="true" || v==="1" || v==="yes" || v==="unlocked";
+    });
+  }
+
+  function lockTextVisible(){
+    const t=(document.body&&document.body.innerText||"").toLowerCase();
+    return (t.includes("dashboard locked") && t.includes("passcode")) ||
+           (t.includes("create passcode") && t.includes("passcode")) ||
+           (t.includes("setup passcode") && t.includes("passcode")) ||
+           (t.includes("enter your passcode") && t.includes("unlock"));
+  }
+
+  function visible(el){
+    if(!el)return false;
+    const cs=getComputedStyle(el),r=el.getBoundingClientRect();
+    return cs.display!=="none"&&cs.visibility!=="hidden"&&Number(cs.opacity)!==0&&r.width>20&&r.height>20;
+  }
+
+  function lockOverlayVisible(){
+    const nodes=document.querySelectorAll('[id*="lock" i],[class*="lock" i],[id*="passcode" i],[class*="passcode" i],[id*="login" i],[class*="login" i],dialog,[role="dialog"]');
+    for(const el of nodes){
+      if(!visible(el))continue;
+      const t=(el.innerText||"").toLowerCase();
+      const m=(el.id+" "+el.className).toLowerCase();
+      if(/lock|passcode|login|auth/.test(m)||(t.includes("passcode")&&(t.includes("create")||t.includes("unlock")||t.includes("dashboard"))))return true;
+    }
+    return false;
+  }
+
+  function shouldGate(){
+    // First setup: no passcode exists yet, so keep app panels/dock hidden until setup finishes.
+    if(!hasPasscodeKey()) return true;
+    // Existing setup: hide panels while lock screen is visible or session is not unlocked.
+    if(lockTextVisible()||lockOverlayVisible()) return true;
+    return false;
+  }
+
+  function hideApp(){
+    document.documentElement.classList.add("rs173-locked");
+    document.body&&document.body.classList.add("rs170-locking","rs154-locked");
+    ["rs146Panel","rs142Panel","rs136DataPanel","rs147Overlay","rs165BgPanel"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){el.classList.remove("open");el.style.display="none";el.style.pointerEvents="none";}
+    });
+    document.querySelectorAll(".rs146DockBtn,.rs142DockBtn,.rs136DockBtn").forEach(b=>b.classList.remove("active"));
+  }
+
+  function showApp(){
+    document.documentElement.classList.remove("rs173-locked");
+    document.body&&document.body.classList.remove("rs170-locking","rs154-locked");
+    ["rs146Panel","rs142Panel","rs136DataPanel"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.style.display="";
+    });
+  }
+
+  function sync(){
+    if(shouldGate()) hideApp();
+    else showApp();
+  }
+
+  // Gate immediately before DOM is ready.
+  document.documentElement.classList.add("rs173-locked");
+
+  // Stop dock/panel click handlers while gated.
+  window.addEventListener("click",function(e){
+    if(!document.documentElement.classList.contains("rs173-locked"))return;
+    const blocked=e.target.closest&&e.target.closest("#rs146Dock,#rs142Dock,#rs136PullDock,#rs146Panel,#rs142Panel,#rs136DataPanel,#rs161LofiPlayer,#rs162StatsPill,#rs165LogoBtn,#rs165BgPanel");
+    if(blocked){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  },true);
+
+  document.addEventListener("DOMContentLoaded",function(){
+    sync();
+    setTimeout(sync,100);
+    setTimeout(sync,500);
+    setTimeout(sync,1200);
+  });
+
+  window.addEventListener("load",function(){
+    sync();
+    setTimeout(sync,300);
+  });
+
+  document.addEventListener("input",function(){setTimeout(sync,80)},true);
+  document.addEventListener("keydown",function(){setTimeout(sync,80)},true);
+  document.addEventListener("click",function(){setTimeout(sync,120)},true);
+
+  const obs=new MutationObserver(function(){
+    clearTimeout(window.__rs173Timer);
+    window.__rs173Timer=setTimeout(sync,60);
+  });
+  if(document.documentElement) obs.observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["class","style","hidden"]});
+
+  setInterval(sync,700);
+})();
+</script>
+<script>
 /* ===== Early bookmarklet URL strip ===== */
 (function(){
   try{
