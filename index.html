@@ -20201,6 +20201,360 @@ window.addEventListener("load", ()=>setTimeout(updateCommandCenter, 800));
 })();
 </script>
 
+
+<!-- ===== v182: visible minimalist workspace home while keeping existing tabs ===== -->
+<style id="rs-v182-visible-workspace-css">
+  body.rs182-workspace{
+    padding:0 !important;
+    min-height:100vh !important;
+    overflow-x:hidden !important;
+    background:
+      radial-gradient(circle at 18% 78%, rgba(45,212,191,.18), transparent 32%),
+      radial-gradient(circle at 78% 22%, rgba(59,130,246,.14), transparent 34%),
+      linear-gradient(145deg,#020617,#07111b 52%,#0b1020) !important;
+  }
+
+  body.rs182-workspace .app{
+    display:none !important;
+  }
+
+  body.rs182-panel-open #rs182Home{
+    opacity:0 !important;
+    pointer-events:none !important;
+    transform:scale(.985) !important;
+  }
+
+  #rs182Home{
+    position:relative;
+    z-index:5;
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    padding:70px 22px 120px;
+    transition:opacity .18s ease, transform .18s ease;
+  }
+
+  .rs182Stage{
+    width:min(1120px,100%);
+    text-align:center;
+  }
+
+  .rs182Brand{
+    font-size:12px;
+    font-weight:950;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:rgba(248,250,252,.62);
+    margin-bottom:26px;
+  }
+
+  .rs182Profit{
+    font-size:clamp(58px,12vw,128px);
+    line-height:.9;
+    letter-spacing:-.085em;
+    font-weight:950;
+    color:#fff;
+    text-shadow:0 30px 90px rgba(0,0,0,.46);
+  }
+
+  .rs182Label{
+    margin-top:14px;
+    font-size:12px;
+    font-weight:950;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:rgba(226,232,240,.58);
+  }
+
+  .rs182Stats{
+    margin:34px auto 0;
+    display:flex;
+    justify-content:center;
+    gap:38px;
+    flex-wrap:wrap;
+  }
+
+  .rs182Stat{
+    min-width:125px;
+  }
+
+  .rs182Stat b{
+    display:block;
+    color:#fff;
+    font-size:clamp(24px,3.5vw,38px);
+    font-weight:950;
+    letter-spacing:-.055em;
+  }
+
+  .rs182Stat span{
+    display:block;
+    color:rgba(226,232,240,.54);
+    font-size:10px;
+    font-weight:950;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    margin-top:5px;
+  }
+
+  .rs182Actions{
+    margin:30px auto 0;
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:9px;
+  }
+
+  .rs182Pill{
+    width:auto !important;
+    min-width:0 !important;
+    height:38px !important;
+    padding:0 15px !important;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.065) !important;
+    border:1px solid rgba(255,255,255,.10) !important;
+    color:#fff !important;
+    font-size:12px !important;
+    font-weight:950 !important;
+    box-shadow:none !important;
+    backdrop-filter:blur(18px) !important;
+    -webkit-backdrop-filter:blur(18px) !important;
+  }
+
+  .rs182GraphShell{
+    margin:44px auto 0;
+    width:min(960px,100%);
+    text-align:left;
+  }
+
+  .rs182GraphTop{
+    display:flex;
+    justify-content:space-between;
+    align-items:end;
+    gap:12px;
+    margin-bottom:10px;
+    color:#fff;
+  }
+
+  .rs182GraphTop b{
+    font-size:15px;
+    font-weight:950;
+    letter-spacing:-.02em;
+  }
+
+  .rs182GraphTop span{
+    font-size:11px;
+    color:rgba(226,232,240,.56);
+    font-weight:850;
+  }
+
+  .rs182GraphBox{
+    height:260px;
+    border-top:1px solid rgba(255,255,255,.08);
+    border-bottom:1px solid rgba(255,255,255,.08);
+    padding:14px 0;
+  }
+
+  .rs182GraphBox canvas{
+    width:100% !important;
+    height:100% !important;
+  }
+
+  #rs146Dock{
+    z-index:2147482000 !important;
+  }
+
+  #rs146Panel.open{
+    z-index:2147481900 !important;
+  }
+
+  body.rs182-workspace #rs146Panel{
+    inset:54px 18px 72px !important;
+    border-radius:28px !important;
+    background:rgba(8,12,20,.78) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    box-shadow:0 34px 100px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08) !important;
+    backdrop-filter:blur(30px) saturate(1.12) !important;
+    -webkit-backdrop-filter:blur(30px) saturate(1.12) !important;
+  }
+
+  body.rs182-workspace #rs146Panel .rs146Header{
+    border-bottom:1px solid rgba(255,255,255,.08) !important;
+  }
+
+  body.rs182-workspace #rs146Panel .rs146Header h2{
+    color:#fff !important;
+    font-size:16px !important;
+    font-weight:950 !important;
+    letter-spacing:-.025em !important;
+  }
+
+  body.rs182-workspace #rs146Panel .rs146Metric,
+  body.rs182-workspace #rs146Panel .rs169Card,
+  body.rs182-workspace #rs146Panel .rs146TableCard,
+  body.rs182-workspace #rs146Panel .rs146GraphCard{
+    background:rgba(255,255,255,.045) !important;
+    border:1px solid rgba(255,255,255,.085) !important;
+    border-radius:22px !important;
+    box-shadow:none !important;
+  }
+
+  body.rs182-workspace #rs146Panel table td,
+  body.rs182-workspace #rs146Panel table th{
+    border-color:rgba(255,255,255,.06) !important;
+  }
+
+  @media(max-width:760px){
+    .rs182Stats{gap:20px}
+    .rs182Stat{min-width:95px}
+    .rs182GraphBox{height:220px}
+  }
+</style>
+
+<script id="rs-v182-visible-workspace-js">
+(function(){
+  if(window.__rsV182VisibleWorkspace) return;
+  window.__rsV182VisibleWorkspace = true;
+
+  function read(k){try{return JSON.parse(localStorage.getItem(k)||"[]")||[]}catch(e){return[]}}
+  function active(){return read("activeInventory").length?read("activeInventory"):read("inventory")}
+  function sold(){return read("soldInventory").length?read("soldInventory"):read("sold")}
+  function holds(){return read("inventoryHolds").length?read("inventoryHolds"):read("holds")}
+  function n(v){const x=Number(String(v??"").replace(/[^0-9.-]/g,""));return Number.isFinite(x)?x:0}
+  function money(v,d=0){try{return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:d}).format(Number(v)||0)}catch(e){return "$"+(Number(v)||0).toFixed(d)}}
+  function val(r,ks){for(const k of ks){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return 0}
+  function sale(r){return val(r,["sale","price","salePrice","soldPrice","revenue","income","amount","totalIncome","total"])}
+  function cost(r){return val(r,["cost","Cost","itemCost","cogs","costOfSold","purchasePrice"])}
+  function fee(r){return val(r,["fees","fee","platformFees","sellingFees","sellerFees","transactionFee"])}
+  function ship(r){return val(r,["ship","shipping","shippingCost","postage","labelCost"])}
+  function list(r){return val(r,["list","listPrice","listingPrice","price","salePrice","amount"])}
+  function profit(r){for(const k of["profit","netProfit","totalProfit","net"]){if(r&&r[k]!=null&&String(r[k]).trim()!=="")return n(r[k])}return sale(r)-cost(r)-fee(r)-ship(r)}
+  function soldDate(r){const raw=r.soldDate||r.date||r.Date||r["Sold Date"]||r.saleDate||r.createdAt||"";const d=new Date(raw);return isNaN(d)?null:d}
+
+  function ensureHome(){
+    if(document.getElementById("rs182Home")) return;
+    document.body.classList.add("rs182-workspace");
+    const home=document.createElement("main");
+    home.id="rs182Home";
+    home.innerHTML =
+      '<div class="rs182Stage">'+
+        '<div class="rs182Brand">RESELLr</div>'+
+        '<div class="rs182Profit" id="rs182Profit">$0</div>'+
+        '<div class="rs182Label">Total Profit</div>'+
+        '<div class="rs182Stats">'+
+          '<div class="rs182Stat"><b id="rs182Active">0</b><span>Active</span></div>'+
+          '<div class="rs182Stat"><b id="rs182Sales">0</b><span>Sales</span></div>'+
+          '<div class="rs182Stat"><b id="rs182Inventory">$0</b><span>Inventory</span></div>'+
+          '<div class="rs182Stat"><b id="rs182Holds">0</b><span>Holds</span></div>'+
+        '</div>'+
+        '<div class="rs182Actions">'+
+          '<button class="rs182Pill" data-rs182-open="inventory">Inventory</button>'+
+          '<button class="rs182Pill" data-rs182-open="sold">Sold</button>'+
+          '<button class="rs182Pill" data-rs182-open="holds">Holds</button>'+
+          '<button class="rs182Pill" data-rs182-open="tax">Tax Report</button>'+
+          '<button class="rs182Pill" data-rs182-open="import">Import / Data</button>'+
+        '</div>'+
+        '<div class="rs182GraphShell"><div class="rs182GraphTop"><b>Business Growth</b><span>income · profit · cost + profit</span></div><div class="rs182GraphBox"><canvas id="rs182Chart"></canvas></div></div>'+
+      '</div>';
+    document.body.appendChild(home);
+  }
+
+  function refresh(){
+    ensureHome();
+    const a=active(), s=sold(), h=holds();
+    const p=s.reduce((x,r)=>x+profit(r),0);
+    const inv=a.reduce((x,r)=>x+(list(r)||cost(r)),0);
+    document.getElementById("rs182Profit").textContent=money(p,0);
+    document.getElementById("rs182Active").textContent=a.length;
+    document.getElementById("rs182Sales").textContent=s.length;
+    document.getElementById("rs182Inventory").textContent=money(inv,0);
+    document.getElementById("rs182Holds").textContent=h.length;
+    draw();
+  }
+
+  function draw(){
+    if(!window.Chart) return;
+    const c=document.getElementById("rs182Chart");
+    if(!c) return;
+    const by=new Map();
+    sold().forEach(r=>{
+      const d=soldDate(r);
+      if(!d) return;
+      const k=d.toISOString().slice(0,10);
+      if(!by.has(k)) by.set(k,{d,income:0,profit:0,cp:0});
+      const b=by.get(k);
+      b.income+=sale(r);
+      b.profit+=profit(r);
+      b.cp+=cost(r)+profit(r);
+    });
+    let ti=0,tp=0,tcp=0;
+    const rows=[...by.values()].sort((a,b)=>a.d-b.d).map(x=>{
+      ti+=x.income; tp+=x.profit; tcp+=x.cp;
+      return {label:x.d.toLocaleDateString("en-US",{month:"short",day:"numeric"}),ti,tp,tcp};
+    });
+    try{const old=Chart.getChart&&Chart.getChart(c);if(old)old.destroy()}catch(e){}
+    new Chart(c,{type:"line",data:{labels:rows.map(r=>r.label),datasets:[{label:"Income",data:rows.map(r=>r.ti),borderWidth:3,pointRadius:0,tension:.28},{label:"Profit",data:rows.map(r=>r.tp),borderWidth:3,pointRadius:0,tension:.28},{label:"Cost + Profit",data:rows.map(r=>r.tcp),borderWidth:3,pointRadius:0,tension:.28}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{labels:{color:"rgba(248,250,252,.7)",boxWidth:10}},tooltip:{callbacks:{label:ctx=>" "+ctx.dataset.label+": "+money(ctx.parsed.y,0)}}},scales:{x:{grid:{color:"rgba(255,255,255,.045)"},ticks:{color:"rgba(226,232,240,.55)",maxTicksLimit:8}},y:{grid:{color:"rgba(255,255,255,.055)"},ticks:{color:"rgba(226,232,240,.55)",callback:v=>money(v,0)}}}}});
+  }
+
+  function openExisting(panel){
+    const btn=document.querySelector('.rs146DockBtn[data-panel="'+panel+'"]');
+    if(btn){
+      document.body.classList.add("rs182-panel-open");
+      btn.click();
+      setTimeout(()=>document.body.classList.toggle("rs182-panel-open",document.getElementById("rs146Panel")?.classList.contains("open")),220);
+    }
+  }
+
+  function showHome(){
+    const p=document.getElementById("rs146Panel");
+    if(p) p.classList.remove("open");
+    document.body.classList.remove("rs182-panel-open");
+    document.querySelectorAll(".rs146DockBtn").forEach(b=>b.classList.remove("active"));
+    document.querySelector('.rs146DockBtn[data-panel="dashboard"]')?.classList.add("active");
+    refresh();
+  }
+
+  function bind(){
+    document.addEventListener("click",function(e){
+      const quick=e.target.closest&&e.target.closest("[data-rs182-open]");
+      if(quick){
+        e.preventDefault();
+        openExisting(quick.dataset.rs182Open);
+        return;
+      }
+
+      const dock=e.target.closest&&e.target.closest(".rs146DockBtn");
+      if(dock){
+        const panel=dock.dataset.panel;
+        if(panel==="dashboard"){
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          showHome();
+          return;
+        }
+        if(panel){
+          document.body.classList.add("rs182-panel-open");
+          setTimeout(()=>document.body.classList.toggle("rs182-panel-open",document.getElementById("rs146Panel")?.classList.contains("open")),250);
+        }
+      }
+
+      if(e.target.closest&&e.target.closest("#rs146Close")){
+        setTimeout(showHome,120);
+      }
+    },true);
+  }
+
+  function start(){
+    ensureHome();
+    refresh();
+    bind();
+    setTimeout(refresh,500);
+  }
+
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+})();
+</script>
+
 </body></html><!-- ===== PATCH: Topbar eBay logo button + private sales dashboard reliability ===== --><style id="resellrTopbarEbayLogoPatchCss">
   #ebayPriceTopButton.ebay-top-logo-button,
   #ebayPriceTopButton.resellr-ebay-logo-button{
