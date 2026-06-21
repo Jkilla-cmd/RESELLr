@@ -1375,3 +1375,89 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
   pointer-events:auto!important;
   cursor:pointer!important;
 }
+
+
+/* ===== v229 remove GIF + stable dashboard layout + sold actions ===== */
+.dashboard-gif-card,
+#dashboardGifCard,
+.dashboard-gif-preview,
+#dashboardGifPreview,
+.dashboard-gif-controls{
+  display:none!important;
+}
+.spend-kpi{
+  display:block!important;
+  min-width:250px!important;
+}
+.spend-kpi .month-progress{
+  display:block!important;
+  margin-top:12px!important;
+}
+.month-progress-top{
+  display:flex!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  color:var(--muted)!important;
+  font-size:11px!important;
+}
+.month-progress-track,.split-track{
+  width:100%!important;
+  height:8px!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.08)!important;
+  overflow:hidden!important;
+  margin-top:6px!important;
+}
+.month-progress-track i,.split-track i{
+  display:block!important;
+  height:100%!important;
+  width:0%;
+  border-radius:999px!important;
+  background:linear-gradient(90deg,var(--cyan),var(--purple))!important;
+}
+.split-bars{
+  display:grid!important;
+  gap:8px!important;
+  margin-top:12px!important;
+}
+.split-bars>div{
+  display:grid!important;
+  grid-template-columns:72px 1fr 42px!important;
+  gap:8px!important;
+  align-items:center!important;
+}
+.split-bars small{
+  color:var(--muted)!important;
+  font-size:10px!important;
+}
+#inventorySplitBar{background:linear-gradient(90deg,var(--cyan),var(--green))!important}
+#asideSplitBar{background:linear-gradient(90deg,var(--gold),var(--purple))!important}
+.snapshot-card{
+  margin-top:22px!important;
+}
+#sold .row-actions{
+  justify-content:center!important;
+  gap:18px!important;
+}
+#sold .row-actions button{
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+#sold .row-actions .icon-action{
+  width:auto!important;
+  min-width:0!important;
+  height:auto!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  font-size:18px!important;
+  color:rgba(248,250,252,.86)!important;
+}
+#sold .row-actions .delete-btn{
+  color:rgba(255,107,107,.92)!important;
+}
+.chart-card,#growthChart{
+  min-height:330px!important;
+}

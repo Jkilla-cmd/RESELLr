@@ -3071,3 +3071,158 @@ render=function(){
   renderSoldRows();
 };
 setTimeout(()=>{moveGifUnderKpisV228();renderSoldRows();},500);
+
+
+/* ===== v229: remove GIF logic + permanent sold actions + dashboard rec/graph ===== */
+function removeGifFeatureV229(){
+  document.querySelectorAll("#dashboardGifCard,.dashboard-gif-card,#dashboardGifPreview,.dashboard-gif-preview,.dashboard-gif-controls").forEach(el=>el.remove());
+  localStorage.removeItem("resellr_dashboard_gif");
+}
+
+function updateSpendRecommendation(){
+  const now=new Date();
+  const rows=sold().filter(r=>{
+    const d=dateOf(r);
+    return d && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+  });
+  const monthSales=rows.reduce((x,r)=>x+price(r),0);
+  const monthProfit=rows.reduce((x,r)=>x+profit(r),0);
+  const inventoryPct=50;
+  const asidePct=50;
+  const inventorySpend=monthProfit>0 ? monthProfit*(inventoryPct/100) : monthSales*.25;
+  const setAside=Math.max(0,monthProfit*(asidePct/100));
+  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const monthPct=Math.min(100,Math.round(now.getDate()/daysInMonth*100));
+
+  if($("#spendRecommend")) $("#spendRecommend").textContent=money(inventorySpend,0);
+  if($("#spendRecommendText")) $("#spendRecommendText").textContent=`inventory · keep ${money(setAside,0)} aside`;
+  if($("#monthProgressPct")) $("#monthProgressPct").textContent=monthPct+"%";
+  if($("#monthProgressBar")) $("#monthProgressBar").style.width=monthPct+"%";
+  if($("#inventorySplitPct")) $("#inventorySplitPct").textContent=inventoryPct+"%";
+  if($("#asideSplitPct")) $("#asideSplitPct").textContent=asidePct+"%";
+  if($("#inventorySplitBar")) $("#inventorySplitBar").style.width=inventoryPct+"%";
+  if($("#asideSplitBar")) $("#asideSplitBar").style.width=asidePct+"%";
+}
+
+window.rsSoldEditSaleV229=function(index){
+  const rows=sold();
+  const item=rows[index];
+  if(!item)return;
+  const newPrice=prompt(`Edit sold price for "${title(item)}"`, String(price(item)||""));
+  if(newPrice===null)return;
+  item.price=n(newPrice);
+  item.salePrice=n(newPrice);
+  item.soldPrice=n(newPrice);
+  item.profit=item.price-cost(item)-fees(item)-ship(item);
+  setSold(rows);
+  render();
+};
+
+window.rsSoldMoveBackV229=function(index){
+  const rows=sold();
+  const item=rows[index];
+  if(!item)return;
+  const activeRows=active();
+  activeRows.unshift({...item,status:"active",addedAt:new Date().toISOString()});
+  rows.splice(index,1);
+  setSold(rows);
+  setActive(activeRows);
+  render();
+  showPage("inventory");
+};
+
+window.rsSoldDeleteV229=function(index){
+  const rows=sold();
+  const item=rows[index];
+  if(!item)return;
+  if(confirm(`Delete "${title(item)}" from Sold Items?`)){
+    rows.splice(index,1);
+    setSold(rows);
+    render();
+  }
+};
+
+renderSoldRows=function(){
+  const base=sold();
+  const rows=getSoldFilteredRows().map(r=>({r,i:base.indexOf(r)}));
+  updateSoldKpisFromRows(rows.map(x=>x.r));
+  $("#soldRows").innerHTML=rows.map(({r,i})=>{
+    const p=price(r),pr=profit(r),m=p?Math.round(pr/p*100):0;
+    return `<tr>
+      <td><div class="item-cell"><div class="thumb"></div><div>${esc(title(r))}<small>${esc(platform(r))}</small></div></div></td>
+      <td>${fmt(dateOf(r))}</td>
+      <td>${money(p)}</td>
+      <td>${money(cost(r))}</td>
+      <td class="${pr>=0?"profit":"loss"}">${money(pr)}</td>
+      <td class="margin">${m}%</td>
+      <td><div class="row-actions">
+        <button type="button" onclick="rsSoldEditSaleV229(${i})" class="icon-action" title="Edit sale">$</button>
+        <button type="button" onclick="rsSoldMoveBackV229(${i})" class="icon-action" title="Move back to inventory">▣</button>
+        <button type="button" onclick="rsSoldDeleteV229(${i})" class="icon-action delete-btn" title="Delete sold item">×</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+};
+
+// Prevent older delegated handlers from eating sold button clicks before inline onclick runs.
+document.addEventListener("click",function(e){
+  const btn=e.target.closest&&e.target.closest("#soldRows .row-actions button");
+  if(!btn)return;
+  e.stopPropagation();
+},false);
+
+drawChart=function(){
+  if(!window.Chart)return;
+  const canvas=$("#growthChart");
+  if(!canvas)return;
+
+  const by=new Map();
+  sortedSoldDesc().filter(inRangeBySelect).forEach(r=>{
+    const d=dateOf(r);
+    if(!d)return;
+    const k=d.toISOString().slice(0,10);
+    if(!by.has(k))by.set(k,{d,income:0,profit:0,costProfit:0});
+    const b=by.get(k);
+    b.income+=price(r);
+    b.profit+=profit(r);
+    b.costProfit+=cost(r)+profit(r);
+  });
+
+  let ci=0,cp=0,ccp=0;
+  const rows=[...by.values()].sort((a,b)=>a.d-b.d).map(x=>{
+    ci+=x.income; cp+=x.profit; ccp+=x.costProfit;
+    return {label:x.d.toLocaleDateString("en-US",{month:"short",day:"numeric"}),income:ci,profit:cp,costProfit:ccp};
+  });
+
+  if(chart)chart.destroy();
+  chart=new Chart(canvas,{
+    type:"line",
+    data:{
+      labels:rows.map(r=>r.label),
+      datasets:[
+        {label:"Total Income",data:rows.map(r=>Number(r.income.toFixed(2))),borderColor:"#ffb31a",backgroundColor:"rgba(255,179,26,.08)",fill:false,tension:.38,pointRadius:2,pointHoverRadius:5},
+        {label:"Profit",data:rows.map(r=>Number(r.profit.toFixed(2))),borderColor:"#58ff83",backgroundColor:"rgba(88,255,131,.16)",fill:true,tension:.38,pointRadius:2,pointHoverRadius:5},
+        {label:"Cost + Profit",data:rows.map(r=>Number(r.costProfit.toFixed(2))),borderColor:"#cf52ff",backgroundColor:"rgba(207,82,255,.08)",fill:false,tension:.38,pointRadius:2,pointHoverRadius:5}
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:false,
+      interaction:{mode:"index",intersect:false},
+      plugins:{legend:{labels:{color:"rgba(226,232,240,.82)",boxWidth:12}},tooltip:{callbacks:{label:ctx=>" "+ctx.dataset.label+": "+money(ctx.parsed.y)}}},
+      scales:{x:{ticks:{color:"rgba(226,232,240,.78)",maxTicksLimit:8},grid:{display:false}},y:{beginAtZero:true,ticks:{color:"rgba(226,232,240,.78)",callback:v=>"$"+v},grid:{color:"rgba(255,255,255,.075)"}}}
+    }
+  });
+};
+
+const oldRenderV229=render;
+render=function(){
+  oldRenderV229();
+  removeGifFeatureV229();
+  updateSpendRecommendation();
+  renderSoldRows();
+  drawChart();
+};
+
+setTimeout(()=>{removeGifFeatureV229();updateSpendRecommendation();renderSoldRows();drawChart();},500);
