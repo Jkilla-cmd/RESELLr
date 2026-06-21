@@ -2657,7 +2657,7 @@ render=function(){
 setTimeout(()=>{forceSideIconsV222();renderSoldRows();},400);
 
 
-/* ===== v232: reinvest mode switcher for Recommended Next Month ===== */
+/* ===== v233: reinvest mode button + useful dashboard insights ===== */
 const REINVEST_MODES=[
   {key:"conservative",label:"Conservative 40/60",inventoryPct:40,asidePct:60},
   {key:"balanced",label:"Balanced 50/50",inventoryPct:50,asidePct:50},
@@ -2688,7 +2688,6 @@ function updateSpendRecommendation(){
   const costProfit=monthRows.reduce((x,r)=>x+cost(r)+profit(r),0);
   const inventorySpend=costProfit*(mode.inventoryPct/100);
   const setAside=costProfit*(mode.asidePct/100);
-
   const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
   const monthPct=Math.min(100,Math.round(now.getDate()/daysInMonth*100));
 
@@ -2704,6 +2703,48 @@ function updateSpendRecommendation(){
   if($("#asideSplitBar")) $("#asideSplitBar").style.width=mode.asidePct+"%";
 }
 
+function renderDashboardInsights(){
+  const activeRows=active();
+  const soldRows=sold();
+  const now=new Date();
+
+  const sellThrough=(soldRows.length+activeRows.length)>0
+    ? Math.round((soldRows.length/(soldRows.length+activeRows.length))*100)
+    : 0;
+  if($("#velocitySellThrough")) $("#velocitySellThrough").textContent=sellThrough+"%";
+  if($("#velocityText")) $("#velocityText").textContent=`${soldRows.length} sold · ${activeRows.length} active`;
+
+  const latestSold=soldRows.slice().sort((a,b)=>(dateOf(b)||0)-(dateOf(a)||0))[0];
+  if(latestSold){
+    const d=dateOf(latestSold);
+    if($("#lastSaleWhen")) $("#lastSaleWhen").textContent=d?d.toLocaleDateString("en-US",{month:"short",day:"numeric"}):"Recent";
+    if($("#lastSaleItem")) $("#lastSaleItem").textContent=title(latestSold).slice(0,44);
+  }else{
+    if($("#lastSaleWhen")) $("#lastSaleWhen").textContent="—";
+    if($("#lastSaleItem")) $("#lastSaleItem").textContent="No sales yet";
+  }
+
+  const monthSold=soldRows.filter(r=>{
+    const d=dateOf(r);
+    return d && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+  }).length;
+  const goal=30;
+  const pct=Math.min(100,Math.round(monthSold/goal*100));
+  if($("#monthlyGoalCount")) $("#monthlyGoalCount").textContent=`${monthSold} / ${goal}`;
+  if($("#monthlyGoalBar")) $("#monthlyGoalBar").style.width=pct+"%";
+
+  const aged=activeRows.filter(r=>{
+    const d=dateOf(r);
+    return d && ((now-d)/(1000*60*60*24))>180;
+  }).length;
+  const lowMargin=activeRows.filter(r=>{
+    const p=price(r), c=cost(r);
+    return p>0 && ((p-c)/p)<0.20;
+  }).length;
+  if($("#attentionCount")) $("#attentionCount").textContent=aged+lowMargin;
+  if($("#attentionText")) $("#attentionText").textContent=`${aged} aged · ${lowMargin} low margin`;
+}
+
 document.addEventListener("click",function(e){
   if(e.target && e.target.id==="reinvestModeBtn"){
     e.preventDefault();
@@ -2711,9 +2752,11 @@ document.addEventListener("click",function(e){
   }
 },true);
 
-const oldRenderV232=render;
+const oldRenderV233=render;
 render=function(){
-  oldRenderV232();
+  oldRenderV233();
   updateSpendRecommendation();
+  renderDashboardInsights();
 };
-setTimeout(updateSpendRecommendation,400);
+
+setTimeout(()=>{updateSpendRecommendation();renderDashboardInsights();},400);
