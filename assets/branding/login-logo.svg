@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 180">
+<defs>
+  <linearGradient id="g" x1="0" y1="0" x2="190" y2="180"><stop stop-color="#00f5ff"/><stop offset=".65" stop-color="#24e7c7"/><stop offset="1" stop-color="#cf52ff"/></linearGradient>
+</defs>
+<rect width="900" height="180" fill="none"/>
+<path fill="none" stroke="url(#g)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" d="M45 139V45c0-16 13-29 29-29h68c31 0 51 19 51 46 0 28-21 47-53 47h-39l77 69M45 45h97"/>
+<text x="230" y="117" font-family="Inter, Arial, sans-serif" font-size="74" letter-spacing="22" fill="#f8fafc">RESELLr</text>
+</svg>
