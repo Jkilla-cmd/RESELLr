@@ -856,41 +856,172 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
 }
 
 
-/* ===== v234 keep mode button only; remove insights/GIF ===== */
-.dashboard-insight-grid,
-#dashboardInsightGrid,
-.dashboard-gif-card,
-#dashboardGifCard,
-.dashboard-gif-preview,
-#dashboardGifPreview,
-.dashboard-gif-controls{
-  display:none!important;
+/* ===== v235 health score + comic/card focus + player + sold actions ===== */
+.resellr-power-grid{
+  display:grid;
+  grid-template-columns:minmax(300px,1.15fr) minmax(280px,.85fr);
+  gap:18px;
+  margin:20px 0 22px;
 }
-.reinvest-mode-btn{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  margin-top:9px!important;
-  height:28px!important;
-  padding:0 12px!important;
-  border-radius:999px!important;
-  border:1px solid rgba(255,255,255,.14)!important;
-  background:rgba(255,255,255,.055)!important;
-  color:#fff!important;
-  font-size:11px!important;
-  font-weight:800!important;
-  letter-spacing:.02em!important;
+.health-card,.focus-card{
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:linear-gradient(180deg,rgba(10,18,34,.78),rgba(8,13,26,.54));
+  box-shadow:0 24px 80px rgba(0,0,0,.22);
+  backdrop-filter:blur(24px);
+}
+.health-card .card-head,.focus-card .card-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+.health-card h3,.focus-card h3{
+  margin:0;
+  text-transform:uppercase;
+  font-size:13px;
+  letter-spacing:.05em;
+}
+#healthGrade,#focusTopType{
+  color:var(--cyan);
+  font-weight:800;
+  font-size:12px;
+  border:1px solid rgba(0,245,255,.18);
+  background:rgba(0,245,255,.07);
+  padding:5px 9px;
+  border-radius:999px;
+}
+.health-score-wrap{
+  display:grid;
+  grid-template-columns:128px 1fr;
+  gap:18px;
+  align-items:center;
+  margin-top:18px;
+}
+.health-ring{
+  width:116px;
+  height:116px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  position:relative;
+  background:conic-gradient(var(--cyan) var(--score,0%),rgba(255,255,255,.10) 0);
+  box-shadow:0 0 32px rgba(0,245,255,.10);
+}
+.health-ring:after{
+  content:"";
+  position:absolute;
+  inset:12px;
+  border-radius:50%;
+  background:#08101e;
+}
+.health-ring strong{
+  position:relative;
+  z-index:1;
+  font-size:34px;
+  font-weight:700;
+}
+.health-breakdown{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.health-breakdown div,.focus-grid div{
+  border:1px solid rgba(255,255,255,.075);
+  border-radius:13px;
+  padding:11px;
+  background:rgba(255,255,255,.035);
+}
+.health-breakdown span,.focus-grid span{
+  display:block;
+  color:var(--muted);
+  text-transform:uppercase;
+  font-size:10px;
+  letter-spacing:.04em;
+}
+.health-breakdown b,.focus-grid b{
+  display:block;
+  margin-top:5px;
+  color:#fff;
+  font-size:20px;
+  font-weight:650;
+}
+#healthAdvice,#focusAdvice{
+  display:block;
+  margin-top:12px;
+  color:var(--muted);
+  font-style:normal;
+  font-size:12px;
+  line-height:1.35;
+}
+.focus-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:18px;
+}
+.focus-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+.focus-tags button{
+  height:30px;
+  padding:0 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);
+  color:#fff;
+  font-size:12px;
+  cursor:pointer;
+}
+.focus-tags button:hover{
+  color:var(--cyan);
+  border-color:rgba(0,245,255,.35);
+  background:rgba(0,245,255,.08);
+}
+.player-controls button,
+#playBtn,#pauseBtn,#stopBtn{
+  pointer-events:auto!important;
   cursor:pointer!important;
 }
-.reinvest-mode-btn:hover{
-  color:var(--cyan)!important;
-  border-color:rgba(0,245,255,.35)!important;
-  background:rgba(0,245,255,.09)!important;
+.player-controls .player-btn{
+  width:42px!important;
+  height:42px!important;
+  border-radius:50%!important;
+  border:1px solid var(--line)!important;
+  background:rgba(255,255,255,.04)!important;
+  color:#fff!important;
 }
-.spend-kpi{
-  display:block!important;
+#sold .row-actions{
+  justify-content:center!important;
+  gap:18px!important;
 }
-.spend-kpi .month-progress{
-  display:block!important;
-  margin-top:12px!important;
+#sold .row-actions button{
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+#sold .row-actions .icon-action{
+  width:auto!important;
+  min-width:0!important;
+  height:auto!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  font-size:18px!important;
+  color:rgba(248,250,252,.86)!important;
+}
+#sold .row-actions .delete-btn{
+  color:rgba(255,107,107,.92)!important;
+}
+@media(max-width:950px){
+  .resellr-power-grid{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+  .health-score-wrap{grid-template-columns:1fr}
+  .focus-grid,.health-breakdown{grid-template-columns:1fr}
 }

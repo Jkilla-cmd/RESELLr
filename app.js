@@ -2657,69 +2657,184 @@ render=function(){
 setTimeout(()=>{forceSideIconsV222();renderSoldRows();},400);
 
 
-/* ===== v234: mode button only, no insight/GIF cards ===== */
-function removeDashboardExtrasV234(){
-  document.querySelectorAll("#dashboardInsightGrid,.dashboard-insight-grid,#dashboardGifCard,.dashboard-gif-card").forEach(el=>el.remove());
-  localStorage.removeItem("resellr_dashboard_gif");
+/* ===== v235: RESELLr Health Score + Comic/Card Focus + player + sold actions ===== */
+function clampV235(v,min,max){return Math.max(min,Math.min(max,v));}
+
+function categoryOfV235(r){
+  const s=String(r?.category||r?.type||r?.notes||r?.title||"").toLowerCase();
+  if(s.includes("card")||s.includes("gpk")||s.includes("garbage pail")||s.includes("pokemon")||s.includes("trading"))return "card";
+  if(s.includes("comic")||s.includes("#")||s.includes("variant")||s.includes("slab")||s.includes("signed"))return "comic";
+  return "other";
 }
 
-const REINVEST_MODES=[
-  {key:"conservative",label:"Conservative 40/60",inventoryPct:40,asidePct:60},
-  {key:"balanced",label:"Balanced 50/50",inventoryPct:50,asidePct:50},
-  {key:"growth",label:"Growth 70/30",inventoryPct:70,asidePct:30}
-];
-
-function getReinvestMode(){
-  const key=localStorage.getItem("resellr_reinvest_mode")||"balanced";
-  return REINVEST_MODES.find(m=>m.key===key)||REINVEST_MODES[1];
+function ageDaysV235(r){
+  const d=dateOf(r);
+  if(!d)return 0;
+  return Math.max(0,(Date.now()-d.getTime())/(1000*60*60*24));
 }
 
-function cycleReinvestMode(){
-  const current=getReinvestMode();
-  const idx=REINVEST_MODES.findIndex(m=>m.key===current.key);
-  const next=REINVEST_MODES[(idx+1)%REINVEST_MODES.length];
-  localStorage.setItem("resellr_reinvest_mode",next.key);
-  updateSpendRecommendation();
+function renderHealthScoreV235(){
+  const a=active(), s=sold();
+  const total=a.length+s.length;
+  const sellThrough=total?Math.round((s.length/total)*100):0;
+
+  const soldIncome=s.reduce((x,r)=>x+price(r),0);
+  const soldProfit=s.reduce((x,r)=>x+profit(r),0);
+  const marginPct=soldIncome?Math.round((soldProfit/soldIncome)*100):0;
+
+  const avgAge=a.length?a.reduce((x,r)=>x+ageDaysV235(r),0)/a.length:0;
+  const agedPenalty=clampV235(Math.round(avgAge/365*100),0,100);
+  const ageScore=clampV235(100-agedPenalty,0,100);
+
+  const platforms=[...new Set(s.map(r=>platform(r).toLowerCase()).filter(Boolean))].length;
+  const platformScore=clampV235(platforms*34,0,100);
+
+  const sellScore=clampV235(Math.round(sellThrough*3.5),0,100);
+  const marginScore=clampV235(Math.round(marginPct*3),0,100);
+
+  const score=Math.round((sellScore*.30)+(marginScore*.30)+(ageScore*.25)+(platformScore*.15));
+  const grade=score>=85?"Excellent":score>=70?"Strong":score>=55?"Needs Work":"Weak";
+
+  if($("#healthScore")) $("#healthScore").textContent=score;
+  if($("#healthRing")) $("#healthRing").style.setProperty("--score",score+"%");
+  if($("#healthGrade")) $("#healthGrade").textContent=grade;
+  if($("#healthSellThrough")) $("#healthSellThrough").textContent=sellScore;
+  if($("#healthMargin")) $("#healthMargin").textContent=marginScore;
+  if($("#healthAge")) $("#healthAge").textContent=ageScore;
+  if($("#healthPlatform")) $("#healthPlatform").textContent=platformScore;
+
+  let advice="Healthy inventory balance.";
+  if(score<55) advice="Improve score by moving old inventory, raising margins, or adding more platform sales.";
+  else if(ageScore<55) advice="Aged inventory is pulling the score down. Review older listings.";
+  else if(marginScore<55) advice="Margins look low. Check fees, shipping, and pricing.";
+  else if(sellScore<55) advice="Sell-through could improve. Consider comps, offers, or relisting stale items.";
+  if($("#healthAdvice")) $("#healthAdvice").textContent=advice;
 }
 
-function updateSpendRecommendation(){
-  const mode=getReinvestMode();
-  const now=new Date();
-  const monthRows=sold().filter(r=>{
-    const d=dateOf(r);
-    return d && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
-  });
+function renderComicCardFocusV235(){
+  const rows=[...active(),...sold(),...holds()];
+  const comics=rows.filter(r=>categoryOfV235(r)==="comic").length;
+  const cards=rows.filter(r=>categoryOfV235(r)==="card").length;
+  const other=rows.filter(r=>categoryOfV235(r)==="other").length;
+  const top=Math.max(comics,cards,other);
+  const topName=top===comics?"Comics":top===cards?"Cards":"Other";
 
-  const costProfit=monthRows.reduce((x,r)=>x+cost(r)+profit(r),0);
-  const inventorySpend=costProfit*(mode.inventoryPct/100);
-  const setAside=costProfit*(mode.asidePct/100);
-  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
-  const monthPct=Math.min(100,Math.round(now.getDate()/daysInMonth*100));
+  if($("#focusComics")) $("#focusComics").textContent=comics;
+  if($("#focusCards")) $("#focusCards").textContent=cards;
+  if($("#focusOther")) $("#focusOther").textContent=other;
+  if($("#focusTopType")) $("#focusTopType").textContent=top?topName:"—";
+}
 
-  if($("#spendRecommend")) $("#spendRecommend").textContent=money(inventorySpend,0);
-  if($("#spendRecommendText")) $("#spendRecommendText").textContent=`${mode.inventoryPct}% inventory · ${mode.asidePct}% keep aside`;
-  if($("#reinvestModeBtn")) $("#reinvestModeBtn").textContent=mode.label;
-
-  if($("#monthProgressPct")) $("#monthProgressPct").textContent=monthPct+"%";
-  if($("#monthProgressBar")) $("#monthProgressBar").style.width=monthPct+"%";
-  if($("#inventorySplitPct")) $("#inventorySplitPct").textContent=mode.inventoryPct+"%";
-  if($("#asideSplitPct")) $("#asideSplitPct").textContent=mode.asidePct+"%";
-  if($("#inventorySplitBar")) $("#inventorySplitBar").style.width=mode.inventoryPct+"%";
-  if($("#asideSplitBar")) $("#asideSplitBar").style.width=mode.asidePct+"%";
+function filterInventoryByFocusV235(type){
+  showPage("inventory");
+  setTimeout(()=>{
+    const input=$("#inventorySearch");
+    if(!input)return;
+    input.value=type==="comic"?"comic":type==="card"?"card":"";
+    renderInventoryRows();
+  },80);
 }
 
 document.addEventListener("click",function(e){
-  if(e.target && e.target.id==="reinvestModeBtn"){
-    e.preventDefault();
-    cycleReinvestMode();
-  }
+  if(e.target&&e.target.id==="filterComicsBtn"){e.preventDefault();filterInventoryByFocusV235("comic");}
+  if(e.target&&e.target.id==="filterCardsBtn"){e.preventDefault();filterInventoryByFocusV235("card");}
+  if(e.target&&e.target.id==="filterOtherBtn"){e.preventDefault();filterInventoryByFocusV235("other");}
 },true);
 
-const oldRenderV234=render;
-render=function(){
-  oldRenderV234();
-  removeDashboardExtrasV234();
-  updateSpendRecommendation();
+/* Player hard fix */
+function setupPlayerV235(){
+  const audio=$("#audio");
+  const play=$("#playBtn");
+  const volume=$("#volume");
+  if(!audio||!play||play.dataset.v235)return;
+  play.dataset.v235="1";
+  play.addEventListener("click",function(e){
+    e.preventDefault();
+    if(audio.paused){
+      if(volume) audio.volume=Number(volume.value)||.35;
+      audio.play().then(()=>{play.textContent="Ⅱ";}).catch(()=>{play.textContent="▶";});
+    }else{
+      audio.pause();
+      play.textContent="▶";
+    }
+  });
+  if(volume&&!volume.dataset.v235){
+    volume.dataset.v235="1";
+    volume.addEventListener("input",()=>audio.volume=Number(volume.value)||.35);
+  }
+}
+
+/* Sold action hard fix */
+window.rsSoldEditSaleV235=function(index){
+  const rows=sold(), item=rows[index];
+  if(!item)return;
+  const newPrice=prompt(`Edit sold price for "${title(item)}"`, String(price(item)||""));
+  if(newPrice===null)return;
+  item.price=n(newPrice);
+  item.salePrice=n(newPrice);
+  item.soldPrice=n(newPrice);
+  item.profit=item.price-cost(item)-fees(item)-ship(item);
+  setSold(rows);
+  render();
 };
 
-setTimeout(()=>{removeDashboardExtrasV234();updateSpendRecommendation();},400);
+window.rsSoldMoveBackV235=function(index){
+  const rows=sold(), item=rows[index];
+  if(!item)return;
+  const a=active();
+  a.unshift({...item,status:"active",addedAt:new Date().toISOString()});
+  rows.splice(index,1);
+  setSold(rows);
+  setActive(a);
+  render();
+  showPage("inventory");
+};
+
+window.rsSoldDeleteV235=function(index){
+  const rows=sold(), item=rows[index];
+  if(!item)return;
+  if(confirm(`Delete "${title(item)}" from Sold Items?`)){
+    rows.splice(index,1);
+    setSold(rows);
+    render();
+  }
+};
+
+renderSoldRows=function(){
+  const base=sold();
+  const rows=getSoldFilteredRows().map(r=>({r,i:base.indexOf(r)}));
+  updateSoldKpisFromRows(rows.map(x=>x.r));
+  $("#soldRows").innerHTML=rows.map(({r,i})=>{
+    const p=price(r),pr=profit(r),m=p?Math.round(pr/p*100):0;
+    return `<tr>
+      <td><div class="item-cell"><div class="thumb"></div><div>${esc(title(r))}<small>${esc(platform(r))}</small></div></div></td>
+      <td>${fmt(dateOf(r))}</td>
+      <td>${money(p)}</td>
+      <td>${money(cost(r))}</td>
+      <td class="${pr>=0?"profit":"loss"}">${money(pr)}</td>
+      <td class="margin">${m}%</td>
+      <td><div class="row-actions">
+        <button type="button" onclick="rsSoldEditSaleV235(${i})" class="icon-action" title="Edit sale">$</button>
+        <button type="button" onclick="rsSoldMoveBackV235(${i})" class="icon-action" title="Move back to inventory">▣</button>
+        <button type="button" onclick="rsSoldDeleteV235(${i})" class="icon-action delete-btn" title="Delete sold item">×</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+};
+
+document.addEventListener("click",function(e){
+  const btn=e.target.closest&&e.target.closest("#soldRows .row-actions button");
+  if(!btn)return;
+  e.stopPropagation();
+},false);
+
+const oldRenderV235=render;
+render=function(){
+  oldRenderV235();
+  renderHealthScoreV235();
+  renderComicCardFocusV235();
+  setupPlayerV235();
+  renderSoldRows();
+};
+
+setTimeout(()=>{renderHealthScoreV235();renderComicCardFocusV235();setupPlayerV235();renderSoldRows();},500);
