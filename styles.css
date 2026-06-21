@@ -1344,3 +1344,34 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
 .dashboard-gif-controls{position:absolute!important;left:10px!important;right:10px!important;bottom:10px!important;z-index:5!important}
 .dashboard-gif-card.has-gif #dashboardGifClear{display:none!important}
 #sold .row-actions button{pointer-events:auto!important;cursor:pointer!important}
+
+
+/* ===== v228 GIF placement + sold direct onclick fallback ===== */
+#dashboard{
+  position:relative!important;
+}
+#dashboard .dashboard-gif-card{
+  position:absolute!important;
+  right:46px!important;
+  top:190px!important;
+  width:min(520px,38vw)!important;
+  max-width:520px!important;
+  margin:0!important;
+  z-index:3!important;
+}
+#dashboard .snapshot-card{
+  margin-top:22px!important;
+}
+@media(max-width:1050px){
+  #dashboard .dashboard-gif-card{
+    position:relative!important;
+    right:auto!important;
+    top:auto!important;
+    width:100%!important;
+    margin:18px 0!important;
+  }
+}
+#soldRows button[onclick]{
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}

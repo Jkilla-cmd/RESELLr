@@ -3000,3 +3000,74 @@ render=function(){
   renderSoldRows();
 };
 setTimeout(()=>{ensureDashboardCardsV227();renderSalesSnapshot();setupDashboardGif();renderDashboardGif();renderSoldRows();},500);
+
+
+/* ===== v228: place GIF under inventory/cost profit + sold actions via direct onclick ===== */
+function moveGifUnderKpisV228(){
+  const dash=$("#dashboard");
+  const gif=$("#dashboardGifCard");
+  if(!dash||!gif)return;
+  dash.appendChild(gif);
+}
+
+window.rsSoldMoveBackV228=function(key){
+  const idx=Number(key);
+  const rows=sold();
+  const item=rows[idx];
+  if(!item)return;
+  const a=active();
+  a.unshift({...item,status:"active",addedAt:new Date().toISOString()});
+  rows.splice(idx,1);
+  setSold(rows);
+  setActive(a);
+  render();
+  showPage("inventory");
+};
+
+window.rsSoldDeleteV228=function(key){
+  const idx=Number(key);
+  const rows=sold();
+  const item=rows[idx];
+  if(!item)return;
+  if(confirm(`Delete sold record for "${title(item)}"?`)){
+    rows.splice(idx,1);
+    setSold(rows);
+    render();
+  }
+};
+
+renderSoldRows=function(){
+  const base=sold();
+  const rows=getSoldFilteredRows().map(r=>({r,i:base.indexOf(r)}));
+  updateSoldKpisFromRows(rows.map(x=>x.r));
+
+  $("#soldRows").innerHTML=rows.map(({r,i})=>{
+    const p=price(r),pr=profit(r),m=p?Math.round(pr/p*100):0;
+    return `<tr>
+      <td><div class="item-cell"><div class="thumb"></div><div>${esc(title(r))}<small>${esc(platform(r))}</small></div></div></td>
+      <td>${fmt(dateOf(r))}</td>
+      <td>${money(p)}</td>
+      <td>${money(cost(r))}</td>
+      <td class="${pr>=0?"profit":"loss"}">${money(pr)}</td>
+      <td class="margin">${m}%</td>
+      <td><div class="row-actions">
+        <button type="button" onclick="rsSoldMoveBackV228('${i}')" class="icon-action" title="Move back to inventory">▣</button>
+        <button type="button" onclick="rsSoldDeleteV228('${i}')" class="icon-action delete-btn" title="Delete sold item">×</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+};
+
+document.addEventListener("click",function(e){
+  const btn=e.target.closest&&e.target.closest("#soldRows .row-actions button");
+  if(!btn)return;
+  e.stopPropagation();
+},false);
+
+const oldRenderV228=render;
+render=function(){
+  oldRenderV228();
+  moveGifUnderKpisV228();
+  renderSoldRows();
+};
+setTimeout(()=>{moveGifUnderKpisV228();renderSoldRows();},500);
