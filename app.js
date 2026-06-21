@@ -3226,3 +3226,104 @@ render=function(){
 };
 
 setTimeout(()=>{removeGifFeatureV229();updateSpendRecommendation();renderSoldRows();drawChart();},500);
+
+
+/* ===== v230: safe first-time login and page boot fix ===== */
+function passHashV230(v){
+  let h=2166136261;
+  const s=String(v||"");
+  for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}
+  return (h>>>0).toString(16);
+}
+function hasPassV230(){
+  return !!localStorage.getItem("resellr_pass_hash");
+}
+function showLogin(){
+  const screen=document.getElementById("loginScreen");
+  if(!screen)return;
+  const setup=!hasPassV230();
+  const label=document.getElementById("loginLabel");
+  const submit=document.getElementById("loginSubmit");
+  const reset=document.getElementById("resetPassBtn");
+  const msg=document.getElementById("loginMessage");
+  if(label)label.textContent=setup?"Create passcode":"Enter passcode";
+  if(submit)submit.textContent=setup?"Create passcode":"Unlock";
+  if(reset)reset.style.display=setup?"none":"inline-block";
+  if(msg)msg.textContent="";
+  document.body.classList.add("locked");
+  screen.classList.add("show");
+  setTimeout(()=>document.getElementById("loginPass")?.focus(),80);
+}
+function hideLoginV230(){
+  document.body.classList.remove("locked");
+  document.getElementById("loginScreen")?.classList.remove("show");
+}
+function initLoginV230(){
+  const form=document.getElementById("loginForm");
+  if(!form || form.dataset.v230Bound)return;
+  form.dataset.v230Bound="1";
+  form.addEventListener("submit",function(e){
+    e.preventDefault();
+    const input=document.getElementById("loginPass");
+    const msg=document.getElementById("loginMessage");
+    const v=(input?.value||"").trim();
+    if(v.length<3){
+      if(msg)msg.textContent="Use at least 3 characters.";
+      return;
+    }
+    if(!hasPassV230()){
+      localStorage.setItem("resellr_pass_hash",passHashV230(v));
+      sessionStorage.setItem("resellr_unlocked","1");
+      if(input)input.value="";
+      hideLoginV230();
+      try{render();}catch(err){console.error(err);}
+      return;
+    }
+    if(passHashV230(v)===localStorage.getItem("resellr_pass_hash")){
+      sessionStorage.setItem("resellr_unlocked","1");
+      if(input)input.value="";
+      hideLoginV230();
+      try{render();}catch(err){console.error(err);}
+    }else{
+      if(msg)msg.textContent="Wrong passcode.";
+    }
+  });
+  const reset=document.getElementById("resetPassBtn");
+  if(reset && !reset.dataset.v230Bound){
+    reset.dataset.v230Bound="1";
+    reset.addEventListener("click",function(){
+      if(confirm("Reset passcode on this device?")){
+        localStorage.removeItem("resellr_pass_hash");
+        sessionStorage.removeItem("resellr_unlocked");
+        showLogin();
+      }
+    });
+  }
+}
+function bootLoginV230(){
+  initLoginV230();
+  if(sessionStorage.getItem("resellr_unlocked")==="1"){
+    hideLoginV230();
+  }else{
+    showLogin();
+  }
+}
+
+// Remove GIF storage and any leftover DOM
+function removeGifFeatureV230(){
+  localStorage.removeItem("resellr_dashboard_gif");
+  document.querySelectorAll("#dashboardGifCard,.dashboard-gif-card,#dashboardGifPreview,.dashboard-gif-preview,.dashboard-gif-controls").forEach(el=>el.remove());
+}
+
+// Make render safer so one broken dashboard widget does not stop page load.
+const oldRenderV230=typeof render==="function"?render:null;
+if(oldRenderV230){
+  render=function(){
+    try{oldRenderV230();}catch(err){console.error("render recovered",err);}
+    try{removeGifFeatureV230();}catch(err){}
+  };
+}
+
+document.addEventListener("DOMContentLoaded",bootLoginV230);
+setTimeout(bootLoginV230,250);
+setTimeout(removeGifFeatureV230,350);
