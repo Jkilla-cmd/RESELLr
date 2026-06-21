@@ -1025,3 +1025,11 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
   .health-score-wrap{grid-template-columns:1fr}
   .focus-grid,.health-breakdown{grid-template-columns:1fr}
 }
+
+
+/* ===== v236 requested cleanup: remove Health/Focus cards + restore spend mode button ===== */
+.resellr-power-grid{display:none!important}
+.spend-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.spend-head-row span{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:rgba(226,232,240,.72);font-weight:800}
+.spend-mode-btn{border:1px solid rgba(0,245,255,.28)!important;background:rgba(0,245,255,.08)!important;color:rgba(226,232,240,.92)!important;border-radius:999px!important;padding:7px 10px!important;font-size:11px!important;font-weight:900!important;line-height:1!important;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.spend-mode-btn:hover{border-color:rgba(0,245,255,.55)!important;background:rgba(0,245,255,.14)!important}

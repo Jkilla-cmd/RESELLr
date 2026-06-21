@@ -2838,3 +2838,102 @@ render=function(){
 };
 
 setTimeout(()=>{renderHealthScoreV235();renderComicCardFocusV235();setupPlayerV235();renderSoldRows();},500);
+
+
+/* ===== v236: user requested current-layout only changes =====
+   - Health Score and Comic/Card Focus are removed in index.html.
+   - Recommended Next Month mode button restored.
+   - Bookmarklet/Add to RESELLr import can add as guest/local without login. */
+(function(){
+  const hasImportItemParam=()=>{
+    try{return new URLSearchParams(location.search).has("importItem")}catch(e){return false}
+  };
+
+  // Allow Add to RESELLr bookmarklet imports to open and save locally without the lock screen blocking it.
+  if(hasImportItemParam()){
+    sessionStorage.setItem("resellr_unlocked","1");
+    localStorage.setItem("resellr_guest_mode","1");
+  }
+
+  const oldShowLoginV236 = typeof showLogin==="function" ? showLogin : null;
+  if(oldShowLoginV236){
+    showLogin=function(){
+      if(hasImportItemParam()){
+        sessionStorage.setItem("resellr_unlocked","1");
+        document.body.classList.remove("locked");
+        document.getElementById("loginScreen")?.classList.remove("show");
+        return;
+      }
+      return oldShowLoginV236.apply(this,arguments);
+    };
+  }
+
+  const spendModes=[
+    {key:"balanced",label:"Balanced",inventoryPct:50,asidePct:20},
+    {key:"growth",label:"Growth",inventoryPct:65,asidePct:15},
+    {key:"safe",label:"Safe",inventoryPct:40,asidePct:25}
+  ];
+  function getSpendMode(){
+    const key=localStorage.getItem("resellr_spend_mode")||"balanced";
+    return spendModes.find(m=>m.key===key)||spendModes[0];
+  }
+  function nextSpendMode(){
+    const cur=getSpendMode();
+    const idx=spendModes.findIndex(m=>m.key===cur.key);
+    const next=spendModes[(idx+1)%spendModes.length];
+    localStorage.setItem("resellr_spend_mode",next.key);
+    updateSpendRecommendation();
+  }
+
+  updateSpendRecommendation=function(){
+    const now=new Date();
+    const mode=getSpendMode();
+    const monthRows=sold().filter(r=>{
+      const d=dateOf(r);
+      return d && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+    });
+    const monthSales=monthRows.reduce((x,r)=>x+price(r),0);
+    const monthProfit=monthRows.reduce((x,r)=>x+profit(r),0);
+    const inventorySpend=monthSales*(mode.inventoryPct/100);
+    const setAside=Math.max(0,monthProfit*(mode.asidePct/100));
+    const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+    const monthPct=Math.min(100,Math.round(now.getDate()/daysInMonth*100));
+
+    if($("#spendRecommend")) $("#spendRecommend").textContent=money(inventorySpend,0);
+    if($("#spendRecommendText")) $("#spendRecommendText").textContent=`${mode.label} mode · keep ${money(setAside,0)} aside`;
+    if($("#monthProgressPct")) $("#monthProgressPct").textContent=monthPct+"%";
+    if($("#monthProgressBar")) $("#monthProgressBar").style.width=monthPct+"%";
+    if($("#inventorySplitPct")) $("#inventorySplitPct").textContent=mode.inventoryPct+"%";
+    if($("#asideSplitPct")) $("#asideSplitPct").textContent=mode.asidePct+"%";
+    if($("#inventorySplitBar")) $("#inventorySplitBar").style.width=mode.inventoryPct+"%";
+    if($("#asideSplitBar")) $("#asideSplitBar").style.width=mode.asidePct+"%";
+    if($("#spendModeBtn")) $("#spendModeBtn").textContent=`${mode.label} Mode`;
+  };
+
+  document.addEventListener("click",function(e){
+    const btn=e.target.closest&&e.target.closest("#spendModeBtn");
+    if(!btn)return;
+    e.preventDefault();
+    nextSpendMode();
+  },true);
+
+  const oldImportItemObjectV236 = typeof importItemObject==="function" ? importItemObject : null;
+  if(oldImportItemObjectV236){
+    importItemObject=function(item,showAlert=true){
+      localStorage.setItem("resellr_guest_mode","1");
+      const ok=oldImportItemObjectV236.call(this,item,showAlert);
+      if(ok){
+        // Data is already saved through setActive() into localStorage. This flag is for future account sync/merge logic.
+        localStorage.setItem("resellr_guest_items_pending_sync","1");
+      }
+      return ok;
+    };
+  }
+
+  const oldRenderV236 = render;
+  render=function(){
+    oldRenderV236();
+    updateSpendRecommendation();
+  };
+  setTimeout(updateSpendRecommendation,250);
+})();

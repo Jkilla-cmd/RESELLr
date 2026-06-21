@@ -52,7 +52,7 @@
         <div class="kpi"><span>Inventory Value</span><b id="kpiInventory">$0.00</b><em>active list value</em></div><div class="kpi"><span>Cost + Profit</span><b id="kpiCostProfit">$0.00</b><em>cost of sold + profit</em></div>
         <div class="goal"><span>Profit Goal</span><div class="ring" id="goalRing"><strong id="goalPct">0%</strong></div><small id="goalText">$0 / $300</small></div>
         <div class="kpi spend-kpi">
-          <span>Recommended Next Month</span>
+          <div class="spend-head-row"><span>Recommended Next Month</span><button type="button" id="spendModeBtn" class="spend-mode-btn">Switch Mode</button></div>
           <b id="spendRecommend">$0</b>
           <em id="spendRecommendText">inventory spend · set aside</em>
           <div class="month-progress">
@@ -66,43 +66,6 @@
         </div>
       </div>
 
-
-      <div class="resellr-power-grid" id="resellrPowerGrid">
-        <div class="health-card" id="resellrHealthCard">
-          <div class="card-head">
-            <h3>RESELLr Health Score</h3>
-            <span id="healthGrade">—</span>
-          </div>
-          <div class="health-score-wrap">
-            <div class="health-ring" id="healthRing"><strong id="healthScore">0</strong></div>
-            <div class="health-breakdown">
-              <div><span>Sell Through</span><b id="healthSellThrough">0</b></div>
-              <div><span>Margin</span><b id="healthMargin">0</b></div>
-              <div><span>Inventory Age</span><b id="healthAge">0</b></div>
-              <div><span>Platform Mix</span><b id="healthPlatform">0</b></div>
-            </div>
-          </div>
-          <em id="healthAdvice">Restore your data to calculate score.</em>
-        </div>
-
-        <div class="focus-card" id="comicCardFocusCard">
-          <div class="card-head">
-            <h3>Comic / Card Focus</h3>
-            <span id="focusTopType">—</span>
-          </div>
-          <div class="focus-grid">
-            <div><span>Comics</span><b id="focusComics">0</b></div>
-            <div><span>Cards</span><b id="focusCards">0</b></div>
-            <div><span>Other</span><b id="focusOther">0</b></div>
-          </div>
-          <div class="focus-tags">
-            <button type="button" id="filterComicsBtn">Comics</button>
-            <button type="button" id="filterCardsBtn">Cards</button>
-            <button type="button" id="filterOtherBtn">Other</button>
-          </div>
-          <em id="focusAdvice">Built for comics, cards, slabs, variants, signed books, and collectibles.</em>
-        </div>
-      </div>
 
       <div class="dashboard-grid">
         <div class="chart-card">
