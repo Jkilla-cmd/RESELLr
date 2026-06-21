@@ -2655,3 +2655,65 @@ render=function(){
 };
 
 setTimeout(()=>{forceSideIconsV222();renderSoldRows();},400);
+
+
+/* ===== v232: reinvest mode switcher for Recommended Next Month ===== */
+const REINVEST_MODES=[
+  {key:"conservative",label:"Conservative 40/60",inventoryPct:40,asidePct:60},
+  {key:"balanced",label:"Balanced 50/50",inventoryPct:50,asidePct:50},
+  {key:"growth",label:"Growth 70/30",inventoryPct:70,asidePct:30}
+];
+
+function getReinvestMode(){
+  const key=localStorage.getItem("resellr_reinvest_mode")||"balanced";
+  return REINVEST_MODES.find(m=>m.key===key)||REINVEST_MODES[1];
+}
+
+function cycleReinvestMode(){
+  const current=getReinvestMode();
+  const idx=REINVEST_MODES.findIndex(m=>m.key===current.key);
+  const next=REINVEST_MODES[(idx+1)%REINVEST_MODES.length];
+  localStorage.setItem("resellr_reinvest_mode",next.key);
+  updateSpendRecommendation();
+}
+
+function updateSpendRecommendation(){
+  const mode=getReinvestMode();
+  const now=new Date();
+  const monthRows=sold().filter(r=>{
+    const d=dateOf(r);
+    return d && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+  });
+
+  const costProfit=monthRows.reduce((x,r)=>x+cost(r)+profit(r),0);
+  const inventorySpend=costProfit*(mode.inventoryPct/100);
+  const setAside=costProfit*(mode.asidePct/100);
+
+  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const monthPct=Math.min(100,Math.round(now.getDate()/daysInMonth*100));
+
+  if($("#spendRecommend")) $("#spendRecommend").textContent=money(inventorySpend,0);
+  if($("#spendRecommendText")) $("#spendRecommendText").textContent=`${mode.inventoryPct}% inventory · ${mode.asidePct}% keep aside`;
+  if($("#reinvestModeBtn")) $("#reinvestModeBtn").textContent=mode.label;
+
+  if($("#monthProgressPct")) $("#monthProgressPct").textContent=monthPct+"%";
+  if($("#monthProgressBar")) $("#monthProgressBar").style.width=monthPct+"%";
+  if($("#inventorySplitPct")) $("#inventorySplitPct").textContent=mode.inventoryPct+"%";
+  if($("#asideSplitPct")) $("#asideSplitPct").textContent=mode.asidePct+"%";
+  if($("#inventorySplitBar")) $("#inventorySplitBar").style.width=mode.inventoryPct+"%";
+  if($("#asideSplitBar")) $("#asideSplitBar").style.width=mode.asidePct+"%";
+}
+
+document.addEventListener("click",function(e){
+  if(e.target && e.target.id==="reinvestModeBtn"){
+    e.preventDefault();
+    cycleReinvestMode();
+  }
+},true);
+
+const oldRenderV232=render;
+render=function(){
+  oldRenderV232();
+  updateSpendRecommendation();
+};
+setTimeout(updateSpendRecommendation,400);

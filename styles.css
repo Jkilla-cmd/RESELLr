@@ -854,3 +854,23 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
 #sold .row-actions .delete-btn{
   color:rgba(255,107,107,.9)!important;
 }
+
+
+/* ===== v232 reinvest mode button ===== */
+.reinvest-mode-btn{
+  margin-top:10px!important;
+  height:30px!important;
+  padding:0 12px!important;
+  border-radius:999px!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:#fff!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  letter-spacing:.02em!important;
+}
+.reinvest-mode-btn:hover{
+  color:var(--cyan)!important;
+  border-color:rgba(0,245,255,.35)!important;
+  background:rgba(0,245,255,.08)!important;
+}
