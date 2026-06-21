@@ -2937,3 +2937,62 @@ setTimeout(()=>{renderHealthScoreV235();renderComicCardFocusV235();setupPlayerV2
   };
   setTimeout(updateSpendRecommendation,250);
 })();
+
+/* ===== v237: dashboard yearly sales count + tax CSV selected year =====
+   - Dashboard Sales This Year now counts only sold records from the current calendar year.
+   - Tax Reports CSV export now exports the currently selected tax year/month instead of all sales. */
+(function(){
+  function currentYearSoldRows(){
+    const yr=new Date().getFullYear();
+    return sold().filter(r=>{
+      const d=dateOf(r);
+      return d && d.getFullYear()===yr;
+    });
+  }
+
+  function updateSalesThisYearKpi(){
+    const el=document.getElementById("kpiSales");
+    if(el) el.textContent=currentYearSoldRows().length;
+  }
+
+  function taxExportRows(){
+    return filterByYearMonth(sold(),document.getElementById("taxYearFilter"),document.getElementById("taxMonthFilter"))
+      .sort((a,b)=>(dateOf(b)||0)-(dateOf(a)||0));
+  }
+
+  function taxExportFilename(){
+    const y=document.getElementById("taxYearFilter")?.value||"all";
+    const m=document.getElementById("taxMonthFilter")?.value||"all";
+    if(y!=="all" && m!=="all") return `tax-${y}-${String(m).padStart(2,"0")}.csv`;
+    if(y!=="all") return `tax-${y}.csv`;
+    return "tax-all-years.csv";
+  }
+
+  function wireTaxExportSelectedYear(){
+    const btn=document.getElementById("exportTax");
+    if(!btn || btn.dataset.v237SelectedYearExport==="1") return;
+    btn.dataset.v237SelectedYearExport="1";
+    btn.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      download(taxExportFilename(),csv(taxExportRows()));
+      return false;
+    };
+  }
+
+  const oldRenderV237=render;
+  render=function(){
+    oldRenderV237();
+    updateSalesThisYearKpi();
+    wireTaxExportSelectedYear();
+  };
+
+  document.addEventListener("DOMContentLoaded",function(){
+    updateSalesThisYearKpi();
+    wireTaxExportSelectedYear();
+  });
+  setTimeout(function(){
+    updateSalesThisYearKpi();
+    wireTaxExportSelectedYear();
+  },250);
+})();
