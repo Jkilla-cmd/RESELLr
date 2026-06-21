@@ -1,8 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 180">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 190">
 <defs>
-  <linearGradient id="g" x1="0" y1="0" x2="190" y2="180"><stop stop-color="#00f5ff"/><stop offset=".65" stop-color="#24e7c7"/><stop offset="1" stop-color="#cf52ff"/></linearGradient>
+  <linearGradient id="g" x1="0" y1="0" x2="180" y2="180">
+    <stop stop-color="#00f5ff"/>
+    <stop offset=".58" stop-color="#37f2c4"/>
+    <stop offset="1" stop-color="#d45cff"/>
+  </linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>
-<rect width="900" height="180" fill="none"/>
-<path fill="none" stroke="url(#g)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" d="M45 139V45c0-16 13-29 29-29h68c31 0 51 19 51 46 0 28-21 47-53 47h-39l77 69M45 45h97"/>
-<text x="230" y="117" font-family="Inter, Arial, sans-serif" font-size="74" letter-spacing="22" fill="#f8fafc">RESELLr</text>
+<rect width="880" height="190" fill="none"/>
+<path filter="url(#glow)" d="M42 145V48c0-17 14-31 31-31h72c34 0 55 20 55 49s-22 50-56 50h-38l75 67" fill="none" stroke="url(#g)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+<path filter="url(#glow)" d="M42 48h103" fill="none" stroke="url(#g)" stroke-width="20" stroke-linecap="round"/>
+<text x="238" y="121" font-family="Inter, Arial, sans-serif" font-size="72" letter-spacing="20" fill="#f8fafc">RESELLr</text>
 </svg>
