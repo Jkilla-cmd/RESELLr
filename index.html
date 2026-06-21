@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RESELLr v200</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="rescue.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -88,30 +87,28 @@
       </div>
 
 
-
-      <div class="snapshot-card" id="snapshotSalesCard">
+      <div class="monthly-card">
         <div class="card-head">
-          <h3>Sales Snapshot</h3>
+          <h3>Monthly Profit</h3>
           <div class="inline-tools">
-            <select id="snapshotYearFilter"></select>
-            <select id="snapshotMonthFilter"></select>
+            <select id="monthlyYearFilter"></select>
           </div>
         </div>
-        <div class="snapshot-grid">
-          <div><span>Items Sold</span><b id="snapshotItemsSold">0</b></div>
-          <div><span>Cost + Profit</span><b id="snapshotCostProfit">$0</b></div>
-          <div><span>Total Income</span><b id="snapshotIncome">$0</b></div>
-          <div><span>Total Profit</span><b id="snapshotProfit">$0</b></div>
-        </div>
-        <div class="platform-snapshot">
-          <div class="platform-row"><span>Mercari</span><b id="snapshotMercari">$0</b><small id="snapshotMercariCount">0 sales</small></div>
-          <div class="platform-bar"><i id="snapshotMercariBar"></i></div>
-          <div class="platform-row"><span>eBay</span><b id="snapshotEbay">$0</b><small id="snapshotEbayCount">0 sales</small></div>
-          <div class="platform-bar"><i id="snapshotEbayBar"></i></div>
-          <div class="platform-row"><span>Private Sale</span><b id="snapshotPrivate">$0</b><small id="snapshotPrivateCount">0 sales</small></div>
-          <div class="platform-bar"><i id="snapshotPrivateBar"></i></div>
-        </div>
+        <canvas id="monthlyProfitChart"></canvas>
       </div>
+
+      <div class="lower-grid">
+        <div class="table-card">
+          <div class="card-head">
+            <h3>Latest Additions <small id="inventoryCount">(last 5)</small></h3>
+            <div class="inline-tools"><input id="dashInventorySearch" placeholder="Search inventory..."><button class="primary" id="addItemBtn">+ Add Item</button></div>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Item</th><th>Price</th><th>Cost</th><th>Profit</th><th>Margin</th><th>Added</th><th>Status</th><th></th></tr></thead><tbody id="dashInventoryRows"></tbody></table></div>
+        </div>
+        <div class="side-stack">
+          <div class="mini-card"><h3>Sales Calendar</h3><div class="calendar-heat" id="heatmap"></div></div>
+          <div class="mini-card player"><h3>Now Playing</h3><div class="track"><div class="cover"></div><div><b>Neon Nights</b><span>Lofizen Radio</span></div></div><div class="player-controls"><button id="playBtn">Ⅱ</button><input id="volume" type="range" min="0" max="1" step=".01" value=".35"></div></div>
+        </div>
       </div>
     </section>
 
@@ -246,6 +243,5 @@
 
   <audio id="audio" loop src="https://stream.zeno.fm/f3wvbbqmdg8uv"></audio>
   <script src="app.js"></script>
-  <script src="rescue.js"></script>
 </body>
 </html>
