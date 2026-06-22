@@ -2996,3 +2996,63 @@ setTimeout(()=>{renderHealthScoreV235();renderComicCardFocusV235();setupPlayerV2
     wireTaxExportSelectedYear();
   },250);
 })();
+
+/* ===== v238: dashboard sold snapshot by platform/category with year filter ===== */
+(function(){
+  function getSnapshotYears(){
+    const yrs=[...new Set(sold().map(r=>dateOf(r)?.getFullYear()).filter(Boolean))].sort((a,b)=>b-a);
+    return yrs.length?yrs:[new Date().getFullYear()];
+  }
+
+  function setupPlatformSnapshotYearFilter(){
+    const sel=document.getElementById("platformSnapshotYearFilter");
+    if(!sel) return;
+    const cur=sel.value || String(new Date().getFullYear());
+    const yrs=getSnapshotYears();
+    sel.innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join("");
+    if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+    else if([...sel.options].some(o=>o.value===String(new Date().getFullYear()))) sel.value=String(new Date().getFullYear());
+  }
+
+  function snapshotRowsForYear(){
+    const sel=document.getElementById("platformSnapshotYearFilter");
+    const year=Number(sel?.value || new Date().getFullYear());
+    const groups=new Map();
+    sold().forEach(r=>{
+      const d=dateOf(r);
+      if(!d || d.getFullYear()!==year) return;
+      const plat=platform(r)||"Unknown";
+      const cat=category(r)||"Other";
+      const key=plat+"||"+cat;
+      if(!groups.has(key)) groups.set(key,{platform:plat,category:cat,count:0,costProfit:0});
+      const g=groups.get(key);
+      g.count+=1;
+      g.costProfit+=cost(r)+profit(r);
+    });
+    return [...groups.values()].sort((a,b)=>b.count-a.count || b.costProfit-a.costProfit || a.platform.localeCompare(b.platform));
+  }
+
+  function renderPlatformSnapshot(){
+    setupPlatformSnapshotYearFilter();
+    const body=document.getElementById("platformSnapshotRows");
+    if(!body) return;
+    const rows=snapshotRowsForYear();
+    const totalCount=rows.reduce((x,r)=>x+r.count,0);
+    const totalCostProfit=rows.reduce((x,r)=>x+r.costProfit,0);
+    body.innerHTML=rows.length ? rows.map(r=>`<tr><td>${esc(r.platform)}</td><td>${esc(r.category)}</td><td>${r.count}</td><td class="profit">${money(r.costProfit)}</td></tr>`).join("") +
+      `<tr class="platform-snapshot-total"><td colspan="2">Total</td><td>${totalCount}</td><td>${money(totalCostProfit)}</td></tr>` :
+      `<tr><td colspan="4" class="muted">No sold items found for this year.</td></tr>`;
+  }
+
+  document.addEventListener("change",function(e){
+    if(e.target && e.target.id==="platformSnapshotYearFilter") renderPlatformSnapshot();
+  },true);
+
+  const oldRenderV238=render;
+  render=function(){
+    oldRenderV238();
+    renderPlatformSnapshot();
+  };
+
+  setTimeout(renderPlatformSnapshot,300);
+})();
