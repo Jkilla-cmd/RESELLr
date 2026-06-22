@@ -1050,3 +1050,10 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
 .snapshot-main{font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 .snapshot-sub{display:block;font-size:10px;color:rgba(226,232,240,.55);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 .platform-snapshot-total td{font-weight:800;color:var(--text);background:rgba(255,255,255,.035)}
+
+.platform-snapshot-card{
+max-width:520px;
+width:100%;
+margin:16px 0 24px auto;
+}
+.platform-snapshot-table th:first-child,.platform-snapshot-table td:first-child{width:50%}
