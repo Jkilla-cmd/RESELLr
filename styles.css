@@ -1034,12 +1034,19 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
 .spend-mode-btn{border:1px solid rgba(0,245,255,.28)!important;background:rgba(0,245,255,.08)!important;color:rgba(226,232,240,.92)!important;border-radius:999px!important;padding:7px 10px!important;font-size:11px!important;font-weight:900!important;line-height:1!important;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 .spend-mode-btn:hover{border-color:rgba(0,245,255,.55)!important;background:rgba(0,245,255,.14)!important}
 
-/* ===== v238 platform/category sold snapshot ===== */
-.platform-snapshot-card{margin-top:24px}
-.platform-snapshot-card .card-head{margin-bottom:10px}
-.platform-snapshot-table{min-width:560px}
+/* ===== v239 compact platform/category sold snapshot ===== */
+.platform-snapshot-card{margin-top:12px;padding:12px 14px!important}
+.platform-snapshot-card .card-head{margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.platform-snapshot-card h3{font-size:13px!important;margin:0!important}
+.platform-snapshot-card .inline-tools select{min-height:28px!important;height:28px!important;padding:4px 24px 4px 9px!important;font-size:11px!important;border-radius:999px!important}
+.platform-snapshot-card .table-wrap{max-height:165px;overflow:auto;border-radius:12px}
+.platform-snapshot-table{min-width:0!important;width:100%;font-size:12px;border-spacing:0!important}
+.platform-snapshot-table th{font-size:10px!important;padding:6px 8px!important;letter-spacing:.06em;white-space:nowrap}
+.platform-snapshot-table td{padding:6px 8px!important;line-height:1.15;vertical-align:middle}
+.platform-snapshot-table th:nth-child(2),
+.platform-snapshot-table td:nth-child(2){text-align:center;width:54px}
 .platform-snapshot-table th:nth-child(3),
-.platform-snapshot-table td:nth-child(3){text-align:center}
-.platform-snapshot-table th:nth-child(4),
-.platform-snapshot-table td:nth-child(4){text-align:right}
-.platform-snapshot-total td{font-weight:700;color:var(--text);background:rgba(255,255,255,.035)}
+.platform-snapshot-table td:nth-child(3){text-align:right;width:102px;white-space:nowrap}
+.snapshot-main{font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.snapshot-sub{display:block;font-size:10px;color:rgba(226,232,240,.55);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.platform-snapshot-total td{font-weight:800;color:var(--text);background:rgba(255,255,255,.035)}

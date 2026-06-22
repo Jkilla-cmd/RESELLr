@@ -3039,9 +3039,9 @@ setTimeout(()=>{renderHealthScoreV235();renderComicCardFocusV235();setupPlayerV2
     const rows=snapshotRowsForYear();
     const totalCount=rows.reduce((x,r)=>x+r.count,0);
     const totalCostProfit=rows.reduce((x,r)=>x+r.costProfit,0);
-    body.innerHTML=rows.length ? rows.map(r=>`<tr><td>${esc(r.platform)}</td><td>${esc(r.category)}</td><td>${r.count}</td><td class="profit">${money(r.costProfit)}</td></tr>`).join("") +
-      `<tr class="platform-snapshot-total"><td colspan="2">Total</td><td>${totalCount}</td><td>${money(totalCostProfit)}</td></tr>` :
-      `<tr><td colspan="4" class="muted">No sold items found for this year.</td></tr>`;
+    body.innerHTML=rows.length ? rows.map(r=>`<tr><td><div class="snapshot-main">${esc(r.platform)}</div><span class="snapshot-sub">${esc(r.category)}</span></td><td>${r.count}</td><td class="profit">${money(r.costProfit)}</td></tr>`).join("") +
+      `<tr class="platform-snapshot-total"><td>Total</td><td>${totalCount}</td><td>${money(totalCostProfit)}</td></tr>` :
+      `<tr><td colspan="3" class="muted">No sold items found for this year.</td></tr>`;
   }
 
   document.addEventListener("change",function(e){
