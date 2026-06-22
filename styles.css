@@ -1057,3 +1057,11 @@ width:100%;
 margin:16px 0 24px auto;
 }
 .platform-snapshot-table th:first-child,.platform-snapshot-table td:first-child{width:50%}
+
+.compact-platform-card{
+grid-column:5 / span 2;
+margin-top:8px;
+width:100%;
+}
+.compact-platform-card .table-wrap{max-height:180px}
+.platform-snapshot-table td small{display:none!important;}
