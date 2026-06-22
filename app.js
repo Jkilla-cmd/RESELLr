@@ -2997,7 +2997,7 @@ setTimeout(()=>{renderHealthScoreV235();renderComicCardFocusV235();setupPlayerV2
   },250);
 })();
 
-/* ===== v238: dashboard sold snapshot by platform/category with year filter ===== */
+/* fixed snapshot */
 (function(){
   function getSnapshotYears(){
     const yrs=[...new Set(sold().map(r=>dateOf(r)?.getFullYear()).filter(Boolean))].sort((a,b)=>b-a);
@@ -3022,9 +3022,8 @@ setTimeout(()=>{renderHealthScoreV235();renderComicCardFocusV235();setupPlayerV2
       const d=dateOf(r);
       if(!d || d.getFullYear()!==year) return;
       const plat=platform(r)||"Unknown";
-      const cat=category(r)||"Other";
-      const key=plat+"||"+cat;
-      if(!groups.has(key)) groups.set(key,{platform:plat,category:cat,count:0,costProfit:0});
+      const key=plat;
+      if(!groups.has(key)) groups.set(key,{platform:plat,count:0,costProfit:0});
       const g=groups.get(key);
       g.count+=1;
       g.costProfit+=cost(r)+profit(r);
@@ -3039,7 +3038,7 @@ setTimeout(()=>{renderHealthScoreV235();renderComicCardFocusV235();setupPlayerV2
     const rows=snapshotRowsForYear();
     const totalCount=rows.reduce((x,r)=>x+r.count,0);
     const totalCostProfit=rows.reduce((x,r)=>x+r.costProfit,0);
-    body.innerHTML=rows.length ? rows.map(r=>`<tr><td><div class="snapshot-main">${esc(r.platform)}</div><span class="snapshot-sub">${esc(r.category)}</span></td><td>${r.count}</td><td class="profit">${money(r.costProfit)}</td></tr>`).join("") +
+    body.innerHTML=rows.length ? rows.map(r=>`<tr><td><div class="snapshot-main">${esc(r.platform)}</div></td><td>${r.count}</td><td class="profit">${money(r.costProfit)}</td></tr>`).join("") +
       `<tr class="platform-snapshot-total"><td>Total</td><td>${totalCount}</td><td>${money(totalCostProfit)}</td></tr>` :
       `<tr><td colspan="3" class="muted">No sold items found for this year.</td></tr>`;
   }

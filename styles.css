@@ -1065,3 +1065,5 @@ width:100%;
 }
 .compact-platform-card .table-wrap{max-height:180px}
 .platform-snapshot-table td small{display:none!important;}
+
+.compact-platform-card{margin-top:-120px !important;align-self:start;} .snapshot-sub{display:none!important;}
