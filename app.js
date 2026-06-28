@@ -3278,3 +3278,186 @@ render = function(){
 };
 
 setTimeout(()=>{ensureEditSoldModalV240();moveSoldSnapshotCompactV240();renderSoldRows();},500);
+
+
+/* ===== v241: stretched sold snapshot + bulletproof sold edit using delegated data action ===== */
+let editSoldIndexV241 = null;
+
+function ensureSoldEditOverlayV241(){
+  let modal = document.getElementById("soldEditOverlayV241");
+  if(modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "soldEditOverlayV241";
+  modal.innerHTML = `<form class="modal-box" id="soldEditFormV241">
+    <h2>Edit Sold Item</h2>
+    <input name="title" placeholder="Item title" required>
+    <div class="form-grid">
+      <select name="platform">
+        <option value="Mercari">Mercari</option>
+        <option value="eBay">eBay</option>
+        <option value="Private Sale">Private Sale</option>
+      </select>
+      <select name="category">
+        <option value="Comic">Comic</option>
+        <option value="Card">Card</option>
+        <option value="Other">Other</option>
+      </select>
+      <input name="soldPrice" type="number" step="any" placeholder="Sold price" required>
+      <input name="cost" type="number" step="any" placeholder="Cost">
+      <input name="fees" type="number" step="any" placeholder="Fees">
+      <input name="shipping" type="number" step="any" placeholder="Shipping">
+      <input name="soldDate" type="date">
+    </div>
+    <textarea name="notes" placeholder="Notes"></textarea>
+    <div class="modal-actions">
+      <button type="button" id="cancelSoldEditV241">Cancel</button>
+      <button class="primary">Save Sold Item</button>
+    </div>
+  </form>`;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function openSoldEditV241(index){
+  const rows = sold();
+  const item = rows[index];
+  if(!item) return;
+  editSoldIndexV241 = index;
+  const modal = ensureSoldEditOverlayV241();
+  const form = document.getElementById("soldEditFormV241");
+
+  form.elements.title.value = title(item);
+  const p = platform(item).toLowerCase();
+  form.elements.platform.value = p.includes("ebay") ? "eBay" : p.includes("private") ? "Private Sale" : "Mercari";
+  const cat = String(item.category || item.type || "").toLowerCase();
+  form.elements.category.value = cat.includes("card") ? "Card" : cat.includes("other") ? "Other" : "Comic";
+  form.elements.soldPrice.value = price(item) || "";
+  form.elements.cost.value = cost(item) || "";
+  form.elements.fees.value = fees(item) || "";
+  form.elements.shipping.value = ship(item) || "";
+  const d = dateOf(item);
+  form.elements.soldDate.value = d && !isNaN(d) ? d.toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
+  form.elements.notes.value = item.notes || item.description || "";
+
+  modal.classList.add("open");
+}
+
+function closeSoldEditV241(){
+  const modal = document.getElementById("soldEditOverlayV241");
+  if(modal) modal.classList.remove("open");
+}
+
+window.openSoldEditV241 = openSoldEditV241;
+
+document.addEventListener("click", function(e){
+  const editBtn = e.target.closest && e.target.closest('[data-v241-sold-edit]');
+  if(editBtn){
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    openSoldEditV241(Number(editBtn.dataset.index));
+    return;
+  }
+  if(e.target && e.target.id === "cancelSoldEditV241"){
+    e.preventDefault();
+    closeSoldEditV241();
+  }
+}, true);
+
+document.addEventListener("submit", function(e){
+  if(!e.target || e.target.id !== "soldEditFormV241") return;
+  e.preventDefault();
+  e.stopPropagation();
+  const rows = sold();
+  const item = rows[editSoldIndexV241];
+  if(!item) return;
+  const fd = new FormData(e.target);
+  const soldPrice = n(fd.get("soldPrice"));
+  const updated = {
+    ...item,
+    title: String(fd.get("title") || "").trim(),
+    platform: String(fd.get("platform") || "Mercari"),
+    category: String(fd.get("category") || "Comic"),
+    price: soldPrice,
+    salePrice: soldPrice,
+    soldPrice: soldPrice,
+    cost: n(fd.get("cost")),
+    fees: n(fd.get("fees")),
+    shipping: n(fd.get("shipping")),
+    soldDate: String(fd.get("soldDate") || ""),
+    date: String(fd.get("soldDate") || item.date || ""),
+    notes: String(fd.get("notes") || ""),
+    status: "sold"
+  };
+  updated.profit = updated.price - updated.cost - updated.fees - updated.shipping;
+  rows[editSoldIndexV241] = updated;
+  setSold(rows);
+  editSoldIndexV241 = null;
+  closeSoldEditV241();
+  render();
+}, true);
+
+function moveSoldSnapshotStretchedV241(){
+  const dash = document.getElementById("dashboard");
+  const snap = document.getElementById("dashboardSoldSnapshot");
+  if(dash && snap) dash.appendChild(snap);
+}
+
+function rsSoldMoveBackV241(index){
+  const rows = sold();
+  const item = rows[index];
+  if(!item) return;
+  const a = active();
+  a.unshift({...item,status:"active",addedAt:new Date().toISOString()});
+  rows.splice(index,1);
+  setSold(rows);
+  setActive(a);
+  render();
+  showPage("inventory");
+}
+function rsSoldDeleteV241(index){
+  const rows = sold();
+  const item = rows[index];
+  if(!item) return;
+  if(confirm(`Delete "${title(item)}" from Sold Items?`)){
+    rows.splice(index,1);
+    setSold(rows);
+    render();
+  }
+}
+window.rsSoldMoveBackV241 = rsSoldMoveBackV241;
+window.rsSoldDeleteV241 = rsSoldDeleteV241;
+
+renderSoldRows = function(){
+  const base = sold();
+  const rows = getSoldFilteredRows().map(r => ({r, i: base.indexOf(r)}));
+  updateSoldKpisFromRows(rows.map(x => x.r));
+  const tbody = document.getElementById("soldRows");
+  if(!tbody) return;
+  tbody.innerHTML = rows.map(({r,i})=>{
+    const p = price(r), pr = profit(r), m = p ? Math.round(pr / p * 100) : 0;
+    return `<tr>
+      <td><div class="item-cell"><div class="thumb"></div><div>${esc(title(r))}<small>${esc(platform(r))}</small></div></div></td>
+      <td>${fmt(dateOf(r))}</td>
+      <td>${money(p)}</td>
+      <td>${money(cost(r))}</td>
+      <td class="${pr>=0 ? "profit" : "loss"}">${money(pr)}</td>
+      <td class="margin">${m}%</td>
+      <td><div class="row-actions">
+        <button type="button" data-v241-sold-edit data-index="${i}" class="icon-action" title="Edit sold item">$</button>
+        <button type="button" onclick="rsSoldMoveBackV241(${i})" class="icon-action" title="Move back to inventory">▣</button>
+        <button type="button" onclick="rsSoldDeleteV241(${i})" class="icon-action delete-btn" title="Delete sold item">×</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+};
+
+const oldRenderV241 = render;
+render = function(){
+  oldRenderV241();
+  ensureSoldEditOverlayV241();
+  moveSoldSnapshotStretchedV241();
+  renderSoldRows();
+};
+
+setTimeout(()=>{ensureSoldEditOverlayV241();moveSoldSnapshotStretchedV241();renderSoldRows();},500);

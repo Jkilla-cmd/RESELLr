@@ -1159,3 +1159,120 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
     margin:18px 0!important;
   }
 }
+
+
+/* ===== v241 stretched sold snapshot + sold edit overlay hard fix ===== */
+#dashboard{
+  position:relative!important;
+}
+#dashboardSoldSnapshot.sold-snapshot-card{
+  position:absolute!important;
+  left:calc(50% - 145px)!important;
+  right:42px!important;
+  top:118px!important;
+  width:auto!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:12px!important;
+  border-radius:15px!important;
+  z-index:2!important;
+}
+#dashboardSoldSnapshot .card-head{
+  margin-bottom:6px!important;
+}
+#dashboardSoldSnapshot h3{
+  font-size:11px!important;
+}
+#dashboardSoldSnapshot select{
+  height:26px!important;
+  min-width:90px!important;
+  font-size:10px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid{
+  display:grid!important;
+  grid-template-columns:repeat(4,1fr)!important;
+  gap:8px!important;
+  margin-top:8px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid>div{
+  padding:8px 10px!important;
+  border-radius:11px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid span{
+  font-size:8px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid b{
+  font-size:16px!important;
+  margin-top:3px!important;
+}
+#dashboardSoldSnapshot .platform-mini{
+  display:grid!important;
+  grid-template-columns:repeat(3,1fr)!important;
+  gap:8px!important;
+  margin-top:8px!important;
+}
+#dashboardSoldSnapshot .platform-mini>div{
+  padding:7px 9px!important;
+  border-radius:10px!important;
+}
+#dashboardSoldSnapshot .platform-mini span{
+  font-size:7px!important;
+}
+#dashboardSoldSnapshot .platform-mini b{
+  font-size:12px!important;
+  margin-top:3px!important;
+}
+#editSoldModal,
+#soldEditOverlayV241{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:22px!important;
+  background:rgba(2,6,23,.78)!important;
+  backdrop-filter:blur(18px)!important;
+}
+#editSoldModal.open,
+#editSoldModal.show,
+#editSoldModal.is-open,
+#soldEditOverlayV241.open{
+  display:flex!important;
+}
+#editSoldModal .modal-box,
+#soldEditOverlayV241 .modal-box{
+  width:min(720px,94vw)!important;
+  max-height:88vh!important;
+  overflow:auto!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:22px!important;
+  background:linear-gradient(180deg,rgba(10,18,34,.98),rgba(8,13,26,.94))!important;
+  box-shadow:0 30px 100px rgba(0,0,0,.58)!important;
+  padding:22px!important;
+}
+#editSoldModal input,#editSoldModal select,#editSoldModal textarea,
+#soldEditOverlayV241 input,#soldEditOverlayV241 select,#soldEditOverlayV241 textarea{
+  border:1px solid rgba(255,255,255,.14)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:#fff!important;
+}
+#soldRows .row-actions button{
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+@media(max-width:1050px){
+  #dashboardSoldSnapshot.sold-snapshot-card{
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    width:100%!important;
+    margin:18px 0!important;
+  }
+}
+@media(max-width:700px){
+  #dashboardSoldSnapshot .sold-snapshot-grid{
+    grid-template-columns:1fr 1fr!important;
+  }
+}
