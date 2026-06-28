@@ -903,3 +903,86 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
 .platform-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
 .platform-mini b{display:block;margin-top:6px;color:#fff;font-size:18px}
 @media(max-width:900px){.sold-snapshot-grid{grid-template-columns:1fr 1fr}.platform-mini{grid-template-columns:1fr}}
+
+
+/* ===== v238 old half sold snapshot + edit sold modal ===== */
+#dashboardSoldSnapshot.sold-snapshot-card{
+  position:absolute!important;
+  right:42px!important;
+  top:245px!important;
+  width:min(430px,34vw)!important;
+  margin:0!important;
+  padding:14px!important;
+  border-radius:16px!important;
+  z-index:3!important;
+}
+#dashboard{
+  position:relative!important;
+}
+#dashboardSoldSnapshot .card-head{
+  margin-bottom:8px!important;
+}
+#dashboardSoldSnapshot h3{
+  font-size:12px!important;
+}
+#dashboardSoldSnapshot .inline-tools{
+  gap:6px!important;
+}
+#dashboardSoldSnapshot select{
+  height:28px!important;
+  min-width:92px!important;
+  font-size:11px!important;
+  padding:0 7px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid{
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+  margin-top:10px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid>div{
+  padding:10px!important;
+  border-radius:12px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid span{
+  font-size:9px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid b{
+  font-size:18px!important;
+  margin-top:4px!important;
+}
+#dashboardSoldSnapshot .platform-mini{
+  display:grid!important;
+  grid-template-columns:1fr 1fr 1fr!important;
+  gap:8px!important;
+  margin-top:8px!important;
+}
+#dashboardSoldSnapshot .platform-mini>div{
+  padding:9px!important;
+  border-radius:12px!important;
+}
+#dashboardSoldSnapshot .platform-mini span{
+  font-size:8px!important;
+}
+#dashboardSoldSnapshot .platform-mini b{
+  font-size:13px!important;
+  margin-top:4px!important;
+}
+#editSoldModal .modal-box{
+  width:min(720px,94vw)!important;
+}
+#editSoldModal textarea{
+  min-height:88px!important;
+}
+#sold .row-actions button{
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+@media(max-width:1050px){
+  #dashboardSoldSnapshot.sold-snapshot-card{
+    position:relative!important;
+    right:auto!important;
+    top:auto!important;
+    width:100%!important;
+    margin:18px 0!important;
+  }
+}

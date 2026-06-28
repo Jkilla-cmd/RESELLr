@@ -2835,3 +2835,114 @@ document.addEventListener("change",function(e){
 const oldRenderV237=render;
 render=function(){oldRenderV237();renderWallet();renderDashboardSoldSnapshotV237();fixSalesThisYearV237()};
 setTimeout(()=>{renderWallet();renderDashboardSoldSnapshotV237();fixSalesThisYearV237()},500);
+
+
+/* ===== v238: old half-size sold snapshot placement + edit sold items ===== */
+let editSoldIndexV238=null;
+
+function moveSoldSnapshotOldSpotV238(){
+  const dash=$("#dashboard");
+  const snap=$("#dashboardSoldSnapshot");
+  if(dash&&snap) dash.appendChild(snap);
+}
+
+function openEditSoldModalV238(index){
+  const rows=sold();
+  const item=rows[index];
+  if(!item)return;
+  editSoldIndexV238=index;
+  const modal=$("#editSoldModal");
+  const form=$("#editSoldForm");
+  if(!modal||!form){
+    const p=prompt(`Edit sold price for "${title(item)}"`, String(price(item)||""));
+    if(p===null)return;
+    item.price=n(p); item.salePrice=n(p); item.soldPrice=n(p);
+    item.profit=item.price-cost(item)-fees(item)-ship(item);
+    setSold(rows);
+    render();
+    return;
+  }
+  form.title.value=title(item);
+  form.platform.value=platform(item).toLowerCase().includes("ebay")?"eBay":platform(item).toLowerCase().includes("private")?"Private Sale":"Mercari";
+  const cat=String(item.category||item.type||"").toLowerCase();
+  form.category.value=cat.includes("card")?"Card":cat.includes("other")?"Other":"Comic";
+  form.soldPrice.value=price(item)||"";
+  form.cost.value=cost(item)||"";
+  form.fees.value=fees(item)||"";
+  form.shipping.value=ship(item)||"";
+  const d=dateOf(item);
+  form.soldDate.value=d&&!isNaN(d)?d.toISOString().slice(0,10):new Date().toISOString().slice(0,10);
+  form.notes.value=item.notes||item.description||"";
+  modal.classList.add("open");
+}
+
+$("#cancelEditSold")?.addEventListener("click",()=>$("#editSoldModal")?.classList.remove("open"));
+
+$("#editSoldForm")?.addEventListener("submit",function(e){
+  e.preventDefault();
+  const rows=sold();
+  const item=rows[editSoldIndexV238];
+  if(!item)return;
+  const fd=new FormData(e.target);
+  const soldPrice=n(fd.get("soldPrice"));
+  rows[editSoldIndexV238]={
+    ...item,
+    title:String(fd.get("title")||"").trim(),
+    platform:String(fd.get("platform")||"Mercari"),
+    category:String(fd.get("category")||"Comic"),
+    price:soldPrice,
+    salePrice:soldPrice,
+    soldPrice:soldPrice,
+    cost:n(fd.get("cost")),
+    fees:n(fd.get("fees")),
+    shipping:n(fd.get("shipping")),
+    soldDate:String(fd.get("soldDate")||""),
+    date:String(fd.get("soldDate")||item.date||""),
+    notes:String(fd.get("notes")||""),
+    status:"sold"
+  };
+  rows[editSoldIndexV238].profit=rows[editSoldIndexV238].price-rows[editSoldIndexV238].cost-rows[editSoldIndexV238].fees-rows[editSoldIndexV238].shipping;
+  setSold(rows);
+  editSoldIndexV238=null;
+  $("#editSoldModal")?.classList.remove("open");
+  render();
+});
+
+window.rsSoldEditSaleV238=openEditSoldModalV238;
+
+renderSoldRows=function(){
+  const base=sold();
+  const rows=getSoldFilteredRows().map(r=>({r,i:base.indexOf(r)}));
+  updateSoldKpisFromRows(rows.map(x=>x.r));
+  $("#soldRows").innerHTML=rows.map(({r,i})=>{
+    const p=price(r),pr=profit(r),m=p?Math.round(pr/p*100):0;
+    return `<tr>
+      <td><div class="item-cell"><div class="thumb"></div><div>${esc(title(r))}<small>${esc(platform(r))}</small></div></div></td>
+      <td>${fmt(dateOf(r))}</td>
+      <td>${money(p)}</td>
+      <td>${money(cost(r))}</td>
+      <td class="${pr>=0?"profit":"loss"}">${money(pr)}</td>
+      <td class="margin">${m}%</td>
+      <td><div class="row-actions">
+        <button type="button" onclick="rsSoldEditSaleV238(${i})" class="icon-action" title="Edit sold item">$</button>
+        <button type="button" onclick="rsSoldMoveBackV235 ? rsSoldMoveBackV235(${i}) : rsSoldMoveBackV228 ? rsSoldMoveBackV228(${i}) : null" class="icon-action" title="Move back to inventory">▣</button>
+        <button type="button" onclick="rsSoldDeleteV235 ? rsSoldDeleteV235(${i}) : rsSoldDeleteV228 ? rsSoldDeleteV228(${i}) : null" class="icon-action delete-btn" title="Delete sold item">×</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+};
+
+document.addEventListener("click",function(e){
+  const btn=e.target.closest&&e.target.closest("#soldRows .row-actions button");
+  if(!btn)return;
+  e.stopPropagation();
+},false);
+
+const oldRenderV238=render;
+render=function(){
+  oldRenderV238();
+  moveSoldSnapshotOldSpotV238();
+  renderSoldRows();
+};
+
+setTimeout(()=>{moveSoldSnapshotOldSpotV238();renderSoldRows();},500);
