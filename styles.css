@@ -1800,3 +1800,86 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
 #soldRows .sold-old-icon-v250.delete{
   color:rgba(255,107,107,.95)!important;
 }
+
+
+/* ===== v251 final snapshot adjustment + guaranteed sold edit modal ===== */
+#dashboardSoldSnapshot.sold-snapshot-card{
+  left:39.5%!important;
+  right:14px!important;
+  top:112px!important;
+  min-height:196px!important;
+  padding:14px 14px!important;
+  transform:none!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid>div{
+  padding:10px 12px!important;
+}
+#dashboardSoldSnapshot .platform-mini>div{
+  padding:9px 12px!important;
+}
+#soldEditGuaranteedV251{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:22px!important;
+  background:rgba(2,6,23,.84)!important;
+  backdrop-filter:blur(18px)!important;
+}
+#soldEditGuaranteedV251.open{
+  display:flex!important;
+}
+#soldEditGuaranteedV251 .modal-box{
+  width:min(720px,94vw)!important;
+  max-height:88vh!important;
+  overflow:auto!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:22px!important;
+  background:linear-gradient(180deg,rgba(10,18,34,.98),rgba(8,13,26,.94))!important;
+  box-shadow:0 30px 100px rgba(0,0,0,.60)!important;
+  padding:22px!important;
+}
+#soldEditGuaranteedV251 input,
+#soldEditGuaranteedV251 select,
+#soldEditGuaranteedV251 textarea{
+  width:100%!important;
+  min-height:42px!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:#fff!important;
+  border-radius:12px!important;
+  padding:0 12px!important;
+}
+#soldEditGuaranteedV251 textarea{
+  min-height:90px!important;
+  padding:12px!important;
+}
+#soldRows .sold-old-icon-v251{
+  appearance:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:auto!important;
+  min-width:0!important;
+  height:auto!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:rgba(248,250,252,.88)!important;
+  font-size:18px!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+}
+#soldRows .sold-old-icon-v251.delete{
+  color:rgba(255,107,107,.95)!important;
+}
+#soldRows .row-actions{
+  gap:18px!important;
+  justify-content:center!important;
+}
