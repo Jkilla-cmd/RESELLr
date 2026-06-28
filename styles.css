@@ -1726,3 +1726,77 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
   cursor:pointer!important;
   pointer-events:auto!important;
 }
+
+
+/* ===== v249 snapshot corrected + old sold action icons ===== */
+#dashboardSoldSnapshot.sold-snapshot-card{
+  top:126px!important;
+  transform:none!important;
+}
+.sold-icon-v249{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:auto!important;
+  min-width:0!important;
+  height:auto!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:rgba(248,250,252,.86)!important;
+  font-size:18px!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+}
+.sold-icon-v249.edit{
+  color:rgba(248,250,252,.90)!important;
+}
+.sold-icon-v249.move{
+  color:rgba(248,250,252,.90)!important;
+}
+.sold-icon-v249.delete{
+  color:rgba(255,107,107,.95)!important;
+}
+#soldRows .row-actions{
+  gap:18px!important;
+  justify-content:center!important;
+}
+
+
+/* ===== v250 final override: snapshot position + sold old icons ===== */
+#dashboardSoldSnapshot.sold-snapshot-card{
+  top:112px!important;
+  transform:none!important;
+  left:37%!important;
+  right:14px!important;
+}
+#soldRows .row-actions{
+  gap:18px!important;
+  justify-content:center!important;
+}
+#soldRows .sold-old-icon-v250{
+  appearance:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:auto!important;
+  min-width:0!important;
+  height:auto!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:rgba(248,250,252,.88)!important;
+  font-size:18px!important;
+  line-height:1!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+}
+#soldRows .sold-old-icon-v250.delete{
+  color:rgba(255,107,107,.95)!important;
+}
