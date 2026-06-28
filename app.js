@@ -2749,3 +2749,89 @@ setTimeout(()=>{
 const oldRenderV236=render;
 render=function(){oldRenderV236();renderWallet()};
 setTimeout(renderWallet,500);
+
+
+/* ===== v237: wallet cents display, dashboard sold snapshot, sales this year exact ===== */
+function moneyCentsV237(v){return money(Number(v)||0,2)}
+
+function renderWallet(){
+  const w=walletRead();
+  const ledger=walletLedger();
+  const bal=Number(w.balance)||0;
+  const now=new Date();
+  const today=now.toDateString();
+  const todaysDeposit=ledger.filter(x=>x.type==="deposit"&&new Date(x.date).toDateString()===today).reduce((a,x)=>a+Number(x.amount||0),0);
+  const monthSpent=Math.abs(ledger.filter(x=>x.type==="spend"&&new Date(x.date).getFullYear()===now.getFullYear()&&new Date(x.date).getMonth()===now.getMonth()).reduce((a,x)=>a+Number(x.amount||0),0));
+  const buyingPower=Math.max(0,bal*.35);
+  const mode=walletMode();
+  if($("#walletBalance")) $("#walletBalance").textContent=moneyCentsV237(bal);
+  if($("#walletModeLabel")) $("#walletModeLabel").textContent=mode.label;
+  if($("#walletTodayDeposit")) $("#walletTodayDeposit").textContent=moneyCentsV237(todaysDeposit);
+  if($("#walletMonthSpent")) $("#walletMonthSpent").textContent=moneyCentsV237(monthSpent);
+  if($("#walletBuyingPower")) $("#walletBuyingPower").textContent=moneyCentsV237(buyingPower);
+}
+
+function dashboardSnapshotYearsV237(){
+  const years=[...new Set(sold().map(r=>dateOf(r)?.getFullYear()).filter(Boolean))].sort((a,b)=>b-a);
+  return years.length?years:[new Date().getFullYear()];
+}
+function setupDashboardSoldFiltersV237(){
+  const y=$("#dashSoldYearFilter"), m=$("#dashSoldMonthFilter");
+  if(!y||!m)return;
+  const oldY=y.value;
+  const years=dashboardSnapshotYearsV237();
+  y.innerHTML='<option value="all">All Years</option>'+years.map(yr=>`<option value="${yr}">${yr}</option>`).join("");
+  if([...y.options].some(o=>o.value===oldY)) y.value=oldY; else y.value=String(new Date().getFullYear());
+  const oldM=m.value;
+  m.innerHTML='<option value="all">All Months</option>'+Array.from({length:12},(_,i)=>`<option value="${i+1}">${monthName(i+1)}</option>`).join("");
+  if([...m.options].some(o=>o.value===oldM)) m.value=oldM; else m.value="all";
+}
+function dashboardSoldRowsV237(){
+  const y=$("#dashSoldYearFilter")?.value||String(new Date().getFullYear());
+  const m=$("#dashSoldMonthFilter")?.value||"all";
+  return sold().filter(r=>{
+    const d=dateOf(r);
+    if(!d)return false;
+    if(y!=="all"&&d.getFullYear()!==Number(y))return false;
+    if(m!=="all"&&d.getMonth()+1!==Number(m))return false;
+    return true;
+  }).sort((a,b)=>(dateOf(b)||0)-(dateOf(a)||0));
+}
+function renderDashboardSoldSnapshotV237(){
+  setupDashboardSoldFiltersV237();
+  const rows=dashboardSoldRowsV237();
+  const income=rows.reduce((a,r)=>a+price(r),0);
+  const prof=rows.reduce((a,r)=>a+profit(r),0);
+  const cp=rows.reduce((a,r)=>a+cost(r)+profit(r),0);
+  if($("#dashSoldItems")) $("#dashSoldItems").textContent=rows.length;
+  if($("#dashSoldIncome")) $("#dashSoldIncome").textContent=moneyCentsV237(income);
+  if($("#dashSoldCostProfit")) $("#dashSoldCostProfit").textContent=moneyCentsV237(cp);
+  if($("#dashSoldProfit")) $("#dashSoldProfit").textContent=moneyCentsV237(prof);
+  const mercari=rows.filter(r=>platform(r).toLowerCase().includes("mercari")).reduce((a,r)=>a+price(r),0);
+  const ebay=rows.filter(r=>platform(r).toLowerCase().includes("ebay")).reduce((a,r)=>a+price(r),0);
+  const priv=rows.filter(r=>platform(r).toLowerCase().includes("private")).reduce((a,r)=>a+price(r),0);
+  if($("#dashMercariSales")) $("#dashMercariSales").textContent=moneyCentsV237(mercari);
+  if($("#dashEbaySales")) $("#dashEbaySales").textContent=moneyCentsV237(ebay);
+  if($("#dashPrivateSales")) $("#dashPrivateSales").textContent=moneyCentsV237(priv);
+}
+function fixSalesThisYearV237(){
+  const now=new Date();
+  const count=sold().filter(r=>{
+    const d=dateOf(r);
+    return d && d.getFullYear()===now.getFullYear();
+  }).length;
+  ["salesThisYear","salesYear","yearSales","kpiSalesThisYear"].forEach(id=>{const el=$("#"+id); if(el) el.textContent=count;});
+  document.querySelectorAll("span,small,div").forEach(el=>{
+    if((el.textContent||"").trim().toLowerCase()==="sales this year"){
+      const box=el.closest(".kpi,.stat,.metric,.card,div");
+      const big=box?.querySelector("b,strong,.value,h2");
+      if(big) big.textContent=count;
+    }
+  });
+}
+document.addEventListener("change",function(e){
+  if(e.target && (e.target.id==="dashSoldYearFilter" || e.target.id==="dashSoldMonthFilter")) renderDashboardSoldSnapshotV237();
+},true);
+const oldRenderV237=render;
+render=function(){oldRenderV237();renderWallet();renderDashboardSoldSnapshotV237();fixSalesThisYearV237()};
+setTimeout(()=>{renderWallet();renderDashboardSoldSnapshotV237();fixSalesThisYearV237()},500);

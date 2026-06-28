@@ -888,3 +888,18 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
 .wallet-settings-card button:hover{color:var(--cyan)}
 @media(max-width:950px){.wallet-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:620px){.wallet-grid{grid-template-columns:1fr}.wallet-flow{display:none}}
+
+
+/* ===== v237 cents wallet + sold snapshot + sales this year fix ===== */
+.sold-snapshot-card{margin:20px 0 22px;padding:18px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,rgba(10,18,34,.82),rgba(8,13,26,.58));box-shadow:0 24px 80px rgba(0,0,0,.22);backdrop-filter:blur(24px)}
+.sold-snapshot-card .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sold-snapshot-card h3{margin:0;text-transform:uppercase;font-size:13px;letter-spacing:.05em}
+.sold-snapshot-card .inline-tools{display:flex;gap:8px}
+.sold-snapshot-card select{height:32px;min-width:118px;border-radius:10px;border:1px solid var(--line);background:#101827;color:#f8fafc;padding:0 9px}
+.sold-snapshot-grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:12px;margin-top:16px}
+.sold-snapshot-grid>div,.platform-mini>div{border:1px solid rgba(255,255,255,.075);border-radius:14px;padding:13px;background:rgba(255,255,255,.035)}
+.sold-snapshot-grid span,.platform-mini span{display:block;color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:.04em}
+.sold-snapshot-grid b{display:block;margin-top:6px;color:var(--cyan);font-size:22px;font-weight:650}
+.platform-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+.platform-mini b{display:block;margin-top:6px;color:#fff;font-size:18px}
+@media(max-width:900px){.sold-snapshot-grid{grid-template-columns:1fr 1fr}.platform-mini{grid-template-columns:1fr}}
