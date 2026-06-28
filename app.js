@@ -2946,3 +2946,163 @@ render=function(){
 };
 
 setTimeout(()=>{moveSoldSnapshotOldSpotV238();renderSoldRows();},500);
+
+
+/* ===== v239: reliable sold edit popup + snapshot no overlap ===== */
+function ensureEditSoldModalV239(){
+  if($("#editSoldModal")) return;
+  const modal=document.createElement("div");
+  modal.className="modal";
+  modal.id="editSoldModal";
+  modal.innerHTML=`<form class="modal-box" id="editSoldForm">
+    <h2>Edit Sold Item</h2>
+    <input name="title" placeholder="Item title" required>
+    <div class="form-grid">
+      <select name="platform">
+        <option value="Mercari">Mercari</option>
+        <option value="eBay">eBay</option>
+        <option value="Private Sale">Private Sale</option>
+      </select>
+      <select name="category">
+        <option value="Comic">Comic</option>
+        <option value="Card">Card</option>
+        <option value="Other">Other</option>
+      </select>
+      <input name="soldPrice" type="number" step="any" placeholder="Sold price" required>
+      <input name="cost" type="number" step="any" placeholder="Cost">
+      <input name="fees" type="number" step="any" placeholder="Fees">
+      <input name="shipping" type="number" step="any" placeholder="Shipping">
+      <input name="soldDate" type="date">
+    </div>
+    <textarea name="notes" placeholder="Notes"></textarea>
+    <div class="modal-actions">
+      <button type="button" id="cancelEditSold">Cancel</button>
+      <button class="primary">Save Sold Item</button>
+    </div>
+  </form>`;
+  document.body.appendChild(modal);
+}
+
+let editSoldIndexV239=null;
+
+function openEditSoldModalV239(index){
+  ensureEditSoldModalV239();
+  const rows=sold();
+  const item=rows[index];
+  if(!item) return;
+
+  editSoldIndexV239=index;
+  const modal=$("#editSoldModal");
+  const form=$("#editSoldForm");
+
+  form.elements.title.value=title(item);
+  const p=platform(item).toLowerCase();
+  form.elements.platform.value=p.includes("ebay")?"eBay":p.includes("private")?"Private Sale":"Mercari";
+
+  const cat=String(item.category||item.type||"").toLowerCase();
+  form.elements.category.value=cat.includes("card")?"Card":cat.includes("other")?"Other":"Comic";
+
+  form.elements.soldPrice.value=price(item)||"";
+  form.elements.cost.value=cost(item)||"";
+  form.elements.fees.value=fees(item)||"";
+  form.elements.shipping.value=ship(item)||"";
+
+  const d=dateOf(item);
+  form.elements.soldDate.value=d&&!isNaN(d)?d.toISOString().slice(0,10):new Date().toISOString().slice(0,10);
+  form.elements.notes.value=item.notes||item.description||"";
+
+  modal.classList.add("open","show");
+}
+
+window.rsSoldEditSaleV239=openEditSoldModalV239;
+
+function closeEditSoldModalV239(){
+  $("#editSoldModal")?.classList.remove("open","show");
+}
+
+document.addEventListener("click",function(e){
+  if(e.target && e.target.id==="cancelEditSold"){
+    e.preventDefault();
+    closeEditSoldModalV239();
+  }
+
+  const editBtn=e.target.closest && e.target.closest("[data-sold-edit-v239]");
+  if(editBtn){
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    openEditSoldModalV239(Number(editBtn.dataset.index));
+  }
+},true);
+
+document.addEventListener("submit",function(e){
+  if(e.target && e.target.id==="editSoldForm"){
+    e.preventDefault();
+    const rows=sold();
+    const item=rows[editSoldIndexV239];
+    if(!item) return;
+
+    const fd=new FormData(e.target);
+    const soldPrice=n(fd.get("soldPrice"));
+    const updated={
+      ...item,
+      title:String(fd.get("title")||"").trim(),
+      platform:String(fd.get("platform")||"Mercari"),
+      category:String(fd.get("category")||"Comic"),
+      price:soldPrice,
+      salePrice:soldPrice,
+      soldPrice:soldPrice,
+      cost:n(fd.get("cost")),
+      fees:n(fd.get("fees")),
+      shipping:n(fd.get("shipping")),
+      soldDate:String(fd.get("soldDate")||""),
+      date:String(fd.get("soldDate")||item.date||""),
+      notes:String(fd.get("notes")||""),
+      status:"sold"
+    };
+    updated.profit=updated.price-updated.cost-updated.fees-updated.shipping;
+    rows[editSoldIndexV239]=updated;
+    setSold(rows);
+    editSoldIndexV239=null;
+    closeEditSoldModalV239();
+    render();
+  }
+},true);
+
+function moveSoldSnapshotOldSpotV239(){
+  const dash=$("#dashboard");
+  const snap=$("#dashboardSoldSnapshot");
+  if(dash&&snap) dash.appendChild(snap);
+}
+
+renderSoldRows=function(){
+  const base=sold();
+  const rows=getSoldFilteredRows().map(r=>({r,i:base.indexOf(r)}));
+  updateSoldKpisFromRows(rows.map(x=>x.r));
+  $("#soldRows").innerHTML=rows.map(({r,i})=>{
+    const p=price(r),pr=profit(r),m=p?Math.round(pr/p*100):0;
+    return `<tr>
+      <td><div class="item-cell"><div class="thumb"></div><div>${esc(title(r))}<small>${esc(platform(r))}</small></div></div></td>
+      <td>${fmt(dateOf(r))}</td>
+      <td>${money(p)}</td>
+      <td>${money(cost(r))}</td>
+      <td class="${pr>=0?"profit":"loss"}">${money(pr)}</td>
+      <td class="margin">${m}%</td>
+      <td><div class="row-actions">
+        <button type="button" data-sold-edit-v239 data-index="${i}" class="icon-action" title="Edit sold item">$</button>
+        <button type="button" onclick="window.rsSoldMoveBackV235 ? rsSoldMoveBackV235(${i}) : (window.rsSoldMoveBackV228 ? rsSoldMoveBackV228(${i}) : null)" class="icon-action" title="Move back to inventory">▣</button>
+        <button type="button" onclick="window.rsSoldDeleteV235 ? rsSoldDeleteV235(${i}) : (window.rsSoldDeleteV228 ? rsSoldDeleteV228(${i}) : null)" class="icon-action delete-btn" title="Delete sold item">×</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+};
+
+const oldRenderV239=render;
+render=function(){
+  oldRenderV239();
+  ensureEditSoldModalV239();
+  moveSoldSnapshotOldSpotV239();
+  renderSoldRows();
+};
+
+setTimeout(()=>{ensureEditSoldModalV239();moveSoldSnapshotOldSpotV239();renderSoldRows();},500);

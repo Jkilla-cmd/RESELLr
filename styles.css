@@ -986,3 +986,61 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
     margin:18px 0!important;
   }
 }
+
+
+/* ===== v239 sold snapshot no-overlap + sold edit modal visibility ===== */
+#dashboardSoldSnapshot.sold-snapshot-card{
+  position:absolute!important;
+  right:42px!important;
+  top:158px!important;
+  width:min(430px,34vw)!important;
+  margin:0!important;
+  padding:14px!important;
+  border-radius:16px!important;
+  z-index:4!important;
+}
+#editSoldModal{
+  position:fixed!important;
+  inset:0!important;
+  z-index:99999!important;
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:22px!important;
+  background:rgba(2,6,23,.72)!important;
+  backdrop-filter:blur(16px)!important;
+}
+#editSoldModal.open,
+#editSoldModal.show{
+  display:flex!important;
+}
+#editSoldModal .modal-box{
+  width:min(720px,94vw)!important;
+  max-height:88vh!important;
+  overflow:auto!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:22px!important;
+  background:linear-gradient(180deg,rgba(10,18,34,.96),rgba(8,13,26,.92))!important;
+  box-shadow:0 30px 100px rgba(0,0,0,.45)!important;
+}
+#editSoldModal input,
+#editSoldModal select,
+#editSoldModal textarea{
+  border:1px solid rgba(255,255,255,.14)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:#fff!important;
+}
+#sold .row-actions button,
+#soldRows .row-actions button{
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+@media(max-width:1050px){
+  #dashboardSoldSnapshot.sold-snapshot-card{
+    position:relative!important;
+    right:auto!important;
+    top:auto!important;
+    width:100%!important;
+    margin:18px 0!important;
+  }
+}
