@@ -1703,3 +1703,26 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
   pointer-events:auto!important;
   cursor:pointer!important;
 }
+
+
+/* ===== v248 sold snapshot lower by margin + edit uses existing inventory modal ===== */
+#dashboardSoldSnapshot.sold-snapshot-card{
+  top:168px!important;
+  transform:translateY(34px)!important;
+}
+.sold-edit-fallback-btn-v248{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:42px!important;
+  height:26px!important;
+  padding:0 10px!important;
+  border-radius:999px!important;
+  border:1px solid rgba(0,245,255,.35)!important;
+  background:rgba(0,245,255,.10)!important;
+  color:var(--cyan)!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+}

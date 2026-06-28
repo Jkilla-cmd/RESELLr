@@ -4619,3 +4619,137 @@ setTimeout(()=>{ensureSoldEditOverlayV244();placeSnapshotV244();renderSoldRows()
 
   setTimeout(()=>{ensureEditOverlayV247();placeSnapshotV247();window.renderSoldRows();},500);
 })();
+
+
+/* ===== v248: Sold edit uses Inventory edit popup path; snapshot forced lower ===== */
+(function(){
+  function ensureSoldIdsV248(){
+    const rows = sold();
+    let changed = false;
+    rows.forEach((r,i)=>{
+      if(!r.soldId && !r.id && !r._id){
+        r.soldId = "sold248_" + Date.now() + "_" + i + "_" + Math.random().toString(16).slice(2);
+        changed = true;
+      }
+    });
+    if(changed) setSold(rows);
+    return rows;
+  }
+
+  function keyV248(r){ return String(r.soldId || r.id || r._id || ""); }
+  function idxV248(id){ return sold().findIndex(r => keyV248(r) === String(id)); }
+
+  window.editSoldWithPromptV248 = function(id){
+    const rows = sold();
+    const i = idxV248(id);
+    const item = rows[i];
+    if(!item) return;
+
+    const currentPrice = price(item);
+    const currentCost = cost(item);
+    const currentFees = fees(item);
+    const currentShipping = ship(item);
+
+    const soldPrice = prompt(`Edit sold price for:\n${title(item)}`, String(currentPrice || ""));
+    if(soldPrice === null) return;
+
+    const itemCost = prompt("Edit cost", String(currentCost || 0));
+    if(itemCost === null) return;
+
+    const itemFees = prompt("Edit fees", String(currentFees || 0));
+    if(itemFees === null) return;
+
+    const itemShipping = prompt("Edit shipping", String(currentShipping || 0));
+    if(itemShipping === null) return;
+
+    const p = n(soldPrice), c = n(itemCost), f = n(itemFees), sh = n(itemShipping);
+    rows[i] = {
+      ...item,
+      price: p,
+      salePrice: p,
+      soldPrice: p,
+      cost: c,
+      fees: f,
+      shipping: sh,
+      profit: p - c - f - sh,
+      status: "sold"
+    };
+
+    setSold(rows);
+    render();
+  };
+
+  window.moveSoldBackV248 = function(id){
+    const rows = sold();
+    const i = idxV248(id);
+    const item = rows[i];
+    if(!item) return;
+    const a = active();
+    a.unshift({...item,status:"active",addedAt:new Date().toISOString()});
+    rows.splice(i,1);
+    setSold(rows);
+    setActive(a);
+    render();
+    showPage("inventory");
+  };
+
+  window.deleteSoldV248 = function(id){
+    const rows = sold();
+    const i = idxV248(id);
+    const item = rows[i];
+    if(!item) return;
+    if(confirm(`Delete "${title(item)}" from Sold Items?`)){
+      rows.splice(i,1);
+      setSold(rows);
+      render();
+    }
+  };
+
+  function placeSnapshotLowerV248(){
+    const dash = document.getElementById("dashboard");
+    const snap = document.getElementById("dashboardSoldSnapshot");
+    if(dash && snap){
+      dash.appendChild(snap);
+      snap.style.top = "168px";
+      snap.style.transform = "translateY(34px)";
+    }
+  }
+
+  window.renderSoldRows = function(){
+    const base = ensureSoldIdsV248();
+    let filtered = base;
+    try{ filtered = getSoldFilteredRows(); }catch(e){}
+    const rows = filtered.map(r => ({r, i: base.indexOf(r)}));
+    try{ updateSoldKpisFromRows(rows.map(x=>x.r)); }catch(e){}
+
+    const tbody = document.getElementById("soldRows");
+    if(!tbody) return;
+
+    tbody.innerHTML = rows.map(({r})=>{
+      const id = keyV248(r).replace(/'/g,"\\'");
+      const p = price(r), pr = profit(r), m = p ? Math.round(pr / p * 100) : 0;
+      return `<tr>
+        <td><div class="item-cell"><div class="thumb"></div><div>${esc(title(r))}<small>${esc(platform(r))}</small></div></div></td>
+        <td>${fmt(dateOf(r))}</td>
+        <td>${money(p)}</td>
+        <td>${money(cost(r))}</td>
+        <td class="${pr>=0 ? "profit" : "loss"}">${money(pr)}</td>
+        <td class="margin">${m}%</td>
+        <td><div class="row-actions">
+          <button type="button" class="sold-edit-fallback-btn-v248" onclick="editSoldWithPromptV248('${id}')">Edit</button>
+          <button type="button" class="sold-action-chip-v246" onclick="moveSoldBackV248('${id}')">▣</button>
+          <button type="button" class="sold-action-chip-v246 delete" onclick="deleteSoldV248('${id}')">×</button>
+        </div></td>
+      </tr>`;
+    }).join("");
+  };
+
+  const previousRender = window.render;
+  window.render = function(){
+    previousRender();
+    placeSnapshotLowerV248();
+    window.renderSoldRows();
+  };
+
+  setTimeout(()=>{placeSnapshotLowerV248();window.renderSoldRows();},500);
+})();
