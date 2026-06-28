@@ -1568,3 +1568,138 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
   pointer-events:auto!important;
   cursor:pointer!important;
 }
+
+
+/* ===== v246 dashboard snapshot lower/larger + sold action emergency overlay ===== */
+#dashboardSoldSnapshot.sold-snapshot-card{
+  left:37%!important;
+  right:14px!important;
+  top:126px!important;
+  padding:18px 16px!important;
+  min-height:238px!important;
+  z-index:3!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid{
+  gap:13px!important;
+}
+#dashboardSoldSnapshot .platform-mini{
+  gap:13px!important;
+  margin-top:13px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid>div{
+  padding:15px 15px!important;
+}
+#dashboardSoldSnapshot .platform-mini>div{
+  padding:13px 15px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid b{
+  font-size:21px!important;
+}
+#dashboardSoldSnapshot .platform-mini b{
+  font-size:16px!important;
+}
+#soldEmergencyPanelV246{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:22px!important;
+  background:rgba(2,6,23,.84)!important;
+  backdrop-filter:blur(18px)!important;
+}
+#soldEmergencyPanelV246.open{
+  display:flex!important;
+}
+#soldEmergencyPanelV246 .modal-box{
+  width:min(760px,94vw)!important;
+  max-height:88vh!important;
+  overflow:auto!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:22px!important;
+  background:linear-gradient(180deg,rgba(10,18,34,.98),rgba(8,13,26,.94))!important;
+  box-shadow:0 30px 100px rgba(0,0,0,.60)!important;
+  padding:22px!important;
+}
+#soldEmergencyPanelV246 input,
+#soldEmergencyPanelV246 select,
+#soldEmergencyPanelV246 textarea{
+  border:1px solid rgba(255,255,255,.14)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:#fff!important;
+}
+.sold-action-chip-v246{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:30px!important;
+  height:26px!important;
+  padding:0 8px!important;
+  border-radius:999px!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:#fff!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+.sold-action-chip-v246.edit{color:var(--cyan)!important;border-color:rgba(0,245,255,.35)!important;background:rgba(0,245,255,.09)!important}
+.sold-action-chip-v246.delete{color:#ff6b6b!important}
+#soldRows, #soldRows *{
+  pointer-events:auto!important;
+}
+
+
+/* ===== v247 snapshot slightly lower + edit sold direct popup ===== */
+#dashboardSoldSnapshot.sold-snapshot-card{
+  top:142px!important;
+}
+#soldEditOverlayV247{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:22px!important;
+  background:rgba(2,6,23,.84)!important;
+  backdrop-filter:blur(18px)!important;
+}
+#soldEditOverlayV247.open{
+  display:flex!important;
+}
+#soldEditOverlayV247 .modal-box{
+  width:min(720px,94vw)!important;
+  max-height:88vh!important;
+  overflow:auto!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:22px!important;
+  background:linear-gradient(180deg,rgba(10,18,34,.98),rgba(8,13,26,.94))!important;
+  box-shadow:0 30px 100px rgba(0,0,0,.60)!important;
+  padding:22px!important;
+}
+#soldEditOverlayV247 input,
+#soldEditOverlayV247 select,
+#soldEditOverlayV247 textarea{
+  border:1px solid rgba(255,255,255,.14)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:#fff!important;
+}
+.edit-sold-v247{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:38px!important;
+  height:26px!important;
+  padding:0 9px!important;
+  border-radius:999px!important;
+  border:1px solid rgba(0,245,255,.35)!important;
+  background:rgba(0,245,255,.10)!important;
+  color:var(--cyan)!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
