@@ -52,7 +52,7 @@
         <div class="kpi"><span>Inventory Value</span><b id="kpiInventory">$0.00</b><em>active list value</em></div><div class="kpi"><span>Cost + Profit</span><b id="kpiCostProfit">$0.00</b><em>cost of sold + profit</em></div>
         <div class="goal"><span>Profit Goal</span><div class="ring" id="goalRing"><strong id="goalPct">0%</strong></div><small id="goalText">$0 / $300</small></div>
         <div class="kpi spend-kpi">
-          <div class="spend-head-row"><span>Recommended Next Month</span><button type="button" id="spendModeBtn" class="spend-mode-btn">Switch Mode</button></div>
+          <span>Recommended Next Month</span>
           <b id="spendRecommend">$0</b>
           <em id="spendRecommendText">inventory spend · set aside</em>
           <div class="month-progress">
@@ -66,18 +66,25 @@
         </div>
       </div>
 
-              <div class="platform-snapshot-card table-card compact-platform-card">
+
+      <div class="reinvest-wallet-card" id="reinvestWalletCard">
         <div class="card-head">
-          <h3>Sold Snapshot</h3>
-          <div class="inline-tools"><select id="platformSnapshotYearFilter"></select></div>
+          <h3>Reinvestment Wallet</h3>
+          <button type="button" id="walletSetupBtn">Setup</button>
         </div>
-        <div class="table-wrap">
-          <table class="platform-snapshot-table">
-            <thead><tr><th>Platform</th><th>Sold</th><th>Cost + Profit</th></tr></thead>
-            <tbody id="platformSnapshotRows"></tbody>
-          </table>
+        <div class="wallet-grid">
+          <div class="wallet-main">
+            <span>Available to Reinvest</span>
+            <b id="walletBalance">$0</b>
+            <em id="walletModeLabel">Balanced 50/50</em>
+          </div>
+          <div><span>Today's Deposit</span><b id="walletTodayDeposit">$0</b></div>
+          <div><span>This Month Spent</span><b id="walletMonthSpent">$0</b></div>
+          <div><span>Buying Power</span><b id="walletBuyingPower">$0</b></div>
         </div>
-      </div>
+        <div class="wallet-flow">
+          <span>Sales</span><i></i><span>Wallet</span><i></i><span>Inventory</span><i></i><span>Profit</span>
+        </div>
       </div>
 
       <div class="dashboard-grid">
@@ -176,6 +183,15 @@
     <section class="page" id="settings">
       <div class="page-head"><h1>Settings</h1></div>
       <div class="settings-grid">
+
+      <div class="data-card wallet-settings-card">
+        <b>Reinvestment Wallet</b>
+        <span>Set your current balance once. Future sales and inventory purchases will track from here.</span>
+        <input id="walletInitialBalance" type="number" step="any" placeholder="Current wallet balance">
+        <button type="button" id="walletInitializeBtn">Initialize Wallet</button>
+        <button type="button" id="walletResetBtn">Reset Wallet</button>
+      </div>
+
         <div class="data-card">
           <b>Bookmarklet</b>
           <span>Drag this button to your bookmarks bar. Use it on a Mercari/eBay item page to send title, description, and list value into RESELLr.</span>

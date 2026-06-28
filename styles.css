@@ -856,214 +856,35 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
 }
 
 
-/* ===== v235 health score + comic/card focus + player + sold actions ===== */
-.resellr-power-grid{
-  display:grid;
-  grid-template-columns:minmax(300px,1.15fr) minmax(280px,.85fr);
-  gap:18px;
-  margin:20px 0 22px;
+/* ===== v236 reinvestment wallet ===== */
+.reinvest-wallet-card{
+  margin:20px 0 22px;padding:18px;border:1px solid var(--line);border-radius:18px;
+  background:linear-gradient(180deg,rgba(10,18,34,.82),rgba(8,13,26,.58));
+  box-shadow:0 24px 80px rgba(0,0,0,.22);backdrop-filter:blur(24px)
 }
-.health-card,.focus-card{
-  padding:18px;
-  border:1px solid var(--line);
-  border-radius:18px;
-  background:linear-gradient(180deg,rgba(10,18,34,.78),rgba(8,13,26,.54));
-  box-shadow:0 24px 80px rgba(0,0,0,.22);
-  backdrop-filter:blur(24px);
+.reinvest-wallet-card .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.reinvest-wallet-card h3{margin:0;text-transform:uppercase;font-size:13px;letter-spacing:.05em}
+#walletSetupBtn{
+  height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.055);color:#fff;font-size:12px
 }
-.health-card .card-head,.focus-card .card-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
+#walletSetupBtn:hover{color:var(--cyan);border-color:rgba(0,245,255,.35)}
+.wallet-grid{display:grid;grid-template-columns:1.35fr repeat(3,1fr);gap:14px;margin-top:16px}
+.wallet-grid>div{border:1px solid rgba(255,255,255,.075);border-radius:15px;padding:14px;background:rgba(255,255,255,.035)}
+.wallet-grid span{display:block;color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:.04em}
+.wallet-grid b{display:block;margin-top:7px;color:var(--cyan);font-size:24px;font-weight:650}
+.wallet-main b{font-size:34px;color:var(--green)}
+.wallet-grid em{display:block;margin-top:6px;color:var(--muted);font-style:normal;font-size:12px}
+.wallet-flow{display:flex;align-items:center;gap:10px;margin-top:14px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.wallet-flow i{flex:1;height:2px;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--purple));opacity:.72}
+.wallet-settings-card input{
+  width:100%;height:40px;margin-top:14px;padding:0 12px;border-radius:10px;border:1px solid var(--line);
+  background:rgba(255,255,255,.05);color:#fff
 }
-.health-card h3,.focus-card h3{
-  margin:0;
-  text-transform:uppercase;
-  font-size:13px;
-  letter-spacing:.05em;
+.wallet-settings-card button{
+  margin-top:10px;margin-right:8px;height:34px;padding:0 12px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.055);color:#fff
 }
-#healthGrade,#focusTopType{
-  color:var(--cyan);
-  font-weight:800;
-  font-size:12px;
-  border:1px solid rgba(0,245,255,.18);
-  background:rgba(0,245,255,.07);
-  padding:5px 9px;
-  border-radius:999px;
-}
-.health-score-wrap{
-  display:grid;
-  grid-template-columns:128px 1fr;
-  gap:18px;
-  align-items:center;
-  margin-top:18px;
-}
-.health-ring{
-  width:116px;
-  height:116px;
-  border-radius:50%;
-  display:grid;
-  place-items:center;
-  position:relative;
-  background:conic-gradient(var(--cyan) var(--score,0%),rgba(255,255,255,.10) 0);
-  box-shadow:0 0 32px rgba(0,245,255,.10);
-}
-.health-ring:after{
-  content:"";
-  position:absolute;
-  inset:12px;
-  border-radius:50%;
-  background:#08101e;
-}
-.health-ring strong{
-  position:relative;
-  z-index:1;
-  font-size:34px;
-  font-weight:700;
-}
-.health-breakdown{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-.health-breakdown div,.focus-grid div{
-  border:1px solid rgba(255,255,255,.075);
-  border-radius:13px;
-  padding:11px;
-  background:rgba(255,255,255,.035);
-}
-.health-breakdown span,.focus-grid span{
-  display:block;
-  color:var(--muted);
-  text-transform:uppercase;
-  font-size:10px;
-  letter-spacing:.04em;
-}
-.health-breakdown b,.focus-grid b{
-  display:block;
-  margin-top:5px;
-  color:#fff;
-  font-size:20px;
-  font-weight:650;
-}
-#healthAdvice,#focusAdvice{
-  display:block;
-  margin-top:12px;
-  color:var(--muted);
-  font-style:normal;
-  font-size:12px;
-  line-height:1.35;
-}
-.focus-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-top:18px;
-}
-.focus-tags{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:12px;
-}
-.focus-tags button{
-  height:30px;
-  padding:0 12px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.05);
-  color:#fff;
-  font-size:12px;
-  cursor:pointer;
-}
-.focus-tags button:hover{
-  color:var(--cyan);
-  border-color:rgba(0,245,255,.35);
-  background:rgba(0,245,255,.08);
-}
-.player-controls button,
-#playBtn,#pauseBtn,#stopBtn{
-  pointer-events:auto!important;
-  cursor:pointer!important;
-}
-.player-controls .player-btn{
-  width:42px!important;
-  height:42px!important;
-  border-radius:50%!important;
-  border:1px solid var(--line)!important;
-  background:rgba(255,255,255,.04)!important;
-  color:#fff!important;
-}
-#sold .row-actions{
-  justify-content:center!important;
-  gap:18px!important;
-}
-#sold .row-actions button{
-  pointer-events:auto!important;
-  cursor:pointer!important;
-}
-#sold .row-actions .icon-action{
-  width:auto!important;
-  min-width:0!important;
-  height:auto!important;
-  padding:0!important;
-  border:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-  border-radius:0!important;
-  font-size:18px!important;
-  color:rgba(248,250,252,.86)!important;
-}
-#sold .row-actions .delete-btn{
-  color:rgba(255,107,107,.92)!important;
-}
-@media(max-width:950px){
-  .resellr-power-grid{grid-template-columns:1fr}
-}
-@media(max-width:650px){
-  .health-score-wrap{grid-template-columns:1fr}
-  .focus-grid,.health-breakdown{grid-template-columns:1fr}
-}
-
-
-/* ===== v236 requested cleanup: remove Health/Focus cards + restore spend mode button ===== */
-.resellr-power-grid{display:none!important}
-.spend-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.spend-head-row span{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:rgba(226,232,240,.72);font-weight:800}
-.spend-mode-btn{border:1px solid rgba(0,245,255,.28)!important;background:rgba(0,245,255,.08)!important;color:rgba(226,232,240,.92)!important;border-radius:999px!important;padding:7px 10px!important;font-size:11px!important;font-weight:900!important;line-height:1!important;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
-.spend-mode-btn:hover{border-color:rgba(0,245,255,.55)!important;background:rgba(0,245,255,.14)!important}
-
-/* ===== v239 compact platform/category sold snapshot ===== */
-.platform-snapshot-card{margin-top:12px;padding:12px 14px!important}
-.platform-snapshot-card .card-head{margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.platform-snapshot-card h3{font-size:13px!important;margin:0!important}
-.platform-snapshot-card .inline-tools select{min-height:28px!important;height:28px!important;padding:4px 24px 4px 9px!important;font-size:11px!important;border-radius:999px!important}
-.platform-snapshot-card .table-wrap{max-height:165px;overflow:auto;border-radius:12px}
-.platform-snapshot-table{min-width:0!important;width:100%;font-size:12px;border-spacing:0!important}
-.platform-snapshot-table th{font-size:10px!important;padding:6px 8px!important;letter-spacing:.06em;white-space:nowrap}
-.platform-snapshot-table td{padding:6px 8px!important;line-height:1.15;vertical-align:middle}
-.platform-snapshot-table th:nth-child(2),
-.platform-snapshot-table td:nth-child(2){text-align:center;width:54px}
-.platform-snapshot-table th:nth-child(3),
-.platform-snapshot-table td:nth-child(3){text-align:right;width:102px;white-space:nowrap}
-.snapshot-main{font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
-.snapshot-sub{display:block;font-size:10px;color:rgba(226,232,240,.55);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
-.platform-snapshot-total td{font-weight:800;color:var(--text);background:rgba(255,255,255,.035)}
-
-.platform-snapshot-card{
-max-width:520px;
-width:100%;
-margin:16px 0 24px auto;
-}
-.platform-snapshot-table th:first-child,.platform-snapshot-table td:first-child{width:50%}
-
-.compact-platform-card{
-grid-column:5 / span 2;
-margin-top:8px;
-width:100%;
-}
-.compact-platform-card .table-wrap{max-height:180px}
-.platform-snapshot-table td small{display:none!important;}
-
-.compact-platform-card{margin-top:-210px !important;align-self:start;transform:translateX(-80px);} .snapshot-sub{display:none!important;}
+.wallet-settings-card button:hover{color:var(--cyan)}
+@media(max-width:950px){.wallet-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.wallet-grid{grid-template-columns:1fr}.wallet-flow{display:none}}

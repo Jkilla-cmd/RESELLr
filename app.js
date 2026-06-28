@@ -2657,401 +2657,95 @@ render=function(){
 setTimeout(()=>{forceSideIconsV222();renderSoldRows();},400);
 
 
-/* ===== v235: RESELLr Health Score + Comic/Card Focus + player + sold actions ===== */
-function clampV235(v,min,max){return Math.max(min,Math.min(max,v));}
-
-function categoryOfV235(r){
-  const s=String(r?.category||r?.type||r?.notes||r?.title||"").toLowerCase();
-  if(s.includes("card")||s.includes("gpk")||s.includes("garbage pail")||s.includes("pokemon")||s.includes("trading"))return "card";
-  if(s.includes("comic")||s.includes("#")||s.includes("variant")||s.includes("slab")||s.includes("signed"))return "comic";
-  return "other";
+/* ===== v236: Reinvestment Wallet tracking ===== */
+function walletRead(){try{return JSON.parse(localStorage.getItem("resellr_wallet")||"{}")||{}}catch(e){return{}}}
+function walletWrite(w){localStorage.setItem("resellr_wallet",JSON.stringify(w||{}))}
+function walletLedger(){try{return JSON.parse(localStorage.getItem("resellr_wallet_ledger")||"[]")||[]}catch(e){return[]}}
+function walletWriteLedger(rows){localStorage.setItem("resellr_wallet_ledger",JSON.stringify(rows||[]))}
+function walletMode(){
+  const key=localStorage.getItem("resellr_reinvest_mode")||"balanced";
+  const modes={conservative:{label:"Conservative 40/60",inventoryPct:40,asidePct:60},balanced:{label:"Balanced 50/50",inventoryPct:50,asidePct:50},growth:{label:"Growth 70/30",inventoryPct:70,asidePct:30}};
+  return modes[key]||modes.balanced;
 }
-
-function ageDaysV235(r){
-  const d=dateOf(r);
-  if(!d)return 0;
-  return Math.max(0,(Date.now()-d.getTime())/(1000*60*60*24));
+function walletAddEntry(type,amount,label,item){
+  const rows=walletLedger();
+  const entry={id:"w_"+Date.now()+"_"+Math.random().toString(16).slice(2),type,amount:Number(amount)||0,label:label||"",itemTitle:item?title(item):"",date:new Date().toISOString()};
+  rows.unshift(entry); walletWriteLedger(rows.slice(0,500));
+  const w=walletRead(); w.balance=(Number(w.balance)||0)+(Number(amount)||0); w.updatedAt=new Date().toISOString(); walletWrite(w);
 }
-
-function renderHealthScoreV235(){
-  const a=active(), s=sold();
-  const total=a.length+s.length;
-  const sellThrough=total?Math.round((s.length/total)*100):0;
-
-  const soldIncome=s.reduce((x,r)=>x+price(r),0);
-  const soldProfit=s.reduce((x,r)=>x+profit(r),0);
-  const marginPct=soldIncome?Math.round((soldProfit/soldIncome)*100):0;
-
-  const avgAge=a.length?a.reduce((x,r)=>x+ageDaysV235(r),0)/a.length:0;
-  const agedPenalty=clampV235(Math.round(avgAge/365*100),0,100);
-  const ageScore=clampV235(100-agedPenalty,0,100);
-
-  const platforms=[...new Set(s.map(r=>platform(r).toLowerCase()).filter(Boolean))].length;
-  const platformScore=clampV235(platforms*34,0,100);
-
-  const sellScore=clampV235(Math.round(sellThrough*3.5),0,100);
-  const marginScore=clampV235(Math.round(marginPct*3),0,100);
-
-  const score=Math.round((sellScore*.30)+(marginScore*.30)+(ageScore*.25)+(platformScore*.15));
-  const grade=score>=85?"Excellent":score>=70?"Strong":score>=55?"Needs Work":"Weak";
-
-  if($("#healthScore")) $("#healthScore").textContent=score;
-  if($("#healthRing")) $("#healthRing").style.setProperty("--score",score+"%");
-  if($("#healthGrade")) $("#healthGrade").textContent=grade;
-  if($("#healthSellThrough")) $("#healthSellThrough").textContent=sellScore;
-  if($("#healthMargin")) $("#healthMargin").textContent=marginScore;
-  if($("#healthAge")) $("#healthAge").textContent=ageScore;
-  if($("#healthPlatform")) $("#healthPlatform").textContent=platformScore;
-
-  let advice="Healthy inventory balance.";
-  if(score<55) advice="Improve score by moving old inventory, raising margins, or adding more platform sales.";
-  else if(ageScore<55) advice="Aged inventory is pulling the score down. Review older listings.";
-  else if(marginScore<55) advice="Margins look low. Check fees, shipping, and pricing.";
-  else if(sellScore<55) advice="Sell-through could improve. Consider comps, offers, or relisting stale items.";
-  if($("#healthAdvice")) $("#healthAdvice").textContent=advice;
+function walletInitialize(balance){
+  walletWrite({balance:Number(balance)||0,initializedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+  walletWriteLedger([{id:"w_init_"+Date.now(),type:"initial",amount:Number(balance)||0,label:"Starting balance",date:new Date().toISOString()}]);
+  renderWallet();
 }
-
-function renderComicCardFocusV235(){
-  const rows=[...active(),...sold(),...holds()];
-  const comics=rows.filter(r=>categoryOfV235(r)==="comic").length;
-  const cards=rows.filter(r=>categoryOfV235(r)==="card").length;
-  const other=rows.filter(r=>categoryOfV235(r)==="other").length;
-  const top=Math.max(comics,cards,other);
-  const topName=top===comics?"Comics":top===cards?"Cards":"Other";
-
-  if($("#focusComics")) $("#focusComics").textContent=comics;
-  if($("#focusCards")) $("#focusCards").textContent=cards;
-  if($("#focusOther")) $("#focusOther").textContent=other;
-  if($("#focusTopType")) $("#focusTopType").textContent=top?topName:"—";
+function walletDepositFromSale(item){
+  const mode=walletMode();
+  const costProfit=cost(item)+profit(item);
+  const deposit=Math.max(0,costProfit*(mode.inventoryPct/100));
+  if(deposit>0) walletAddEntry("deposit",deposit,`Sale deposit ${mode.inventoryPct}%`,item);
 }
-
-function filterInventoryByFocusV235(type){
-  showPage("inventory");
-  setTimeout(()=>{
-    const input=$("#inventorySearch");
-    if(!input)return;
-    input.value=type==="comic"?"comic":type==="card"?"card":"";
-    renderInventoryRows();
-  },80);
+function walletSpendForInventory(item){
+  const c=cost(item);
+  if(c>0) walletAddEntry("spend",-c,"Inventory purchase",item);
 }
-
+function renderWallet(){
+  const w=walletRead(), ledger=walletLedger(), bal=Number(w.balance)||0, now=new Date();
+  const today=now.toDateString();
+  const todaysDeposit=ledger.filter(x=>x.type==="deposit"&&new Date(x.date).toDateString()===today).reduce((a,x)=>a+Number(x.amount||0),0);
+  const monthSpent=Math.abs(ledger.filter(x=>x.type==="spend"&&new Date(x.date).getFullYear()===now.getFullYear()&&new Date(x.date).getMonth()===now.getMonth()).reduce((a,x)=>a+Number(x.amount||0),0));
+  const buyingPower=Math.max(0,bal*.35), mode=walletMode();
+  if($("#walletBalance")) $("#walletBalance").textContent=money(bal,0);
+  if($("#walletModeLabel")) $("#walletModeLabel").textContent=mode.label;
+  if($("#walletTodayDeposit")) $("#walletTodayDeposit").textContent=money(todaysDeposit,0);
+  if($("#walletMonthSpent")) $("#walletMonthSpent").textContent=money(monthSpent,0);
+  if($("#walletBuyingPower")) $("#walletBuyingPower").textContent=money(buyingPower,0);
+}
 document.addEventListener("click",function(e){
-  if(e.target&&e.target.id==="filterComicsBtn"){e.preventDefault();filterInventoryByFocusV235("comic");}
-  if(e.target&&e.target.id==="filterCardsBtn"){e.preventDefault();filterInventoryByFocusV235("card");}
-  if(e.target&&e.target.id==="filterOtherBtn"){e.preventDefault();filterInventoryByFocusV235("other");}
+  if(e.target&&e.target.id==="walletSetupBtn"){e.preventDefault();showPage("settings");setTimeout(()=>$("#walletInitialBalance")?.focus(),100)}
+  if(e.target&&e.target.id==="walletInitializeBtn"){e.preventDefault();walletInitialize(Number($("#walletInitialBalance")?.value||0));alert("Reinvestment Wallet initialized.")}
+  if(e.target&&e.target.id==="walletResetBtn"){e.preventDefault();if(confirm("Reset Reinvestment Wallet and ledger?")){localStorage.removeItem("resellr_wallet");localStorage.removeItem("resellr_wallet_ledger");renderWallet()}}
 },true);
 
-/* Player hard fix */
-function setupPlayerV235(){
-  const audio=$("#audio");
-  const play=$("#playBtn");
-  const volume=$("#volume");
-  if(!audio||!play||play.dataset.v235)return;
-  play.dataset.v235="1";
-  play.addEventListener("click",function(e){
-    e.preventDefault();
-    if(audio.paused){
-      if(volume) audio.volume=Number(volume.value)||.35;
-      audio.play().then(()=>{play.textContent="Ⅱ";}).catch(()=>{play.textContent="▶";});
-    }else{
-      audio.pause();
-      play.textContent="▶";
-    }
-  });
-  if(volume&&!volume.dataset.v235){
-    volume.dataset.v235="1";
-    volume.addEventListener("input",()=>audio.volume=Number(volume.value)||.35);
-  }
-}
-
-/* Sold action hard fix */
-window.rsSoldEditSaleV235=function(index){
-  const rows=sold(), item=rows[index];
-  if(!item)return;
-  const newPrice=prompt(`Edit sold price for "${title(item)}"`, String(price(item)||""));
-  if(newPrice===null)return;
-  item.price=n(newPrice);
-  item.salePrice=n(newPrice);
-  item.soldPrice=n(newPrice);
-  item.profit=item.price-cost(item)-fees(item)-ship(item);
-  setSold(rows);
-  render();
-};
-
-window.rsSoldMoveBackV235=function(index){
-  const rows=sold(), item=rows[index];
-  if(!item)return;
-  const a=active();
-  a.unshift({...item,status:"active",addedAt:new Date().toISOString()});
-  rows.splice(index,1);
-  setSold(rows);
-  setActive(a);
-  render();
-  showPage("inventory");
-};
-
-window.rsSoldDeleteV235=function(index){
-  const rows=sold(), item=rows[index];
-  if(!item)return;
-  if(confirm(`Delete "${title(item)}" from Sold Items?`)){
-    rows.splice(index,1);
-    setSold(rows);
-    render();
-  }
-};
-
-renderSoldRows=function(){
-  const base=sold();
-  const rows=getSoldFilteredRows().map(r=>({r,i:base.indexOf(r)}));
-  updateSoldKpisFromRows(rows.map(x=>x.r));
-  $("#soldRows").innerHTML=rows.map(({r,i})=>{
-    const p=price(r),pr=profit(r),m=p?Math.round(pr/p*100):0;
-    return `<tr>
-      <td><div class="item-cell"><div class="thumb"></div><div>${esc(title(r))}<small>${esc(platform(r))}</small></div></div></td>
-      <td>${fmt(dateOf(r))}</td>
-      <td>${money(p)}</td>
-      <td>${money(cost(r))}</td>
-      <td class="${pr>=0?"profit":"loss"}">${money(pr)}</td>
-      <td class="margin">${m}%</td>
-      <td><div class="row-actions">
-        <button type="button" onclick="rsSoldEditSaleV235(${i})" class="icon-action" title="Edit sale">$</button>
-        <button type="button" onclick="rsSoldMoveBackV235(${i})" class="icon-action" title="Move back to inventory">▣</button>
-        <button type="button" onclick="rsSoldDeleteV235(${i})" class="icon-action delete-btn" title="Delete sold item">×</button>
-      </div></td>
-    </tr>`;
-  }).join("");
-};
-
-document.addEventListener("click",function(e){
-  const btn=e.target.closest&&e.target.closest("#soldRows .row-actions button");
-  if(!btn)return;
-  e.stopPropagation();
-},false);
-
-const oldRenderV235=render;
-render=function(){
-  oldRenderV235();
-  renderHealthScoreV235();
-  renderComicCardFocusV235();
-  setupPlayerV235();
-  renderSoldRows();
-};
-
-setTimeout(()=>{renderHealthScoreV235();renderComicCardFocusV235();setupPlayerV235();renderSoldRows();},500);
-
-
-/* ===== v236: user requested current-layout only changes =====
-   - Health Score and Comic/Card Focus are removed in index.html.
-   - Recommended Next Month mode button restored.
-   - Bookmarklet/Add to RESELLr import can add as guest/local without login. */
-(function(){
-  const hasImportItemParam=()=>{
-    try{return new URLSearchParams(location.search).has("importItem")}catch(e){return false}
-  };
-
-  // Allow Add to RESELLr bookmarklet imports to open and save locally without the lock screen blocking it.
-  if(hasImportItemParam()){
-    sessionStorage.setItem("resellr_unlocked","1");
-    localStorage.setItem("resellr_guest_mode","1");
-  }
-
-  const oldShowLoginV236 = typeof showLogin==="function" ? showLogin : null;
-  if(oldShowLoginV236){
-    showLogin=function(){
-      if(hasImportItemParam()){
-        sessionStorage.setItem("resellr_unlocked","1");
-        document.body.classList.remove("locked");
-        document.getElementById("loginScreen")?.classList.remove("show");
-        return;
-      }
-      return oldShowLoginV236.apply(this,arguments);
-    };
-  }
-
-  const spendModes=[
-    {key:"balanced",label:"Balanced",inventoryPct:50,asidePct:20},
-    {key:"growth",label:"Growth",inventoryPct:65,asidePct:15},
-    {key:"safe",label:"Safe",inventoryPct:40,asidePct:25}
-  ];
-  function getSpendMode(){
-    const key=localStorage.getItem("resellr_spend_mode")||"balanced";
-    return spendModes.find(m=>m.key===key)||spendModes[0];
-  }
-  function nextSpendMode(){
-    const cur=getSpendMode();
-    const idx=spendModes.findIndex(m=>m.key===cur.key);
-    const next=spendModes[(idx+1)%spendModes.length];
-    localStorage.setItem("resellr_spend_mode",next.key);
-    updateSpendRecommendation();
-  }
-
-  updateSpendRecommendation=function(){
-    const now=new Date();
-    const mode=getSpendMode();
-    const monthRows=sold().filter(r=>{
-      const d=dateOf(r);
-      return d && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
-    });
-    const monthSales=monthRows.reduce((x,r)=>x+price(r),0);
-    const monthProfit=monthRows.reduce((x,r)=>x+profit(r),0);
-    const inventorySpend=monthSales*(mode.inventoryPct/100);
-    const setAside=Math.max(0,monthProfit*(mode.asidePct/100));
-    const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
-    const monthPct=Math.min(100,Math.round(now.getDate()/daysInMonth*100));
-
-    if($("#spendRecommend")) $("#spendRecommend").textContent=money(inventorySpend,0);
-    if($("#spendRecommendText")) $("#spendRecommendText").textContent=`${mode.label} mode · keep ${money(setAside,0)} aside`;
-    if($("#monthProgressPct")) $("#monthProgressPct").textContent=monthPct+"%";
-    if($("#monthProgressBar")) $("#monthProgressBar").style.width=monthPct+"%";
-    if($("#inventorySplitPct")) $("#inventorySplitPct").textContent=mode.inventoryPct+"%";
-    if($("#asideSplitPct")) $("#asideSplitPct").textContent=mode.asidePct+"%";
-    if($("#inventorySplitBar")) $("#inventorySplitBar").style.width=mode.inventoryPct+"%";
-    if($("#asideSplitBar")) $("#asideSplitBar").style.width=mode.asidePct+"%";
-    if($("#spendModeBtn")) $("#spendModeBtn").textContent=`${mode.label} Mode`;
-  };
-
-  document.addEventListener("click",function(e){
-    const btn=e.target.closest&&e.target.closest("#spendModeBtn");
-    if(!btn)return;
-    e.preventDefault();
-    nextSpendMode();
-  },true);
-
-  const oldImportItemObjectV236 = typeof importItemObject==="function" ? importItemObject : null;
-  if(oldImportItemObjectV236){
-    importItemObject=function(item,showAlert=true){
-      localStorage.setItem("resellr_guest_mode","1");
-      const ok=oldImportItemObjectV236.call(this,item,showAlert);
-      if(ok){
-        // Data is already saved through setActive() into localStorage. This flag is for future account sync/merge logic.
-        localStorage.setItem("resellr_guest_items_pending_sync","1");
-      }
-      return ok;
-    };
-  }
-
-  const oldRenderV236 = render;
-  render=function(){
-    oldRenderV236();
-    updateSpendRecommendation();
-  };
-  setTimeout(updateSpendRecommendation,250);
-})();
-
-/* ===== v237: dashboard yearly sales count + tax CSV selected year =====
-   - Dashboard Sales This Year now counts only sold records from the current calendar year.
-   - Tax Reports CSV export now exports the currently selected tax year/month instead of all sales. */
-(function(){
-  function currentYearSoldRows(){
-    const yr=new Date().getFullYear();
-    return sold().filter(r=>{
-      const d=dateOf(r);
-      return d && d.getFullYear()===yr;
+/* Hook sold form: after sale, deposit based on selected mode */
+setTimeout(()=>{
+  const form=$("#sellEditForm")||$("#soldForm");
+  if(form&&!form.dataset.walletHooked){
+    form.dataset.walletHooked="1";
+    form.addEventListener("submit",function(){
+      setTimeout(()=>{
+        const rows=sold().slice().sort((a,b)=>(dateOf(b)||0)-(dateOf(a)||0));
+        const latest=rows[0];
+        if(latest&&!latest.walletDepositId){
+          const all=sold();
+          const idx=all.findIndex(r=>r===latest);
+          walletDepositFromSale(latest);
+          if(idx>=0){all[idx].walletDepositId="dep_"+Date.now();setSold(all)}
+          renderWallet();
+        }
+      },150);
     });
   }
+},800);
 
-  function updateSalesThisYearKpi(){
-    const el=document.getElementById("kpiSales");
-    if(el) el.textContent=currentYearSoldRows().length;
-  }
-
-  function taxExportRows(){
-    return filterByYearMonth(sold(),document.getElementById("taxYearFilter"),document.getElementById("taxMonthFilter"))
-      .sort((a,b)=>(dateOf(b)||0)-(dateOf(a)||0));
-  }
-
-  function taxExportFilename(){
-    const y=document.getElementById("taxYearFilter")?.value||"all";
-    const m=document.getElementById("taxMonthFilter")?.value||"all";
-    if(y!=="all" && m!=="all") return `tax-${y}-${String(m).padStart(2,"0")}.csv`;
-    if(y!=="all") return `tax-${y}.csv`;
-    return "tax-all-years.csv";
-  }
-
-  function wireTaxExportSelectedYear(){
-    const btn=document.getElementById("exportTax");
-    if(!btn || btn.dataset.v237SelectedYearExport==="1") return;
-    btn.dataset.v237SelectedYearExport="1";
-    btn.onclick=function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      download(taxExportFilename(),csv(taxExportRows()));
-      return false;
-    };
-  }
-
-  const oldRenderV237=render;
-  render=function(){
-    oldRenderV237();
-    updateSalesThisYearKpi();
-    wireTaxExportSelectedYear();
-  };
-
-  document.addEventListener("DOMContentLoaded",function(){
-    updateSalesThisYearKpi();
-    wireTaxExportSelectedYear();
-  });
-  setTimeout(function(){
-    updateSalesThisYearKpi();
-    wireTaxExportSelectedYear();
-  },250);
-})();
-
-/* fixed snapshot */
-(function(){
-  function getSnapshotYears(){
-    const yrs=[...new Set(sold().map(r=>dateOf(r)?.getFullYear()).filter(Boolean))].sort((a,b)=>b-a);
-    return yrs.length?yrs:[new Date().getFullYear()];
-  }
-
-  function setupPlatformSnapshotYearFilter(){
-    const sel=document.getElementById("platformSnapshotYearFilter");
-    if(!sel) return;
-    const cur=sel.value || String(new Date().getFullYear());
-    const yrs=getSnapshotYears();
-    sel.innerHTML=yrs.map(y=>`<option value="${y}">${y}</option>`).join("");
-    if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
-    else if([...sel.options].some(o=>o.value===String(new Date().getFullYear()))) sel.value=String(new Date().getFullYear());
-  }
-
-  function snapshotRowsForYear(){
-    const sel=document.getElementById("platformSnapshotYearFilter");
-    const year=Number(sel?.value || new Date().getFullYear());
-    const groups=new Map();
-    sold().forEach(r=>{
-      const d=dateOf(r);
-      if(!d || d.getFullYear()!==year) return;
-      const plat=platform(r)||"Unknown";
-      const key=plat;
-      if(!groups.has(key)) groups.set(key,{platform:plat,count:0,costProfit:0});
-      const g=groups.get(key);
-      g.count+=1;
-      g.costProfit+=cost(r)+profit(r);
+/* Hook add/edit item form: ask to charge wallet for new inventory cost */
+setTimeout(()=>{
+  const form=$("#itemForm");
+  if(form&&!form.dataset.walletInventoryHooked){
+    form.dataset.walletInventoryHooked="1";
+    form.addEventListener("submit",function(){
+      setTimeout(()=>{
+        const newest=active()[0];
+        if(newest&&cost(newest)>0&&!newest.walletSpendId){
+          if(confirm(`Use Reinvestment Wallet for "${title(newest)}" cost ${money(cost(newest))}?`)){
+            walletSpendForInventory(newest);
+            const rows=active(); rows[0].walletSpendId="spend_"+Date.now(); setActive(rows); renderWallet();
+          }
+        }
+      },150);
     });
-    return [...groups.values()].sort((a,b)=>b.count-a.count || b.costProfit-a.costProfit || a.platform.localeCompare(b.platform));
   }
+},800);
 
-  function renderPlatformSnapshot(){
-    setupPlatformSnapshotYearFilter();
-    const body=document.getElementById("platformSnapshotRows");
-    if(!body) return;
-    const rows=snapshotRowsForYear();
-    const totalCount=rows.reduce((x,r)=>x+r.count,0);
-    const totalCostProfit=rows.reduce((x,r)=>x+r.costProfit,0);
-    body.innerHTML=rows.length ? rows.map(r=>`<tr><td><div class="snapshot-main">${esc(r.platform)}</div></td><td>${r.count}</td><td class="profit">${money(r.costProfit)}</td></tr>`).join("") +
-      `<tr class="platform-snapshot-total"><td>Total</td><td>${totalCount}</td><td>${money(totalCostProfit)}</td></tr>` :
-      `<tr><td colspan="3" class="muted">No sold items found for this year.</td></tr>`;
-  }
-
-  document.addEventListener("change",function(e){
-    if(e.target && e.target.id==="platformSnapshotYearFilter") renderPlatformSnapshot();
-  },true);
-
-  const oldRenderV238=render;
-  render=function(){
-    oldRenderV238();
-    renderPlatformSnapshot();
-  };
-
-  setTimeout(renderPlatformSnapshot,300);
-})();
+const oldRenderV236=render;
+render=function(){oldRenderV236();renderWallet()};
+setTimeout(renderWallet,500);
