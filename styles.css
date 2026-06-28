@@ -1422,3 +1422,149 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
   background:rgba(255,255,255,.055)!important;
   color:#fff!important;
 }
+
+
+/* ===== v244 sold snapshot tighter to wallet + sold actions by id ===== */
+#dashboardSoldSnapshot.sold-snapshot-card{
+  left:39%!important;
+  right:22px!important;
+  top:104px!important;
+  padding:16px 14px!important;
+  min-height:168px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid{
+  gap:11px!important;
+}
+#dashboardSoldSnapshot .platform-mini{
+  gap:11px!important;
+  margin-top:10px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid>div{
+  padding:11px 13px!important;
+}
+#dashboardSoldSnapshot .platform-mini>div{
+  padding:10px 12px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid b{
+  font-size:19px!important;
+}
+#dashboardSoldSnapshot .platform-mini b{
+  font-size:14px!important;
+}
+#soldEditOverlayV244{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:22px!important;
+  background:rgba(2,6,23,.82)!important;
+  backdrop-filter:blur(18px)!important;
+}
+#soldEditOverlayV244.open{
+  display:flex!important;
+}
+#soldEditOverlayV244 .modal-box{
+  width:min(720px,94vw)!important;
+  max-height:88vh!important;
+  overflow:auto!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:22px!important;
+  background:linear-gradient(180deg,rgba(10,18,34,.98),rgba(8,13,26,.94))!important;
+  box-shadow:0 30px 100px rgba(0,0,0,.58)!important;
+  padding:22px!important;
+}
+#soldEditOverlayV244 input,
+#soldEditOverlayV244 select,
+#soldEditOverlayV244 textarea{
+  border:1px solid rgba(255,255,255,.14)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:#fff!important;
+}
+#soldRows .row-actions button{
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+
+
+/* ===== v245 close snapshot-wallet gap + visible sold edit fallback ===== */
+#dashboardSoldSnapshot.sold-snapshot-card{
+  left:39%!important;
+  right:18px!important;
+  top:102px!important;
+  padding:16px 14px!important;
+  min-height:215px!important;
+  z-index:3!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid{
+  gap:12px!important;
+}
+#dashboardSoldSnapshot .platform-mini{
+  gap:12px!important;
+  margin-top:12px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid>div{
+  padding:13px 14px!important;
+}
+#dashboardSoldSnapshot .platform-mini>div{
+  padding:12px 14px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid b{
+  font-size:20px!important;
+}
+#dashboardSoldSnapshot .platform-mini b{
+  font-size:15px!important;
+}
+#soldEditOverlayV245{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:22px!important;
+  background:rgba(2,6,23,.84)!important;
+  backdrop-filter:blur(18px)!important;
+}
+#soldEditOverlayV245.open{
+  display:flex!important;
+}
+#soldEditOverlayV245 .modal-box{
+  width:min(720px,94vw)!important;
+  max-height:88vh!important;
+  overflow:auto!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:22px!important;
+  background:linear-gradient(180deg,rgba(10,18,34,.98),rgba(8,13,26,.94))!important;
+  box-shadow:0 30px 100px rgba(0,0,0,.60)!important;
+  padding:22px!important;
+}
+#soldEditOverlayV245 input,
+#soldEditOverlayV245 select,
+#soldEditOverlayV245 textarea{
+  border:1px solid rgba(255,255,255,.14)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:#fff!important;
+}
+#soldRows .row-actions .edit-sold-v245{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:34px!important;
+  height:24px!important;
+  padding:0 7px!important;
+  border-radius:999px!important;
+  border:1px solid rgba(0,245,255,.28)!important;
+  background:rgba(0,245,255,.08)!important;
+  color:var(--cyan)!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+#soldRows button,
+#sold .row-actions button{
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}

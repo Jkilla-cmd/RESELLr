@@ -3785,3 +3785,438 @@ render = function(){
 };
 
 setTimeout(()=>{ensureSoldEditOverlayV243();placeSnapshotV243();},500);
+
+
+/* ===== v244: sold page actions rebuilt by stable item id ===== */
+let editSoldIdV244 = null;
+
+function ensureSoldIdsV244(){
+  const rows = sold();
+  let changed = false;
+  rows.forEach((r, i) => {
+    if(!r.id && !r._id && !r.soldId){
+      r.soldId = "sold_" + Date.now() + "_" + i + "_" + Math.random().toString(16).slice(2);
+      changed = true;
+    }
+  });
+  if(changed) setSold(rows);
+  return rows;
+}
+
+function soldKeyV244(item){
+  return String(item.soldId || item.id || item._id || "");
+}
+
+function soldIndexByIdV244(id){
+  const rows = sold();
+  return rows.findIndex(r => soldKeyV244(r) === String(id));
+}
+
+function ensureSoldEditOverlayV244(){
+  let modal = document.getElementById("soldEditOverlayV244");
+  if(modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "soldEditOverlayV244";
+  modal.innerHTML = `<form class="modal-box" id="soldEditFormV244">
+    <h2>Edit Sold Item</h2>
+    <input name="title" placeholder="Item title" required>
+    <div class="form-grid">
+      <select name="platform">
+        <option value="Mercari">Mercari</option>
+        <option value="eBay">eBay</option>
+        <option value="Private Sale">Private Sale</option>
+      </select>
+      <select name="category">
+        <option value="Comic">Comic</option>
+        <option value="Card">Card</option>
+        <option value="Other">Other</option>
+      </select>
+      <input name="soldPrice" type="number" step="any" placeholder="Sold price" required>
+      <input name="cost" type="number" step="any" placeholder="Cost">
+      <input name="fees" type="number" step="any" placeholder="Fees">
+      <input name="shipping" type="number" step="any" placeholder="Shipping">
+      <input name="soldDate" type="date">
+    </div>
+    <textarea name="notes" placeholder="Notes"></textarea>
+    <div class="modal-actions">
+      <button type="button" id="cancelSoldEditV244">Cancel</button>
+      <button class="primary">Save Sold Item</button>
+    </div>
+  </form>`;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function openSoldEditV244(id){
+  const rows = sold();
+  const idx = soldIndexByIdV244(id);
+  const item = rows[idx];
+  if(!item) return;
+
+  editSoldIdV244 = id;
+  const modal = ensureSoldEditOverlayV244();
+  const form = document.getElementById("soldEditFormV244");
+
+  form.elements.title.value = title(item);
+  const p = platform(item).toLowerCase();
+  form.elements.platform.value = p.includes("ebay") ? "eBay" : p.includes("private") ? "Private Sale" : "Mercari";
+
+  const cat = String(item.category || item.type || "").toLowerCase();
+  form.elements.category.value = cat.includes("card") ? "Card" : cat.includes("other") ? "Other" : "Comic";
+
+  form.elements.soldPrice.value = price(item) || "";
+  form.elements.cost.value = cost(item) || "";
+  form.elements.fees.value = fees(item) || "";
+  form.elements.shipping.value = ship(item) || "";
+
+  const d = dateOf(item);
+  form.elements.soldDate.value = d && !isNaN(d) ? d.toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
+  form.elements.notes.value = item.notes || item.description || "";
+  modal.classList.add("open");
+}
+
+function closeSoldEditV244(){
+  document.getElementById("soldEditOverlayV244")?.classList.remove("open");
+}
+
+function moveSoldBackV244(id){
+  const rows = sold();
+  const idx = soldIndexByIdV244(id);
+  const item = rows[idx];
+  if(!item) return;
+  const a = active();
+  a.unshift({...item, status:"active", addedAt:new Date().toISOString()});
+  rows.splice(idx,1);
+  setSold(rows);
+  setActive(a);
+  render();
+  showPage("inventory");
+}
+
+function deleteSoldV244(id){
+  const rows = sold();
+  const idx = soldIndexByIdV244(id);
+  const item = rows[idx];
+  if(!item) return;
+  if(confirm(`Delete "${title(item)}" from Sold Items?`)){
+    rows.splice(idx,1);
+    setSold(rows);
+    render();
+  }
+}
+
+document.addEventListener("click", function(e){
+  const actionBtn = e.target.closest && e.target.closest("[data-sold-action-v244]");
+  if(actionBtn){
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    const id = actionBtn.dataset.id;
+    const action = actionBtn.dataset.soldActionV244;
+    if(action === "edit") openSoldEditV244(id);
+    if(action === "move") moveSoldBackV244(id);
+    if(action === "delete") deleteSoldV244(id);
+    return;
+  }
+
+  if(e.target && e.target.id === "cancelSoldEditV244"){
+    e.preventDefault();
+    closeSoldEditV244();
+  }
+}, true);
+
+document.addEventListener("submit", function(e){
+  if(!e.target || e.target.id !== "soldEditFormV244") return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const rows = sold();
+  const idx = soldIndexByIdV244(editSoldIdV244);
+  const item = rows[idx];
+  if(!item) return;
+
+  const fd = new FormData(e.target);
+  const soldPrice = n(fd.get("soldPrice"));
+  const updated = {
+    ...item,
+    title: String(fd.get("title") || "").trim(),
+    platform: String(fd.get("platform") || "Mercari"),
+    category: String(fd.get("category") || "Comic"),
+    price: soldPrice,
+    salePrice: soldPrice,
+    soldPrice: soldPrice,
+    cost: n(fd.get("cost")),
+    fees: n(fd.get("fees")),
+    shipping: n(fd.get("shipping")),
+    soldDate: String(fd.get("soldDate") || ""),
+    date: String(fd.get("soldDate") || item.date || ""),
+    notes: String(fd.get("notes") || ""),
+    status: "sold"
+  };
+  updated.profit = updated.price - updated.cost - updated.fees - updated.shipping;
+  rows[idx] = updated;
+  setSold(rows);
+  editSoldIdV244 = null;
+  closeSoldEditV244();
+  render();
+}, true);
+
+function placeSnapshotV244(){
+  const dash = document.getElementById("dashboard");
+  const snap = document.getElementById("dashboardSoldSnapshot");
+  if(dash && snap) dash.appendChild(snap);
+}
+
+renderSoldRows = function(){
+  const base = ensureSoldIdsV244();
+  const rows = getSoldFilteredRows().map(r => ({r, i: base.indexOf(r)}));
+  updateSoldKpisFromRows(rows.map(x => x.r));
+  const tbody = document.getElementById("soldRows");
+  if(!tbody) return;
+  tbody.innerHTML = rows.map(({r})=>{
+    const id = soldKeyV244(r);
+    const p = price(r), pr = profit(r), m = p ? Math.round(pr / p * 100) : 0;
+    return `<tr>
+      <td><div class="item-cell"><div class="thumb"></div><div>${esc(title(r))}<small>${esc(platform(r))}</small></div></div></td>
+      <td>${fmt(dateOf(r))}</td>
+      <td>${money(p)}</td>
+      <td>${money(cost(r))}</td>
+      <td class="${pr>=0 ? "profit" : "loss"}">${money(pr)}</td>
+      <td class="margin">${m}%</td>
+      <td><div class="row-actions">
+        <button type="button" data-sold-action-v244="edit" data-id="${id}" class="icon-action" title="Edit sold item">$</button>
+        <button type="button" data-sold-action-v244="move" data-id="${id}" class="icon-action" title="Move back to inventory">▣</button>
+        <button type="button" data-sold-action-v244="delete" data-id="${id}" class="icon-action delete-btn" title="Delete sold item">×</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+};
+
+const oldRenderV244 = render;
+render = function(){
+  oldRenderV244();
+  ensureSoldEditOverlayV244();
+  placeSnapshotV244();
+  renderSoldRows();
+};
+
+setTimeout(()=>{ensureSoldEditOverlayV244();placeSnapshotV244();renderSoldRows();},500);
+
+
+/* ===== v245: service-worker-busted sold edit + text Edit button fallback ===== */
+(function(){
+  let editSoldIdV245 = null;
+
+  function ensureSoldIdsV245(){
+    const rows = sold();
+    let changed = false;
+    rows.forEach((r, i) => {
+      if(!r.id && !r._id && !r.soldId){
+        r.soldId = "sold_" + Date.now() + "_" + i + "_" + Math.random().toString(16).slice(2);
+        changed = true;
+      }
+    });
+    if(changed) setSold(rows);
+    return rows;
+  }
+
+  function soldKeyV245(item){
+    return String(item.soldId || item.id || item._id || "");
+  }
+
+  function soldIndexByIdV245(id){
+    const rows = sold();
+    return rows.findIndex(r => soldKeyV245(r) === String(id));
+  }
+
+  function ensureSoldEditOverlayV245(){
+    let modal = document.getElementById("soldEditOverlayV245");
+    if(modal) return modal;
+    modal = document.createElement("div");
+    modal.id = "soldEditOverlayV245";
+    modal.innerHTML = `<form class="modal-box" id="soldEditFormV245">
+      <h2>Edit Sold Item</h2>
+      <input name="title" placeholder="Item title" required>
+      <div class="form-grid">
+        <select name="platform">
+          <option value="Mercari">Mercari</option>
+          <option value="eBay">eBay</option>
+          <option value="Private Sale">Private Sale</option>
+        </select>
+        <select name="category">
+          <option value="Comic">Comic</option>
+          <option value="Card">Card</option>
+          <option value="Other">Other</option>
+        </select>
+        <input name="soldPrice" type="number" step="any" placeholder="Sold price" required>
+        <input name="cost" type="number" step="any" placeholder="Cost">
+        <input name="fees" type="number" step="any" placeholder="Fees">
+        <input name="shipping" type="number" step="any" placeholder="Shipping">
+        <input name="soldDate" type="date">
+      </div>
+      <textarea name="notes" placeholder="Notes"></textarea>
+      <div class="modal-actions">
+        <button type="button" id="cancelSoldEditV245">Cancel</button>
+        <button class="primary">Save Sold Item</button>
+      </div>
+    </form>`;
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  function openSoldEditV245(id){
+    const rows = sold();
+    const idx = soldIndexByIdV245(id);
+    const item = rows[idx];
+    if(!item) return;
+
+    editSoldIdV245 = id;
+    const modal = ensureSoldEditOverlayV245();
+    const form = document.getElementById("soldEditFormV245");
+
+    form.elements.title.value = title(item);
+    const p = platform(item).toLowerCase();
+    form.elements.platform.value = p.includes("ebay") ? "eBay" : p.includes("private") ? "Private Sale" : "Mercari";
+
+    const cat = String(item.category || item.type || "").toLowerCase();
+    form.elements.category.value = cat.includes("card") ? "Card" : cat.includes("other") ? "Other" : "Comic";
+
+    form.elements.soldPrice.value = price(item) || "";
+    form.elements.cost.value = cost(item) || "";
+    form.elements.fees.value = fees(item) || "";
+    form.elements.shipping.value = ship(item) || "";
+
+    const d = dateOf(item);
+    form.elements.soldDate.value = d && !isNaN(d) ? d.toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
+    form.elements.notes.value = item.notes || item.description || "";
+    modal.classList.add("open");
+  }
+
+  function closeSoldEditV245(){
+    document.getElementById("soldEditOverlayV245")?.classList.remove("open");
+  }
+
+  function moveSoldBackV245(id){
+    const rows = sold();
+    const idx = soldIndexByIdV245(id);
+    const item = rows[idx];
+    if(!item) return;
+    const a = active();
+    a.unshift({...item, status:"active", addedAt:new Date().toISOString()});
+    rows.splice(idx,1);
+    setSold(rows);
+    setActive(a);
+    render();
+    showPage("inventory");
+  }
+
+  function deleteSoldV245(id){
+    const rows = sold();
+    const idx = soldIndexByIdV245(id);
+    const item = rows[idx];
+    if(!item) return;
+    if(confirm(`Delete "${title(item)}" from Sold Items?`)){
+      rows.splice(idx,1);
+      setSold(rows);
+      render();
+    }
+  }
+
+  function placeSnapshotV245(){
+    const dash = document.getElementById("dashboard");
+    const snap = document.getElementById("dashboardSoldSnapshot");
+    if(dash && snap) dash.appendChild(snap);
+  }
+
+  window.openSoldEditV245 = openSoldEditV245;
+
+  document.addEventListener("click", function(e){
+    const btn = e.target.closest && e.target.closest("[data-sold-action-v245]");
+    if(btn){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      const id = btn.dataset.id;
+      const action = btn.dataset.soldActionV245;
+      if(action === "edit") openSoldEditV245(id);
+      if(action === "move") moveSoldBackV245(id);
+      if(action === "delete") deleteSoldV245(id);
+      return;
+    }
+    if(e.target && e.target.id === "cancelSoldEditV245"){
+      e.preventDefault();
+      closeSoldEditV245();
+    }
+  }, true);
+
+  document.addEventListener("submit", function(e){
+    if(!e.target || e.target.id !== "soldEditFormV245") return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const rows = sold();
+    const idx = soldIndexByIdV245(editSoldIdV245);
+    const item = rows[idx];
+    if(!item) return;
+
+    const fd = new FormData(e.target);
+    const soldPrice = n(fd.get("soldPrice"));
+    const updated = {
+      ...item,
+      title: String(fd.get("title") || "").trim(),
+      platform: String(fd.get("platform") || "Mercari"),
+      category: String(fd.get("category") || "Comic"),
+      price: soldPrice,
+      salePrice: soldPrice,
+      soldPrice: soldPrice,
+      cost: n(fd.get("cost")),
+      fees: n(fd.get("fees")),
+      shipping: n(fd.get("shipping")),
+      soldDate: String(fd.get("soldDate") || ""),
+      date: String(fd.get("soldDate") || item.date || ""),
+      notes: String(fd.get("notes") || ""),
+      status: "sold"
+    };
+    updated.profit = updated.price - updated.cost - updated.fees - updated.shipping;
+    rows[idx] = updated;
+    setSold(rows);
+    editSoldIdV245 = null;
+    closeSoldEditV245();
+    render();
+  }, true);
+
+  renderSoldRows = function(){
+    const base = ensureSoldIdsV245();
+    const rows = getSoldFilteredRows().map(r => ({r, i: base.indexOf(r)}));
+    updateSoldKpisFromRows(rows.map(x => x.r));
+    const tbody = document.getElementById("soldRows");
+    if(!tbody) return;
+    tbody.innerHTML = rows.map(({r})=>{
+      const id = soldKeyV245(r);
+      const p = price(r), pr = profit(r), m = p ? Math.round(pr / p * 100) : 0;
+      return `<tr>
+        <td><div class="item-cell"><div class="thumb"></div><div>${esc(title(r))}<small>${esc(platform(r))}</small></div></div></td>
+        <td>${fmt(dateOf(r))}</td>
+        <td>${money(p)}</td>
+        <td>${money(cost(r))}</td>
+        <td class="${pr>=0 ? "profit" : "loss"}">${money(pr)}</td>
+        <td class="margin">${m}%</td>
+        <td><div class="row-actions">
+          <button type="button" data-sold-action-v245="edit" data-id="${id}" class="edit-sold-v245" title="Edit sold item">Edit</button>
+          <button type="button" data-sold-action-v245="move" data-id="${id}" class="icon-action" title="Move back to inventory">▣</button>
+          <button type="button" data-sold-action-v245="delete" data-id="${id}" class="icon-action delete-btn" title="Delete sold item">×</button>
+        </div></td>
+      </tr>`;
+    }).join("");
+  };
+
+  const oldRenderV245 = render;
+  render = function(){
+    oldRenderV245();
+    ensureSoldEditOverlayV245();
+    placeSnapshotV245();
+    renderSoldRows();
+  };
+
+  setTimeout(()=>{ensureSoldEditOverlayV245();placeSnapshotV245();renderSoldRows();},500);
+})();
