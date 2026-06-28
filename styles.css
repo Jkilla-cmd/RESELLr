@@ -1366,3 +1366,59 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
     margin:18px 0!important;
   }
 }
+
+
+/* ===== v243 bigger sold snapshot + stronger sold edit click fallback ===== */
+#dashboardSoldSnapshot.sold-snapshot-card{
+  left:39%!important;
+  right:26px!important;
+  top:112px!important;
+  padding:14px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid{
+  gap:10px!important;
+}
+#dashboardSoldSnapshot .platform-mini{
+  gap:10px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid>div,
+#dashboardSoldSnapshot .platform-mini>div{
+  padding:10px 12px!important;
+}
+#dashboardSoldSnapshot .sold-snapshot-grid b{
+  font-size:18px!important;
+}
+#dashboardSoldSnapshot .platform-mini b{
+  font-size:13px!important;
+}
+#soldEditOverlayV243{
+  position:fixed!important;
+  inset:0!important;
+  z-index:2147483647!important;
+  display:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:22px!important;
+  background:rgba(2,6,23,.82)!important;
+  backdrop-filter:blur(18px)!important;
+}
+#soldEditOverlayV243.open{
+  display:flex!important;
+}
+#soldEditOverlayV243 .modal-box{
+  width:min(720px,94vw)!important;
+  max-height:88vh!important;
+  overflow:auto!important;
+  border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:22px!important;
+  background:linear-gradient(180deg,rgba(10,18,34,.98),rgba(8,13,26,.94))!important;
+  box-shadow:0 30px 100px rgba(0,0,0,.58)!important;
+  padding:22px!important;
+}
+#soldEditOverlayV243 input,
+#soldEditOverlayV243 select,
+#soldEditOverlayV243 textarea{
+  border:1px solid rgba(255,255,255,.14)!important;
+  background:rgba(255,255,255,.055)!important;
+  color:#fff!important;
+}
