@@ -325,5 +325,35 @@
 
   <audio id="audio" loop src="https://stream.zeno.fm/f3wvbbqmdg8uv"></audio>
   <script src="app.js"></script>
+
+  <div id="soldEditOverlayV242" class="modal">
+    <form class="modal-box" id="soldEditFormV242">
+      <h2>Edit Sold Item</h2>
+      <input name="title" placeholder="Item title" required>
+      <div class="form-grid">
+        <select name="platform">
+          <option value="Mercari">Mercari</option>
+          <option value="eBay">eBay</option>
+          <option value="Private Sale">Private Sale</option>
+        </select>
+        <select name="category">
+          <option value="Comic">Comic</option>
+          <option value="Card">Card</option>
+          <option value="Other">Other</option>
+        </select>
+        <input name="soldPrice" type="number" step="any" placeholder="Sold price" required>
+        <input name="cost" type="number" step="any" placeholder="Cost">
+        <input name="fees" type="number" step="any" placeholder="Fees">
+        <input name="shipping" type="number" step="any" placeholder="Shipping">
+        <input name="soldDate" type="date">
+      </div>
+      <textarea name="notes" placeholder="Notes"></textarea>
+      <div class="modal-actions">
+        <button type="button" id="cancelSoldEditV242">Cancel</button>
+        <button class="primary">Save Sold Item</button>
+      </div>
+    </form>
+  </div>
+
 </body>
 </html>

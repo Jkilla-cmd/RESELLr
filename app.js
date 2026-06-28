@@ -3461,3 +3461,157 @@ render = function(){
 };
 
 setTimeout(()=>{ensureSoldEditOverlayV241();moveSoldSnapshotStretchedV241();renderSoldRows();},500);
+
+
+/* ===== v242: sold snapshot placement + sold edit catches actual button clicks ===== */
+let editSoldIndexV242 = null;
+
+function ensureSoldEditOverlayV242(){
+  let modal = document.getElementById("soldEditOverlayV242");
+  if(modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "soldEditOverlayV242";
+  modal.className = "modal";
+  modal.innerHTML = `<form class="modal-box" id="soldEditFormV242">
+    <h2>Edit Sold Item</h2>
+    <input name="title" placeholder="Item title" required>
+    <div class="form-grid">
+      <select name="platform"><option value="Mercari">Mercari</option><option value="eBay">eBay</option><option value="Private Sale">Private Sale</option></select>
+      <select name="category"><option value="Comic">Comic</option><option value="Card">Card</option><option value="Other">Other</option></select>
+      <input name="soldPrice" type="number" step="any" placeholder="Sold price" required>
+      <input name="cost" type="number" step="any" placeholder="Cost">
+      <input name="fees" type="number" step="any" placeholder="Fees">
+      <input name="shipping" type="number" step="any" placeholder="Shipping">
+      <input name="soldDate" type="date">
+    </div>
+    <textarea name="notes" placeholder="Notes"></textarea>
+    <div class="modal-actions"><button type="button" id="cancelSoldEditV242">Cancel</button><button class="primary">Save Sold Item</button></div>
+  </form>`;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function openSoldEditV242(index){
+  const rows = sold();
+  const item = rows[index];
+  if(!item) return;
+  editSoldIndexV242 = index;
+
+  const modal = ensureSoldEditOverlayV242();
+  const form = document.getElementById("soldEditFormV242");
+
+  form.elements.title.value = title(item);
+  const p = platform(item).toLowerCase();
+  form.elements.platform.value = p.includes("ebay") ? "eBay" : p.includes("private") ? "Private Sale" : "Mercari";
+  const cat = String(item.category || item.type || "").toLowerCase();
+  form.elements.category.value = cat.includes("card") ? "Card" : cat.includes("other") ? "Other" : "Comic";
+  form.elements.soldPrice.value = price(item) || "";
+  form.elements.cost.value = cost(item) || "";
+  form.elements.fees.value = fees(item) || "";
+  form.elements.shipping.value = ship(item) || "";
+  const d = dateOf(item);
+  form.elements.soldDate.value = d && !isNaN(d) ? d.toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
+  form.elements.notes.value = item.notes || item.description || "";
+
+  modal.classList.add("open");
+}
+
+function closeSoldEditV242(){
+  document.getElementById("soldEditOverlayV242")?.classList.remove("open");
+}
+
+window.openSoldEditV242 = openSoldEditV242;
+
+function soldIndexFromClickedRowV242(btn){
+  if(btn.dataset && btn.dataset.index != null && btn.dataset.index !== "") return Number(btn.dataset.index);
+  const tr = btn.closest("tr");
+  if(!tr) return -1;
+  const tbody = tr.parentElement;
+  const visibleIndex = Array.from(tbody.children).indexOf(tr);
+  const base = sold();
+  if(typeof getSoldFilteredRows === "function"){
+    const rows = getSoldFilteredRows();
+    const item = rows[visibleIndex];
+    return base.indexOf(item);
+  }
+  return visibleIndex;
+}
+
+document.addEventListener("click", function(e){
+  const btn = e.target.closest && e.target.closest("button");
+  if(!btn) return;
+
+  if(btn.id === "cancelSoldEditV242"){
+    e.preventDefault();
+    closeSoldEditV242();
+    return;
+  }
+
+  const inSoldRows = !!btn.closest("#soldRows");
+  const isEdit =
+    btn.hasAttribute("data-v241-sold-edit") ||
+    btn.hasAttribute("data-v240-sold-edit") ||
+    btn.hasAttribute("data-sold-edit-v239") ||
+    btn.getAttribute("data-sold-action") === "edit" ||
+    (inSoldRows && (btn.title || "").toLowerCase().includes("edit")) ||
+    (inSoldRows && btn.textContent.trim() === "$");
+
+  if(isEdit){
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    const idx = soldIndexFromClickedRowV242(btn);
+    openSoldEditV242(idx);
+  }
+}, true);
+
+document.addEventListener("submit", function(e){
+  if(!e.target || e.target.id !== "soldEditFormV242") return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const rows = sold();
+  const item = rows[editSoldIndexV242];
+  if(!item) return;
+
+  const fd = new FormData(e.target);
+  const soldPrice = n(fd.get("soldPrice"));
+  const updated = {
+    ...item,
+    title: String(fd.get("title") || "").trim(),
+    platform: String(fd.get("platform") || "Mercari"),
+    category: String(fd.get("category") || "Comic"),
+    price: soldPrice,
+    salePrice: soldPrice,
+    soldPrice: soldPrice,
+    cost: n(fd.get("cost")),
+    fees: n(fd.get("fees")),
+    shipping: n(fd.get("shipping")),
+    soldDate: String(fd.get("soldDate") || ""),
+    date: String(fd.get("soldDate") || item.date || ""),
+    notes: String(fd.get("notes") || ""),
+    status: "sold"
+  };
+  updated.profit = updated.price - updated.cost - updated.fees - updated.shipping;
+
+  rows[editSoldIndexV242] = updated;
+  setSold(rows);
+  editSoldIndexV242 = null;
+  closeSoldEditV242();
+  render();
+}, true);
+
+function placeSoldSnapshotV242(){
+  const dash = document.getElementById("dashboard");
+  const snap = document.getElementById("dashboardSoldSnapshot");
+  if(dash && snap) dash.appendChild(snap);
+}
+
+const oldRenderV242 = render;
+render = function(){
+  oldRenderV242();
+  ensureSoldEditOverlayV242();
+  placeSoldSnapshotV242();
+};
+
+setTimeout(()=>{ensureSoldEditOverlayV242();placeSoldSnapshotV242();},500);
