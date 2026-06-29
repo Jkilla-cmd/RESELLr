@@ -2022,3 +2022,32 @@ tr.search-hit td{background:rgba(0,245,255,.12)!important;box-shadow:inset 3px 0
 }
 #soldRows .sold-old-icon-v253.delete{color:rgba(255,107,107,.95)!important}
 #soldRows .row-actions{gap:18px!important;justify-content:center!important}
+
+
+/* ===== v254 Reinvestment Wallet bottom-left dock ===== */
+#reinvestWalletCard,.reinvest-wallet-card{display:none!important}
+#walletDockV254{position:fixed;left:22px;bottom:22px;z-index:99990;display:flex;align-items:flex-end;gap:14px;pointer-events:none}
+#walletDockButtonV254{pointer-events:auto;width:54px;height:54px;border-radius:18px;border:1px solid rgba(255,255,255,.16);background:radial-gradient(circle at 28% 20%,rgba(0,245,255,.22),transparent 45%),linear-gradient(145deg,rgba(10,18,34,.92),rgba(5,9,18,.82));color:#fff;box-shadow:0 18px 55px rgba(0,0,0,.42),0 0 28px rgba(0,245,255,.14);display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(18px);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+#walletDockButtonV254:hover{transform:translateY(-3px) scale(1.03);border-color:rgba(0,245,255,.45);box-shadow:0 24px 70px rgba(0,0,0,.48),0 0 34px rgba(0,245,255,.22)}
+#walletDockButtonV254 svg{width:27px;height:27px;filter:drop-shadow(0 0 10px rgba(0,245,255,.28))}
+#walletDockPanelV254{pointer-events:auto;width:min(430px,calc(100vw - 98px));transform:translateX(-18px) translateY(18px) scale(.82);opacity:0;visibility:hidden;transform-origin:bottom left;transition:opacity .22s ease,transform .28s cubic-bezier(.2,.9,.25,1.15),visibility .22s ease;border:1px solid rgba(255,255,255,.14);border-radius:24px;overflow:hidden;background:radial-gradient(circle at 14% 12%,rgba(0,245,255,.20),transparent 34%),radial-gradient(circle at 88% 20%,rgba(207,82,255,.20),transparent 30%),linear-gradient(180deg,rgba(10,18,34,.95),rgba(6,10,22,.90));box-shadow:0 30px 110px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(26px)}
+#walletDockV254.open #walletDockPanelV254{opacity:1;visibility:visible;transform:translateX(0) translateY(0) scale(1)}
+#walletDockV254.open #walletDockButtonV254{transform:rotate(-8deg) scale(1.04);border-color:rgba(0,245,255,.48)}
+.wallet-dock-head-v254{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 10px}
+.wallet-dock-head-v254 h3{margin:0;text-transform:uppercase;font-size:12px;letter-spacing:.07em}
+.wallet-dock-mode-v254{color:var(--cyan,#00f5ff);border:1px solid rgba(0,245,255,.22);background:rgba(0,245,255,.08);border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800}
+.wallet-dock-main-v254{padding:0 16px 16px}
+.wallet-balance-v254{border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px;background:rgba(255,255,255,.045)}
+.wallet-balance-v254 span,.wallet-mini-v254 span{display:block;color:var(--muted,rgba(226,232,240,.62));text-transform:uppercase;font-size:10px;letter-spacing:.055em}
+.wallet-balance-v254 b{display:block;margin-top:8px;color:var(--green,#58ff83);font-size:36px;line-height:1;font-weight:750}
+.wallet-mini-grid-v254{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.wallet-mini-v254{border:1px solid rgba(255,255,255,.075);border-radius:15px;padding:12px;background:rgba(255,255,255,.035)}
+.wallet-mini-v254 b{display:block;margin-top:6px;color:#fff;font-size:17px;font-weight:700}
+.wallet-flow-v254{display:flex;align-items:center;gap:8px;margin-top:13px;color:var(--muted,rgba(226,232,240,.62));font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.wallet-flow-v254 i{flex:1;height:2px;border-radius:999px;background:linear-gradient(90deg,var(--cyan,#00f5ff),var(--purple,#cf52ff));opacity:.7}
+.wallet-dock-actions-v254{display:flex;gap:8px;padding:0 16px 16px}
+.wallet-dock-actions-v254 button{height:32px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.055);color:#fff;cursor:pointer;font-size:12px}
+.wallet-dock-actions-v254 button:hover{color:var(--cyan,#00f5ff);border-color:rgba(0,245,255,.35);background:rgba(0,245,255,.08)}
+#walletDockPulseV254{position:absolute;left:7px;bottom:7px;width:40px;height:40px;border-radius:18px;background:rgba(0,245,255,.16);filter:blur(16px);animation:walletPulseV254 2.4s ease-in-out infinite;pointer-events:none}
+@keyframes walletPulseV254{0%,100%{opacity:.35;transform:scale(.92)}50%{opacity:.75;transform:scale(1.18)}}
+@media(max-width:720px){#walletDockV254{left:14px;bottom:14px}#walletDockPanelV254{width:calc(100vw - 88px)}.wallet-mini-grid-v254{grid-template-columns:1fr}}
