@@ -2586,3 +2586,175 @@ body::after{
   .wallet-metrics-v257{grid-template-columns:1fr!important}
   .wallet-side-v257{display:none!important}
 }
+
+/* ===== v258 improved hidden glow wallet ===== */
+.reinvest-wallet-card,
+.wallet-fab-v254,.wallet-drawer-v254,
+.wallet-bar-button-v255,.wallet-drawer-panel-v255,
+.wallet-bar-button-v256,.wallet-drawer-panel-v256,
+.wallet-corner-hotspot-v257,.wallet-corner-glow-v257,.wallet-reveal-v257,.wallet-drawer-panel-v257{
+  display:none!important;
+}
+
+.wallet-glow-hotspot-v258{
+  position:fixed!important;
+  left:0!important;
+  bottom:0!important;
+  width:118px!important;
+  height:92px!important;
+  z-index:100025!important;
+  pointer-events:auto!important;
+}
+
+/* visible slow breathing corner light */
+.wallet-corner-light-v258{
+  position:fixed!important;
+  left:-38px!important;
+  bottom:-38px!important;
+  width:128px!important;
+  height:128px!important;
+  z-index:100022!important;
+  pointer-events:none!important;
+  border-radius:50%!important;
+  background:
+    radial-gradient(circle,rgba(0,255,238,.72) 0%,rgba(0,245,255,.36) 21%,rgba(0,245,255,.12) 46%,transparent 72%)!important;
+  filter:blur(5px)!important;
+  opacity:.78!important;
+  animation:walletGlowBreathV258 3.8s ease-in-out infinite!important;
+}
+.wallet-corner-light-v258::before{
+  content:""!important;
+  position:absolute!important;
+  left:34px!important;
+  bottom:34px!important;
+  width:54px!important;
+  height:54px!important;
+  border-left:2px solid rgba(86,255,240,.72)!important;
+  border-bottom:2px solid rgba(86,255,240,.72)!important;
+  border-radius:0 0 0 18px!important;
+  box-shadow:-8px 8px 26px rgba(0,245,255,.42)!important;
+  animation:walletCornerLineV258 3.8s ease-in-out infinite!important;
+}
+.wallet-corner-light-v258::after{
+  content:""!important;
+  position:absolute!important;
+  left:52px!important;
+  bottom:52px!important;
+  width:14px!important;
+  height:14px!important;
+  border-radius:50%!important;
+  background:#56fff0!important;
+  box-shadow:0 0 18px #00f5ff,0 0 36px rgba(0,245,255,.75)!important;
+  animation:walletDotV258 3.8s ease-in-out infinite!important;
+}
+@keyframes walletGlowBreathV258{
+  0%,100%{opacity:.42;transform:scale(.86)}
+  50%{opacity:1;transform:scale(1.18)}
+}
+@keyframes walletCornerLineV258{
+  0%,100%{opacity:.38;transform:translate(0,0)}
+  50%{opacity:1;transform:translate(3px,-3px)}
+}
+@keyframes walletDotV258{
+  0%,100%{opacity:.34;transform:scale(.72)}
+  50%{opacity:1;transform:scale(1.18)}
+}
+
+/* Hover reveal: icon only, no text notification card */
+.wallet-icon-reveal-v258{
+  position:fixed!important;
+  left:18px!important;
+  bottom:14px!important;
+  z-index:100026!important;
+  width:58px!important;
+  height:58px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:17px!important;
+  border:1px solid rgba(0,245,255,.0)!important;
+  background:rgba(5,12,24,.02)!important;
+  opacity:0!important;
+  transform:translateX(-16px) scale(.86)!important;
+  cursor:pointer!important;
+  pointer-events:auto!important;
+  transition:opacity .22s ease, transform .28s cubic-bezier(.2,.8,.2,1), border-color .24s ease, background .24s ease, box-shadow .24s ease!important;
+}
+.wallet-glow-hotspot-v258:hover .wallet-icon-reveal-v258,
+.wallet-icon-reveal-v258.is-open{
+  opacity:1!important;
+  transform:translateX(0) scale(1)!important;
+  border-color:rgba(0,245,255,.68)!important;
+  background:rgba(5,12,24,.72)!important;
+  box-shadow:0 0 30px rgba(0,245,255,.30), inset 0 0 18px rgba(0,245,255,.08)!important;
+  backdrop-filter:blur(18px)!important;
+}
+.wallet-icon-reveal-v258 svg{
+  width:34px!important;
+  height:34px!important;
+  stroke:#56fff0!important;
+  filter:drop-shadow(0 0 9px rgba(0,245,255,.70))!important;
+}
+
+/* Drawer */
+.wallet-drawer-panel-v258{
+  position:fixed!important;
+  left:96px!important;
+  right:22px!important;
+  bottom:76px!important;
+  z-index:100024!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 292px!important;
+  gap:14px!important;
+  padding:18px!important;
+  border:1px solid rgba(0,245,255,.32)!important;
+  border-radius:24px!important;
+  background:
+    radial-gradient(circle at 10% 0%,rgba(0,245,255,.17),transparent 34%),
+    radial-gradient(circle at 90% 4%,rgba(198,70,255,.17),transparent 32%),
+    linear-gradient(180deg,rgba(8,15,31,.96),rgba(5,10,22,.92))!important;
+  box-shadow:0 30px 110px rgba(0,0,0,.58),0 0 44px rgba(0,245,255,.17)!important;
+  backdrop-filter:blur(26px)!important;
+  transform:translateY(36px) scale(.985)!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  transition:transform .34s cubic-bezier(.2,.8,.2,1), opacity .24s ease!important;
+}
+.wallet-drawer-panel-v258.open{
+  transform:translateY(0) scale(1)!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+}
+.wallet-drawer-panel-v258::before{
+  content:""!important;
+  position:absolute!important;
+  left:42px!important;
+  right:42px!important;
+  top:-1px!important;
+  height:1px!important;
+  background:linear-gradient(90deg,transparent,#00f5ff,#c646ff,transparent)!important;
+  opacity:.8!important;
+}
+.wallet-head-v258{display:flex!important;align-items:center!important;justify-content:space-between!important;margin-bottom:14px!important}
+.wallet-title-v258{display:flex!important;align-items:center!important;gap:12px!important}
+.wallet-title-v258 h3{margin:0!important;font-size:18px!important;text-transform:uppercase!important;letter-spacing:.04em!important}
+.wallet-mini-v258{width:34px!important;height:34px!important;display:grid!important;place-items:center!important;border-radius:12px!important;background:rgba(0,245,255,.08)!important;border:1px solid rgba(0,245,255,.28)!important}
+.wallet-mini-v258 svg{width:23px!important;height:23px!important;stroke:#56fff0!important}
+.wallet-close-v258{border:0!important;background:transparent!important;color:rgba(248,250,252,.78)!important;font-size:22px!important;cursor:pointer!important}
+.wallet-metrics-v258{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important}
+.wallet-metric-v258,.wallet-summary-v258,.wallet-rate-v258,.wallet-activity-v258{border:1px solid rgba(255,255,255,.10)!important;border-radius:16px!important;background:rgba(255,255,255,.045)!important;padding:15px!important}
+.wallet-metric-v258 span,.wallet-activity-v258 h4,.wallet-summary-v258 h4,.wallet-rate-v258 h4{font-size:10px!important;color:rgba(203,213,225,.76)!important;text-transform:uppercase!important;letter-spacing:.05em!important}
+.wallet-metric-v258 b{display:block!important;margin-top:8px!important;font-size:28px!important;color:#53ffe1!important}
+.wallet-metric-v258 small{display:block!important;margin-top:5px!important;color:rgba(248,250,252,.70)!important;font-size:11px!important}
+.wallet-activity-v258{margin-top:12px!important}
+.wallet-row-v258{display:grid!important;grid-template-columns:80px 1fr 82px!important;gap:10px!important;align-items:center!important;padding:8px 0!important;border-top:1px solid rgba(255,255,255,.06)!important;font-size:12px!important}
+.wallet-row-v258 .pos{color:#58ffc1!important}.wallet-row-v258 .neg{color:#ff8b9a!important}
+.wallet-side-v258{display:flex!important;flex-direction:column!important;gap:12px!important}
+.wallet-line-v258{display:flex!important;justify-content:space-between!important;gap:10px!important;padding:7px 0!important;border-top:1px solid rgba(255,255,255,.06)!important;font-size:12px!important}
+.wallet-rate-bar-v258{height:9px!important;overflow:hidden!important;border-radius:999px!important;background:rgba(148,163,184,.18)!important}
+.wallet-rate-bar-v258 i{display:block!important;height:100%!important;border-radius:999px!important;background:linear-gradient(90deg,#58ffc1,#28d8ff,#d45cff)!important}
+.wallet-rate-v258 b{display:block!important;margin:2px 0 8px!important;color:#53ffe1!important;font-size:24px!important}
+@media(max-width:900px){
+  .wallet-drawer-panel-v258{left:12px!important;right:12px!important;bottom:84px!important;grid-template-columns:1fr!important}
+  .wallet-metrics-v258{grid-template-columns:1fr!important}
+  .wallet-side-v258{display:none!important}
+}
