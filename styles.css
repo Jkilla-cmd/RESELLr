@@ -2758,3 +2758,27 @@ body::after{
   .wallet-metrics-v258{grid-template-columns:1fr!important}
   .wallet-side-v258{display:none!important}
 }
+
+
+/* v259 wallet alignment */
+.wallet-icon-reveal-v258{
+ width:48px!important;
+ height:48px!important;
+ left:12px!important;
+ bottom:6px!important;
+ border-radius:14px!important;
+}
+.wallet-icon-reveal-v258 svg{
+ width:28px!important;
+ height:28px!important;
+}
+.wallet-glow-hotspot-v258{
+ width:96px!important;
+ height:72px!important;
+ left:0!important;
+ bottom:0!important;
+}
+.wallet-corner-light-v258{
+ left:-46px!important;
+ bottom:-46px!important;
+}
