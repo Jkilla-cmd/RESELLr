@@ -491,12 +491,14 @@ function renderRows(){
   const shownEnd = Math.min(count, start+INV_PAGE_SIZE);
   invPageInfo.textContent = count ? `Showing ${shownStart}\u2013${shownEnd} of ${count} items` : "No items";
   invPageTotal.textContent = totalPages;
+  invCountBadge.textContent = `${count} item${count===1?"":"s"}`;
   const optsHtml = Array.from({length:totalPages},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
   if(invPageSelect.innerHTML!==optsHtml) invPageSelect.innerHTML=optsHtml;
   invPageSelect.value = String(inventoryPage);
   invPrevBtn.disabled = inventoryPage<=1;
   invNextBtn.disabled = inventoryPage>=totalPages;
 
+  holdsCountBadge.textContent = `${state.holds.length} on hold`;
   holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}">
     <td>${rowTitle(r)}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td>
     <td>${ageChip(r.heldAt, 14)}</td>

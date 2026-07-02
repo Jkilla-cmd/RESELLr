@@ -181,9 +181,17 @@
 
     <section id="inventory" class="page">
       <div class="table-head">
-        <div><h2>Inventory</h2><p>Active items currently available.</p></div>
+        <div><h2>Inventory <span id="invCountBadge" class="count-pill">0 items</span></h2><p>Active items currently available.</p></div>
         <div class="table-head-actions">
-          <button id="pasteListingBtn" title="Paste a listing copied by the RESELLr bookmarklet">Paste Listing</button>
+          <button id="pasteListingBtn" class="icon-only" title="Paste Listing (from RESELLr bookmarklet)">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 20 15 9"/>
+              <path d="m12.5 6.5 1.5-1.5 1.5 1.5-1.5 1.5Z"/>
+              <path d="m19 3 .9 1.9 1.9.9-1.9.9L19 8.6l-.9-1.9L16.2 5.8l1.9-.9Z"/>
+              <path d="M4 3v2"/>
+              <path d="M3 4h2"/>
+            </svg>
+          </button>
           <button class="primary" id="addItemBtn2">Add Item</button>
         </div>
       </div>
@@ -204,7 +212,7 @@
     </section>
 
     <section id="holds" class="page">
-      <div class="table-head"><div><h2>Holds</h2><p>Reserved items waiting for purchase or decision.</p></div></div>
+      <div class="table-head"><div><h2>Holds <span id="holdsCountBadge" class="count-pill">0 items</span></h2><p>Reserved items waiting for purchase or decision.</p></div></div>
       <div class="table-card">
         <table>
           <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>On Hold</th><th>Actions</th></tr></thead>
