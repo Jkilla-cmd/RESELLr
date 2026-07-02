@@ -1,7 +1,7 @@
 
 const KEY = "resellr_v300_data";
 let state = load();
-let editin = null;
+let editing = null;
 
 function load(){
   try{
