@@ -244,10 +244,64 @@ exportBtn.onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="resellr-data.json"; a.click();
 }
+function normalizeItem(r, kind){
+  const id = r.id || r._id || uid();
+  const title = r.title || r.item || "Untitled item";
+  const category = r.category || r.type || "Other";
+  const platform = r.platform || r.source || "";
+  const price = n(r.price ?? r.salePrice ?? r.soldPrice ?? r.value);
+  const out = {
+    id, title, platform, category,
+    price, cost:n(r.cost), fees:n(r.fees), shipping:n(r.shipping),
+    notes: r.notes || ""
+  };
+  if(kind==="sold"){
+    out.date = String(r.date || r.soldDate || r.addedAt || today()).slice(0,10);
+  }
+  return out;
+}
+function normalizeState(raw){
+  const legacy = Array.isArray(raw.activeInventory) || Array.isArray(raw.soldInventory) || Array.isArray(raw.inventoryHolds);
+  const invSrc = legacy ? raw.activeInventory : raw.inventory;
+  const holdSrc = legacy ? raw.inventoryHolds : raw.holds;
+  const soldSrc = legacy ? raw.soldInventory : raw.sold;
+  const seen = new Set();
+  function convert(list, kind){
+    return (Array.isArray(list) ? list : []).map(r=>{
+      const item = normalizeItem(r, kind);
+      while(seen.has(item.id)) item.id = uid();
+      seen.add(item.id);
+      return item;
+    });
+  }
+  return {
+    theme: raw.theme || state.theme || "light",
+    walletMode: Number.isFinite(raw.walletMode) ? raw.walletMode : (state.walletMode ?? 50),
+    inventory: convert(invSrc,"inventory"),
+    holds: convert(holdSrc,"holds"),
+    sold: convert(soldSrc,"sold")
+  };
+}
 importFile.onchange=e=>{
   const f=e.target.files[0]; if(!f)return;
   const reader=new FileReader();
-  reader.onload=()=>{state=JSON.parse(reader.result); save(); render();};
+  reader.onload=()=>{
+    let raw;
+    try{ raw = JSON.parse(reader.result); }
+    catch(err){ alert("That file isn't valid JSON. Please choose a RESELLr export file."); e.target.value=""; return; }
+    const hasCurrent = Array.isArray(raw.inventory) || Array.isArray(raw.holds) || Array.isArray(raw.sold);
+    const hasLegacy = Array.isArray(raw.activeInventory) || Array.isArray(raw.soldInventory) || Array.isArray(raw.inventoryHolds);
+    if(!hasCurrent && !hasLegacy){ alert("This doesn't look like a RESELLr backup file."); e.target.value=""; return; }
+    const imported = normalizeState(raw);
+    const total = imported.inventory.length + imported.holds.length + imported.sold.length;
+    if(!confirm(`Import ${total} item(s) (${imported.inventory.length} active, ${imported.holds.length} on hold, ${imported.sold.length} sold) and replace your current data? This can't be undone.`)){
+      e.target.value=""; return;
+    }
+    state = imported;
+    save(); render();
+    e.target.value="";
+  };
+  reader.onerror=()=>alert("Couldn't read that file.");
   reader.readAsText(f);
 }
 seedBtn.onclick=()=>{state=demoData();save();render();}
