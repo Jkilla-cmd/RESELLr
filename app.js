@@ -516,6 +516,7 @@ function renderRows(){
   const soldShownStart = soldCount ? soldStart+1 : 0;
   const soldShownEnd = Math.min(soldCount, soldStart+SOLD_PAGE_SIZE);
   soldPageInfo.textContent = soldCount ? `Showing ${soldShownStart}\u2013${soldShownEnd} of ${soldCount} items` : "No items";
+  soldCountBadge.textContent = `${soldCount} item${soldCount===1?"":"s"} sold`;
   soldPageTotal.textContent = soldTotalPages;
   const soldOptsHtml = Array.from({length:soldTotalPages},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
   if(soldPageSelect.innerHTML!==soldOptsHtml) soldPageSelect.innerHTML=soldOptsHtml;
@@ -860,30 +861,33 @@ goalInput.oninput=()=>{ state.monthlyGoal=n(goalInput.value)||300; save(); rende
 
 /* ---------- search ---------- */
 let searchHighlightTimer;
-function doSearch(){
-  const q=globalSearch.value.toLowerCase().trim();
-  if(!q) return;
-  const kinds=["inventory","holds","sold"];
-  let found=null, foundKind=null;
-  for(const k of kinds){
-    const hit = state[k].find(r=>(r.title||"").toLowerCase().includes(q));
-    if(hit){ found=hit; foundKind=k; break; }
-  }
-  if(!found) return;
-  if(foundKind==="inventory"){
+const KIND_LABEL = {inventory:"Inventory", holds:"Holds", sold:"Sold"};
+function computeMatches(q){
+  const out=[];
+  ["inventory","holds","sold"].forEach(kind=>{
+    state[kind].forEach(r=>{
+      if((r.title||"").toLowerCase().includes(q)) out.push({...r, _kind:kind});
+    });
+  });
+  return out;
+}
+function jumpToItem(kind, id){
+  const item = (state[kind]||[]).find(x=>x.id===id);
+  if(!item) return;
+  if(kind==="inventory"){
     const sorted = sortedInventory();
-    const idx = sorted.findIndex(x=>x.id===found.id);
+    const idx = sorted.findIndex(x=>x.id===id);
     if(idx>=0){ inventoryPage = Math.floor(idx/INV_PAGE_SIZE)+1; renderRows(); }
   }
-  if(foundKind==="sold"){
+  if(kind==="sold"){
     soldYear.value="all"; soldMonth.value="all";
     const sorted = getSoldRows().sort((a,b)=> parseLocalDate(b.date) - parseLocalDate(a.date));
-    const idx = sorted.findIndex(x=>x.id===found.id);
+    const idx = sorted.findIndex(x=>x.id===id);
     if(idx>=0){ soldPage = Math.floor(idx/SOLD_PAGE_SIZE)+1; renderRows(); }
   }
-  showPage(foundKind);
+  showPage(kind);
   requestAnimationFrame(()=>{
-    const rowEl = document.getElementById(`row-${foundKind}-${found.id}`);
+    const rowEl = document.getElementById(`row-${kind}-${id}`);
     if(rowEl){
       rowEl.scrollIntoView({behavior:"smooth", block:"center"});
       clearTimeout(searchHighlightTimer);
@@ -894,8 +898,46 @@ function doSearch(){
     }
   });
 }
-globalSearch.oninput=doSearch;
-globalSearch.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); doSearch(); } });
+const SEARCH_RESULT_LIMIT = 40;
+function renderSearchResults(){
+  const q=globalSearch.value.toLowerCase().trim();
+  if(!q){ searchResults.hidden=true; searchResults.innerHTML=""; return; }
+  const matches=computeMatches(q);
+  if(!matches.length){
+    searchResults.innerHTML = `<div class="search-empty">No matches for "${globalSearch.value}"</div>`;
+    searchResults.hidden=false;
+    return;
+  }
+  const shown = matches.slice(0, SEARCH_RESULT_LIMIT);
+  searchResults.innerHTML =
+    `<div class="search-results-head">${matches.length} match${matches.length===1?"":"es"}</div>` +
+    shown.map(r=>`<div class="search-result-item" data-kind="${r._kind}" data-id="${r.id}"><span class="sr-kind">${KIND_LABEL[r._kind]}</span><span class="sr-title">${r.title}</span><span class="sr-price">${money(r.price)}</span></div>`).join("") +
+    (matches.length>SEARCH_RESULT_LIMIT ? `<div class="search-more">+${matches.length-SEARCH_RESULT_LIMIT} more — refine your search</div>` : "");
+  searchResults.hidden=false;
+  searchResults.querySelectorAll(".search-result-item").forEach(el=>{
+    el.onclick=()=>{
+      jumpToItem(el.dataset.kind, el.dataset.id);
+      searchResults.hidden=true;
+    };
+  });
+}
+function doSearch(){
+  const q=globalSearch.value.toLowerCase().trim();
+  if(!q) return;
+  const matches=computeMatches(q);
+  if(!matches.length) return;
+  jumpToItem(matches[0]._kind, matches[0].id);
+  searchResults.hidden=true;
+}
+globalSearch.oninput=renderSearchResults;
+globalSearch.addEventListener("focus", ()=>{ if(globalSearch.value.trim()) renderSearchResults(); });
+globalSearch.addEventListener("keydown", e=>{
+  if(e.key==="Enter"){ e.preventDefault(); doSearch(); }
+  if(e.key==="Escape"){ searchResults.hidden=true; globalSearch.blur(); }
+});
+document.addEventListener("click", e=>{
+  if(!e.target.closest(".search-wrap")) searchResults.hidden=true;
+});
 
 /* ---------- import / export ---------- */
 function normalizeItem(r, kind){

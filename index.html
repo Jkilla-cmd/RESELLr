@@ -44,8 +44,9 @@
       </div>
       <div class="search-wrap">
         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        <input id="globalSearch" placeholder="Search inventory, listings, or SKU..." />
+        <input id="globalSearch" placeholder="Search inventory, listings, or SKU..." autocomplete="off" />
         <kbd>⌘K</kbd>
+        <div id="searchResults" class="search-results" hidden></div>
       </div>
       <div class="top-status">
         <div class="status-chip"><span class="dot" id="autoSaveDot"></span><div><b>Auto Save</b><small id="autoSaveText">On</small></div></div>
@@ -214,7 +215,7 @@
 
     <section id="sold" class="page">
       <div class="table-head">
-        <div><h2>Sold</h2><p>Completed sales and performance.</p></div>
+        <div><h2>Sold <span id="soldCountBadge" class="count-pill">0 items</span></h2><p>Completed sales and performance.</p></div>
         <div class="table-head-actions">
           <select id="soldYear"></select>
           <select id="soldMonth"></select>
