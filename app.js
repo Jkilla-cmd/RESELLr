@@ -392,7 +392,7 @@ function ensureFilters(){
   const cy=new Date().getFullYear();
   const soldYears=[...new Set(state.sold.map(r=>parseLocalDate(r.date).getFullYear()))];
   const years=[...new Set([cy,...soldYears])].sort((a,b)=>b-a);
-  setYearOptions(growthYear, years);
+  setYearOptions(growthYear, years, {allOption:true});
   setYearOptions(monthlyYear, years);
   setYearOptions(snapYear, years, {allOption:true});
   setYearOptions(taxYear, years, {allOption:true});
@@ -400,14 +400,17 @@ function ensureFilters(){
   const monthOpts = `<option value="all">All Months</option>`+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m,i)=>`<option value="${i}">${m}</option>`).join("");
   if(!snapMonth.innerHTML) snapMonth.innerHTML = monthOpts;
   if(!soldMonth.innerHTML) soldMonth.innerHTML = monthOpts;
-  const ghtml = years.map(y=>`<option value="${y}">${y===cy?"This Year":y}</option>`).join("");
+  const ghtml = `<option value="all">All Years</option>` + years.map(y=>`<option value="${y}">${y===cy?"This Year":y}</option>`).join("");
   if(globalYear.innerHTML!==ghtml) globalYear.innerHTML=ghtml;
   globalYear.value = growthYear.value;
 }
 growthYear.onchange = snapYear.onchange = snapMonth.onchange = monthlyYear.onchange = taxYear.onchange = render;
 soldYear.onchange = soldMonth.onchange = ()=>{ soldPage=1; render(); };
 globalYear.onchange = ()=>{
-  growthYear.value=globalYear.value; monthlyYear.value=globalYear.value; snapYear.value=globalYear.value; render();
+  growthYear.value=globalYear.value;
+  if([...monthlyYear.options].some(o=>o.value===globalYear.value)) monthlyYear.value=globalYear.value;
+  if([...snapYear.options].some(o=>o.value===globalYear.value)) snapYear.value=globalYear.value;
+  render();
 };
 function getTaxRows(){
   return taxYear.value && taxYear.value!=="all"
@@ -622,21 +625,11 @@ function niceCeil(v){
   let m; if(rel<=1)m=1; else if(rel<=2)m=2; else if(rel<=5)m=5; else m=10;
   return m*pow;
 }
-function roundRect(ctx,x,y,w,h,r){
-  if(h<=0) h=0.0001;
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.arcTo(x+w,y,x+w,y+h,r);
-  ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r);
-  ctx.arcTo(x,y,x+w,y,r);
-  ctx.closePath();
-}
 function themeVar(name, fallback){
   const v = getComputedStyle(document.documentElement).getPropertyValue(name);
   return (v && v.trim()) || fallback;
 }
-function drawLineChart(canvas, series, colors){
+function drawLineChart(canvas, series, colors, labels, opts={}){
   const w=canvas.clientWidth, h=canvas.clientHeight;
   if(!w||!h) return null;
   const dpr=devicePixelRatio||1;
@@ -645,7 +638,7 @@ function drawLineChart(canvas, series, colors){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
   const padL=42,padR=8,padT=10,padB=22;
-  const max=Math.max(1,...series.flat());
+  const max=Math.max(1,...series.flat(),opts.goal||0);
   const niceMax=niceCeil(max*1.05);
   const gridColor=themeVar("--line","#e7eaef"), mutedColor=themeVar("--muted","#6b7480");
   ctx.strokeStyle=gridColor; ctx.fillStyle=mutedColor; ctx.font="11px Inter, sans-serif"; ctx.lineWidth=1;
@@ -655,77 +648,41 @@ function drawLineChart(canvas, series, colors){
     ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR,y);ctx.stroke();
     ctx.fillText(fmtShort(niceMax*i/steps),2,y+4);
   }
-  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const len=series[0].length;
-  months.slice(0,len).forEach((m,i)=>{
+  const lbls = labels && labels.length===len ? labels : Array.from({length:len},(_,i)=>String(i+1));
+  const skip = Math.max(1, Math.ceil(len/12));
+  lbls.forEach((lab,i)=>{
+    if(i%skip!==0 && i!==len-1) return;
     const x=padL+(w-padL-padR)*(i/Math.max(1,len-1));
-    ctx.fillText(m, x-9, h-6);
+    ctx.fillStyle=mutedColor;
+    ctx.fillText(lab, x-9, h-6);
   });
   series.forEach((s,si)=>{
     ctx.beginPath();
     s.forEach((v,i)=>{
       const x=padL+(w-padL-padR)*(i/Math.max(1,s.length-1));
-      const y=padT+(h-padT-padB)*(1-v/niceMax);
+      const y=padT+(h-padT-padB)*(1-Math.max(0,v)/niceMax);
       i? ctx.lineTo(x,y): ctx.moveTo(x,y);
     });
     ctx.strokeStyle=colors[si]; ctx.lineWidth=2.5; ctx.lineJoin="round"; ctx.lineCap="round"; ctx.stroke();
+    if(opts.dots){
+      ctx.fillStyle=colors[si];
+      s.forEach((v,i)=>{
+        const x=padL+(w-padL-padR)*(i/Math.max(1,s.length-1));
+        const y=padT+(h-padT-padB)*(1-Math.max(0,v)/niceMax);
+        ctx.beginPath(); ctx.arc(x,y,2.6,0,Math.PI*2); ctx.fill();
+      });
+    }
   });
+  if(opts.goal>0){
+    const gy=padT+(h-padT-padB)*(1-opts.goal/niceMax);
+    ctx.setLineDash([4,4]); ctx.strokeStyle="#c9432f"; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(w-padR,gy); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle="#c9432f"; ctx.textAlign="right"; ctx.fillText(`${money(opts.goal)} Goal`, w-padR, gy-6); ctx.textAlign="left";
+  }
   const meta={padL,padR,padT,padB,niceMax,w,h,len};
   canvas._chartMeta=meta;
   return meta;
-}
-function drawBarChart(canvas, values, color, goal, lineValues, lineColor){
-  const w=canvas.clientWidth, h=canvas.clientHeight;
-  if(!w||!h) return;
-  const dpr=devicePixelRatio||1;
-  canvas.width=w*dpr; canvas.height=h*dpr;
-  const ctx=canvas.getContext("2d");
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,w,h);
-  const padL=42,padR=8,padT=14,padB=22;
-  const max=Math.max(1,...values,...(lineValues||[]),goal||0);
-  const niceMax=niceCeil(max*1.15);
-  const gridColor=themeVar("--line","#e7eaef"), mutedColor=themeVar("--muted","#6b7480");
-  ctx.strokeStyle=gridColor; ctx.fillStyle=mutedColor; ctx.font="11px Inter, sans-serif"; ctx.lineWidth=1;
-  const steps=4;
-  for(let i=0;i<=steps;i++){
-    const y=padT+(h-padT-padB)*(1-i/steps);
-    ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR,y);ctx.stroke();
-    ctx.fillText(fmtShort(niceMax*i/steps),2,y+4);
-  }
-  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const bw=(w-padL-padR)/values.length;
-  values.forEach((v,i)=>{
-    const x=padL+i*bw+bw*0.22;
-    const bh=(h-padT-padB)*(Math.max(0,v)/niceMax);
-    const y=h-padB-bh;
-    ctx.fillStyle=color;
-    roundRect(ctx,x,y,bw*0.56,bh,4);
-    ctx.fill();
-    ctx.fillStyle=mutedColor;
-    ctx.fillText(months[i], x-2, h-6);
-  });
-  if(lineValues && lineValues.length){
-    ctx.beginPath();
-    lineValues.forEach((v,i)=>{
-      const x=padL+i*bw+bw*0.5;
-      const y=padT+(h-padT-padB)*(1-Math.max(0,v)/niceMax);
-      i? ctx.lineTo(x,y): ctx.moveTo(x,y);
-    });
-    ctx.strokeStyle=lineColor; ctx.lineWidth=2.5; ctx.lineJoin="round"; ctx.lineCap="round"; ctx.stroke();
-    ctx.fillStyle=lineColor;
-    lineValues.forEach((v,i)=>{
-      const x=padL+i*bw+bw*0.5;
-      const y=padT+(h-padT-padB)*(1-Math.max(0,v)/niceMax);
-      ctx.beginPath(); ctx.arc(x,y,2.6,0,Math.PI*2); ctx.fill();
-    });
-  }
-  if(goal>0){
-    const gy=padT+(h-padT-padB)*(1-goal/niceMax);
-    ctx.setLineDash([4,4]); ctx.strokeStyle="#c9432f"; ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(w-padR,gy); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle="#c9432f"; ctx.textAlign="right"; ctx.fillText(`${money(goal)} Goal`, w-padR, gy-6); ctx.textAlign="left";
-  }
-  canvas._barMeta={padL,padR,padT,padB,niceMax,w,h,bw,count:values.length};
 }
 function monthlySeries(year){
   const income=Array(12).fill(0), cost=Array(12).fill(0), profitArr=Array(12).fill(0), counts=Array(12).fill(0), costProfitArr=Array(12).fill(0);
@@ -736,21 +693,58 @@ function monthlySeries(year){
   });
   return {income,cost,profitArr,counts,costProfitArr};
 }
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function monthSpanSeries(){
+  const now = new Date();
+  const validDates = state.sold.map(r=>parseLocalDate(r.date)).filter(d=>!isNaN(d));
+  let startY = now.getFullYear(), startM = 0;
+  if(validDates.length){
+    const minD = new Date(Math.min(...validDates.map(d=>d.getTime())));
+    startY = minD.getFullYear(); startM = minD.getMonth();
+  }
+  const endY = now.getFullYear(), endM = 11;
+  const months=[];
+  let y=startY, m=startM;
+  while(y<endY || (y===endY && m<=endM)){
+    months.push({y,m});
+    m++; if(m>11){ m=0; y++; }
+  }
+  const idxOf = new Map(months.map((mm,i)=>[`${mm.y}-${mm.m}`,i]));
+  const income=months.map(()=>0), cost=months.map(()=>0), profitArr=months.map(()=>0);
+  state.sold.forEach(r=>{
+    const d=parseLocalDate(r.date); if(isNaN(d)) return;
+    const idx=idxOf.get(`${d.getFullYear()}-${d.getMonth()}`);
+    if(idx===undefined) return;
+    income[idx]+=n(r.price); cost[idx]+=n(r.cost); profitArr[idx]+=profit(r);
+  });
+  const labels = months.map(mm=>`${MONTH_NAMES[mm.m]} '${String(mm.y).slice(2)}`);
+  const tipLabels = months.map(mm=>`${MONTH_NAMES[mm.m]} ${mm.y}`);
+  return {income,cost,profitArr,labels,tipLabels};
+}
 function drawGrowthChart(){
-  const year = n(growthYear.value)||new Date().getFullYear();
-  const {income,cost,profitArr} = monthlySeries(year);
+  const yearSel = growthYear.value;
   const cum = arr=>{ let s=0; return arr.map(v=>s+=v); };
-  const incomeC=cum(income), costC=cum(cost), profitC=cum(profitArr);
-  const meta = drawLineChart(growthChart, [incomeC,costC,profitC], ["#e8a33d","#3f7fc9","#3f9d63"]);
-  growthChart._series = {incomeC,costC,profitC,year};
+  let incomeC,costC,profitC,labels,tipLabels;
+  if(yearSel==="all"){
+    const s=monthSpanSeries();
+    incomeC=cum(s.income); costC=cum(s.cost); profitC=cum(s.profitArr);
+    labels=s.labels; tipLabels=s.tipLabels;
+  }else{
+    const year=n(yearSel)||new Date().getFullYear();
+    const {income,cost,profitArr}=monthlySeries(year);
+    incomeC=cum(income); costC=cum(cost); profitC=cum(profitArr);
+    labels=MONTH_NAMES; tipLabels=MONTH_NAMES.map(m=>`${m} ${year}`);
+  }
+  const meta = drawLineChart(growthChart, [incomeC,costC,profitC], ["#e8a33d","#3f7fc9","#3f9d63"], labels);
+  growthChart._series = {incomeC,costC,profitC,tipLabels};
   return meta;
 }
 function renderCharts(){
   drawGrowthChart();
   const year = n(monthlyYear.value)||new Date().getFullYear();
   const {profitArr,counts,costProfitArr} = monthlySeries(year);
-  drawBarChart(monthlyChart, profitArr, "#3f9d63", state.monthlyGoal||300, costProfitArr, "#7c5cff");
-  monthlyChart._barData = {profitArr,counts,costProfitArr,year,goal:state.monthlyGoal||300};
+  drawLineChart(monthlyChart, [profitArr,costProfitArr], ["#3f9d63","#7c5cff"], MONTH_NAMES, {dots:true, goal: state.monthlyGoal||300});
+  monthlyChart._monthlyData = {profitArr,counts,costProfitArr,year,goal:state.monthlyGoal||300};
 }
 growthChart.addEventListener("mousemove", e=>{
   const meta=growthChart._chartMeta, s=growthChart._series;
@@ -759,8 +753,7 @@ growthChart.addEventListener("mousemove", e=>{
   const x=e.clientX-rect.left;
   let idx=Math.round((x-meta.padL)/((meta.w-meta.padL-meta.padR)/Math.max(1,meta.len-1)));
   idx=Math.max(0,Math.min(meta.len-1,idx));
-  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  growthTip.innerHTML=`<b>${months[idx]} ${s.year}</b>
+  growthTip.innerHTML=`<b>${s.tipLabels[idx]}</b>
     <div><span>Total Income</span><span>${money(s.incomeC[idx])}</span></div>
     <div><span>Cost of Sold</span><span>${money(s.costC[idx])}</span></div>
     <div><span>Profit</span><span>${money(s.profitC[idx])}</span></div>`;
@@ -773,25 +766,24 @@ growthChart.addEventListener("mousemove", e=>{
 growthChart.addEventListener("mouseleave",()=>growthTip.hidden=true);
 
 monthlyChart.addEventListener("mousemove", e=>{
-  const meta=monthlyChart._barMeta, d=monthlyChart._barData;
+  const meta=monthlyChart._chartMeta, d=monthlyChart._monthlyData;
   if(!meta||!d) return;
   const rect=monthlyChart.getBoundingClientRect();
   const x=e.clientX-rect.left;
-  let idx=Math.floor((x-meta.padL)/meta.bw);
-  idx=Math.max(0,Math.min(meta.count-1,idx));
-  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  let idx=Math.round((x-meta.padL)/((meta.w-meta.padL-meta.padR)/Math.max(1,meta.len-1)));
+  idx=Math.max(0,Math.min(meta.len-1,idx));
   const val=d.profitArr[idx], cnt=d.counts[idx], cp=d.costProfitArr[idx];
   const diff=val-d.goal;
-  monthlyTip.innerHTML=`<b>${months[idx]} ${d.year}</b>
+  monthlyTip.innerHTML=`<b>${MONTH_NAMES[idx]} ${d.year}</b>
     <div><span>Profit</span><span>${money(val)}</span></div>
     <div><span>Cost + Profit</span><span>${money(cp)}</span></div>
     <div><span>Items Sold</span><span>${cnt}</span></div>
     <div><span>${diff>=0?"Above Goal":"Below Goal"}</span><span>${diff>=0?"+":""}${money(diff)}</span></div>`;
-  const barH=(meta.h-meta.padT-meta.padB)*(Math.max(0,val)/meta.niceMax);
-  const tipX = meta.padL+idx*meta.bw+meta.bw*0.5;
-  const tipY = meta.h-meta.padB-barH;
+  const tipX = meta.padL+(meta.w-meta.padL-meta.padR)*(idx/Math.max(1,meta.len-1));
+  const topVal = Math.max(val,cp);
+  const tipY = meta.padT+(meta.h-meta.padT-meta.padB)*(1-Math.max(0,topVal)/meta.niceMax);
   monthlyTip.style.left=tipX+"px";
-  monthlyTip.style.top=Math.max(0,tipY-92)+"px";
+  monthlyTip.style.top=Math.max(0,tipY-100)+"px";
   monthlyTip.hidden=false;
 });
 monthlyChart.addEventListener("mouseleave",()=>monthlyTip.hidden=true);
