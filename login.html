@@ -4,6 +4,16 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>RESELLr — Log In</title>
+<script>
+(function(){
+  try{
+    var saved = JSON.parse(localStorage.getItem("resellr_v300_data"));
+    var theme = (saved && saved.theme) ? saved.theme
+      : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.dataset.theme = theme;
+  }catch(e){}
+})();
+</script>
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="login-body">

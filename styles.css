@@ -67,6 +67,7 @@ svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .login-card .field-label input{width:100%}
 .login-card button.primary{width:100%;padding:12px;margin-top:2px;border-radius:12px}
 .login-error{background:#fdecea;color:#c0392b;border-radius:10px;padding:9px 12px;font-size:12.5px;margin:0}
+[data-theme="dark"] .login-error{background:#3a1a1a;color:#f2a5a0}
 
 
 /* SIDEBAR */
