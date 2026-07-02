@@ -6,7 +6,16 @@ let editing = null;
 /* ---------- helpers ---------- */
 function n(v){ const x = Number(v); return Number.isFinite(x) ? x : 0; }
 function money(v){ const x=n(v); const sign=x<0?"-":""; return sign+"$"+Math.abs(x).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function today(){ return new Date().toISOString().slice(0,10); }
+function pad2(x){ return String(x).padStart(2,"0"); }
+function localDateStr(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function today(){ return localDateStr(new Date()); }
+function parseLocalDate(dateStr){
+  if(!dateStr) return new Date(NaN);
+  const s = String(dateStr).slice(0,10);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return new Date(dateStr);
+  return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+}
 function uid(){ return "id_" + Date.now() + "_" + Math.random().toString(16).slice(2); }
 function profit(r){ return n(r.price)-n(r.cost)-n(r.fees)-n(r.shipping); }
 function costProfit(r){ return n(r.cost)+profit(r); }
@@ -56,7 +65,7 @@ function synthHistory(final, days, startRatio){
 
 function demoData(){
   const now = new Date();
-  const iso = (offsetDays)=>{ const d=new Date(now); d.setDate(d.getDate()-offsetDays); return d.toISOString().slice(0,10); };
+  const iso = (offsetDays)=>{ const d=new Date(now); d.setDate(d.getDate()-offsetDays); return localDateStr(d); };
   const inventory=[
     {id:uid(),title:"2024 Daredevil 14 NYCC John Tyler Christopher Red Foil Exclusive Variant",platform:"Mercari",category:"Comic",price:45,cost:15,fees:0,shipping:0,notes:"Added from Mercari",addedAt:Date.now()-1000*60*60*26},
     {id:uid(),title:"Absolute Batman Annual #1 Signed Variant",platform:"eBay",category:"Comic",price:120,cost:80,fees:0,shipping:0,notes:"Convention signatures",addedAt:Date.now()-1000*60*60*24*4},
@@ -78,7 +87,7 @@ function demoData(){
   const invValue = inventory.reduce((a,r)=>a+n(r.price),0);
   const cp = sold.reduce((a,r)=>a+costProfit(r),0);
   const wallet = cp*0.5 - inventory.reduce((a,r)=>a+n(r.cost),0);
-  const salesYTD = sold.filter(r=>new Date(r.date).getFullYear()===now.getFullYear()).length;
+  const salesYTD = sold.filter(r=>parseLocalDate(r.date).getFullYear()===now.getFullYear()).length;
   const days=30;
   const invArr=synthHistory(invValue,days,0.82);
   const cpArr=synthHistory(cp,days,0.65);
@@ -87,7 +96,7 @@ function demoData(){
   const history=[];
   for(let i=0;i<days;i++){
     const d=new Date(now); d.setDate(d.getDate()-(days-1-i));
-    history.push({date:d.toISOString().slice(0,10),invValue:invArr[i],costProfit:cpArr[i],wallet:wArr[i],sales:sArr[i]});
+    history.push({date:localDateStr(d),invValue:invArr[i],costProfit:cpArr[i],wallet:wArr[i],sales:sArr[i]});
   }
   const activity=[
     {text:"Sold Amazing Spider-Man #300",sub:"Mercari • +$71.00 Profit",color:"blue",icon:"$",ts:Date.now()-1000*60*60*1},
@@ -238,6 +247,7 @@ document.getElementById("itemForm").onsubmit=(e)=>{
     item.addedAt = Date.now();
     state.inventory.unshift(item);
     logActivity(`Listed ${item.title}`, `${item.platform} • ${money(item.price)}`, "gold", "+");
+    inventoryPage = 1;
   }
   save(); document.getElementById("itemModal").close(); render();
 };
@@ -277,7 +287,7 @@ function ensureHistory(){
     invValue: state.inventory.reduce((a,r)=>a+n(r.price),0),
     costProfit: state.sold.reduce((a,r)=>a+costProfit(r),0),
     wallet: walletBalance(),
-    sales: state.sold.filter(r=>new Date(r.date).getFullYear()===new Date().getFullYear()).length
+    sales: state.sold.filter(r=>parseLocalDate(r.date).getFullYear()===new Date().getFullYear()).length
   };
   if(!state.history) state.history=[];
   const last = state.history[state.history.length-1];
@@ -331,7 +341,7 @@ function renderKPIs(){
   const invValue=state.inventory.reduce((a,r)=>a+n(r.price),0);
   const cp=state.sold.reduce((a,r)=>a+costProfit(r),0);
   const y=new Date().getFullYear();
-  const yr=state.sold.filter(r=>new Date(r.date).getFullYear()===y);
+  const yr=state.sold.filter(r=>parseLocalDate(r.date).getFullYear()===y);
   const yrProfit=yr.reduce((a,r)=>a+profit(r),0);
   const wb=walletBalance();
 
@@ -366,7 +376,7 @@ function setYearOptions(select, years, opts={}){
 }
 function ensureFilters(){
   const cy=new Date().getFullYear();
-  const soldYears=[...new Set(state.sold.map(r=>new Date(r.date).getFullYear()))];
+  const soldYears=[...new Set(state.sold.map(r=>parseLocalDate(r.date).getFullYear()))];
   const years=[...new Set([cy,...soldYears])].sort((a,b)=>b-a);
   setYearOptions(growthYear, years);
   setYearOptions(monthlyYear, years);
@@ -385,15 +395,15 @@ globalYear.onchange = ()=>{
 };
 function getTaxRows(){
   return taxYear.value && taxYear.value!=="all"
-    ? state.sold.filter(r=>new Date(r.date).getFullYear()===n(taxYear.value))
+    ? state.sold.filter(r=>parseLocalDate(r.date).getFullYear()===n(taxYear.value))
     : [...state.sold];
 }
 
 /* ---------- sold snapshot ---------- */
 function renderSnapshot(){
   let rows=[...state.sold];
-  if(snapYear.value && snapYear.value!=="all") rows=rows.filter(r=>new Date(r.date).getFullYear()===n(snapYear.value));
-  if(snapMonth.value && snapMonth.value!=="all") rows=rows.filter(r=>new Date(r.date).getMonth()===n(snapMonth.value));
+  if(snapYear.value && snapYear.value!=="all") rows=rows.filter(r=>parseLocalDate(r.date).getFullYear()===n(snapYear.value));
+  if(snapMonth.value && snapMonth.value!=="all") rows=rows.filter(r=>parseLocalDate(r.date).getMonth()===n(snapMonth.value));
   const income=rows.reduce((a,r)=>a+n(r.price),0);
   const totalProfit=rows.reduce((a,r)=>a+profit(r),0);
   snapItems.textContent=rows.length;
@@ -430,23 +440,50 @@ function ageChip(ts, warnAt){
   const label = d<1 ? "Today" : d===1 ? "1 day" : `${d} days`;
   return `<span class="age-chip${warnAt && d>warnAt ? ' warn':''}">${label}</span>`;
 }
+const INV_PAGE_SIZE = 25;
+let inventoryPage = 1;
+function sortedInventory(){
+  return [...state.inventory].sort((a,b)=> (b.addedAt||0) - (a.addedAt||0));
+}
 function renderRows(){
-  inventoryRows.innerHTML=state.inventory.map(r=>`<tr id="row-inventory-${r.id}">
+  const invSorted = sortedInventory();
+  const totalPages = Math.max(1, Math.ceil(invSorted.length / INV_PAGE_SIZE));
+  if(inventoryPage>totalPages) inventoryPage=totalPages;
+  if(inventoryPage<1) inventoryPage=1;
+  const start = (inventoryPage-1)*INV_PAGE_SIZE;
+  const pageItems = invSorted.slice(start, start+INV_PAGE_SIZE);
+
+  inventoryRows.innerHTML=pageItems.map(r=>`<tr id="row-inventory-${r.id}">
     <td>${rowTitle(r)}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td><td class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
     <td>${ageChip(r.addedAt, 45)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")'>✎</button><button class="icon-btn" onclick="moveToHold('${r.id}')">◇</button><button class="icon-btn" onclick="markSold('${r.id}')">$</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="7" class="muted">No active inventory yet.</td></tr>`;
+
+  const count = invSorted.length;
+  const shownStart = count ? start+1 : 0;
+  const shownEnd = Math.min(count, start+INV_PAGE_SIZE);
+  invPageInfo.textContent = count ? `Showing ${shownStart}\u2013${shownEnd} of ${count} items` : "No items";
+  invPageTotal.textContent = totalPages;
+  const optsHtml = Array.from({length:totalPages},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
+  if(invPageSelect.innerHTML!==optsHtml) invPageSelect.innerHTML=optsHtml;
+  invPageSelect.value = String(inventoryPage);
+  invPrevBtn.disabled = inventoryPage<=1;
+  invNextBtn.disabled = inventoryPage>=totalPages;
+
   holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}">
     <td>${rowTitle(r)}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td>
     <td>${ageChip(r.heldAt, 14)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick="moveHoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="6" class="muted">No items on hold.</td></tr>`;
-  const soldSorted = [...state.sold].sort((a,b)=> new Date(b.date) - new Date(a.date));
+  const soldSorted = [...state.sold].sort((a,b)=> parseLocalDate(b.date) - parseLocalDate(a.date));
   soldRows.innerHTML=soldSorted.map(r=>`<tr id="row-sold-${r.id}">
     <td>${rowTitle(r)}</td><td>${r.date||""}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td><td>${money(r.fees)}</td><td class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")'>✎</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="8" class="muted">Nothing sold yet.</td></tr>`;
 }
+invPrevBtn.onclick=()=>{ if(inventoryPage>1){ inventoryPage--; renderRows(); } };
+invNextBtn.onclick=()=>{ inventoryPage++; renderRows(); };
+invPageSelect.onchange=()=>{ inventoryPage=n(invPageSelect.value)||1; renderRows(); };
 function renderCategoryBreakdown(){
   const rows = getTaxRows();
   const cats={};
@@ -647,7 +684,7 @@ function drawBarChart(canvas, values, color, goal, lineValues, lineColor){
 function monthlySeries(year){
   const income=Array(12).fill(0), cost=Array(12).fill(0), profitArr=Array(12).fill(0), counts=Array(12).fill(0), costProfitArr=Array(12).fill(0);
   state.sold.forEach(r=>{
-    const d=new Date(r.date); if(d.getFullYear()!==year) return;
+    const d=parseLocalDate(r.date); if(d.getFullYear()!==year) return;
     const m=d.getMonth();
     income[m]+=n(r.price); cost[m]+=n(r.cost); profitArr[m]+=profit(r); counts[m]++; costProfitArr[m]+=costProfit(r);
   });
@@ -721,9 +758,9 @@ function checkStorageHealthy(){
 function pulseFor(regex){
   const now=new Date();
   const avg=arr=>arr.length?arr.reduce((a,r)=>a+n(r.price),0)/arr.length:0;
-  const thisMonth=state.sold.filter(r=>regex.test(r.platform) && sameMonth(new Date(r.date),now));
+  const thisMonth=state.sold.filter(r=>regex.test(r.platform) && sameMonth(parseLocalDate(r.date),now));
   const prevDate=new Date(now.getFullYear(),now.getMonth()-1,1);
-  const prevMonth=state.sold.filter(r=>regex.test(r.platform) && sameMonth(new Date(r.date),prevDate));
+  const prevMonth=state.sold.filter(r=>regex.test(r.platform) && sameMonth(parseLocalDate(r.date),prevDate));
   if(!thisMonth.length || !prevMonth.length) return null;
   const a=avg(thisMonth), b=avg(prevMonth);
   if(!b) return null;
@@ -788,6 +825,11 @@ function doSearch(){
     if(hit){ found=hit; foundKind=k; break; }
   }
   if(!found) return;
+  if(foundKind==="inventory"){
+    const sorted = sortedInventory();
+    const idx = sorted.findIndex(x=>x.id===found.id);
+    if(idx>=0){ inventoryPage = Math.floor(idx/INV_PAGE_SIZE)+1; renderRows(); }
+  }
   showPage(foundKind);
   requestAnimationFrame(()=>{
     const rowEl = document.getElementById(`row-${foundKind}-${found.id}`);
@@ -857,7 +899,7 @@ exportBtn.onclick=()=>{
 };
 exportXlsBtn.onclick=()=>{
   if(typeof XLSX==="undefined"){ alert("The spreadsheet library didn't load (no internet connection?). Try again once you're online."); return; }
-  const rows = getTaxRows().slice().sort((a,b)=> new Date(b.date) - new Date(a.date));
+  const rows = getTaxRows().slice().sort((a,b)=> parseLocalDate(b.date) - parseLocalDate(a.date));
   if(!rows.length){ alert("No sold items found for that year."); return; }
   const data = rows.map(r=>({
     "Date Sold": r.date || "",
