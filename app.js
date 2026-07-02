@@ -158,10 +158,28 @@ function showPage(id){
 }
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
 alertsBell.onclick=()=>showPage("alerts");
-avatarBtn.onclick=()=>showPage("settings");
 customizeBtn.onclick=()=>alert("Customize layout — coming soon!");
 document.addEventListener("keydown",e=>{
   if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); globalSearch.focus(); }
+  if(e.key==="Escape") avatarDropdown.hidden=true;
+});
+
+/* ---------- avatar dropdown ---------- */
+avatarBtn.onclick=(e)=>{
+  e.stopPropagation();
+  avatarDropdown.hidden = !avatarDropdown.hidden;
+};
+avatarSettingsItem.onclick=()=>{
+  avatarDropdown.hidden = true;
+  showPage("settings");
+};
+logoutMenuBtn.onclick=()=>{
+  avatarDropdown.hidden = true;
+  if(typeof firebase === "undefined" || !firebase.auth){ window.location.href="login.html"; return; }
+  firebase.auth().signOut().then(()=>{ window.location.href="login.html"; });
+};
+document.addEventListener("click",(e)=>{
+  if(!e.target.closest(".avatar-menu")) avatarDropdown.hidden = true;
 });
 
 /* ---------- item modal ---------- */
@@ -817,6 +835,7 @@ function renderHeader(){
   const name=(state.userName||"").trim();
   greeting.textContent = `Good ${part}${name?`, ${name}.`:"."}`;
   avatarInitial.textContent = name? name[0].toUpperCase() : "?";
+  avatarDropdownName.textContent = name || "Account";
   if(document.activeElement!==userNameInput) userNameInput.value = state.userName||"";
   if(document.activeElement!==goalInput) goalInput.value = state.monthlyGoal||300;
 
@@ -857,6 +876,7 @@ goalInput.oninput=()=>{ state.monthlyGoal=n(goalInput.value)||300; save(); rende
 if(typeof firebase !== "undefined" && firebase.auth){
   firebase.auth().onAuthStateChanged(user=>{
     if(user && accountEmail) accountEmail.textContent = user.email || "—";
+    if(user && avatarDropdownEmail) avatarDropdownEmail.textContent = user.email || "—";
   });
 }
 if(logoutBtn){

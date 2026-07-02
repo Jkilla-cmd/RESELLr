@@ -148,7 +148,24 @@ svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .status-chip .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.18)}
 .icon-only{position:relative;border:1px solid var(--line);background:var(--surface);border-radius:11px;width:38px;height:38px;display:grid;place-items:center;color:var(--ink)}
 .icon-only .badge,.badge{position:absolute;top:-5px;right:-5px;background:#e14b4b;color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 5px;border:2px solid var(--bg)}
+.avatar-menu{position:relative}
 .avatar{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 9px 5px 5px}
+.avatar-dropdown{
+  position:absolute;top:calc(100% + 8px);right:0;min-width:200px;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:6px;z-index:90;
+}
+.avatar-dropdown-head{padding:9px 10px 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.avatar-dropdown-head div{font-size:13px;font-weight:700;color:var(--ink)}
+.avatar-dropdown-head small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avatar-dropdown-item{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  border:0;background:transparent;color:var(--ink);padding:9px 10px;border-radius:9px;font-size:13px;
+}
+.avatar-dropdown-item svg{width:16px;height:16px;flex:none;color:var(--muted)}
+.avatar-dropdown-item:hover{background:var(--surface2)}
+.avatar-dropdown-item.danger-item{color:var(--red)}
+.avatar-dropdown-item.danger-item svg{color:var(--red)}
 .avatar #avatarInitial{width:28px;height:28px;border-radius:50%;background:var(--gold);color:#171308;font-weight:800;font-size:12px;display:grid;place-items:center}
 .avatar .chev{width:14px;height:14px;color:var(--muted)}
 
