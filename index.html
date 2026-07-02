@@ -132,6 +132,8 @@
               <div><small>Income</small><b id="snapIncome">$0.00</b></div>
               <div><small>Profit</small><b id="snapProfit">$0.00</b></div>
               <div><small>Cost + Profit</small><b id="snapCP">$0.00</b></div>
+              <div><small>Avg Sale</small><b id="snapAvg">$0.00</b></div>
+              <div><small>Margin</small><b id="snapMargin">0%</b></div>
             </div>
           </div>
           <div class="stack-bar" id="platformStack"></div>
@@ -143,7 +145,10 @@
             <h2>Monthly Profit View <svg class="info" viewBox="0 0 24 24" title="Green bars show monthly profit against your goal line."><circle cx="12" cy="12" r="9"/><path d="M12 16v-5"/><circle cx="12" cy="8" r=".5"/></svg></h2>
             <select id="monthlyYear"></select>
           </div>
-          <canvas id="monthlyChart"></canvas>
+          <div class="chart-wrap">
+            <canvas id="monthlyChart"></canvas>
+            <div id="monthlyTip" class="chart-tip" hidden></div>
+          </div>
         </article>
 
         <article class="card">
@@ -175,7 +180,7 @@
       </div>
       <div class="table-card">
         <table>
-          <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>Profit</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>Profit</th><th>Listed</th><th>Actions</th></tr></thead>
           <tbody id="inventoryRows"></tbody>
         </table>
       </div>
@@ -185,7 +190,7 @@
       <div class="table-head"><div><h2>Holds</h2><p>Reserved items waiting for purchase or decision.</p></div></div>
       <div class="table-card">
         <table>
-          <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>On Hold</th><th>Actions</th></tr></thead>
           <tbody id="holdRows"></tbody>
         </table>
       </div>
@@ -215,6 +220,14 @@
           <div><small>Total Fees</small><b id="taxFees">$0.00</b></div>
           <div><small>Total Profit</small><b id="taxProfit">$0.00</b></div>
         </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-head"><h2>By Category</h2></div>
+        <div id="categoryBreakdown" class="category-list"></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-head"><h2>By Platform (Lifetime)</h2></div>
+        <div id="platformBreakdown" class="category-list"></div>
       </div>
     </section>
 

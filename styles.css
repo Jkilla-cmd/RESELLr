@@ -154,7 +154,7 @@ button.primary,.primary{background:#161b22;color:#fff;border-color:#161b22}
 .snap-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 .snap-hero>div:first-child b{font-size:34px;letter-spacing:-.03em;display:block}
 .snap-hero>div:first-child span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-.snap-mini{display:flex;gap:16px}
+.snap-mini{display:flex;gap:16px;flex-wrap:wrap;justify-content:flex-end}
 .snap-mini div{text-align:right}
 .snap-mini small{display:block;color:var(--muted);font-size:11px}
 .snap-mini b{font-size:15px}
@@ -206,6 +206,15 @@ td small{color:var(--muted)}
 .alert-row b{display:block;font-size:13.5px}
 .alert-row p{color:var(--muted);font-size:12px;margin-top:2px}
 
+.category-list{display:flex;flex-direction:column;gap:10px}
+.cat-row{display:grid;grid-template-columns:110px 1fr auto auto;align-items:center;gap:12px;font-size:12.5px}
+.cat-row .cat-name{font-weight:700}
+.cat-row .cat-bar{height:8px;border-radius:999px;background:var(--surface2);overflow:hidden}
+.cat-row .cat-bar span{display:block;height:100%;background:var(--gold)}
+.cat-row .cat-count{color:var(--muted);white-space:nowrap}
+.cat-row .cat-profit{font-weight:700;white-space:nowrap;text-align:right;min-width:90px}
+.age-chip{font-size:11.5px;color:var(--muted)}
+.age-chip.warn{color:var(--red);font-weight:700}
 .field-label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:14px}
 .field-label input{display:block;width:100%;margin-top:6px;max-width:340px}
 .muted{color:var(--muted);font-size:13px}

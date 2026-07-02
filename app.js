@@ -341,10 +341,14 @@ function renderSnapshot(){
   let rows=[...state.sold];
   if(snapYear.value && snapYear.value!=="all") rows=rows.filter(r=>new Date(r.date).getFullYear()===n(snapYear.value));
   if(snapMonth.value && snapMonth.value!=="all") rows=rows.filter(r=>new Date(r.date).getMonth()===n(snapMonth.value));
+  const income=rows.reduce((a,r)=>a+n(r.price),0);
+  const totalProfit=rows.reduce((a,r)=>a+profit(r),0);
   snapItems.textContent=rows.length;
-  snapIncome.textContent=money(rows.reduce((a,r)=>a+n(r.price),0));
+  snapIncome.textContent=money(income);
   snapCP.textContent=money(rows.reduce((a,r)=>a+costProfit(r),0));
-  snapProfit.textContent=money(rows.reduce((a,r)=>a+profit(r),0));
+  snapProfit.textContent=money(totalProfit);
+  snapAvg.textContent=money(rows.length ? income/rows.length : 0);
+  snapMargin.textContent = income>0 ? `${((totalProfit/income)*100).toFixed(1)}%` : "0%";
 
   const groups={Mercari:{c:0,v:0},eBay:{c:0,v:0},Private:{c:0,v:0},Other:{c:0,v:0}};
   rows.forEach(r=>{
@@ -354,7 +358,7 @@ function renderSnapshot(){
   const total=rows.length||1;
   const colorMap={Mercari:"var(--orange)",eBay:"var(--blue)",Private:"var(--green)",Other:"#a1a8b3"};
   const order=["Mercari","eBay","Private","Other"].filter(k=>groups[k].c>0);
-  platformStack.innerHTML = order.length ? order.map(k=>`<span style="width:${(groups[k].c/total*100).toFixed(2)}%;background:${colorMap[k]}"></span>`).join("") : `<span style="width:100%;background:var(--line)"></span>`;
+  platformStack.innerHTML = order.length ? order.map(k=>`<span title="${k}: ${groups[k].c} item${groups[k].c===1?'':'s'} (${(groups[k].c/total*100).toFixed(1)}%) • ${money(groups[k].v)}" style="width:${(groups[k].c/total*100).toFixed(2)}%;background:${colorMap[k]}"></span>`).join("") : `<span style="width:100%;background:var(--line)"></span>`;
   platformLegend.innerHTML = order.length ? order.map(k=>`<div class="p-row"><i class="dot" style="background:${colorMap[k]}"></i>${k} <small>${groups[k].c} (${(groups[k].c/total*100).toFixed(1)}%)</small><b>${money(groups[k].v)}</b></div>`).join("") : `<div class="p-row"><small>No sales yet in this range.</small></div>`;
 
   taxIncome.textContent=money(state.sold.reduce((a,r)=>a+n(r.price),0));
@@ -365,19 +369,57 @@ function renderSnapshot(){
 
 /* ---------- tables ---------- */
 function rowTitle(r){return `<strong>${r.title}</strong><small>${r.category||""}</small>`}
+function ageDays(ts){ return ts ? Math.floor((Date.now()-ts)/86400000) : null; }
+function ageChip(ts, warnAt){
+  const d = ageDays(ts);
+  if(d===null) return `<span class="age-chip">—</span>`;
+  const label = d<1 ? "Today" : d===1 ? "1 day" : `${d} days`;
+  return `<span class="age-chip${warnAt && d>warnAt ? ' warn':''}">${label}</span>`;
+}
 function renderRows(){
   inventoryRows.innerHTML=state.inventory.map(r=>`<tr>
     <td>${rowTitle(r)}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td><td class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
+    <td>${ageChip(r.addedAt, 45)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")'>✎</button><button class="icon-btn" onclick="moveToHold('${r.id}')">◇</button><button class="icon-btn" onclick="markSold('${r.id}')">$</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')">×</button></div></td>
-  </tr>`).join("") || `<tr><td colspan="6" class="muted">No active inventory yet.</td></tr>`;
+  </tr>`).join("") || `<tr><td colspan="7" class="muted">No active inventory yet.</td></tr>`;
   holdRows.innerHTML=state.holds.map(r=>`<tr>
     <td>${rowTitle(r)}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td>
+    <td>${ageChip(r.heldAt, 14)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick="moveHoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')">×</button></div></td>
-  </tr>`).join("") || `<tr><td colspan="5" class="muted">No items on hold.</td></tr>`;
+  </tr>`).join("") || `<tr><td colspan="6" class="muted">No items on hold.</td></tr>`;
   soldRows.innerHTML=state.sold.map(r=>`<tr>
     <td>${rowTitle(r)}</td><td>${r.date||""}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td><td>${money(r.fees)}</td><td class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")'>✎</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="8" class="muted">Nothing sold yet.</td></tr>`;
+}
+function renderCategoryBreakdown(){
+  const cats={};
+  state.sold.forEach(r=>{
+    const key=r.category||"Other";
+    cats[key]=cats[key]||{count:0,profit:0,income:0};
+    cats[key].count++; cats[key].profit+=profit(r); cats[key].income+=n(r.price);
+  });
+  const maxProfit=Math.max(1,...Object.values(cats).map(c=>Math.abs(c.profit)));
+  const catOrder=Object.keys(cats).sort((a,b)=>cats[b].profit-cats[a].profit);
+  categoryBreakdown.innerHTML = catOrder.length ? catOrder.map(k=>{
+    const c=cats[k];
+    const pct=Math.max(4,(Math.abs(c.profit)/maxProfit)*100);
+    return `<div class="cat-row"><span class="cat-name">${k}</span><span class="cat-bar"><span style="width:${pct}%;background:${c.profit>=0?'var(--green)':'var(--red)'}"></span></span><span class="cat-count">${c.count} sold • ${money(c.income)}</span><span class="cat-profit ${c.profit>=0?'profit':'loss'}">${money(c.profit)}</span></div>`;
+  }).join("") : `<p class="muted">No sales yet to break down by category.</p>`;
+
+  const plats={};
+  state.sold.forEach(r=>{
+    const key = /mercari/i.test(r.platform)?"Mercari": /ebay/i.test(r.platform)?"eBay": /private/i.test(r.platform)?"Private Sale":(r.platform||"Other");
+    plats[key]=plats[key]||{count:0,profit:0,income:0};
+    plats[key].count++; plats[key].profit+=profit(r); plats[key].income+=n(r.price);
+  });
+  const maxP=Math.max(1,...Object.values(plats).map(c=>Math.abs(c.profit)));
+  const platOrder=Object.keys(plats).sort((a,b)=>plats[b].income-plats[a].income);
+  platformBreakdown.innerHTML = platOrder.length ? platOrder.map(k=>{
+    const c=plats[k];
+    const pct=Math.max(4,(Math.abs(c.profit)/maxP)*100);
+    return `<div class="cat-row"><span class="cat-name">${k}</span><span class="cat-bar"><span style="width:${pct}%;background:${c.profit>=0?'var(--blue)':'var(--red)'}"></span></span><span class="cat-count">${c.count} sold • ${money(c.income)}</span><span class="cat-profit ${c.profit>=0?'profit':'loss'}">${money(c.profit)}</span></div>`;
+  }).join("") : `<p class="muted">No sales yet to break down by platform.</p>`;
 }
 
 /* ---------- activity ---------- */
@@ -529,15 +571,16 @@ function drawBarChart(canvas, values, color, goal){
     ctx.setLineDash([4,4]); ctx.strokeStyle="#c9432f"; ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(w-padR,gy); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle="#c9432f"; ctx.textAlign="right"; ctx.fillText(`${money(goal)} Goal`, w-padR, gy-6); ctx.textAlign="left";
   }
+  canvas._barMeta={padL,padR,padT,padB,niceMax,w,h,bw,count:values.length};
 }
 function monthlySeries(year){
-  const income=Array(12).fill(0), cost=Array(12).fill(0), profitArr=Array(12).fill(0);
+  const income=Array(12).fill(0), cost=Array(12).fill(0), profitArr=Array(12).fill(0), counts=Array(12).fill(0);
   state.sold.forEach(r=>{
     const d=new Date(r.date); if(d.getFullYear()!==year) return;
     const m=d.getMonth();
-    income[m]+=n(r.price); cost[m]+=n(r.cost); profitArr[m]+=profit(r);
+    income[m]+=n(r.price); cost[m]+=n(r.cost); profitArr[m]+=profit(r); counts[m]++;
   });
-  return {income,cost,profitArr};
+  return {income,cost,profitArr,counts};
 }
 function drawGrowthChart(){
   const year = n(growthYear.value)||new Date().getFullYear();
@@ -551,8 +594,9 @@ function drawGrowthChart(){
 function renderCharts(){
   drawGrowthChart();
   const year = n(monthlyYear.value)||new Date().getFullYear();
-  const {profitArr} = monthlySeries(year);
+  const {profitArr,counts} = monthlySeries(year);
   drawBarChart(monthlyChart, profitArr, "#3f9d63", state.monthlyGoal||300);
+  monthlyChart._barData = {profitArr,counts,year,goal:state.monthlyGoal||300};
 }
 growthChart.addEventListener("mousemove", e=>{
   const meta=growthChart._chartMeta, s=growthChart._series;
@@ -573,6 +617,29 @@ growthChart.addEventListener("mousemove", e=>{
   growthTip.hidden=false;
 });
 growthChart.addEventListener("mouseleave",()=>growthTip.hidden=true);
+
+monthlyChart.addEventListener("mousemove", e=>{
+  const meta=monthlyChart._barMeta, d=monthlyChart._barData;
+  if(!meta||!d) return;
+  const rect=monthlyChart.getBoundingClientRect();
+  const x=e.clientX-rect.left;
+  let idx=Math.floor((x-meta.padL)/meta.bw);
+  idx=Math.max(0,Math.min(meta.count-1,idx));
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const val=d.profitArr[idx], cnt=d.counts[idx];
+  const diff=val-d.goal;
+  monthlyTip.innerHTML=`<b>${months[idx]} ${d.year}</b>
+    <div><span>Profit</span><span>${money(val)}</span></div>
+    <div><span>Items Sold</span><span>${cnt}</span></div>
+    <div><span>${diff>=0?"Above Goal":"Below Goal"}</span><span>${diff>=0?"+":""}${money(diff)}</span></div>`;
+  const barH=(meta.h-meta.padT-meta.padB)*(Math.max(0,val)/meta.niceMax);
+  const tipX = meta.padL+idx*meta.bw+meta.bw*0.5;
+  const tipY = meta.h-meta.padB-barH;
+  monthlyTip.style.left=tipX+"px";
+  monthlyTip.style.top=Math.max(0,tipY-78)+"px";
+  monthlyTip.hidden=false;
+});
+monthlyChart.addEventListener("mouseleave",()=>monthlyTip.hidden=true);
 
 /* ---------- header / status / footer ---------- */
 function checkStorageHealthy(){
@@ -735,6 +802,7 @@ function render(){
   renderKPIs();
   renderSnapshot();
   renderRows();
+  renderCategoryBreakdown();
   renderActivity();
   renderAlerts();
   renderCharts();
