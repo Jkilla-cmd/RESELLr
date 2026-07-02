@@ -3,40 +3,109 @@ const KEY = "resellr_v300_data";
 let state = load();
 let editing = null;
 
-function load(){
-  try{
-    const saved = JSON.parse(localStorage.getItem(KEY));
-    if(saved) return saved;
-  }catch(e){}
-  return demoData();
-}
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
-function money(v){ return "$" + (Number(v)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+/* ---------- helpers ---------- */
 function n(v){ const x = Number(v); return Number.isFinite(x) ? x : 0; }
+function money(v){ const x=n(v); const sign=x<0?"-":""; return sign+"$"+Math.abs(x).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function today(){ return new Date().toISOString().slice(0,10); }
 function uid(){ return "id_" + Date.now() + "_" + Math.random().toString(16).slice(2); }
 function profit(r){ return n(r.price)-n(r.cost)-n(r.fees)-n(r.shipping); }
 function costProfit(r){ return n(r.cost)+profit(r); }
+function sameMonth(d,ref){ return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth(); }
+function attrSafe(obj){ return JSON.stringify(obj).replace(/'/g,"&#39;"); }
+function timeAgo(ts){
+  const s=Math.max(0,Math.floor((Date.now()-ts)/1000));
+  if(s<60) return "just now";
+  const m=Math.floor(s/60); if(m<60) return m+"m ago";
+  const h=Math.floor(m/60); if(h<24) return h+"h ago";
+  const d=Math.floor(h/24); return d+"d ago";
+}
+
+/* ---------- persistence ---------- */
+function load(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(KEY));
+    if(saved){
+      saved.inventory = saved.inventory || [];
+      saved.holds = saved.holds || [];
+      saved.sold = saved.sold || [];
+      saved.history = saved.history || [];
+      saved.activity = saved.activity || [];
+      saved.userName = saved.userName || "";
+      saved.monthlyGoal = Number.isFinite(saved.monthlyGoal) ? saved.monthlyGoal : 300;
+      saved.walletMode = Number.isFinite(saved.walletMode) ? saved.walletMode : 50;
+      saved.theme = saved.theme || "light";
+      return saved;
+    }
+  }catch(e){}
+  return demoData();
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+function synthHistory(final, days, startRatio){
+  const start = final*startRatio;
+  const arr=[];
+  for(let i=0;i<days;i++){
+    const t = days<=1 ? 1 : i/(days-1);
+    const base = start + (final-start)*t;
+    const wobble = base*0.02*Math.sin(i*1.6);
+    arr.push(Math.max(0, base+wobble));
+  }
+  arr[arr.length-1]=final;
+  return arr;
+}
 
 function demoData(){
   const now = new Date();
-  return {
-    theme:"light",
-    walletMode:50,
-    inventory:[
-      {id:uid(),title:"2024 Daredevil 14 NYCC John Tyler Christopher Red Foil Exclusive Variant",platform:"Mercari",category:"Comic",price:45,cost:15,fees:0,shipping:0,notes:"Added from Mercari"},
-      {id:uid(),title:"Absolute Batman Annual #1 Signed Variant",platform:"eBay",category:"Comic",price:120,cost:80,fees:0,shipping:0,notes:"Convention signatures"},
-      {id:uid(),title:"Tekken Saga #1 Virgin Variant",platform:"Mercari",category:"Comic",price:75,cost:15,fees:0,shipping:0,notes:"Knightstone"}
-    ],
-    holds:[],
-    sold:[
-      {id:uid(),title:"Secret Wars #8 CGC 9.8",platform:"eBay",category:"Comic",price:520,cost:360,fees:62,shipping:18,date:new Date(now.getFullYear(),0,18).toISOString().slice(0,10)},
-      {id:uid(),title:"GPK Adam Bomb Signed Print",platform:"Mercari",category:"Card",price:160,cost:52,fees:20,shipping:0,date:new Date(now.getFullYear(),2,8).toISOString().slice(0,10)},
-      {id:uid(),title:"Batman Variant Bundle",platform:"Private Sale",category:"Comic",price:95,cost:40,fees:0,shipping:0,date:new Date(now.getFullYear(),5,12).toISOString().slice(0,10)}
-    ]
+  const iso = (offsetDays)=>{ const d=new Date(now); d.setDate(d.getDate()-offsetDays); return d.toISOString().slice(0,10); };
+  const inventory=[
+    {id:uid(),title:"2024 Daredevil 14 NYCC John Tyler Christopher Red Foil Exclusive Variant",platform:"Mercari",category:"Comic",price:45,cost:15,fees:0,shipping:0,notes:"Added from Mercari",addedAt:Date.now()-1000*60*60*26},
+    {id:uid(),title:"Absolute Batman Annual #1 Signed Variant",platform:"eBay",category:"Comic",price:120,cost:80,fees:0,shipping:0,notes:"Convention signatures",addedAt:Date.now()-1000*60*60*24*4},
+    {id:uid(),title:"Tekken Saga #1 Virgin Variant",platform:"Mercari",category:"Comic",price:75,cost:15,fees:0,shipping:0,notes:"Knightstone",addedAt:Date.now()-1000*60*60*24*9},
+    {id:uid(),title:"2016 Pokemon Generations Meowstic Holo",platform:"Mercari",category:"Card",price:10,cost:2,fees:0,shipping:0,notes:"",addedAt:Date.now()-1000*60*60*24*2},
+    {id:uid(),title:"Ultimate Spider-Man #1 2nd Print",platform:"eBay",category:"Comic",price:35,cost:12,fees:0,shipping:0,notes:"",addedAt:Date.now()-1000*60*60*24*13}
+  ];
+  const holds=[
+    {id:uid(),title:"GPK Adam Bomb Signed Print",platform:"Private Sale",category:"Card",price:150,cost:52,fees:0,shipping:0,notes:"Buyer deciding",heldAt:Date.now()-1000*60*60*24*3}
+  ];
+  const sold=[
+    {id:uid(),title:"Secret Wars #8 CGC 9.8",platform:"eBay",category:"Comic",price:520,cost:360,fees:62,shipping:18,date:iso(165)},
+    {id:uid(),title:"GPK Adam Bomb Signed Print",platform:"Mercari",category:"Card",price:160,cost:52,fees:20,shipping:0,date:iso(116)},
+    {id:uid(),title:"Batman Variant Bundle",platform:"Private Sale",category:"Comic",price:95,cost:40,fees:0,shipping:0,date:iso(20)},
+    {id:uid(),title:"Amazing Spider-Man #300 Facsimile",platform:"Mercari",category:"Comic",price:145,cost:60,fees:14,shipping:0,date:iso(1)},
+    {id:uid(),title:"1st Edition Charizard Reprint",platform:"eBay",category:"Card",price:210,cost:90,fees:22,shipping:8,date:iso(6)},
+    {id:uid(),title:"TMNT #1 Mirage Reprint",platform:"Mercari",category:"Comic",price:65,cost:28,fees:6,shipping:0,date:iso(45)}
+  ];
+  const invValue = inventory.reduce((a,r)=>a+n(r.price),0);
+  const cp = sold.reduce((a,r)=>a+costProfit(r),0);
+  const wallet = cp*0.5 - inventory.reduce((a,r)=>a+n(r.cost),0);
+  const salesYTD = sold.filter(r=>new Date(r.date).getFullYear()===now.getFullYear()).length;
+  const days=30;
+  const invArr=synthHistory(invValue,days,0.82);
+  const cpArr=synthHistory(cp,days,0.65);
+  const wArr=synthHistory(wallet,days,0.7);
+  const sArr=synthHistory(salesYTD,days,0.55).map(v=>Math.round(v));
+  const history=[];
+  for(let i=0;i<days;i++){
+    const d=new Date(now); d.setDate(d.getDate()-(days-1-i));
+    history.push({date:d.toISOString().slice(0,10),invValue:invArr[i],costProfit:cpArr[i],wallet:wArr[i],sales:sArr[i]});
   }
+  const activity=[
+    {text:"Sold Amazing Spider-Man #300",sub:"Mercari • +$71.00 Profit",color:"blue",icon:"$",ts:Date.now()-1000*60*60*1},
+    {text:"Bought Batman #125",sub:"eBay • $68.00",color:"gold",icon:"+",ts:Date.now()-1000*60*60*3},
+    {text:"Moved 1 item to Holds",sub:"GPK Adam Bomb Signed Print • $150.00",color:"green",icon:"◇",ts:Date.now()-1000*60*60*5},
+    {text:"Imported 8 new listings",sub:"eBay",color:"violet",icon:"⇵",ts:Date.now()-1000*60*60*7}
+  ];
+  return { theme:"light", walletMode:50, userName:"", monthlyGoal:300, lastBackupAt:null, inventory, holds, sold, history, activity };
 }
 
+/* ---------- activity log ---------- */
+function logActivity(text, sub, color, icon){
+  state.activity = state.activity || [];
+  state.activity.unshift({text, sub, color:color||"gold", icon:icon||"•", ts:Date.now()});
+  state.activity = state.activity.slice(0,30);
+}
+
+/* ---------- wallet math ---------- */
 function walletBalance(){
   return state.sold.reduce((a,r)=>a + costProfit(r)*(state.walletMode/100),0)
        - state.inventory.reduce((a,r)=>a+n(r.cost),0);
@@ -46,26 +115,33 @@ function reservedProfit(){
   const reinvested = state.sold.reduce((a,r)=>a + costProfit(r)*(state.walletMode/100),0);
   return Math.max(0,total-reinvested);
 }
-function setTheme(t){
-  state.theme=t; save();
-  document.documentElement.dataset.theme=t;
-  document.getElementById("themeToggle").textContent = t==="dark" ? "Light" : "Dark";
-}
 
+/* ---------- theme ---------- */
+function setTheme(t){
+  state.theme=t;
+  document.documentElement.dataset.theme=t;
+  const span=themeToggle.querySelector("span");
+  if(span) span.textContent = t==="dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
+}
+themeToggle.onclick=()=>{ setTheme(state.theme==="dark"?"light":"dark"); render(); };
+
+/* ---------- navigation ---------- */
 function showPage(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active-page"));
-  document.getElementById(id).classList.add("active-page");
+  const el=document.getElementById(id);
+  if(el) el.classList.add("active-page");
   document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
-  const titles = {dashboard:"Dashboard",inventory:"Inventory",holds:"Holds",sold:"Sold",tax:"Tax Reports",settings:"Settings"};
-  document.getElementById("pageTitle").textContent = titles[id] || "Dashboard";
+  if(id==="dashboard"){ renderKPIs(); renderCharts(); }
 }
+document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+alertsBell.onclick=()=>showPage("alerts");
+avatarBtn.onclick=()=>showPage("settings");
+customizeBtn.onclick=()=>alert("Customize layout — coming soon!");
+document.addEventListener("keydown",e=>{
+  if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); globalSearch.focus(); }
+});
 
-document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
-document.getElementById("themeToggle").onclick=()=>setTheme(state.theme==="dark"?"light":"dark");
-document.getElementById("walletGlow").onclick=()=>document.getElementById("walletDrawer").classList.toggle("open");
-document.getElementById("closeWallet").onclick=()=>document.getElementById("walletDrawer").classList.remove("open");
-document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{state.walletMode=n(b.dataset.mode);save();render();});
-
+/* ---------- item modal ---------- */
 function openModal(item=null, kind="inventory"){
   editing = item ? {id:item.id, kind} : null;
   const form = document.getElementById("itemForm");
@@ -83,7 +159,6 @@ function openModal(item=null, kind="inventory"){
   }
   document.getElementById("itemModal").showModal();
 }
-document.getElementById("addItemBtn").onclick=()=>openModal();
 document.getElementById("addItemBtn2").onclick=()=>openModal();
 document.getElementById("cancelModal").onclick=()=>document.getElementById("itemModal").close();
 document.getElementById("itemForm").onsubmit=(e)=>{
@@ -105,14 +180,21 @@ document.getElementById("itemForm").onsubmit=(e)=>{
     const i = arr.findIndex(x=>x.id===editing.id);
     if(i>=0) arr[i] = {...arr[i],...item};
   }else{
+    item.addedAt = Date.now();
     state.inventory.unshift(item);
+    logActivity(`Listed ${item.title}`, `${item.platform} • ${money(item.price)}`, "gold", "+");
   }
   save(); document.getElementById("itemModal").close(); render();
 };
 
+/* ---------- item movement ---------- */
 function moveToHold(id){
   const i=state.inventory.findIndex(x=>x.id===id); if(i<0)return;
-  state.holds.unshift(state.inventory.splice(i,1)[0]); save(); render();
+  const item = state.inventory.splice(i,1)[0];
+  item.heldAt = Date.now();
+  state.holds.unshift(item);
+  logActivity(`Moved 1 item to Holds`, `${item.title} • ${money(n(item.price))}`, "green", "◇");
+  save(); render();
 }
 function moveHoldBack(id){
   const i=state.holds.findIndex(x=>x.id===id); if(i<0)return;
@@ -125,7 +207,10 @@ function markSold(id){
   if(price===null){state.inventory.splice(i,0,item); return;}
   const fees = prompt("Fees", item.fees || 0);
   if(fees===null){state.inventory.splice(i,0,item); return;}
-  state.sold.unshift({...item,price:n(price),fees:n(fees),date:today()});
+  const soldItem = {...item,price:n(price),fees:n(fees),date:today()};
+  state.sold.unshift(soldItem);
+  const p = profit(soldItem);
+  logActivity(`Sold ${soldItem.title}`, `${soldItem.platform} • ${p>=0?"+":""}${money(p)} profit`, "blue", "$");
   save(); render();
 }
 function moveSoldBack(id){
@@ -137,6 +222,64 @@ function delFrom(kind,id){
   state[kind]=state[kind].filter(x=>x.id!==id); save(); render();
 }
 
+/* ---------- history + trends ---------- */
+function ensureHistory(){
+  const t = today();
+  const snap = {
+    date:t,
+    invValue: state.inventory.reduce((a,r)=>a+n(r.price),0),
+    costProfit: state.sold.reduce((a,r)=>a+costProfit(r),0),
+    wallet: walletBalance(),
+    sales: state.sold.filter(r=>new Date(r.date).getFullYear()===new Date().getFullYear()).length
+  };
+  if(!state.history) state.history=[];
+  const last = state.history[state.history.length-1];
+  if(last && last.date===t){ Object.assign(last,snap); }
+  else { state.history.push(snap); if(state.history.length>90) state.history=state.history.slice(-90); }
+}
+function computeTrend(key, daysBack){
+  const hist = state.history||[];
+  if(hist.length<2) return null;
+  const idx = Math.max(0, hist.length-1-daysBack);
+  const startVal = hist[idx][key];
+  const endVal = hist[hist.length-1][key];
+  if(idx===hist.length-1) return null;
+  if(!startVal) return endVal ? null : 0;
+  return ((endVal-startVal)/Math.abs(startVal))*100;
+}
+function renderTrend(el, pct, label){
+  if(pct===null || !Number.isFinite(pct)){ el.textContent="New"; el.className="trend flat"; return; }
+  const arrow = pct>=0 ? "↗" : "↘";
+  el.textContent = `${arrow} ${Math.abs(pct).toFixed(1)}% ${label}`;
+  el.className = "trend " + (pct>0.05?"up":pct<-0.05?"down":"flat");
+}
+
+/* ---------- sparklines ---------- */
+function drawSparkline(canvas, values, color){
+  if(!canvas) return;
+  const dpr = devicePixelRatio||1;
+  const w = canvas.clientWidth||84, h = canvas.clientHeight||32;
+  canvas.width=w*dpr; canvas.height=h*dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  const vals = values.length ? values : [0,0];
+  const max=Math.max(...vals), min=Math.min(...vals);
+  const range = (max-min)||1;
+  ctx.beginPath();
+  vals.forEach((v,i)=>{
+    const x = i/(Math.max(1,vals.length-1))*(w-4)+2;
+    const y = h-4-((v-min)/range)*(h-8);
+    i? ctx.lineTo(x,y): ctx.moveTo(x,y);
+  });
+  ctx.strokeStyle=color; ctx.lineWidth=2; ctx.lineJoin="round"; ctx.lineCap="round"; ctx.stroke();
+  ctx.lineTo(w-2,h); ctx.lineTo(2,h); ctx.closePath();
+  const grad=ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,color+"33"); grad.addColorStop(1,color+"00");
+  ctx.fillStyle=grad; ctx.fill();
+}
+
+/* ---------- KPIs ---------- */
 function renderKPIs(){
   const invValue=state.inventory.reduce((a,r)=>a+n(r.price),0);
   const cp=state.sold.reduce((a,r)=>a+costProfit(r),0);
@@ -146,31 +289,55 @@ function renderKPIs(){
   const wb=walletBalance();
 
   kpiInventoryValue.textContent=money(invValue);
-  kpiInventoryCount.textContent=`${state.inventory.length} active items`;
+  kpiInventoryCount.textContent=`${state.inventory.length} item${state.inventory.length===1?"":"s"}`;
   kpiCostProfit.textContent=money(cp);
   kpiWallet.textContent=money(wb);
-  sideWallet.textContent=money(wb);
   kpiSalesYear.textContent=yr.length;
   kpiProfitYear.textContent=`${money(yrProfit)} profit`;
-  drawerWallet.textContent=money(wb);
-  drawerBuying.textContent=money(Math.max(0,wb));
-  drawerReserved.textContent=money(reservedProfit());
+
+  const hist=state.history||[];
+  drawSparkline(sparkInv, hist.map(h=>h.invValue), "#d9922c");
+  drawSparkline(sparkCP, hist.map(h=>h.costProfit), "#7c5cff");
+  drawSparkline(sparkWallet, hist.map(h=>h.wallet), "#2ea862");
+  drawSparkline(sparkSales, hist.map(h=>h.sales), "#3b82f6");
+
+  renderTrend(trendInv, computeTrend("invValue",30), "vs last 30 days");
+  renderTrend(trendCP, computeTrend("costProfit",30), "vs last 30 days");
+  renderTrend(trendWallet, computeTrend("wallet",30), "vs last 30 days");
+  renderTrend(trendSales, computeTrend("sales",365), "vs last year");
 }
 
+/* ---------- filters / year selects ---------- */
+function setYearOptions(select, years, opts={}){
+  const cy=new Date().getFullYear();
+  let html = opts.allOption?`<option value="all">All Years</option>`:"";
+  html += years.map(y=>`<option value="${y}">${y}</option>`).join("");
+  const prev = select.value;
+  if(select.innerHTML!==html) select.innerHTML=html;
+  if(prev && [...select.options].some(o=>o.value===prev)) select.value=prev;
+  else select.value = opts.allOption ? "all" : String(cy);
+}
 function ensureFilters(){
-  const years=[...new Set(state.sold.map(r=>new Date(r.date).getFullYear()))].sort((a,b)=>b-a);
-  const yopts=`<option value="all">All Years</option>`+years.map(y=>`<option>${y}</option>`).join("");
-  if(snapYear.innerHTML!==yopts) snapYear.innerHTML=yopts;
-  if(monthlyYear.innerHTML!==years.map(y=>`<option>${y}</option>`).join("")) monthlyYear.innerHTML=years.map(y=>`<option>${y}</option>`).join("");
+  const cy=new Date().getFullYear();
+  const soldYears=[...new Set(state.sold.map(r=>new Date(r.date).getFullYear()))];
+  const years=[...new Set([cy,...soldYears])].sort((a,b)=>b-a);
+  setYearOptions(growthYear, years);
+  setYearOptions(monthlyYear, years);
+  setYearOptions(snapYear, years, {allOption:true});
   if(!snapMonth.innerHTML){
     snapMonth.innerHTML=`<option value="all">All Months</option>`+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m,i)=>`<option value="${i}">${m}</option>`).join("");
   }
+  const ghtml = years.map(y=>`<option value="${y}">${y===cy?"This Year":y}</option>`).join("");
+  if(globalYear.innerHTML!==ghtml) globalYear.innerHTML=ghtml;
+  globalYear.value = growthYear.value;
 }
-snapYear.onchange=snapMonth.onchange=render;
-monthlyYear.onchange=render;
+growthYear.onchange = snapYear.onchange = snapMonth.onchange = monthlyYear.onchange = render;
+globalYear.onchange = ()=>{
+  growthYear.value=globalYear.value; monthlyYear.value=globalYear.value; snapYear.value=globalYear.value; render();
+};
 
+/* ---------- sold snapshot ---------- */
 function renderSnapshot(){
-  ensureFilters();
   let rows=[...state.sold];
   if(snapYear.value && snapYear.value!=="all") rows=rows.filter(r=>new Date(r.date).getFullYear()===n(snapYear.value));
   if(snapMonth.value && snapMonth.value!=="all") rows=rows.filter(r=>new Date(r.date).getMonth()===n(snapMonth.value));
@@ -178,72 +345,307 @@ function renderSnapshot(){
   snapIncome.textContent=money(rows.reduce((a,r)=>a+n(r.price),0));
   snapCP.textContent=money(rows.reduce((a,r)=>a+costProfit(r),0));
   snapProfit.textContent=money(rows.reduce((a,r)=>a+profit(r),0));
-  snapMercari.textContent=money(rows.filter(r=>/mercari/i.test(r.platform)).reduce((a,r)=>a+n(r.price),0));
-  snapEbay.textContent=money(rows.filter(r=>/ebay/i.test(r.platform)).reduce((a,r)=>a+n(r.price),0));
-  snapPrivate.textContent=money(rows.filter(r=>/private/i.test(r.platform)).reduce((a,r)=>a+n(r.price),0));
+
+  const groups={Mercari:{c:0,v:0},eBay:{c:0,v:0},Private:{c:0,v:0},Other:{c:0,v:0}};
+  rows.forEach(r=>{
+    const key = /mercari/i.test(r.platform)?"Mercari": /ebay/i.test(r.platform)?"eBay": /private/i.test(r.platform)?"Private":"Other";
+    groups[key].c++; groups[key].v+=n(r.price);
+  });
+  const total=rows.length||1;
+  const colorMap={Mercari:"var(--orange)",eBay:"var(--blue)",Private:"var(--green)",Other:"#a1a8b3"};
+  const order=["Mercari","eBay","Private","Other"].filter(k=>groups[k].c>0);
+  platformStack.innerHTML = order.length ? order.map(k=>`<span style="width:${(groups[k].c/total*100).toFixed(2)}%;background:${colorMap[k]}"></span>`).join("") : `<span style="width:100%;background:var(--line)"></span>`;
+  platformLegend.innerHTML = order.length ? order.map(k=>`<div class="p-row"><i class="dot" style="background:${colorMap[k]}"></i>${k} <small>${groups[k].c} (${(groups[k].c/total*100).toFixed(1)}%)</small><b>${money(groups[k].v)}</b></div>`).join("") : `<div class="p-row"><small>No sales yet in this range.</small></div>`;
+
   taxIncome.textContent=money(state.sold.reduce((a,r)=>a+n(r.price),0));
   taxCost.textContent=money(state.sold.reduce((a,r)=>a+n(r.cost),0));
   taxFees.textContent=money(state.sold.reduce((a,r)=>a+n(r.fees),0));
   taxProfit.textContent=money(state.sold.reduce((a,r)=>a+profit(r),0));
 }
 
+/* ---------- tables ---------- */
 function rowTitle(r){return `<strong>${r.title}</strong><small>${r.category||""}</small>`}
 function renderRows(){
   inventoryRows.innerHTML=state.inventory.map(r=>`<tr>
     <td>${rowTitle(r)}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td><td class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${JSON.stringify(r)},"inventory")'>✎</button><button class="icon-btn" onclick="moveToHold('${r.id}')">◇</button><button class="icon-btn" onclick="markSold('${r.id}')">$</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')">×</button></div></td>
-  </tr>`).join("");
+    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")'>✎</button><button class="icon-btn" onclick="moveToHold('${r.id}')">◇</button><button class="icon-btn" onclick="markSold('${r.id}')">$</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')">×</button></div></td>
+  </tr>`).join("") || `<tr><td colspan="6" class="muted">No active inventory yet.</td></tr>`;
   holdRows.innerHTML=state.holds.map(r=>`<tr>
     <td>${rowTitle(r)}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick="moveHoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')">×</button></div></td>
-  </tr>`).join("");
+  </tr>`).join("") || `<tr><td colspan="5" class="muted">No items on hold.</td></tr>`;
   soldRows.innerHTML=state.sold.map(r=>`<tr>
     <td>${rowTitle(r)}</td><td>${r.date||""}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td><td>${money(r.fees)}</td><td class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${JSON.stringify(r)},"sold")'>✎</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')">×</button></div></td>
-  </tr>`).join("");
+    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")'>✎</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')">×</button></div></td>
+  </tr>`).join("") || `<tr><td colspan="8" class="muted">Nothing sold yet.</td></tr>`;
 }
 
+/* ---------- activity ---------- */
 function renderActivity(){
-  const items=[
-    ...state.sold.slice(0,3).map(r=>({type:"$",text:`Sold ${r.title}`,date:r.date})),
-    ...state.inventory.slice(0,2).map(r=>({type:"+",text:`Listed ${r.title}`,date:"Active"}))
-  ];
-  activityList.innerHTML=items.map(x=>`<div class="activity-item"><div class="activity-dot">${x.type}</div><div><strong>${x.text}</strong><small>${x.date}</small></div><span></span></div>`).join("");
+  const items=[...(state.activity||[])].sort((a,b)=>b.ts-a.ts).slice(0,4);
+  activityList.innerHTML = items.length ? items.map(x=>`
+    <div class="activity-item">
+      <div class="activity-dot ${x.color||'gold'}">${x.icon||'•'}</div>
+      <div><strong>${x.text}</strong>${x.sub?`<small>${x.sub}</small>`:""}</div>
+      <span class="when">${timeAgo(x.ts)}</span>
+    </div>`).join("") : `<p class="muted">No activity yet — add or sell an item to see it here.</p>`;
 }
 
-function drawLine(canvas, data, labels, colors){
-  const ctx=canvas.getContext("2d"), w=canvas.clientWidth, h=canvas.clientHeight, dpr=devicePixelRatio||1;
-  canvas.width=w*dpr; canvas.height=h*dpr; ctx.scale(dpr,dpr);
+/* ---------- alerts ---------- */
+function computeAlerts(){
+  const list=[];
+  const wb=walletBalance();
+  if(wb<0) list.push({level:"warn",title:"Wallet balance is negative",text:`Your wallet is at ${money(wb)}. Adjust your reinvestment mode or sell held inventory to recover.`});
+  const staleHolds = state.holds.filter(h=>h.heldAt && (Date.now()-h.heldAt)/86400000>14);
+  if(staleHolds.length) list.push({level:"warn",title:`${staleHolds.length} item${staleHolds.length===1?"":"s"} on hold over 14 days`,text:"Revisit these holds — move them back to inventory or make a decision."});
+  const zeroCost = state.inventory.filter(r=>!n(r.cost)).length;
+  if(zeroCost) list.push({level:"info",title:`${zeroCost} inventory item${zeroCost===1?"":"s"} missing a cost`,text:"Add cost data so profit and wallet math stay accurate."});
+  const zeroCostSold = state.sold.filter(r=>!n(r.cost)).length;
+  if(zeroCostSold) list.push({level:"info",title:`${zeroCostSold} sold item${zeroCostSold===1?"":"s"} missing a cost`,text:"Missing cost data can understate your tax report totals."});
+  if(!list.length) list.push({level:"ok",title:"Everything looks good",text:"No alerts right now — keep listing!"});
+  return list;
+}
+function renderAlerts(){
+  const list=computeAlerts();
+  const active=list.filter(a=>a.level!=="ok");
+  alertBadge.hidden = active.length===0; alertBadge.textContent=active.length;
+  bellBadge.hidden = active.length===0; bellBadge.textContent=active.length;
+  alertsList.innerHTML=list.map(a=>`<div class="alert-row ${a.level}"><div class="a-icon">${a.level==="warn"?"!":a.level==="ok"?"✓":"i"}</div><div><b>${a.title}</b><p>${a.text}</p></div></div>`).join("");
+}
+
+/* ---------- wallet pages ---------- */
+function renderWallet(){
+  const wb=walletBalance();
+  const buying=Math.max(0,wb);
+  const reserved=reservedProfit();
+  [rwAvailable,reAvailable].forEach(el=>el.textContent=money(wb));
+  [rwBuying,reBuying].forEach(el=>el.textContent=money(buying));
+  drawerWallet.textContent=money(wb);
+  drawerBuying.textContent=money(buying);
+  drawerReserved.textContent=money(reserved);
+  const thisMonth=new Date();
+  const spent = [...state.inventory,...state.holds,...state.sold]
+    .filter(r=>r.addedAt && sameMonth(new Date(r.addedAt),thisMonth))
+    .reduce((a,r)=>a+n(r.cost),0);
+  [rwSpent,reSpent].forEach(el=>el.textContent=money(spent));
+  document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active", n(b.dataset.mode)===state.walletMode));
+}
+document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ state.walletMode=n(b.dataset.mode); save(); render(); });
+
+/* ---------- charts ---------- */
+function fmtShort(v){ return v>=1000 ? "$"+(v/1000).toFixed(v%1000?1:0)+"K" : "$"+Math.round(v); }
+function niceCeil(v){
+  if(v<=0) return 10;
+  const pow=Math.pow(10,Math.floor(Math.log10(v)));
+  const rel=v/pow;
+  let m; if(rel<=1)m=1; else if(rel<=2)m=2; else if(rel<=5)m=5; else m=10;
+  return m*pow;
+}
+function roundRect(ctx,x,y,w,h,r){
+  if(h<=0) h=0.0001;
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function themeVar(name, fallback){
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name);
+  return (v && v.trim()) || fallback;
+}
+function drawLineChart(canvas, series, colors){
+  const w=canvas.clientWidth, h=canvas.clientHeight;
+  if(!w||!h) return null;
+  const dpr=devicePixelRatio||1;
+  canvas.width=w*dpr; canvas.height=h*dpr;
+  const ctx=canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
-  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue("--line"); ctx.lineWidth=1;
-  for(let i=0;i<5;i++){let y=20+(h-45)*i/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
-  const max=Math.max(1,...data.flat());
-  data.forEach((series,si)=>{
-    ctx.strokeStyle=colors[si];ctx.lineWidth=3;ctx.beginPath();
-    series.forEach((v,i)=>{let x=12+(w-24)*i/Math.max(1,series.length-1), y=h-28-(h-58)*(v/max); i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
-    ctx.stroke();
+  const padL=42,padR=8,padT=10,padB=22;
+  const max=Math.max(1,...series.flat());
+  const niceMax=niceCeil(max*1.05);
+  const gridColor=themeVar("--line","#e7eaef"), mutedColor=themeVar("--muted","#6b7480");
+  ctx.strokeStyle=gridColor; ctx.fillStyle=mutedColor; ctx.font="11px Inter, sans-serif"; ctx.lineWidth=1;
+  const steps=4;
+  for(let i=0;i<=steps;i++){
+    const y=padT+(h-padT-padB)*(1-i/steps);
+    ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR,y);ctx.stroke();
+    ctx.fillText(fmtShort(niceMax*i/steps),2,y+4);
+  }
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const len=series[0].length;
+  months.slice(0,len).forEach((m,i)=>{
+    const x=padL+(w-padL-padR)*(i/Math.max(1,len-1));
+    ctx.fillText(m, x-9, h-6);
   });
+  series.forEach((s,si)=>{
+    ctx.beginPath();
+    s.forEach((v,i)=>{
+      const x=padL+(w-padL-padR)*(i/Math.max(1,s.length-1));
+      const y=padT+(h-padT-padB)*(1-v/niceMax);
+      i? ctx.lineTo(x,y): ctx.moveTo(x,y);
+    });
+    ctx.strokeStyle=colors[si]; ctx.lineWidth=2.5; ctx.lineJoin="round"; ctx.lineCap="round"; ctx.stroke();
+  });
+  const meta={padL,padR,padT,padB,niceMax,w,h,len};
+  canvas._chartMeta=meta;
+  return meta;
+}
+function drawBarChart(canvas, values, color, goal){
+  const w=canvas.clientWidth, h=canvas.clientHeight;
+  if(!w||!h) return;
+  const dpr=devicePixelRatio||1;
+  canvas.width=w*dpr; canvas.height=h*dpr;
+  const ctx=canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  const padL=42,padR=8,padT=14,padB=22;
+  const max=Math.max(1,...values,goal||0);
+  const niceMax=niceCeil(max*1.15);
+  const gridColor=themeVar("--line","#e7eaef"), mutedColor=themeVar("--muted","#6b7480");
+  ctx.strokeStyle=gridColor; ctx.fillStyle=mutedColor; ctx.font="11px Inter, sans-serif"; ctx.lineWidth=1;
+  const steps=4;
+  for(let i=0;i<=steps;i++){
+    const y=padT+(h-padT-padB)*(1-i/steps);
+    ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR,y);ctx.stroke();
+    ctx.fillText(fmtShort(niceMax*i/steps),2,y+4);
+  }
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const bw=(w-padL-padR)/values.length;
+  values.forEach((v,i)=>{
+    const x=padL+i*bw+bw*0.22;
+    const bh=(h-padT-padB)*(Math.max(0,v)/niceMax);
+    const y=h-padB-bh;
+    ctx.fillStyle=color;
+    roundRect(ctx,x,y,bw*0.56,bh,4);
+    ctx.fill();
+    ctx.fillStyle=mutedColor;
+    ctx.fillText(months[i], x-2, h-6);
+  });
+  if(goal>0){
+    const gy=padT+(h-padT-padB)*(1-goal/niceMax);
+    ctx.setLineDash([4,4]); ctx.strokeStyle="#c9432f"; ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(w-padR,gy); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle="#c9432f"; ctx.textAlign="right"; ctx.fillText(`${money(goal)} Goal`, w-padR, gy-6); ctx.textAlign="left";
+  }
+}
+function monthlySeries(year){
+  const income=Array(12).fill(0), cost=Array(12).fill(0), profitArr=Array(12).fill(0);
+  state.sold.forEach(r=>{
+    const d=new Date(r.date); if(d.getFullYear()!==year) return;
+    const m=d.getMonth();
+    income[m]+=n(r.price); cost[m]+=n(r.cost); profitArr[m]+=profit(r);
+  });
+  return {income,cost,profitArr};
+}
+function drawGrowthChart(){
+  const year = n(growthYear.value)||new Date().getFullYear();
+  const {income,cost,profitArr} = monthlySeries(year);
+  const cum = arr=>{ let s=0; return arr.map(v=>s+=v); };
+  const incomeC=cum(income), costC=cum(cost), profitC=cum(profitArr);
+  const meta = drawLineChart(growthChart, [incomeC,costC,profitC], ["#e8a33d","#3f7fc9","#3f9d63"]);
+  growthChart._series = {incomeC,costC,profitC,year};
+  return meta;
 }
 function renderCharts(){
-  const months=Array.from({length:12},(_,i)=>i);
-  const income=months.map(m=>state.sold.filter(r=>new Date(r.date).getMonth()===m).reduce((a,r)=>a+n(r.price),0));
-  const cp=months.map(m=>state.sold.filter(r=>new Date(r.date).getMonth()===m).reduce((a,r)=>a+costProfit(r),0));
-  const inv=months.map(()=>state.inventory.reduce((a,r)=>a+n(r.price),0));
-  drawLine(growthChart,[inv,cp,income],months,["#d9a441","#4f8f5f","#3f7fc9"]);
-  const prof=months.map(m=>state.sold.filter(r=>new Date(r.date).getMonth()===m).reduce((a,r)=>a+profit(r),0));
-  drawLine(monthlyChart,[prof],months,["#4f8f5f"]);
+  drawGrowthChart();
+  const year = n(monthlyYear.value)||new Date().getFullYear();
+  const {profitArr} = monthlySeries(year);
+  drawBarChart(monthlyChart, profitArr, "#3f9d63", state.monthlyGoal||300);
 }
+growthChart.addEventListener("mousemove", e=>{
+  const meta=growthChart._chartMeta, s=growthChart._series;
+  if(!meta||!s) return;
+  const rect=growthChart.getBoundingClientRect();
+  const x=e.clientX-rect.left;
+  let idx=Math.round((x-meta.padL)/((meta.w-meta.padL-meta.padR)/Math.max(1,meta.len-1)));
+  idx=Math.max(0,Math.min(meta.len-1,idx));
+  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  growthTip.innerHTML=`<b>${months[idx]} ${s.year}</b>
+    <div><span>Total Income</span><span>${money(s.incomeC[idx])}</span></div>
+    <div><span>Cost of Sold</span><span>${money(s.costC[idx])}</span></div>
+    <div><span>Profit</span><span>${money(s.profitC[idx])}</span></div>`;
+  const tipX = meta.padL+(meta.w-meta.padL-meta.padR)*(idx/Math.max(1,meta.len-1));
+  const tipY = meta.padT+(meta.h-meta.padT-meta.padB)*(1-s.incomeC[idx]/meta.niceMax);
+  growthTip.style.left=tipX+"px";
+  growthTip.style.top=Math.max(0,tipY-70)+"px";
+  growthTip.hidden=false;
+});
+growthChart.addEventListener("mouseleave",()=>growthTip.hidden=true);
 
+/* ---------- header / status / footer ---------- */
+function checkStorageHealthy(){
+  try{ localStorage.setItem("__rz_test","1"); localStorage.removeItem("__rz_test"); return true; }
+  catch(e){ return false; }
+}
+function pulseFor(regex){
+  const now=new Date();
+  const avg=arr=>arr.length?arr.reduce((a,r)=>a+n(r.price),0)/arr.length:0;
+  const thisMonth=state.sold.filter(r=>regex.test(r.platform) && sameMonth(new Date(r.date),now));
+  const prevDate=new Date(now.getFullYear(),now.getMonth()-1,1);
+  const prevMonth=state.sold.filter(r=>regex.test(r.platform) && sameMonth(new Date(r.date),prevDate));
+  if(!thisMonth.length || !prevMonth.length) return null;
+  const a=avg(thisMonth), b=avg(prevMonth);
+  if(!b) return null;
+  return ((a-b)/b)*100;
+}
+function setPulse(el,label,pct){
+  if(pct===null || !Number.isFinite(pct)){ el.textContent=`${label} —`; el.style.color=""; return; }
+  el.textContent=`${label} ${pct>=0?"+":""}${pct.toFixed(2)}%`;
+  el.style.color = pct>=0 ? "#4fd487" : "#f27d7d";
+}
+function renderHeader(){
+  const h=new Date().getHours();
+  const part = h<12?"Morning":h<18?"Afternoon":"Evening";
+  const name=(state.userName||"").trim();
+  greeting.textContent = `Good ${part}${name?`, ${name}.`:"."}`;
+  avatarInitial.textContent = name? name[0].toUpperCase() : "?";
+  if(document.activeElement!==userNameInput) userNameInput.value = state.userName||"";
+  if(document.activeElement!==goalInput) goalInput.value = state.monthlyGoal||300;
+
+  const healthy = checkStorageHealthy();
+  dbHealthText.textContent = healthy ? "Healthy" : "Unavailable";
+  systemsDot.style.background = healthy ? "#22c55e" : "#dc2626";
+  autoSaveDot.style.background = healthy ? "#22c55e" : "#dc2626";
+  autoSaveText.textContent = healthy ? "On" : "Off";
+
+  if(state.lastBackupAt){
+    lastBackupLine.textContent = `Last exported ${timeAgo(state.lastBackupAt)}.`;
+    lastBackupFooter.textContent = `Last Backup: ${timeAgo(state.lastBackupAt)}`;
+  }else{
+    lastBackupLine.textContent = "No backup exported yet.";
+    lastBackupFooter.textContent = "Last Backup: never";
+  }
+
+  setPulse(pulseMC,"MC",pulseFor(/mercari/i));
+  setPulse(pulseEBAY,"EBAY",pulseFor(/ebay/i));
+  setPulse(pulsePRVT,"PRVT",pulseFor(/private/i));
+}
+pulseMC.title="Your avg. Mercari sale price vs last month";
+pulseEBAY.title="Your avg. eBay sale price vs last month";
+pulsePRVT.title="Your avg. Private Sale price vs last month";
+
+function updateClock(){
+  const now=new Date();
+  const time=now.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+  const date=now.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});
+  footerClock.textContent=`${time} · ${date}`;
+}
+setInterval(()=>{ updateClock(); renderHeader(); }, 30000);
+
+userNameInput.oninput=()=>{ state.userName=userNameInput.value; save(); renderHeader(); };
+goalInput.oninput=()=>{ state.monthlyGoal=n(goalInput.value)||300; save(); renderCharts(); };
+
+/* ---------- search ---------- */
 globalSearch.oninput=()=>{
   const q=globalSearch.value.toLowerCase().trim();
   if(!q) return;
   const found=[...state.inventory,...state.holds,...state.sold].find(r=>r.title.toLowerCase().includes(q));
   if(found) showPage(state.inventory.includes(found)?"inventory":state.holds.includes(found)?"holds":"sold");
-}
-exportBtn.onclick=()=>{
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="resellr-data.json"; a.click();
-}
+};
+
+/* ---------- import / export ---------- */
 function normalizeItem(r, kind){
   const id = r.id || r._id || uid();
   const title = r.title || r.item || "Untitled item";
@@ -258,6 +660,8 @@ function normalizeItem(r, kind){
   if(kind==="sold"){
     out.date = String(r.date || r.soldDate || r.addedAt || today()).slice(0,10);
   }
+  if(r.addedAt) out.addedAt = typeof r.addedAt==="number" ? r.addedAt : Date.parse(r.addedAt) || Date.now();
+  if(r.heldAt) out.heldAt = typeof r.heldAt==="number" ? r.heldAt : Date.parse(r.heldAt) || Date.now();
   return out;
 }
 function normalizeState(raw){
@@ -277,11 +681,21 @@ function normalizeState(raw){
   return {
     theme: raw.theme || state.theme || "light",
     walletMode: Number.isFinite(raw.walletMode) ? raw.walletMode : (state.walletMode ?? 50),
+    userName: raw.userName || state.userName || "",
+    monthlyGoal: Number.isFinite(raw.monthlyGoal) ? raw.monthlyGoal : (state.monthlyGoal || 300),
+    lastBackupAt: state.lastBackupAt || null,
+    history: [],
+    activity: state.activity || [],
     inventory: convert(invSrc,"inventory"),
     holds: convert(holdSrc,"holds"),
     sold: convert(soldSrc,"sold")
   };
 }
+exportBtn.onclick=()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="resellr-data.json"; a.click();
+  state.lastBackupAt=Date.now(); save(); renderHeader();
+};
 importFile.onchange=e=>{
   const f=e.target.files[0]; if(!f)return;
   const reader=new FileReader();
@@ -298,22 +712,38 @@ importFile.onchange=e=>{
       e.target.value=""; return;
     }
     state = imported;
+    logActivity(`Imported ${total} items`, "From backup file", "violet", "⇵");
     save(); render();
     e.target.value="";
   };
   reader.onerror=()=>alert("Couldn't read that file.");
   reader.readAsText(f);
-}
-seedBtn.onclick=()=>{state=demoData();save();render();}
-clearBtn.onclick=()=>{if(confirm("Clear all RESELLr data?")){state={theme:state.theme,walletMode:50,inventory:[],holds:[],sold:[]};save();render();}}
+};
+seedBtn.onclick=()=>{ state=demoData(); save(); render(); };
+clearBtn.onclick=()=>{
+  if(confirm("Clear all RESELLr data?")){
+    state={theme:state.theme,walletMode:50,userName:state.userName,monthlyGoal:state.monthlyGoal||300,lastBackupAt:state.lastBackupAt,inventory:[],holds:[],sold:[],history:[],activity:[]};
+    save(); render();
+  }
+};
 
+/* ---------- render loop ---------- */
 function render(){
   setTheme(state.theme||"light");
+  ensureHistory();
   ensureFilters();
   renderKPIs();
   renderSnapshot();
   renderRows();
   renderActivity();
+  renderAlerts();
   renderCharts();
+  renderWallet();
+  renderHeader();
+  save();
 }
+let resizeTimer;
+window.addEventListener("resize", ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(render,150); });
+
+updateClock();
 render();

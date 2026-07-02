@@ -1,252 +1,322 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RESELLr v300</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RESELLr</title>
+<link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark">R</div>
-        <div>
-          <strong>RESELLr</strong>
-          <span>Business OS</span>
-        </div>
-      </div>
+<div class="app-shell">
 
-      <nav class="nav">
-        <button class="active" data-page="dashboard">Dashboard</button>
-        <button data-page="inventory">Inventory</button>
-        <button data-page="holds">Holds</button>
-        <button data-page="sold">Sold</button>
-        <button data-page="tax">Tax Reports</button>
-        <button data-page="settings">Settings</button>
-      </nav>
-
-      <div class="side-card">
-        <span>Reinvestment Wallet</span>
-        <b id="sideWallet">$0.00</b>
-        <small>Available buying power</small>
-      </div>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <div>
-          <h1 id="pageTitle">Dashboard</h1>
-          <p id="pageSub">A cleaner command center for your reselling business.</p>
-        </div>
-        <div class="top-actions">
-          <input id="globalSearch" placeholder="Search inventory, sold, holds..." />
-          <button id="themeToggle">Dark</button>
-          <button id="addItemBtn" class="primary">Add Item</button>
-        </div>
-      </header>
-
-      <section id="dashboard" class="page active-page">
-        <div class="kpi-grid">
-          <article class="kpi">
-            <span>Inventory Value</span>
-            <b id="kpiInventoryValue">$0.00</b>
-            <small id="kpiInventoryCount">0 active items</small>
-          </article>
-          <article class="kpi">
-            <span>Cost + Profit</span>
-            <b id="kpiCostProfit">$0.00</b>
-            <small>Recovered capital + gains</small>
-          </article>
-          <article class="kpi">
-            <span>Wallet</span>
-            <b id="kpiWallet">$0.00</b>
-            <small>Buying power</small>
-          </article>
-          <article class="kpi">
-            <span>Sales This Year</span>
-            <b id="kpiSalesYear">0</b>
-            <small id="kpiProfitYear">$0.00 profit</small>
-          </article>
-        </div>
-
-        <div class="dashboard-grid">
-          <article class="card chart-card">
-            <div class="card-head">
-              <div>
-                <h2>Business Growth</h2>
-                <p>Inventory value, cost + profit, and total income.</p>
-              </div>
-              <select id="growthRange">
-                <option value="all">All</option>
-                <option value="ytd">YTD</option>
-                <option value="30">30D</option>
-              </select>
-            </div>
-            <canvas id="growthChart"></canvas>
-          </article>
-
-          <article class="card snapshot-card">
-            <div class="card-head">
-              <div>
-                <h2>Sold Snapshot</h2>
-                <p>Filtered sales summary.</p>
-              </div>
-              <div class="filters">
-                <select id="snapYear"></select>
-                <select id="snapMonth"></select>
-              </div>
-            </div>
-            <div class="snapshot-list">
-              <div><span>Items Sold</span><b id="snapItems">0</b></div>
-              <div><span>Total Income</span><b id="snapIncome">$0.00</b></div>
-              <div><span>Cost + Profit</span><b id="snapCP">$0.00</b></div>
-              <div><span>Total Profit</span><b id="snapProfit">$0.00</b></div>
-            </div>
-            <div class="platform-split">
-              <div><span>Mercari</span><b id="snapMercari">$0.00</b></div>
-              <div><span>eBay</span><b id="snapEbay">$0.00</b></div>
-              <div><span>Private</span><b id="snapPrivate">$0.00</b></div>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-head">
-              <div>
-                <h2>Monthly Profit</h2>
-                <p>Profit trend by month.</p>
-              </div>
-              <select id="monthlyYear"></select>
-            </div>
-            <canvas id="monthlyChart"></canvas>
-          </article>
-
-          <article class="card activity-card">
-            <div class="card-head">
-              <div>
-                <h2>Recent Activity</h2>
-                <p>Latest inventory and sales movement.</p>
-              </div>
-            </div>
-            <div id="activityList" class="activity-list"></div>
-          </article>
-        </div>
-      </section>
-
-      <section id="inventory" class="page">
-        <div class="table-head">
-          <div>
-            <h2>Inventory</h2>
-            <p>Active items currently available.</p>
-          </div>
-          <button class="primary" id="addItemBtn2">Add Item</button>
-        </div>
-        <div class="table-card">
-          <table>
-            <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>Profit</th><th>Actions</th></tr></thead>
-            <tbody id="inventoryRows"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="holds" class="page">
-        <div class="table-head"><div><h2>Holds</h2><p>Reserved items waiting for purchase or decision.</p></div></div>
-        <div class="table-card">
-          <table>
-            <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>Actions</th></tr></thead>
-            <tbody id="holdRows"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="sold" class="page">
-        <div class="table-head"><div><h2>Sold</h2><p>Completed sales and performance.</p></div></div>
-        <div class="table-card">
-          <table>
-            <thead><tr><th>Item</th><th>Date</th><th>Platform</th><th>Sold Price</th><th>Cost</th><th>Fees</th><th>Profit</th><th>Actions</th></tr></thead>
-            <tbody id="soldRows"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="tax" class="page">
-        <div class="card">
-          <h2>Tax Reports</h2>
-          <p class="muted">Summary of sold items, income, costs, fees, and profit.</p>
-          <div class="snapshot-list tax-summary">
-            <div><span>Total Income</span><b id="taxIncome">$0.00</b></div>
-            <div><span>Total Cost</span><b id="taxCost">$0.00</b></div>
-            <div><span>Total Fees</span><b id="taxFees">$0.00</b></div>
-            <div><span>Total Profit</span><b id="taxProfit">$0.00</b></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="settings" class="page">
-        <div class="card">
-          <h2>Settings</h2>
-          <p class="muted">Import/export your RESELLr data.</p>
-          <div class="settings-actions">
-            <button id="exportBtn">Export JSON</button>
-            <label class="file-btn">Import JSON <input id="importFile" type="file" accept="application/json" hidden></label>
-            <button id="seedBtn">Load Demo Data</button>
-            <button id="clearBtn" class="danger">Clear Data</button>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <button id="walletGlow" title="Open wallet"></button>
-  <aside id="walletDrawer" class="wallet-drawer">
-    <div class="card-head">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">R</div>
       <div>
-        <h2>Reinvestment Wallet</h2>
-        <p>Track what can go back into inventory.</p>
+        <strong>RESELLr</strong>
+        <span>v300</span>
       </div>
-      <button id="closeWallet">×</button>
     </div>
-    <div class="snapshot-list">
-      <div><span>Wallet Balance</span><b id="drawerWallet">$0.00</b></div>
-      <div><span>Buying Power</span><b id="drawerBuying">$0.00</b></div>
-      <div><span>Reserved Profit</span><b id="drawerReserved">$0.00</b></div>
-    </div>
-    <div class="wallet-mode">
-      <span>Reinvestment Mode</span>
-      <button data-mode="40">40%</button>
-      <button data-mode="50">50%</button>
-      <button data-mode="70">70%</button>
-    </div>
+
+    <nav class="nav">
+      <button class="active" data-page="dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg><em>Dashboard</em></button>
+      <button data-page="inventory"><svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg><em>Inventory</em></button>
+      <button data-page="holds"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg><em>Holds</em></button>
+      <button data-page="sold"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><em>Sold</em></button>
+      <button data-page="alerts"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><em>Alerts</em><span id="alertBadge" class="nav-badge" hidden>0</span></button>
+      <button data-page="analytics"><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg><em>Analytics</em></button>
+      <button data-page="reinvest"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg><em>Reinvest</em></button>
+      <button data-page="wallet"><svg viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H18v3H6.5A1.5 1.5 0 0 0 5 8.5 1.5 1.5 0 0 0 6.5 10H20v8.5A1.5 1.5 0 0 1 18.5 20h-12A2.5 2.5 0 0 1 4 17.5v-11Z"/><circle cx="17.5" cy="14" r="1.2"/></svg><em>Wallet</em></button>
+      <button data-page="importexport"><svg viewBox="0 0 24 24"><path d="M16 3l4 4-4 4"/><path d="M20 7H8"/><path d="M8 21l-4-4 4-4"/><path d="M4 17h12"/></svg><em>Import / Export</em></button>
+      <button data-page="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1Z"/></svg><em>Settings</em></button>
+    </nav>
+
+    <button id="themeToggle" class="theme-toggle"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><span>Switch to Dark Mode</span></button>
   </aside>
 
-  <dialog id="itemModal">
-    <form method="dialog" id="itemForm">
-      <h2 id="modalTitle">Add Item</h2>
-      <input name="title" placeholder="Item title" required />
-      <div class="form-grid">
-        <select name="platform">
-          <option>Mercari</option>
-          <option>eBay</option>
-          <option>Private Sale</option>
-        </select>
-        <select name="category">
-          <option>Comic</option>
-          <option>Card</option>
-          <option>Other</option>
-        </select>
-        <input name="price" type="number" step="0.01" placeholder="List / sold price" />
-        <input name="cost" type="number" step="0.01" placeholder="Cost" />
-        <input name="fees" type="number" step="0.01" placeholder="Fees" />
-        <input name="shipping" type="number" step="0.01" placeholder="Shipping" />
-      </div>
-      <textarea name="notes" placeholder="Notes"></textarea>
-      <menu>
-        <button value="cancel" type="button" id="cancelModal">Cancel</button>
-        <button class="primary" id="saveItemBtn">Save</button>
-      </menu>
-    </form>
-  </dialog>
+  <main class="main">
 
-  <script src="app.js"></script>
+    <header class="topbar">
+      <div class="greet">
+        <h1 id="greeting">Good Evening.</h1>
+        <p>Here's what's happening with your business today.</p>
+      </div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="globalSearch" placeholder="Search inventory, listings, or SKU..." />
+        <kbd>⌘K</kbd>
+      </div>
+      <div class="top-status">
+        <div class="status-chip"><span class="dot" id="autoSaveDot"></span><div><b>Auto Save</b><small id="autoSaveText">On</small></div></div>
+        <div class="status-chip"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg><div><b id="dbStatusText">Database</b><small id="dbHealthText">Healthy</small></div></div>
+        <button class="icon-only" id="alertsBell" title="Alerts"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span id="bellBadge" class="badge" hidden>0</span></button>
+        <button class="avatar" id="avatarBtn" title="Settings"><span id="avatarInitial">?</span><svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+    </header>
+
+    <div class="range-row">
+      <select id="globalYear"></select>
+      <button id="customizeBtn">Customize</button>
+    </div>
+
+    <section id="dashboard" class="page active-page">
+
+      <div class="kpi-grid">
+        <article class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon peach"><svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg></div>
+            <canvas class="spark" id="sparkInv"></canvas>
+          </div>
+          <span>Inventory Value</span>
+          <b id="kpiInventoryValue">$0.00</b>
+          <small id="kpiInventoryCount">0 items</small>
+          <div class="trend" id="trendInv"></div>
+        </article>
+        <article class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon violet"><svg viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 3 5 3 5 1.1 5 3-2.2 3-5 3-5-1.1-5-3"/></svg></div>
+            <canvas class="spark" id="sparkCP"></canvas>
+          </div>
+          <span>Cost + Profit</span>
+          <b id="kpiCostProfit">$0.00</b>
+          <small>Total Profit</small>
+          <div class="trend" id="trendCP"></div>
+        </article>
+        <article class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon mint"><svg viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H18v3H6.5A1.5 1.5 0 0 0 5 8.5 1.5 1.5 0 0 0 6.5 10H20v8.5A1.5 1.5 0 0 1 18.5 20h-12A2.5 2.5 0 0 1 4 17.5v-11Z"/></svg></div>
+            <canvas class="spark" id="sparkWallet"></canvas>
+          </div>
+          <span>Wallet Balance</span>
+          <b id="kpiWallet">$0.00</b>
+          <small>Available to spend</small>
+          <div class="trend" id="trendWallet"></div>
+        </article>
+        <article class="kpi">
+          <div class="kpi-top">
+            <div class="kpi-icon sky"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2l2.4 12.2A2 2 0 0 0 8.4 17h9.2a2 2 0 0 0 2-1.6L21 7H6"/></svg></div>
+            <canvas class="spark" id="sparkSales"></canvas>
+          </div>
+          <span>Sales This Year</span>
+          <b id="kpiSalesYear">0</b>
+          <small id="kpiProfitYear">$0.00 profit</small>
+          <div class="trend" id="trendSales"></div>
+        </article>
+      </div>
+
+      <div class="dash-grid">
+        <article class="card chart-card">
+          <div class="card-head">
+            <h2>Business Growth</h2>
+            <select id="growthYear"></select>
+          </div>
+          <div class="legend">
+            <span><i class="dot orange"></i>Total Income</span>
+            <span><i class="dot blue"></i>Cost of Sold</span>
+            <span><i class="dot green"></i>Profit</span>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="growthChart"></canvas>
+            <div id="growthTip" class="chart-tip" hidden></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h2>Sold Snapshot</h2>
+            <div class="filters"><select id="snapYear"></select><select id="snapMonth"></select></div>
+          </div>
+          <div class="snap-hero">
+            <div><b id="snapItems">0</b><span>Total Sold</span></div>
+            <div class="snap-mini">
+              <div><small>Income</small><b id="snapIncome">$0.00</b></div>
+              <div><small>Profit</small><b id="snapProfit">$0.00</b></div>
+              <div><small>Cost + Profit</small><b id="snapCP">$0.00</b></div>
+            </div>
+          </div>
+          <div class="stack-bar" id="platformStack"></div>
+          <div class="platform-split" id="platformLegend"></div>
+        </article>
+
+        <article class="card chart-card">
+          <div class="card-head">
+            <h2>Monthly Profit View <svg class="info" viewBox="0 0 24 24" title="Green bars show monthly profit against your goal line."><circle cx="12" cy="12" r="9"/><path d="M12 16v-5"/><circle cx="12" cy="8" r=".5"/></svg></h2>
+            <select id="monthlyYear"></select>
+          </div>
+          <canvas id="monthlyChart"></canvas>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h2>Recent Activity</h2>
+            <button class="link-btn" data-page="alerts">View All</button>
+          </div>
+          <div id="activityList" class="activity-list"></div>
+        </article>
+
+        <article class="card wallet-card">
+          <div class="card-head">
+            <h2>Reinvestment Wallet</h2>
+            <button class="link-btn" data-page="reinvest">Manage</button>
+          </div>
+          <div class="wallet-row">
+            <div><small>Available</small><b id="rwAvailable">$0.00</b></div>
+            <div><small>This Month Spent</small><b id="rwSpent">$0.00</b></div>
+            <div><small>Buying Power</small><b id="rwBuying">$0.00</b></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="inventory" class="page">
+      <div class="table-head">
+        <div><h2>Inventory</h2><p>Active items currently available.</p></div>
+        <button class="primary" id="addItemBtn2">Add Item</button>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>Profit</th><th>Actions</th></tr></thead>
+          <tbody id="inventoryRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="holds" class="page">
+      <div class="table-head"><div><h2>Holds</h2><p>Reserved items waiting for purchase or decision.</p></div></div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>Actions</th></tr></thead>
+          <tbody id="holdRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="sold" class="page">
+      <div class="table-head"><div><h2>Sold</h2><p>Completed sales and performance.</p></div></div>
+      <div class="table-card">
+        <table>
+          <thead><tr><th>Item</th><th>Date</th><th>Platform</th><th>Sold Price</th><th>Cost</th><th>Fees</th><th>Profit</th><th>Actions</th></tr></thead>
+          <tbody id="soldRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="alerts" class="page">
+      <div class="table-head"><div><h2>Alerts</h2><p>Things worth a look, generated from your live data.</p></div></div>
+      <div id="alertsList" class="alerts-list"></div>
+    </section>
+
+    <section id="analytics" class="page">
+      <div class="table-head"><div><h2>Analytics &amp; Tax Reports</h2><p>Lifetime totals across every sale on record.</p></div></div>
+      <div class="card">
+        <div class="snap-mini big">
+          <div><small>Total Income</small><b id="taxIncome">$0.00</b></div>
+          <div><small>Total Cost</small><b id="taxCost">$0.00</b></div>
+          <div><small>Total Fees</small><b id="taxFees">$0.00</b></div>
+          <div><small>Total Profit</small><b id="taxProfit">$0.00</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="reinvest" class="page">
+      <div class="table-head"><div><h2>Reinvest</h2><p>Choose how much of every sale's cost + profit feeds back into buying power.</p></div></div>
+      <div class="card">
+        <div class="wallet-row">
+          <div><small>Available</small><b id="reAvailable">$0.00</b></div>
+          <div><small>This Month Spent</small><b id="reSpent">$0.00</b></div>
+          <div><small>Buying Power</small><b id="reBuying">$0.00</b></div>
+        </div>
+        <div class="wallet-mode">
+          <span>Reinvestment Mode</span>
+          <button data-mode="40">40%</button>
+          <button data-mode="50">50%</button>
+          <button data-mode="70">70%</button>
+        </div>
+        <p class="muted">Reinvestment mode sets what share of each sale's recovered cost + profit is treated as buying power for new inventory. The rest is held as reserved profit.</p>
+      </div>
+    </section>
+
+    <section id="wallet" class="page">
+      <div class="table-head"><div><h2>Wallet</h2><p>Your reinvestment wallet at a glance.</p></div></div>
+      <div class="card">
+        <div class="wallet-row">
+          <div><small>Wallet Balance</small><b id="drawerWallet">$0.00</b></div>
+          <div><small>Buying Power</small><b id="drawerBuying">$0.00</b></div>
+          <div><small>Reserved Profit</small><b id="drawerReserved">$0.00</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="importexport" class="page">
+      <div class="table-head"><div><h2>Import / Export</h2><p>Back up your data or bring in a RESELLr export.</p></div></div>
+      <div class="card">
+        <div class="settings-actions">
+          <button id="exportBtn">Export JSON</button>
+          <label class="file-btn">Import JSON <input id="importFile" type="file" accept="application/json" hidden></label>
+          <button id="seedBtn">Load Demo Data</button>
+          <button id="clearBtn" class="danger">Clear Data</button>
+        </div>
+        <p class="muted" id="lastBackupLine">No backup exported yet.</p>
+      </div>
+    </section>
+
+    <section id="settings" class="page">
+      <div class="table-head"><div><h2>Settings</h2><p>Personalize RESELLr.</p></div></div>
+      <div class="card">
+        <label class="field-label">Your name<input id="userNameInput" placeholder="e.g. Jacob" /></label>
+        <label class="field-label">Monthly profit goal<input id="goalInput" type="number" step="1" placeholder="300" /></label>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="status-bar">
+  <div class="pulse-group">
+    <span class="pulse-label"><svg viewBox="0 0 24 24"><path d="M2 12h4l2-7 4 14 3-10 2 3h5"/></svg>Market Pulse</span>
+    <span id="pulseMC" class="pulse-item">MC —</span>
+    <span id="pulseEBAY" class="pulse-item">EBAY —</span>
+    <span id="pulsePRVT" class="pulse-item">PRVT —</span>
+  </div>
+  <div class="status-mid">
+    <span id="lastBackupFooter">Last Backup: —</span>
+    <span class="status-chip small"><span class="dot" id="systemsDot"></span>All systems operational</span>
+  </div>
+  <div class="status-right">
+    <span id="footerClock">—</span>
+    <button class="icon-only" title="Today"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></svg></button>
+    <button class="icon-only" id="footerWalletBtn" data-page="wallet" title="Wallet"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></button>
+  </div>
+</footer>
+
+<dialog id="itemModal">
+  <form method="dialog" id="itemForm">
+    <h2 id="modalTitle">Add Item</h2>
+    <input name="title" placeholder="Item title" required />
+    <div class="form-grid">
+      <select name="platform">
+        <option>Mercari</option>
+        <option>eBay</option>
+        <option>Private Sale</option>
+      </select>
+      <select name="category">
+        <option>Comic</option>
+        <option>Card</option>
+        <option>Other</option>
+      </select>
+      <input name="price" type="number" step="0.01" placeholder="List / sold price" />
+      <input name="cost" type="number" step="0.01" placeholder="Cost" />
+      <input name="fees" type="number" step="0.01" placeholder="Fees" />
+      <input name="shipping" type="number" step="0.01" placeholder="Shipping" />
+    </div>
+    <textarea name="notes" placeholder="Notes"></textarea>
+    <menu>
+      <button value="cancel" type="button" id="cancelModal">Cancel</button>
+      <button class="primary" id="saveItemBtn">Save</button>
+    </menu>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
 </body>
 </html>
