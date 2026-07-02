@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RESELLr v300</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">R</div>
+        <div>
+          <strong>RESELLr</strong>
+          <span>Business OS</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="active" data-page="dashboard">Dashboard</button>
+        <button data-page="inventory">Inventory</button>
+        <button data-page="holds">Holds</button>
+        <button data-page="sold">Sold</button>
+        <button data-page="tax">Tax Reports</button>
+        <button data-page="settings">Settings</button>
+      </nav>
+
+      <div class="side-card">
+        <span>Reinvestment Wallet</span>
+        <b id="sideWallet">$0.00</b>
+        <small>Available buying power</small>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageSub">A cleaner command center for your reselling business.</p>
+        </div>
+        <div class="top-actions">
+          <input id="globalSearch" placeholder="Search inventory, sold, holds..." />
+          <button id="themeToggle">Dark</button>
+          <button id="addItemBtn" class="primary">Add Item</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="page active-page">
+        <div class="kpi-grid">
+          <article class="kpi">
+            <span>Inventory Value</span>
+            <b id="kpiInventoryValue">$0.00</b>
+            <small id="kpiInventoryCount">0 active items</small>
+          </article>
+          <article class="kpi">
+            <span>Cost + Profit</span>
+            <b id="kpiCostProfit">$0.00</b>
+            <small>Recovered capital + gains</small>
+          </article>
+          <article class="kpi">
+            <span>Wallet</span>
+            <b id="kpiWallet">$0.00</b>
+            <small>Buying power</small>
+          </article>
+          <article class="kpi">
+            <span>Sales This Year</span>
+            <b id="kpiSalesYear">0</b>
+            <small id="kpiProfitYear">$0.00 profit</small>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="card chart-card">
+            <div class="card-head">
+              <div>
+                <h2>Business Growth</h2>
+                <p>Inventory value, cost + profit, and total income.</p>
+              </div>
+              <select id="growthRange">
+                <option value="all">All</option>
+                <option value="ytd">YTD</option>
+                <option value="30">30D</option>
+              </select>
+            </div>
+            <canvas id="growthChart"></canvas>
+          </article>
+
+          <article class="card snapshot-card">
+            <div class="card-head">
+              <div>
+                <h2>Sold Snapshot</h2>
+                <p>Filtered sales summary.</p>
+              </div>
+              <div class="filters">
+                <select id="snapYear"></select>
+                <select id="snapMonth"></select>
+              </div>
+            </div>
+            <div class="snapshot-list">
+              <div><span>Items Sold</span><b id="snapItems">0</b></div>
+              <div><span>Total Income</span><b id="snapIncome">$0.00</b></div>
+              <div><span>Cost + Profit</span><b id="snapCP">$0.00</b></div>
+              <div><span>Total Profit</span><b id="snapProfit">$0.00</b></div>
+            </div>
+            <div class="platform-split">
+              <div><span>Mercari</span><b id="snapMercari">$0.00</b></div>
+              <div><span>eBay</span><b id="snapEbay">$0.00</b></div>
+              <div><span>Private</span><b id="snapPrivate">$0.00</b></div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <div>
+                <h2>Monthly Profit</h2>
+                <p>Profit trend by month.</p>
+              </div>
+              <select id="monthlyYear"></select>
+            </div>
+            <canvas id="monthlyChart"></canvas>
+          </article>
+
+          <article class="card activity-card">
+            <div class="card-head">
+              <div>
+                <h2>Recent Activity</h2>
+                <p>Latest inventory and sales movement.</p>
+              </div>
+            </div>
+            <div id="activityList" class="activity-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="inventory" class="page">
+        <div class="table-head">
+          <div>
+            <h2>Inventory</h2>
+            <p>Active items currently available.</p>
+          </div>
+          <button class="primary" id="addItemBtn2">Add Item</button>
+        </div>
+        <div class="table-card">
+          <table>
+            <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>Profit</th><th>Actions</th></tr></thead>
+            <tbody id="inventoryRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="holds" class="page">
+        <div class="table-head"><div><h2>Holds</h2><p>Reserved items waiting for purchase or decision.</p></div></div>
+        <div class="table-card">
+          <table>
+            <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>Actions</th></tr></thead>
+            <tbody id="holdRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="sold" class="page">
+        <div class="table-head"><div><h2>Sold</h2><p>Completed sales and performance.</p></div></div>
+        <div class="table-card">
+          <table>
+            <thead><tr><th>Item</th><th>Date</th><th>Platform</th><th>Sold Price</th><th>Cost</th><th>Fees</th><th>Profit</th><th>Actions</th></tr></thead>
+            <tbody id="soldRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tax" class="page">
+        <div class="card">
+          <h2>Tax Reports</h2>
+          <p class="muted">Summary of sold items, income, costs, fees, and profit.</p>
+          <div class="snapshot-list tax-summary">
+            <div><span>Total Income</span><b id="taxIncome">$0.00</b></div>
+            <div><span>Total Cost</span><b id="taxCost">$0.00</b></div>
+            <div><span>Total Fees</span><b id="taxFees">$0.00</b></div>
+            <div><span>Total Profit</span><b id="taxProfit">$0.00</b></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings" class="page">
+        <div class="card">
+          <h2>Settings</h2>
+          <p class="muted">Import/export your RESELLr data.</p>
+          <div class="settings-actions">
+            <button id="exportBtn">Export JSON</button>
+            <label class="file-btn">Import JSON <input id="importFile" type="file" accept="application/json" hidden></label>
+            <button id="seedBtn">Load Demo Data</button>
+            <button id="clearBtn" class="danger">Clear Data</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <button id="walletGlow" title="Open wallet"></button>
+  <aside id="walletDrawer" class="wallet-drawer">
+    <div class="card-head">
+      <div>
+        <h2>Reinvestment Wallet</h2>
+        <p>Track what can go back into inventory.</p>
+      </div>
+      <button id="closeWallet">×</button>
+    </div>
+    <div class="snapshot-list">
+      <div><span>Wallet Balance</span><b id="drawerWallet">$0.00</b></div>
+      <div><span>Buying Power</span><b id="drawerBuying">$0.00</b></div>
+      <div><span>Reserved Profit</span><b id="drawerReserved">$0.00</b></div>
+    </div>
+    <div class="wallet-mode">
+      <span>Reinvestment Mode</span>
+      <button data-mode="40">40%</button>
+      <button data-mode="50">50%</button>
+      <button data-mode="70">70%</button>
+    </div>
+  </aside>
+
+  <dialog id="itemModal">
+    <form method="dialog" id="itemForm">
+      <h2 id="modalTitle">Add Item</h2>
+      <input name="title" placeholder="Item title" required />
+      <div class="form-grid">
+        <select name="platform">
+          <option>Mercari</option>
+          <option>eBay</option>
+          <option>Private Sale</option>
+        </select>
+        <select name="category">
+          <option>Comic</option>
+          <option>Card</option>
+          <option>Other</option>
+        </select>
+        <input name="price" type="number" step="0.01" placeholder="List / sold price" />
+        <input name="cost" type="number" step="0.01" placeholder="Cost" />
+        <input name="fees" type="number" step="0.01" placeholder="Fees" />
+        <input name="shipping" type="number" step="0.01" placeholder="Shipping" />
+      </div>
+      <textarea name="notes" placeholder="Notes"></textarea>
+      <menu>
+        <button value="cancel" type="button" id="cancelModal">Cancel</button>
+        <button class="primary" id="saveItemBtn">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
