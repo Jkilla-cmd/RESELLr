@@ -176,7 +176,10 @@
     <section id="inventory" class="page">
       <div class="table-head">
         <div><h2>Inventory</h2><p>Active items currently available.</p></div>
-        <button class="primary" id="addItemBtn2">Add Item</button>
+        <div class="table-head-actions">
+          <button id="pasteListingBtn" title="Paste a listing copied by the RESELLr bookmarklet">Paste Listing</button>
+          <button class="primary" id="addItemBtn2">Add Item</button>
+        </div>
       </div>
       <div class="table-card">
         <table>
@@ -270,6 +273,22 @@
           <button id="clearBtn" class="danger">Clear Data</button>
         </div>
         <p class="muted" id="lastBackupLine">No backup exported yet.</p>
+      </div>
+
+      <div class="card bookmarklet-card">
+        <div class="card-head"><h2>Bookmarklet: Import from Mercari &amp; eBay</h2></div>
+        <p class="muted">Drag the button below to your bookmarks bar. While viewing a listing on Mercari or eBay, click it &mdash; the title and price get copied to your clipboard. Then come back here (or the Inventory page) and click <b>Paste Listing</b> to drop it straight into the Add Item form.</p>
+        <div class="bookmarklet-row">
+          <a class="bookmarklet-btn" href="javascript:(function(){ function getJsonLdProduct(){ var scripts = document.querySelectorAll(&#x27;script[type=&quot;application/ld+json&quot;]&#x27;); for (var i=0;i&lt;scripts.length;i++){ try{ var data = JSON.parse(scripts[i].textContent); var items = Array.isArray(data) ? data.slice() : [data]; for (var j=0;j&lt;items.length;j++){ var it = items[j]; if (!it) continue; if (it[&#x27;@graph&#x27;] &amp;&amp; Array.isArray(it[&#x27;@graph&#x27;])) items = items.concat(it[&#x27;@graph&#x27;]); var type = it[&#x27;@type&#x27;]; var isProduct = type === &#x27;Product&#x27; || (Array.isArray(type) &amp;&amp; type.indexOf(&#x27;Product&#x27;) &gt; -1); if (isProduct){ var price = null; if (it.offers){ var offer = Array.isArray(it.offers) ? it.offers[0] : it.offers; price = offer &amp;&amp; (offer.price || offer.lowPrice); } var image = it.image ? (Array.isArray(it.image) ? it.image[0] : it.image) : null; return { title: it.name, price: price, image: image }; } } }catch(e){} } return null; } function metaContent(prop){ var el = document.querySelector(&#x27;meta[property=&quot;&#x27;+prop+&#x27;&quot;]&#x27;) || document.querySelector(&#x27;meta[name=&quot;&#x27;+prop+&#x27;&quot;]&#x27;); return el ? el.getAttribute(&#x27;content&#x27;) : null; } function findPriceOnPage(){ var text = document.body.innerText || &#x27;&#x27;; var m = text.match(/\$\s?[\d,]+\.\d{2}/); return m ? m[0] : null; } function toast(msg){ var box = document.createElement(&#x27;div&#x27;); box.textContent = msg; box.style.cssText = &#x27;position:fixed;top:16px;right:16px;z-index:2147483647;background:#161b22;color:#fff;padding:12px 16px;border-radius:10px;font:13px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.35);max-width:280px&#x27;; document.body.appendChild(box); setTimeout(function(){ if(box.parentNode) box.parentNode.removeChild(box); }, 4500); } function fallbackCopy(text){ var ta = document.createElement(&#x27;textarea&#x27;); ta.value = text; ta.style.position = &#x27;fixed&#x27;; ta.style.left = &#x27;-9999px&#x27;; document.body.appendChild(ta); ta.select(); try{ document.execCommand(&#x27;copy&#x27;); }catch(e){} document.body.removeChild(ta); } var host = location.hostname; var platform = host.indexOf(&#x27;mercari&#x27;) &gt; -1 ? &#x27;Mercari&#x27; : (host.indexOf(&#x27;ebay&#x27;) &gt; -1 ? &#x27;eBay&#x27; : &#x27;Other&#x27;); var ld = getJsonLdProduct(); var title = (ld &amp;&amp; ld.title) || metaContent(&#x27;og:title&#x27;) || document.title || &#x27;&#x27;; title = title.replace(/\s*[\|\-]\s*(Mercari|eBay).*$/i, &#x27;&#x27;).trim(); var priceRaw = (ld &amp;&amp; ld.price) || metaContent(&#x27;product:price:amount&#x27;) || metaContent(&#x27;og:price:amount&#x27;) || findPriceOnPage(); var price = priceRaw ? parseFloat(String(priceRaw).replace(/[^0-9.]/g,&#x27;&#x27;)) : &#x27;&#x27;; var image = (ld &amp;&amp; ld.image) || metaContent(&#x27;og:image&#x27;) || &#x27;&#x27;; var payload = { title: title, price: price, platform: platform, sourceUrl: location.href, image: image, scrapedAt: Date.now() }; var json = JSON.stringify(payload); var priceLabel = price ? (&#x27;$&#x27; + price) : &#x27;no price found&#x27;; if (navigator.clipboard &amp;&amp; navigator.clipboard.writeText){ navigator.clipboard.writeText(json).then(function(){ toast(&#x27;RESELLr: copied &quot;&#x27; + title + &#x27;&quot; (&#x27; + priceLabel + &#x27;). Paste it into RESELLr with &quot;Paste Listing&quot;.&#x27;); }).catch(function(){ fallbackCopy(json); toast(&#x27;RESELLr: copied &quot;&#x27; + title + &#x27;&quot; (&#x27; + priceLabel + &#x27;). Paste it into RESELLr with &quot;Paste Listing&quot;.&#x27;); }); } else { fallbackCopy(json); toast(&#x27;RESELLr: copied &quot;&#x27; + title + &#x27;&quot; (&#x27; + priceLabel + &#x27;). Paste it into RESELLr with &quot;Paste Listing&quot;.&#x27;); } })();" onclick="alert(&#39;Drag this button to your bookmarks bar instead of clicking it.&#39;); return false;">+ Add to RESELLr</a>
+          <button id="pasteListingBtn2">Paste Listing</button>
+        </div>
+        <ol class="bookmarklet-steps">
+          <li>Show your browser's bookmarks bar (Ctrl/Cmd+Shift+B).</li>
+          <li>Drag the gold <b>+ Add to RESELLr</b> button up into the bookmarks bar.</li>
+          <li>Open a listing on Mercari or eBay, then click the bookmark.</li>
+          <li>Come back to RESELLr and click <b>Paste Listing</b> &mdash; the title, price, and platform will pre-fill the Add Item form. Fill in your cost and save.</li>
+        </ol>
+        <p class="muted small">Scraping depends on each site's page structure, so double-check the title and price before saving. If your browser blocks clipboard access, click Paste Listing and paste the copied text manually when prompted.</p>
       </div>
     </section>
 

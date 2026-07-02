@@ -161,6 +161,40 @@ function openModal(item=null, kind="inventory"){
 }
 document.getElementById("addItemBtn2").onclick=()=>openModal();
 document.getElementById("cancelModal").onclick=()=>document.getElementById("itemModal").close();
+
+/* ---------- bookmarklet paste ---------- */
+function guessCategory(title){
+  const t = title||"";
+  if(/pokemon|tcg|panini|topps|psa|bgs|graded|slab|card game|yugioh|magic: the gathering|\bmtg\b/i.test(t)) return "Card";
+  if(/comic|cgc|variant|#\d|annual|issue/i.test(t)) return "Comic";
+  return "Comic";
+}
+async function pasteListing(){
+  let raw = null;
+  try{
+    if(navigator.clipboard && navigator.clipboard.readText){
+      raw = await navigator.clipboard.readText();
+    }
+  }catch(e){ raw = null; }
+  if(!raw || !raw.trim().startsWith("{")){
+    raw = prompt("Clipboard access was blocked by your browser. Paste the copied listing here:");
+  }
+  if(!raw) return;
+  let data;
+  try{ data = JSON.parse(raw); }
+  catch(e){ alert("That doesn't look like a listing copied by the RESELLr bookmarklet. Click the bookmarklet on a Mercari or eBay listing page first, then try again."); return; }
+  if(!data.title){ alert("No title was found in that listing. You can still add it manually."); return; }
+
+  openModal(null);
+  const form = document.getElementById("itemForm");
+  form.title.value = data.title || "";
+  form.platform.value = /mercari/i.test(data.platform) ? "Mercari" : /ebay/i.test(data.platform) ? "eBay" : "Mercari";
+  form.category.value = guessCategory(data.title);
+  form.price.value = data.price || "";
+  form.notes.value = data.sourceUrl ? `Imported from ${data.sourceUrl}` : "";
+}
+document.getElementById("pasteListingBtn").onclick=pasteListing;
+document.getElementById("pasteListingBtn2").onclick=pasteListing;
 document.getElementById("itemForm").onsubmit=(e)=>{
   e.preventDefault();
   const fd = new FormData(e.target);
