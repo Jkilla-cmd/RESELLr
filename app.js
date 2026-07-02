@@ -43,6 +43,7 @@ function load(){
       saved.monthlyGoal = Number.isFinite(saved.monthlyGoal) ? saved.monthlyGoal : 300;
       saved.walletMode = Number.isFinite(saved.walletMode) ? saved.walletMode : 50;
       saved.theme = saved.theme || "light";
+      saved.sidebarCollapsed = !!saved.sidebarCollapsed;
       return saved;
     }
   }catch(e){}
@@ -104,7 +105,7 @@ function demoData(){
     {text:"Moved 1 item to Holds",sub:"GPK Adam Bomb Signed Print • $150.00",color:"green",icon:"◇",ts:Date.now()-1000*60*60*5},
     {text:"Imported 8 new listings",sub:"eBay",color:"violet",icon:"⇵",ts:Date.now()-1000*60*60*7}
   ];
-  return { theme:"light", walletMode:50, userName:"", monthlyGoal:300, lastBackupAt:null, inventory, holds, sold, history, activity };
+  return { theme:"light", walletMode:50, userName:"", monthlyGoal:300, lastBackupAt:null, sidebarCollapsed:false, inventory, holds, sold, history, activity };
 }
 
 /* ---------- activity log ---------- */
@@ -133,6 +134,19 @@ function setTheme(t){
   if(span) span.textContent = t==="dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
 }
 themeToggle.onclick=()=>{ setTheme(state.theme==="dark"?"light":"dark"); render(); };
+
+/* ---------- sidebar collapse ---------- */
+const appShell = document.querySelector(".app-shell");
+function applySidebarState(){
+  appShell.classList.toggle("sb-collapsed", !!state.sidebarCollapsed);
+  sidebarToggle.title = state.sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar";
+}
+sidebarToggle.onclick=()=>{
+  state.sidebarCollapsed = !state.sidebarCollapsed;
+  applySidebarState();
+  save();
+};
+applySidebarState();
 
 /* ---------- navigation ---------- */
 function showPage(id){
@@ -382,14 +396,16 @@ function ensureFilters(){
   setYearOptions(monthlyYear, years);
   setYearOptions(snapYear, years, {allOption:true});
   setYearOptions(taxYear, years, {allOption:true});
-  if(!snapMonth.innerHTML){
-    snapMonth.innerHTML=`<option value="all">All Months</option>`+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m,i)=>`<option value="${i}">${m}</option>`).join("");
-  }
+  setYearOptions(soldYear, years, {allOption:true});
+  const monthOpts = `<option value="all">All Months</option>`+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m,i)=>`<option value="${i}">${m}</option>`).join("");
+  if(!snapMonth.innerHTML) snapMonth.innerHTML = monthOpts;
+  if(!soldMonth.innerHTML) soldMonth.innerHTML = monthOpts;
   const ghtml = years.map(y=>`<option value="${y}">${y===cy?"This Year":y}</option>`).join("");
   if(globalYear.innerHTML!==ghtml) globalYear.innerHTML=ghtml;
   globalYear.value = growthYear.value;
 }
 growthYear.onchange = snapYear.onchange = snapMonth.onchange = monthlyYear.onchange = taxYear.onchange = render;
+soldYear.onchange = soldMonth.onchange = ()=>{ soldPage=1; render(); };
 globalYear.onchange = ()=>{
   growthYear.value=globalYear.value; monthlyYear.value=globalYear.value; snapYear.value=globalYear.value; render();
 };
@@ -397,6 +413,12 @@ function getTaxRows(){
   return taxYear.value && taxYear.value!=="all"
     ? state.sold.filter(r=>parseLocalDate(r.date).getFullYear()===n(taxYear.value))
     : [...state.sold];
+}
+function getSoldRows(){
+  let rows=[...state.sold];
+  if(soldYear.value && soldYear.value!=="all") rows=rows.filter(r=>parseLocalDate(r.date).getFullYear()===n(soldYear.value));
+  if(soldMonth.value && soldMonth.value!=="all") rows=rows.filter(r=>parseLocalDate(r.date).getMonth()===n(soldMonth.value));
+  return rows;
 }
 
 /* ---------- sold snapshot ---------- */
@@ -441,7 +463,9 @@ function ageChip(ts, warnAt){
   return `<span class="age-chip${warnAt && d>warnAt ? ' warn':''}">${label}</span>`;
 }
 const INV_PAGE_SIZE = 25;
+const SOLD_PAGE_SIZE = 25;
 let inventoryPage = 1;
+let soldPage = 1;
 function sortedInventory(){
   return [...state.inventory].sort((a,b)=> (b.addedAt||0) - (a.addedAt||0));
 }
@@ -475,15 +499,36 @@ function renderRows(){
     <td>${ageChip(r.heldAt, 14)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick="moveHoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="6" class="muted">No items on hold.</td></tr>`;
-  const soldSorted = [...state.sold].sort((a,b)=> parseLocalDate(b.date) - parseLocalDate(a.date));
-  soldRows.innerHTML=soldSorted.map(r=>`<tr id="row-sold-${r.id}">
+
+  const soldSorted = getSoldRows().sort((a,b)=> parseLocalDate(b.date) - parseLocalDate(a.date));
+  const soldTotalPages = Math.max(1, Math.ceil(soldSorted.length / SOLD_PAGE_SIZE));
+  if(soldPage>soldTotalPages) soldPage=soldTotalPages;
+  if(soldPage<1) soldPage=1;
+  const soldStart = (soldPage-1)*SOLD_PAGE_SIZE;
+  const soldPageItems = soldSorted.slice(soldStart, soldStart+SOLD_PAGE_SIZE);
+
+  soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}">
     <td>${rowTitle(r)}</td><td>${r.date||""}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td><td>${money(r.fees)}</td><td class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")'>✎</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')">×</button></div></td>
-  </tr>`).join("") || `<tr><td colspan="8" class="muted">Nothing sold yet.</td></tr>`;
+  </tr>`).join("") || `<tr><td colspan="8" class="muted">No sold items match this filter.</td></tr>`;
+
+  const soldCount = soldSorted.length;
+  const soldShownStart = soldCount ? soldStart+1 : 0;
+  const soldShownEnd = Math.min(soldCount, soldStart+SOLD_PAGE_SIZE);
+  soldPageInfo.textContent = soldCount ? `Showing ${soldShownStart}\u2013${soldShownEnd} of ${soldCount} items` : "No items";
+  soldPageTotal.textContent = soldTotalPages;
+  const soldOptsHtml = Array.from({length:soldTotalPages},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
+  if(soldPageSelect.innerHTML!==soldOptsHtml) soldPageSelect.innerHTML=soldOptsHtml;
+  soldPageSelect.value = String(soldPage);
+  soldPrevBtn.disabled = soldPage<=1;
+  soldNextBtn.disabled = soldPage>=soldTotalPages;
 }
 invPrevBtn.onclick=()=>{ if(inventoryPage>1){ inventoryPage--; renderRows(); } };
 invNextBtn.onclick=()=>{ inventoryPage++; renderRows(); };
 invPageSelect.onchange=()=>{ inventoryPage=n(invPageSelect.value)||1; renderRows(); };
+soldPrevBtn.onclick=()=>{ if(soldPage>1){ soldPage--; renderRows(); } };
+soldNextBtn.onclick=()=>{ soldPage++; renderRows(); };
+soldPageSelect.onchange=()=>{ soldPage=n(soldPageSelect.value)||1; renderRows(); };
 function renderCategoryBreakdown(){
   const rows = getTaxRows();
   const cats={};
@@ -829,6 +874,12 @@ function doSearch(){
     const sorted = sortedInventory();
     const idx = sorted.findIndex(x=>x.id===found.id);
     if(idx>=0){ inventoryPage = Math.floor(idx/INV_PAGE_SIZE)+1; renderRows(); }
+  }
+  if(foundKind==="sold"){
+    soldYear.value="all"; soldMonth.value="all";
+    const sorted = getSoldRows().sort((a,b)=> parseLocalDate(b.date) - parseLocalDate(a.date));
+    const idx = sorted.findIndex(x=>x.id===found.id);
+    if(idx>=0){ soldPage = Math.floor(idx/SOLD_PAGE_SIZE)+1; renderRows(); }
   }
   showPage(foundKind);
   requestAnimationFrame(()=>{

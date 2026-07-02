@@ -52,11 +52,19 @@ svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
   background:linear-gradient(180deg,var(--sidebar),var(--sidebar2));
   color:#fff; padding:20px 14px 60px; display:flex; flex-direction:column; gap:20px;
   position:sticky; top:0; height:100vh;
+  transition:width .18s ease;
 }
 .brand{display:flex;align-items:center;gap:11px;padding:2px 6px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
-.brand-mark{width:36px;height:36px;border-radius:11px;background:var(--gold);display:grid;place-items:center;color:#171308;font-weight:900;font-size:17px}
+.brand-mark{width:36px;height:36px;border-radius:11px;background:var(--gold);display:grid;place-items:center;color:#171308;font-weight:900;font-size:17px;flex:none}
 .brand strong{display:block;font-size:16px;letter-spacing:-.02em}
 .brand span{font-size:11px;color:rgba(255,255,255,.45)}
+.brand>div{flex:1;min-width:0}
+.sidebar-toggle{
+  flex:none;width:28px;height:28px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);
+  color:rgba(255,255,255,.75);border-radius:8px;display:grid;place-items:center;padding:0;
+}
+.sidebar-toggle:hover{background:rgba(255,255,255,.1);color:#fff}
+.sidebar-toggle svg{width:14px;height:14px;transition:transform .18s ease}
 .nav{display:flex;flex-direction:column;gap:3px;flex:1;overflow:auto}
 .nav button{
   border:0;background:transparent;color:rgba(255,255,255,.62);
@@ -72,6 +80,18 @@ svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
   display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:13px;font-size:13px;justify-content:center;
 }
 .theme-toggle:hover{background:rgba(255,255,255,.09)}
+
+/* Collapsed sidebar (manual toggle) */
+.app-shell.sb-collapsed{grid-template-columns:78px 1fr}
+.app-shell.sb-collapsed .brand{justify-content:center}
+.app-shell.sb-collapsed .brand>div,
+.app-shell.sb-collapsed .nav em,
+.app-shell.sb-collapsed .theme-toggle span{display:none}
+.app-shell.sb-collapsed .sidebar-toggle svg{transform:rotate(180deg)}
+.app-shell.sb-collapsed .nav button{justify-content:center;padding:10px 0}
+.app-shell.sb-collapsed .nav-badge{position:absolute;top:4px;right:10px;margin-left:0;width:8px;height:8px;padding:0;font-size:0}
+.app-shell.sb-collapsed .theme-toggle{padding:11px}
+
 
 /* MAIN */
 .main{padding:20px 26px 30px;min-width:0}
