@@ -853,6 +853,19 @@ setInterval(()=>{ updateClock(); renderHeader(); }, 30000);
 userNameInput.oninput=()=>{ state.userName=userNameInput.value; save(); renderHeader(); };
 goalInput.oninput=()=>{ state.monthlyGoal=n(goalInput.value)||300; save(); renderCharts(); };
 
+/* ---------- account / auth ---------- */
+if(typeof firebase !== "undefined" && firebase.auth){
+  firebase.auth().onAuthStateChanged(user=>{
+    if(user && accountEmail) accountEmail.textContent = user.email || "—";
+  });
+}
+if(logoutBtn){
+  logoutBtn.onclick=()=>{
+    if(typeof firebase === "undefined" || !firebase.auth){ window.location.href="login.html"; return; }
+    firebase.auth().signOut().then(()=>{ window.location.href="login.html"; });
+  };
+}
+
 /* ---------- search ---------- */
 let searchHighlightTimer;
 const KIND_LABEL = {inventory:"Inventory", holds:"Holds", sold:"Sold"};

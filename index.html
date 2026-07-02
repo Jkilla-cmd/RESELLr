@@ -7,7 +7,8 @@
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div class="app-shell">
+<div id="authGate" class="auth-gate"><div class="auth-gate-spinner"></div><p>Loading RESELLr…</p></div>
+<div class="app-shell" id="appShell" hidden>
 
   <aside class="sidebar">
     <div class="brand">
@@ -340,12 +341,17 @@
         <label class="field-label">Your name<input id="userNameInput" placeholder="e.g. Jacob" /></label>
         <label class="field-label">Monthly profit goal<input id="goalInput" type="number" step="1" placeholder="300" /></label>
       </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-head"><h2>Account</h2></div>
+        <p class="muted">Signed in as <b id="accountEmail">—</b></p>
+        <button class="danger" id="logoutBtn" style="margin-top:10px">Log Out</button>
+      </div>
     </section>
 
   </main>
 </div>
 
-<footer class="status-bar">
+<footer class="status-bar" id="statusBar" hidden>
   <div class="pulse-group">
     <span class="pulse-label"><svg viewBox="0 0 24 24"><path d="M2 12h4l2-7 4 14 3-10 2 3h5"/></svg>Market Pulse</span>
     <span id="pulseMC" class="pulse-item">MC —</span>
@@ -394,6 +400,10 @@
 </dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth-guard.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -46,6 +46,28 @@ h1,h2,h3,p{margin:0}
 svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 .app-shell{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+#appShell[hidden]{display:none}
+#statusBar[hidden]{display:none}
+#authGate[hidden]{display:none}
+
+.auth-gate{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9999}
+.auth-gate-spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:authspin .8s linear infinite}
+@keyframes authspin{to{transform:rotate(360deg)}}
+.auth-gate p{color:var(--muted);font-size:13px;text-align:center;max-width:300px;line-height:1.5}
+.auth-gate code{background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+
+.login-body{background:var(--bg);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:32px;width:min(380px,92vw)}
+.login-brand{display:flex;align-items:center;gap:11px;margin-bottom:24px}
+.login-brand strong{display:block;font-size:16px;letter-spacing:-.02em;color:var(--ink)}
+.login-brand span{font-size:11px;color:var(--muted)}
+.login-card h1{font-size:21px;letter-spacing:-.02em;margin-bottom:4px}
+.login-card p.muted{margin-bottom:20px}
+.login-card form{display:flex;flex-direction:column;gap:14px}
+.login-card .field-label input{width:100%}
+.login-card button.primary{width:100%;padding:12px;margin-top:2px;border-radius:12px}
+.login-error{background:#fdecea;color:#c0392b;border-radius:10px;padding:9px 12px;font-size:12.5px;margin:0}
+
 
 /* SIDEBAR */
 .sidebar{
