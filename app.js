@@ -142,11 +142,15 @@ document.addEventListener("keydown",e=>{
 });
 
 /* ---------- item modal ---------- */
-function openModal(item=null, kind="inventory"){
-  editing = item ? {id:item.id, kind} : null;
+let modalKind = "inventory";
+function openModal(item=null, kind="inventory", opts={}){
+  editing = item ? {id:item.id, kind, moveFrom:opts.moveFrom||null} : null;
+  modalKind = kind;
   const form = document.getElementById("itemForm");
   form.reset();
-  document.getElementById("modalTitle").textContent = item ? "Edit Item" : "Add Item";
+  const isSaleFlow = kind==="sold";
+  dateField.style.display = isSaleFlow ? "" : "none";
+  document.getElementById("modalTitle").textContent = !item ? "Add Item" : (opts.moveFrom ? "Mark as Sold" : "Edit Item");
   if(item){
     form.title.value=item.title||"";
     form.platform.value=item.platform||"Mercari";
@@ -156,6 +160,9 @@ function openModal(item=null, kind="inventory"){
     form.fees.value=item.fees||"";
     form.shipping.value=item.shipping||"";
     form.notes.value=item.notes||"";
+    if(isSaleFlow) form.date.value = item.date || today();
+  } else if(isSaleFlow){
+    form.date.value = today();
   }
   document.getElementById("itemModal").showModal();
 }
@@ -209,10 +216,24 @@ document.getElementById("itemForm").onsubmit=(e)=>{
     shipping: n(fd.get("shipping")),
     notes: fd.get("notes")||""
   };
+  if(modalKind==="sold") item.date = fd.get("date") || today();
+
   if(editing){
-    const arr = state[editing.kind];
-    const i = arr.findIndex(x=>x.id===editing.id);
-    if(i>=0) arr[i] = {...arr[i],...item};
+    if(editing.moveFrom && editing.moveFrom!==editing.kind){
+      const src = state[editing.moveFrom];
+      const i = src.findIndex(x=>x.id===editing.id);
+      const orig = i>=0 ? src.splice(i,1)[0] : {};
+      const merged = {...orig, ...item};
+      state[editing.kind].unshift(merged);
+      if(editing.kind==="sold"){
+        const p = profit(merged);
+        logActivity(`Sold ${merged.title}`, `${merged.platform} • ${p>=0?"+":""}${money(p)} profit`, "blue", "$");
+      }
+    }else{
+      const arr = state[editing.kind];
+      const i = arr.findIndex(x=>x.id===editing.id);
+      if(i>=0) arr[i] = {...arr[i],...item};
+    }
   }else{
     item.addedAt = Date.now();
     state.inventory.unshift(item);
@@ -235,17 +256,9 @@ function moveHoldBack(id){
   state.inventory.unshift(state.holds.splice(i,1)[0]); save(); render();
 }
 function markSold(id){
-  const i=state.inventory.findIndex(x=>x.id===id); if(i<0)return;
-  const item=state.inventory.splice(i,1)[0];
-  const price = prompt("Sold price", item.price || "");
-  if(price===null){state.inventory.splice(i,0,item); return;}
-  const fees = prompt("Fees", item.fees || 0);
-  if(fees===null){state.inventory.splice(i,0,item); return;}
-  const soldItem = {...item,price:n(price),fees:n(fees),date:today()};
-  state.sold.unshift(soldItem);
-  const p = profit(soldItem);
-  logActivity(`Sold ${soldItem.title}`, `${soldItem.platform} • ${p>=0?"+":""}${money(p)} profit`, "blue", "$");
-  save(); render();
+  const item = state.inventory.find(x=>x.id===id);
+  if(!item) return;
+  openModal(item, "sold", {moveFrom:"inventory"});
 }
 function moveSoldBack(id){
   const i=state.sold.findIndex(x=>x.id===id); if(i<0)return;
@@ -358,6 +371,7 @@ function ensureFilters(){
   setYearOptions(growthYear, years);
   setYearOptions(monthlyYear, years);
   setYearOptions(snapYear, years, {allOption:true});
+  setYearOptions(taxYear, years, {allOption:true});
   if(!snapMonth.innerHTML){
     snapMonth.innerHTML=`<option value="all">All Months</option>`+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m,i)=>`<option value="${i}">${m}</option>`).join("");
   }
@@ -365,10 +379,15 @@ function ensureFilters(){
   if(globalYear.innerHTML!==ghtml) globalYear.innerHTML=ghtml;
   globalYear.value = growthYear.value;
 }
-growthYear.onchange = snapYear.onchange = snapMonth.onchange = monthlyYear.onchange = render;
+growthYear.onchange = snapYear.onchange = snapMonth.onchange = monthlyYear.onchange = taxYear.onchange = render;
 globalYear.onchange = ()=>{
   growthYear.value=globalYear.value; monthlyYear.value=globalYear.value; snapYear.value=globalYear.value; render();
 };
+function getTaxRows(){
+  return taxYear.value && taxYear.value!=="all"
+    ? state.sold.filter(r=>new Date(r.date).getFullYear()===n(taxYear.value))
+    : [...state.sold];
+}
 
 /* ---------- sold snapshot ---------- */
 function renderSnapshot(){
@@ -395,10 +414,11 @@ function renderSnapshot(){
   platformStack.innerHTML = order.length ? order.map(k=>`<span title="${k}: ${groups[k].c} item${groups[k].c===1?'':'s'} (${(groups[k].c/total*100).toFixed(1)}%) • ${money(groups[k].v)}" style="width:${(groups[k].c/total*100).toFixed(2)}%;background:${colorMap[k]}"></span>`).join("") : `<span style="width:100%;background:var(--line)"></span>`;
   platformLegend.innerHTML = order.length ? order.map(k=>`<div class="p-row"><i class="dot" style="background:${colorMap[k]}"></i>${k} <small>${groups[k].c} (${(groups[k].c/total*100).toFixed(1)}%)</small><b>${money(groups[k].v)}</b></div>`).join("") : `<div class="p-row"><small>No sales yet in this range.</small></div>`;
 
-  taxIncome.textContent=money(state.sold.reduce((a,r)=>a+n(r.price),0));
-  taxCost.textContent=money(state.sold.reduce((a,r)=>a+n(r.cost),0));
-  taxFees.textContent=money(state.sold.reduce((a,r)=>a+n(r.fees),0));
-  taxProfit.textContent=money(state.sold.reduce((a,r)=>a+profit(r),0));
+  const taxRows = getTaxRows();
+  taxIncome.textContent=money(taxRows.reduce((a,r)=>a+n(r.price),0));
+  taxCost.textContent=money(taxRows.reduce((a,r)=>a+n(r.cost),0));
+  taxFees.textContent=money(taxRows.reduce((a,r)=>a+n(r.fees),0));
+  taxProfit.textContent=money(taxRows.reduce((a,r)=>a+profit(r),0));
 }
 
 /* ---------- tables ---------- */
@@ -411,24 +431,26 @@ function ageChip(ts, warnAt){
   return `<span class="age-chip${warnAt && d>warnAt ? ' warn':''}">${label}</span>`;
 }
 function renderRows(){
-  inventoryRows.innerHTML=state.inventory.map(r=>`<tr>
+  inventoryRows.innerHTML=state.inventory.map(r=>`<tr id="row-inventory-${r.id}">
     <td>${rowTitle(r)}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td><td class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
     <td>${ageChip(r.addedAt, 45)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")'>✎</button><button class="icon-btn" onclick="moveToHold('${r.id}')">◇</button><button class="icon-btn" onclick="markSold('${r.id}')">$</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="7" class="muted">No active inventory yet.</td></tr>`;
-  holdRows.innerHTML=state.holds.map(r=>`<tr>
+  holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}">
     <td>${rowTitle(r)}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td>
     <td>${ageChip(r.heldAt, 14)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick="moveHoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="6" class="muted">No items on hold.</td></tr>`;
-  soldRows.innerHTML=state.sold.map(r=>`<tr>
+  const soldSorted = [...state.sold].sort((a,b)=> new Date(b.date) - new Date(a.date));
+  soldRows.innerHTML=soldSorted.map(r=>`<tr id="row-sold-${r.id}">
     <td>${rowTitle(r)}</td><td>${r.date||""}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td><td>${money(r.fees)}</td><td class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")'>✎</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="8" class="muted">Nothing sold yet.</td></tr>`;
 }
 function renderCategoryBreakdown(){
+  const rows = getTaxRows();
   const cats={};
-  state.sold.forEach(r=>{
+  rows.forEach(r=>{
     const key=r.category||"Other";
     cats[key]=cats[key]||{count:0,profit:0,income:0};
     cats[key].count++; cats[key].profit+=profit(r); cats[key].income+=n(r.price);
@@ -442,7 +464,7 @@ function renderCategoryBreakdown(){
   }).join("") : `<p class="muted">No sales yet to break down by category.</p>`;
 
   const plats={};
-  state.sold.forEach(r=>{
+  rows.forEach(r=>{
     const key = /mercari/i.test(r.platform)?"Mercari": /ebay/i.test(r.platform)?"eBay": /private/i.test(r.platform)?"Private Sale":(r.platform||"Other");
     plats[key]=plats[key]||{count:0,profit:0,income:0};
     plats[key].count++; plats[key].profit+=profit(r); plats[key].income+=n(r.price);
@@ -569,7 +591,7 @@ function drawLineChart(canvas, series, colors){
   canvas._chartMeta=meta;
   return meta;
 }
-function drawBarChart(canvas, values, color, goal){
+function drawBarChart(canvas, values, color, goal, lineValues, lineColor){
   const w=canvas.clientWidth, h=canvas.clientHeight;
   if(!w||!h) return;
   const dpr=devicePixelRatio||1;
@@ -578,7 +600,7 @@ function drawBarChart(canvas, values, color, goal){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
   const padL=42,padR=8,padT=14,padB=22;
-  const max=Math.max(1,...values,goal||0);
+  const max=Math.max(1,...values,...(lineValues||[]),goal||0);
   const niceMax=niceCeil(max*1.15);
   const gridColor=themeVar("--line","#e7eaef"), mutedColor=themeVar("--muted","#6b7480");
   ctx.strokeStyle=gridColor; ctx.fillStyle=mutedColor; ctx.font="11px Inter, sans-serif"; ctx.lineWidth=1;
@@ -600,6 +622,21 @@ function drawBarChart(canvas, values, color, goal){
     ctx.fillStyle=mutedColor;
     ctx.fillText(months[i], x-2, h-6);
   });
+  if(lineValues && lineValues.length){
+    ctx.beginPath();
+    lineValues.forEach((v,i)=>{
+      const x=padL+i*bw+bw*0.5;
+      const y=padT+(h-padT-padB)*(1-Math.max(0,v)/niceMax);
+      i? ctx.lineTo(x,y): ctx.moveTo(x,y);
+    });
+    ctx.strokeStyle=lineColor; ctx.lineWidth=2.5; ctx.lineJoin="round"; ctx.lineCap="round"; ctx.stroke();
+    ctx.fillStyle=lineColor;
+    lineValues.forEach((v,i)=>{
+      const x=padL+i*bw+bw*0.5;
+      const y=padT+(h-padT-padB)*(1-Math.max(0,v)/niceMax);
+      ctx.beginPath(); ctx.arc(x,y,2.6,0,Math.PI*2); ctx.fill();
+    });
+  }
   if(goal>0){
     const gy=padT+(h-padT-padB)*(1-goal/niceMax);
     ctx.setLineDash([4,4]); ctx.strokeStyle="#c9432f"; ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(w-padR,gy); ctx.stroke(); ctx.setLineDash([]);
@@ -608,13 +645,13 @@ function drawBarChart(canvas, values, color, goal){
   canvas._barMeta={padL,padR,padT,padB,niceMax,w,h,bw,count:values.length};
 }
 function monthlySeries(year){
-  const income=Array(12).fill(0), cost=Array(12).fill(0), profitArr=Array(12).fill(0), counts=Array(12).fill(0);
+  const income=Array(12).fill(0), cost=Array(12).fill(0), profitArr=Array(12).fill(0), counts=Array(12).fill(0), costProfitArr=Array(12).fill(0);
   state.sold.forEach(r=>{
     const d=new Date(r.date); if(d.getFullYear()!==year) return;
     const m=d.getMonth();
-    income[m]+=n(r.price); cost[m]+=n(r.cost); profitArr[m]+=profit(r); counts[m]++;
+    income[m]+=n(r.price); cost[m]+=n(r.cost); profitArr[m]+=profit(r); counts[m]++; costProfitArr[m]+=costProfit(r);
   });
-  return {income,cost,profitArr,counts};
+  return {income,cost,profitArr,counts,costProfitArr};
 }
 function drawGrowthChart(){
   const year = n(growthYear.value)||new Date().getFullYear();
@@ -628,9 +665,9 @@ function drawGrowthChart(){
 function renderCharts(){
   drawGrowthChart();
   const year = n(monthlyYear.value)||new Date().getFullYear();
-  const {profitArr,counts} = monthlySeries(year);
-  drawBarChart(monthlyChart, profitArr, "#3f9d63", state.monthlyGoal||300);
-  monthlyChart._barData = {profitArr,counts,year,goal:state.monthlyGoal||300};
+  const {profitArr,counts,costProfitArr} = monthlySeries(year);
+  drawBarChart(monthlyChart, profitArr, "#3f9d63", state.monthlyGoal||300, costProfitArr, "#7c5cff");
+  monthlyChart._barData = {profitArr,counts,costProfitArr,year,goal:state.monthlyGoal||300};
 }
 growthChart.addEventListener("mousemove", e=>{
   const meta=growthChart._chartMeta, s=growthChart._series;
@@ -660,17 +697,18 @@ monthlyChart.addEventListener("mousemove", e=>{
   let idx=Math.floor((x-meta.padL)/meta.bw);
   idx=Math.max(0,Math.min(meta.count-1,idx));
   const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const val=d.profitArr[idx], cnt=d.counts[idx];
+  const val=d.profitArr[idx], cnt=d.counts[idx], cp=d.costProfitArr[idx];
   const diff=val-d.goal;
   monthlyTip.innerHTML=`<b>${months[idx]} ${d.year}</b>
     <div><span>Profit</span><span>${money(val)}</span></div>
+    <div><span>Cost + Profit</span><span>${money(cp)}</span></div>
     <div><span>Items Sold</span><span>${cnt}</span></div>
     <div><span>${diff>=0?"Above Goal":"Below Goal"}</span><span>${diff>=0?"+":""}${money(diff)}</span></div>`;
   const barH=(meta.h-meta.padT-meta.padB)*(Math.max(0,val)/meta.niceMax);
   const tipX = meta.padL+idx*meta.bw+meta.bw*0.5;
   const tipY = meta.h-meta.padB-barH;
   monthlyTip.style.left=tipX+"px";
-  monthlyTip.style.top=Math.max(0,tipY-78)+"px";
+  monthlyTip.style.top=Math.max(0,tipY-92)+"px";
   monthlyTip.hidden=false;
 });
 monthlyChart.addEventListener("mouseleave",()=>monthlyTip.hidden=true);
@@ -739,12 +777,32 @@ userNameInput.oninput=()=>{ state.userName=userNameInput.value; save(); renderHe
 goalInput.oninput=()=>{ state.monthlyGoal=n(goalInput.value)||300; save(); renderCharts(); };
 
 /* ---------- search ---------- */
-globalSearch.oninput=()=>{
+let searchHighlightTimer;
+function doSearch(){
   const q=globalSearch.value.toLowerCase().trim();
   if(!q) return;
-  const found=[...state.inventory,...state.holds,...state.sold].find(r=>r.title.toLowerCase().includes(q));
-  if(found) showPage(state.inventory.includes(found)?"inventory":state.holds.includes(found)?"holds":"sold");
-};
+  const kinds=["inventory","holds","sold"];
+  let found=null, foundKind=null;
+  for(const k of kinds){
+    const hit = state[k].find(r=>(r.title||"").toLowerCase().includes(q));
+    if(hit){ found=hit; foundKind=k; break; }
+  }
+  if(!found) return;
+  showPage(foundKind);
+  requestAnimationFrame(()=>{
+    const rowEl = document.getElementById(`row-${foundKind}-${found.id}`);
+    if(rowEl){
+      rowEl.scrollIntoView({behavior:"smooth", block:"center"});
+      clearTimeout(searchHighlightTimer);
+      document.querySelectorAll("tr.row-highlight").forEach(el=>el.classList.remove("row-highlight"));
+      void rowEl.offsetWidth;
+      rowEl.classList.add("row-highlight");
+      searchHighlightTimer=setTimeout(()=>rowEl.classList.remove("row-highlight"), 2200);
+    }
+  });
+}
+globalSearch.oninput=doSearch;
+globalSearch.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); doSearch(); } });
 
 /* ---------- import / export ---------- */
 function normalizeItem(r, kind){
@@ -796,6 +854,39 @@ exportBtn.onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="resellr-data.json"; a.click();
   state.lastBackupAt=Date.now(); save(); renderHeader();
+};
+exportXlsBtn.onclick=()=>{
+  if(typeof XLSX==="undefined"){ alert("The spreadsheet library didn't load (no internet connection?). Try again once you're online."); return; }
+  const rows = getTaxRows().slice().sort((a,b)=> new Date(b.date) - new Date(a.date));
+  if(!rows.length){ alert("No sold items found for that year."); return; }
+  const data = rows.map(r=>({
+    "Date Sold": r.date || "",
+    "Title": r.title || "",
+    "Category": r.category || "",
+    "Platform": r.platform || "",
+    "Sold Price": n(r.price),
+    "Cost": n(r.cost),
+    "Fees": n(r.fees),
+    "Shipping": n(r.shipping),
+    "Profit": profit(r),
+    "Cost + Profit": costProfit(r)
+  }));
+  const totalsRow = {
+    "Date Sold": "TOTAL", "Title":"", "Category":"", "Platform":"",
+    "Sold Price": rows.reduce((a,r)=>a+n(r.price),0),
+    "Cost": rows.reduce((a,r)=>a+n(r.cost),0),
+    "Fees": rows.reduce((a,r)=>a+n(r.fees),0),
+    "Shipping": rows.reduce((a,r)=>a+n(r.shipping),0),
+    "Profit": rows.reduce((a,r)=>a+profit(r),0),
+    "Cost + Profit": rows.reduce((a,r)=>a+costProfit(r),0)
+  };
+  data.push(totalsRow);
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws["!cols"] = [{wch:11},{wch:42},{wch:10},{wch:12},{wch:11},{wch:10},{wch:9},{wch:10},{wch:11},{wch:13}];
+  const wb = XLSX.utils.book_new();
+  const label = taxYear.value==="all" ? "All Years" : taxYear.value;
+  XLSX.utils.book_append_sheet(wb, ws, "Sold " + label);
+  XLSX.writeFile(wb, `resellr-tax-report-${taxYear.value==="all"?"all-years":taxYear.value}.xlsx`);
 };
 importFile.onchange=e=>{
   const f=e.target.files[0]; if(!f)return;

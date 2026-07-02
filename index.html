@@ -142,8 +142,12 @@
 
         <article class="card chart-card">
           <div class="card-head">
-            <h2>Monthly Profit View <svg class="info" viewBox="0 0 24 24" title="Green bars show monthly profit against your goal line."><circle cx="12" cy="12" r="9"/><path d="M12 16v-5"/><circle cx="12" cy="8" r=".5"/></svg></h2>
+            <h2>Monthly Profit View <svg class="info" viewBox="0 0 24 24" title="Green bars show monthly profit; the line shows cost + profit recovered, against your goal line."><circle cx="12" cy="12" r="9"/><path d="M12 16v-5"/><circle cx="12" cy="8" r=".5"/></svg></h2>
             <select id="monthlyYear"></select>
+          </div>
+          <div class="legend">
+            <span><i class="dot green"></i>Profit</span>
+            <span><i class="dot violet"></i>Cost + Profit</span>
           </div>
           <div class="chart-wrap">
             <canvas id="monthlyChart"></canvas>
@@ -215,7 +219,13 @@
     </section>
 
     <section id="analytics" class="page">
-      <div class="table-head"><div><h2>Analytics &amp; Tax Reports</h2><p>Lifetime totals across every sale on record.</p></div></div>
+      <div class="table-head">
+        <div><h2>Analytics &amp; Tax Reports</h2><p>Totals for the selected year, across every sale on record.</p></div>
+        <div class="table-head-actions">
+          <select id="taxYear"></select>
+          <button class="primary" id="exportXlsBtn">Export XLS</button>
+        </div>
+      </div>
       <div class="card">
         <div class="snap-mini big">
           <div><small>Total Income</small><b id="taxIncome">$0.00</b></div>
@@ -229,7 +239,7 @@
         <div id="categoryBreakdown" class="category-list"></div>
       </div>
       <div class="card" style="margin-top:14px">
-        <div class="card-head"><h2>By Platform (Lifetime)</h2></div>
+        <div class="card-head"><h2>By Platform</h2></div>
         <div id="platformBreakdown" class="category-list"></div>
       </div>
     </section>
@@ -316,15 +326,13 @@
   </div>
   <div class="status-right">
     <span id="footerClock">—</span>
-    <button class="icon-only" title="Today"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></svg></button>
-    <button class="icon-only" id="footerWalletBtn" data-page="wallet" title="Wallet"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></button>
   </div>
 </footer>
 
 <dialog id="itemModal">
   <form method="dialog" id="itemForm">
     <h2 id="modalTitle">Add Item</h2>
-    <input name="title" placeholder="Item title" required />
+    <textarea name="title" class="title-input" placeholder="Item title" rows="2" required></textarea>
     <div class="form-grid">
       <select name="platform">
         <option>Mercari</option>
@@ -341,6 +349,10 @@
       <input name="fees" type="number" step="0.01" placeholder="Fees" />
       <input name="shipping" type="number" step="0.01" placeholder="Shipping" />
     </div>
+    <div id="dateField" class="date-field" style="display:none">
+      <label for="dateInput">Sold date</label>
+      <input id="dateInput" name="date" type="date" />
+    </div>
     <textarea name="notes" placeholder="Notes"></textarea>
     <menu>
       <button value="cancel" type="button" id="cancelModal">Cancel</button>
@@ -349,6 +361,7 @@
   </form>
 </dialog>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
