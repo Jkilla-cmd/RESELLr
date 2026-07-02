@@ -1,4 +1,4 @@
-RESELLr
+RESELLr-1
 
 RESELLr is a private, offline-first web app for resellers to track inventory, sales, and profit — without relying on marketplace dashboards.
 
