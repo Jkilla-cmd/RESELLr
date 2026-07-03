@@ -623,6 +623,9 @@ function renderRows(){
   invPageInfo.textContent = count ? `Showing ${shownStart}\u2013${shownEnd} of ${count} items` : "No items";
   invPageTotal.textContent = totalPages;
   invCountBadge.textContent = `${count} item${count===1?"":"s"}`;
+  const invTotalCost = invSorted.reduce((a,r)=>a+n(r.cost),0);
+  const invTotalValue = invSorted.reduce((a,r)=>a+n(r.price),0);
+  invTotalsBadge.textContent = count ? `Total cost ${money(invTotalCost)} \u00b7 Total value ${money(invTotalValue)}` : "";
   const optsHtml = Array.from({length:totalPages},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
   if(invPageSelect.innerHTML!==optsHtml) invPageSelect.innerHTML=optsHtml;
   invPageSelect.value = String(inventoryPage);
@@ -631,6 +634,9 @@ function renderRows(){
   updateSortIndicators("inventory", inventorySort);
 
   holdsCountBadge.textContent = `${state.holds.length} on hold`;
+  const holdsTotalCost = state.holds.reduce((a,r)=>a+n(r.cost),0);
+  const holdsTotalValue = state.holds.reduce((a,r)=>a+n(r.price),0);
+  holdsTotalsBadge.textContent = state.holds.length ? `Total cost ${money(holdsTotalCost)} \u00b7 Total value ${money(holdsTotalValue)}` : "";
   holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}">
     <td>${rowTitle(r)}</td><td data-label="Platform">${r.platform}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
     <td data-label="On Hold">${ageChip(r.heldAt, 14)}</td>
