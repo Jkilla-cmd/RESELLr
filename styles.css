@@ -56,8 +56,16 @@ svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .auth-gate p{color:var(--muted);font-size:13px;text-align:center;max-width:300px;line-height:1.5}
 .auth-gate code{background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
 
-.login-body{background:var(--bg);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.login-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:32px;width:min(380px,92vw)}
+.login-body{
+  background:#0e1520 url('https://media3.giphy.com/media/v1.Y2lkPTZjMDliOTUyc2FncjdsNWg1MGMyOW1qMjQ2ZTI1NW5pYnJldDM1bWNyZjR3MXdieiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xT9DPErFASWkKCaAJW/giphy.gif') center/cover no-repeat;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.login-card{
+  background:rgba(255,255,255,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.4);border-radius:20px;box-shadow:0 25px 60px rgba(0,0,0,.45);
+  padding:32px;width:min(380px,92vw);
+}
+[data-theme="dark"] .login-card{background:rgba(15,25,36,.78);border-color:rgba(255,255,255,.1)}
 .login-brand{display:flex;align-items:center;gap:11px;margin-bottom:24px}
 .login-brand strong{display:block;font-size:16px;letter-spacing:-.02em;color:var(--ink)}
 .login-brand span{font-size:11px;color:var(--muted)}
