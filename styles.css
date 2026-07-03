@@ -302,6 +302,8 @@ td small{color:var(--muted)}
 .row-actions{display:flex;gap:11px;align-items:center}
 .icon-btn{border:0;background:transparent;padding:0;font-size:17px;color:var(--ink)}
 .profit{color:#16a34a}.loss{color:var(--red)}
+.cat-pill{display:inline-block;margin-top:3px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.margin-chip{display:inline-block;margin-left:5px;font-size:11px;font-weight:600;opacity:.75}
 @keyframes rowFlash{
   0%{background:rgba(224,166,63,.45)}
   100%{background:transparent}

@@ -475,7 +475,31 @@ function renderSnapshot(){
 }
 
 /* ---------- tables ---------- */
-function rowTitle(r){return `<strong>${r.title}</strong><small>${r.category||""}</small>`}
+function categoryPill(cat){
+  const c = cat || "Other";
+  const styles = {
+    Comic: "background:var(--sky-bg);color:var(--sky-ic)",
+    Card: "background:var(--violet-bg);color:var(--violet-ic)",
+    Other: "background:var(--surface2);color:var(--muted)"
+  };
+  return `<span class="cat-pill" style="${styles[c]||styles.Other}">${c}</span>`;
+}
+function rowTitle(r){return `<strong>${r.title}</strong>${categoryPill(r.category)}`}
+function marginPct(r){
+  const price = n(r.price);
+  if(!price) return null;
+  return Math.round((profit(r)/price)*100);
+}
+function profitCell(r){
+  const m = marginPct(r);
+  return `${money(profit(r))}${m!==null?`<small class="margin-chip">${m}%</small>`:""}`;
+}
+function checkComps(kind, id){
+  const item = (state[kind]||[]).find(x=>x.id===id);
+  if(!item) return;
+  const url = "https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(item.title) + "&LH_Sold=1&LH_Complete=1";
+  window.open(url, "_blank", "noopener");
+}
 function ageDays(ts){ return ts ? Math.floor((Date.now()-ts)/86400000) : null; }
 function ageChip(ts, warnAt){
   const d = ageDays(ts);
@@ -499,9 +523,9 @@ function renderRows(){
   const pageItems = invSorted.slice(start, start+INV_PAGE_SIZE);
 
   inventoryRows.innerHTML=pageItems.map(r=>`<tr id="row-inventory-${r.id}">
-    <td>${rowTitle(r)}</td><td data-label="Platform">${r.platform}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
+    <td>${rowTitle(r)}</td><td data-label="Platform">${r.platform}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")'>✎</button><button class="icon-btn" onclick="moveToHold('${r.id}')">◇</button><button class="icon-btn" onclick="markSold('${r.id}')">$</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')">×</button></div></td>
+    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")'>✎</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps">🔍</button><button class="icon-btn" onclick="moveToHold('${r.id}')">◇</button><button class="icon-btn" onclick="markSold('${r.id}')">$</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="7" class="muted">No active inventory yet.</td></tr>`;
 
   const count = invSorted.length;
@@ -520,7 +544,7 @@ function renderRows(){
   holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}">
     <td>${rowTitle(r)}</td><td data-label="Platform">${r.platform}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
     <td data-label="On Hold">${ageChip(r.heldAt, 14)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick="moveHoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')">×</button></div></td>
+    <td><div class="row-actions"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps">🔍</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="6" class="muted">No items on hold.</td></tr>`;
 
   const soldSorted = getSoldRows().sort((a,b)=> parseLocalDate(b.date) - parseLocalDate(a.date));
@@ -531,7 +555,7 @@ function renderRows(){
   const soldPageItems = soldSorted.slice(soldStart, soldStart+SOLD_PAGE_SIZE);
 
   soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}">
-    <td>${rowTitle(r)}</td><td data-label="Date">${r.date||""}</td><td data-label="Platform">${r.platform}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
+    <td>${rowTitle(r)}</td><td data-label="Date">${r.date||""}</td><td data-label="Platform">${r.platform}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")'>✎</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="8" class="muted">No sold items match this filter.</td></tr>`;
 
