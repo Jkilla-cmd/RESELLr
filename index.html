@@ -214,6 +214,9 @@
             <div><small>This Month Spent</small><b id="rwSpent">$0.00</b></div>
             <div><small>Buying Power</small><b id="rwBuying">$0.00</b></div>
           </div>
+          <p id="rwPersonalNote" class="personal-invest-note" hidden>
+            <b id="rwPersonal">$0.00</b> of your current inventory has come from your personal account, not the Stash.
+          </p>
         </article>
       </div>
     </section>
@@ -356,8 +359,13 @@
         <div class="wallet-row">
           <div><small>Stash Balance</small><b id="drawerWallet">$0.00</b></div>
           <div><small>Buying Power</small><b id="drawerBuying">$0.00</b></div>
-          <div><small>Reserved Profit</small><b id="drawerReserved">$0.00</b></div>
+          <div><small>Reserved (Kept)</small><b id="drawerReserved">$0.00</b></div>
         </div>
+      </div>
+      <div class="card" id="personalInvestCard" hidden>
+        <div class="card-head"><h2>Personal Investment</h2></div>
+        <p class="muted">You've spent more buying inventory than you've earned back so far — this much has come out of your own pocket, not the Stash.</p>
+        <b id="drawerPersonal" class="personal-invest-amount">$0.00</b>
       </div>
     </section>
 
@@ -438,10 +446,11 @@
         <option>Other</option>
       </select>
       <input name="price" type="number" step="0.01" placeholder="List / sold price" />
-      <input name="cost" type="number" step="0.01" placeholder="Cost" />
+      <input id="costInput" name="cost" type="number" step="0.01" placeholder="Cost" />
       <input name="fees" type="number" step="0.01" placeholder="Fees" />
       <input name="shipping" type="number" step="0.01" placeholder="Shipping" />
     </div>
+    <p id="stashWarning" class="stash-warning" hidden></p>
     <div id="dateField" class="date-field" style="display:none">
       <label for="dateInput">Sold date</label>
       <input id="dateInput" name="date" type="date" />

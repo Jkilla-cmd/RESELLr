@@ -117,15 +117,30 @@ function logActivity(text, sub, color, icon){
   state.activity = state.activity.slice(0,30);
 }
 
-/* ---------- wallet math ---------- */
+/* ---------- stash math ----------
+   Stash Balance is a running lifetime ledger:
+   money IN = cost+profit recovered from every sale (at your chosen reinvestment %)
+   money OUT = cost of every item you've ever bought, whether it's currently in
+               Inventory, on Hold, or already Sold (the cash left your stash the
+               moment you bought it, regardless of what happened to the item since)
+   If the balance goes negative, that's money that came from your personal account. */
+function totalSpentAllTime(){
+  return [...state.inventory, ...state.holds, ...state.sold].reduce((a,r)=>a+n(r.cost),0);
+}
+function reinvestedAmount(){
+  return state.sold.reduce((a,r)=>a + costProfit(r)*(state.walletMode/100),0);
+}
+function reservedAmount(){
+  return state.sold.reduce((a,r)=>a + costProfit(r)*(1-state.walletMode/100),0);
+}
 function walletBalance(){
-  return state.sold.reduce((a,r)=>a + costProfit(r)*(state.walletMode/100),0)
-       - state.inventory.reduce((a,r)=>a+n(r.cost),0);
+  return reinvestedAmount() - totalSpentAllTime();
+}
+function personalInvestment(){
+  return Math.max(0, -walletBalance());
 }
 function reservedProfit(){
-  const total = state.sold.reduce((a,r)=>a+profit(r),0);
-  const reinvested = state.sold.reduce((a,r)=>a + costProfit(r)*(state.walletMode/100),0);
-  return Math.max(0,total-reinvested);
+  return reservedAmount();
 }
 
 /* ---------- theme ---------- */
@@ -207,10 +222,30 @@ function openModal(item=null, kind="inventory", opts={}){
   } else if(isSaleFlow){
     form.date.value = today();
   }
+  stashWarning.hidden = true;
   document.getElementById("itemModal").showModal();
+  updateStashWarning();
 }
 document.getElementById("addItemBtn2").onclick=()=>openModal();
 document.getElementById("cancelModal").onclick=()=>document.getElementById("itemModal").close();
+function updateStashWarning(){
+  // Only relevant when logging a brand-new purchase into Inventory --
+  // editing an existing item or marking something sold doesn't spend fresh cash.
+  if(editing || modalKind!=="inventory"){ stashWarning.hidden=true; return; }
+  const cost = n(costInput.value);
+  if(!cost){ stashWarning.hidden=true; return; }
+  const available = Math.max(0, walletBalance());
+  if(cost > available){
+    const shortfall = cost - available;
+    stashWarning.hidden = false;
+    stashWarning.textContent = available > 0
+      ? `This would use ${money(shortfall)} from your personal funds \u2014 your Stash only has ${money(available)} available.`
+      : `Your Stash is empty right now \u2014 this ${money(cost)} would come entirely from your personal funds.`;
+  } else {
+    stashWarning.hidden = true;
+  }
+}
+costInput.addEventListener("input", updateStashWarning);
 
 /* ---------- bookmarklet paste ---------- */
 function guessCategory(title){
@@ -702,11 +737,18 @@ function renderWallet(){
   const wb=walletBalance();
   const buying=Math.max(0,wb);
   const reserved=reservedProfit();
+  const personal=personalInvestment();
   [rwAvailable,reAvailable].forEach(el=>el.textContent=money(wb));
   [rwBuying,reBuying].forEach(el=>el.textContent=money(buying));
   drawerWallet.textContent=money(wb);
   drawerBuying.textContent=money(buying);
   drawerReserved.textContent=money(reserved);
+
+  rwPersonalNote.hidden = personal<=0;
+  rwPersonal.textContent = money(personal);
+  personalInvestCard.hidden = personal<=0;
+  drawerPersonal.textContent = money(personal);
+
   const thisMonth=new Date();
   const spent = [...state.inventory,...state.holds,...state.sold]
     .filter(r=>r.addedAt && sameMonth(new Date(r.addedAt),thisMonth))
