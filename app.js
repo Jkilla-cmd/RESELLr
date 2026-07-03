@@ -175,8 +175,8 @@ avatarSettingsItem.onclick=()=>{
 };
 logoutMenuBtn.onclick=()=>{
   avatarDropdown.hidden = true;
-  if(typeof firebase === "undefined" || !firebase.auth){ window.location.href="login.html"; return; }
-  firebase.auth().signOut().then(()=>{ window.location.href="login.html"; });
+  if(typeof firebase === "undefined" || !firebase.auth){ window.location.href="signin.html"; return; }
+  firebase.auth().signOut().then(()=>{ window.location.href="signin.html"; });
 };
 document.addEventListener("click",(e)=>{
   if(!e.target.closest(".avatar-menu")) avatarDropdown.hidden = true;
@@ -881,8 +881,8 @@ if(typeof firebase !== "undefined" && firebase.auth){
 }
 if(logoutBtn){
   logoutBtn.onclick=()=>{
-    if(typeof firebase === "undefined" || !firebase.auth){ window.location.href="login.html"; return; }
-    firebase.auth().signOut().then(()=>{ window.location.href="login.html"; });
+    if(typeof firebase === "undefined" || !firebase.auth){ window.location.href="signin.html"; return; }
+    firebase.auth().signOut().then(()=>{ window.location.href="signin.html"; });
   };
 }
 
