@@ -81,9 +81,8 @@ svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .login-brand-center{
   flex-direction:column;justify-content:center;text-align:center;gap:10px;margin-bottom:28px;
 }
-.login-brand-center .brand-mark{width:52px;height:52px;font-size:22px;border-radius:16px}
-.login-brand-center strong{font-size:20px}
-.login-brand-center span{font-size:12px}
+.brand-bubble{width:220px;height:auto;max-width:100%}
+.brand-tagline{font-size:12px;color:var(--muted)}
 .login-card form{display:flex;flex-direction:column;gap:14px}
 .login-card .field-label input{width:100%}
 .login-card button.primary{width:100%;padding:12px;margin-top:2px;border-radius:12px}
@@ -99,7 +98,7 @@ svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
   transition:width .18s ease;
 }
 .brand{display:flex;align-items:center;gap:11px;padding:2px 6px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
-.brand-mark{width:36px;height:36px;border-radius:11px;background:var(--gold);display:grid;place-items:center;color:#171308;font-weight:900;font-size:17px;flex:none}
+.brand-mark{width:36px;height:auto;flex:none}
 .brand strong{display:block;font-size:16px;letter-spacing:-.02em}
 .brand span{font-size:11px;color:rgba(255,255,255,.45)}
 .brand>div{flex:1;min-width:0}
@@ -399,7 +398,7 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
   .app-shell{grid-template-columns:60px 1fr}
   .sidebar{padding:14px 8px 50px}
   .brand{padding-bottom:10px}
-  .brand-mark{width:32px;height:32px;font-size:15px}
+  .brand-mark{width:32px;height:auto}
   .sidebar-toggle{display:none}
   .nav button{padding:12px 0;justify-content:center}
   .nav-badge{position:absolute;top:2px;right:6px;width:8px;height:8px;padding:0;font-size:0}

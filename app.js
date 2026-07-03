@@ -230,7 +230,7 @@ async function pasteListing(){
   if(!raw) return;
   let data;
   try{ data = JSON.parse(raw); }
-  catch(e){ alert("That doesn't look like a listing copied by the RESELLr bookmarklet. Click the bookmarklet on a Mercari or eBay listing page first, then try again."); return; }
+  catch(e){ alert("That doesn't look like a listing copied by the Comix Stash bookmarklet. Click the bookmarklet on a Mercari or eBay listing page first, then try again."); return; }
   if(!data.title){ alert("No title was found in that listing. You can still add it manually."); return; }
 
   openModal(null);
@@ -1014,7 +1014,7 @@ function normalizeState(raw){
 }
 exportBtn.onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="resellr-data.json"; a.click();
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="comix-stash-data.json"; a.click();
   state.lastBackupAt=Date.now(); save(); renderHeader();
 };
 exportXlsBtn.onclick=()=>{
@@ -1048,7 +1048,7 @@ exportXlsBtn.onclick=()=>{
   const wb = XLSX.utils.book_new();
   const label = taxYear.value==="all" ? "All Years" : taxYear.value;
   XLSX.utils.book_append_sheet(wb, ws, "Sold " + label);
-  XLSX.writeFile(wb, `resellr-tax-report-${taxYear.value==="all"?"all-years":taxYear.value}.xlsx`);
+  XLSX.writeFile(wb, `comix-stash-tax-report-${taxYear.value==="all"?"all-years":taxYear.value}.xlsx`);
 };
 importFile.onchange=e=>{
   const f=e.target.files[0]; if(!f)return;
@@ -1056,10 +1056,10 @@ importFile.onchange=e=>{
   reader.onload=()=>{
     let raw;
     try{ raw = JSON.parse(reader.result); }
-    catch(err){ alert("That file isn't valid JSON. Please choose a RESELLr export file."); e.target.value=""; return; }
+    catch(err){ alert("That file isn't valid JSON. Please choose a Comix Stash export file."); e.target.value=""; return; }
     const hasCurrent = Array.isArray(raw.inventory) || Array.isArray(raw.holds) || Array.isArray(raw.sold);
     const hasLegacy = Array.isArray(raw.activeInventory) || Array.isArray(raw.soldInventory) || Array.isArray(raw.inventoryHolds);
-    if(!hasCurrent && !hasLegacy){ alert("This doesn't look like a RESELLr backup file."); e.target.value=""; return; }
+    if(!hasCurrent && !hasLegacy){ alert("This doesn't look like a Comix Stash backup file."); e.target.value=""; return; }
     const imported = normalizeState(raw);
     const total = imported.inventory.length + imported.holds.length + imported.sold.length;
     if(!confirm(`Import ${total} item(s) (${imported.inventory.length} active, ${imported.holds.length} on hold, ${imported.sold.length} sold) and replace your current data? This can't be undone.`)){
@@ -1075,7 +1075,7 @@ importFile.onchange=e=>{
 };
 seedBtn.onclick=()=>{ state=demoData(); save(); render(); };
 clearBtn.onclick=()=>{
-  if(confirm("Clear all RESELLr data?")){
+  if(confirm("Clear all Comix Stash data?")){
     state={theme:state.theme,walletMode:50,userName:state.userName,monthlyGoal:state.monthlyGoal||300,lastBackupAt:state.lastBackupAt,inventory:[],holds:[],sold:[],history:[],activity:[]};
     save(); render();
   }
