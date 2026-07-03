@@ -5,41 +5,6 @@
   var errorEl = document.getElementById("loginError");
   var submitBtn = document.getElementById("loginSubmitBtn");
 
-  // --- mascot: eyes track email typing, shutters cover eyes for password ---
-  // Controlled entirely via inline styles set here in JS, independent of styles.css,
-  // so the animation can never be broken by a stylesheet caching/version mismatch.
-  var mascot = document.getElementById("robotMascot");
-  var pupilL = document.getElementById("botPupilLeft");
-  var pupilR = document.getElementById("botPupilRight");
-  var shutterL = document.getElementById("botShutterLeft");
-  var shutterR = document.getElementById("botShutterRight");
-  var BASE_L_X = 118, BASE_R_X = 182, MAX_OFFSET = 8;
-
-  function updateEyes(){
-    if(!pupilL || !pupilR) return;
-    var len = emailInput.value.length;
-    var t = Math.max(-1, Math.min(1, (len - 10) / 10));
-    var dx = t * MAX_OFFSET;
-    pupilL.setAttribute("cx", BASE_L_X + dx);
-    pupilR.setAttribute("cx", BASE_R_X + dx);
-  }
-  function setCovering(isCovering){
-    if(!shutterL || !shutterR) return;
-    var sy = isCovering ? "0px" : "-72px";
-    shutterL.style.transform = "translateY(" + sy + ")";
-    shutterR.style.transform = "translateY(" + sy + ")";
-    if(pupilL) pupilL.style.opacity = isCovering ? "0" : "1";
-    if(pupilR) pupilR.style.opacity = isCovering ? "0" : "1";
-  }
-  if(emailInput && mascot){
-    emailInput.addEventListener("input", updateEyes);
-    emailInput.addEventListener("focus", function(){ setCovering(false); });
-  }
-  if(passwordInput && mascot){
-    passwordInput.addEventListener("focus", function(){ setCovering(true); });
-    passwordInput.addEventListener("blur", function(){ setCovering(false); });
-  }
-
   function showError(msg){
     errorEl.textContent = msg;
     errorEl.hidden = false;
