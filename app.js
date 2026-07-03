@@ -475,6 +475,19 @@ function renderSnapshot(){
 }
 
 /* ---------- tables ---------- */
+const ROW_ICONS = {
+  edit: '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  hold: '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4V3Z"/></svg>',
+  sell: '<svg viewBox="0 0 24 24"><path d="M20.59 13.41 12 22l-9-9 8.59-8.59A2 2 0 0 1 13 4h5a2 2 0 0 1 2 2v5a2 2 0 0 1-.41 1.41Z"/><circle cx="16.5" cy="7.5" r="1"/></svg>',
+  trash: '<svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>',
+  restore: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>',
+  search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+  box: '<svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg>',
+  check: '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>'
+};
+function emptyState(icon, title, sub, colspan){
+  return `<tr><td colspan="${colspan}" class="empty-state-cell"><div class="empty-state"><div class="empty-state-icon">${ROW_ICONS[icon]}</div><b>${title}</b><p>${sub}</p></div></td></tr>`;
+}
 function categoryPill(cat){
   const c = cat || "Other";
   const styles = {
@@ -525,8 +538,8 @@ function renderRows(){
   inventoryRows.innerHTML=pageItems.map(r=>`<tr id="row-inventory-${r.id}">
     <td>${rowTitle(r)}</td><td data-label="Platform">${r.platform}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")'>✎</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps">🔍</button><button class="icon-btn" onclick="moveToHold('${r.id}')">◇</button><button class="icon-btn" onclick="markSold('${r.id}')">$</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')">×</button></div></td>
-  </tr>`).join("") || `<tr><td colspan="7" class="muted">No active inventory yet.</td></tr>`;
+    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete">${ROW_ICONS.trash}</button></div></td>
+  </tr>`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",7);
 
   const count = invSorted.length;
   const shownStart = count ? start+1 : 0;
@@ -544,8 +557,8 @@ function renderRows(){
   holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}">
     <td>${rowTitle(r)}</td><td data-label="Platform">${r.platform}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
     <td data-label="On Hold">${ageChip(r.heldAt, 14)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps">🔍</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')">×</button></div></td>
-  </tr>`).join("") || `<tr><td colspan="6" class="muted">No items on hold.</td></tr>`;
+    <td><div class="row-actions"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')" title="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')" title="Delete">${ROW_ICONS.trash}</button></div></td>
+  </tr>`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",6);
 
   const soldSorted = getSoldRows().sort((a,b)=> parseLocalDate(b.date) - parseLocalDate(a.date));
   const soldTotalPages = Math.max(1, Math.ceil(soldSorted.length / SOLD_PAGE_SIZE));
@@ -556,8 +569,8 @@ function renderRows(){
 
   soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}">
     <td>${rowTitle(r)}</td><td data-label="Date">${r.date||""}</td><td data-label="Platform">${r.platform}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")'>✎</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')">×</button></div></td>
-  </tr>`).join("") || `<tr><td colspan="8" class="muted">No sold items match this filter.</td></tr>`;
+    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")' title="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')" title="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')" title="Delete">${ROW_ICONS.trash}</button></div></td>
+  </tr>`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",8);
 
   const soldCount = soldSorted.length;
   const soldShownStart = soldCount ? soldStart+1 : 0;
@@ -669,6 +682,18 @@ function niceCeil(v){
   let m; if(rel<=1)m=1; else if(rel<=2)m=2; else if(rel<=5)m=5; else m=10;
   return m*pow;
 }
+function drawSmoothPath(ctx, pts){
+  if(!pts.length) return;
+  if(pts.length===1){ ctx.moveTo(pts[0].x,pts[0].y); ctx.lineTo(pts[0].x,pts[0].y); return; }
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for(let i=1;i<pts.length-1;i++){
+    const xMid=(pts[i].x+pts[i+1].x)/2;
+    const yMid=(pts[i].y+pts[i+1].y)/2;
+    ctx.quadraticCurveTo(pts[i].x, pts[i].y, xMid, yMid);
+  }
+  const last=pts[pts.length-1], secondLast=pts[pts.length-2];
+  ctx.quadraticCurveTo(secondLast.x, secondLast.y, last.x, last.y);
+}
 function themeVar(name, fallback){
   const v = getComputedStyle(document.documentElement).getPropertyValue(name);
   return (v && v.trim()) || fallback;
@@ -702,12 +727,12 @@ function drawLineChart(canvas, series, colors, labels, opts={}){
     ctx.fillText(lab, x-9, h-6);
   });
   series.forEach((s,si)=>{
+    const pts = s.map((v,i)=>({
+      x: padL+(w-padL-padR)*(i/Math.max(1,s.length-1)),
+      y: padT+(h-padT-padB)*(1-Math.max(0,v)/niceMax)
+    }));
     ctx.beginPath();
-    s.forEach((v,i)=>{
-      const x=padL+(w-padL-padR)*(i/Math.max(1,s.length-1));
-      const y=padT+(h-padT-padB)*(1-Math.max(0,v)/niceMax);
-      i? ctx.lineTo(x,y): ctx.moveTo(x,y);
-    });
+    drawSmoothPath(ctx, pts);
     ctx.strokeStyle=colors[si]; ctx.lineWidth=2.5; ctx.lineJoin="round"; ctx.lineCap="round"; ctx.stroke();
     if(opts.dots){
       ctx.fillStyle=colors[si];
