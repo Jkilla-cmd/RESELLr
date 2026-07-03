@@ -623,7 +623,7 @@ function renderActivity(){
 function computeAlerts(){
   const list=[];
   const wb=walletBalance();
-  if(wb<0) list.push({level:"warn",title:"Wallet balance is negative",text:`Your wallet is at ${money(wb)}. Adjust your reinvestment mode or sell held inventory to recover.`});
+  if(wb<0) list.push({level:"warn",title:"Stash balance is negative",text:`Your stash is at ${money(wb)}. Adjust your reinvestment mode or sell held inventory to recover.`});
   const staleHolds = state.holds.filter(h=>h.heldAt && (Date.now()-h.heldAt)/86400000>14);
   if(staleHolds.length) list.push({level:"warn",title:`${staleHolds.length} item${staleHolds.length===1?"":"s"} on hold over 14 days`,text:"Revisit these holds — move them back to inventory or make a decision."});
   const zeroCost = state.inventory.filter(r=>!n(r.cost)).length;

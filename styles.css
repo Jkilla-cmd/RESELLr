@@ -138,11 +138,11 @@ svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 
 /* MAIN */
 .main{padding:20px 26px 30px;min-width:0}
-.topbar{display:grid;grid-template-columns:1fr minmax(260px,420px) auto;align-items:center;gap:20px;margin-bottom:14px}
+.topbar{display:grid;grid-template-columns:1fr minmax(260px,420px) 1fr;align-items:center;gap:20px;margin-bottom:14px}
 .topbar>*{min-width:0}
 .greet h1{font-size:23px;letter-spacing:-.02em}
 .greet p{color:var(--muted);font-size:13px;margin-top:3px}
-.search-wrap{position:relative;display:flex;align-items:center;min-width:0}
+.search-wrap{position:relative;display:flex;align-items:center;min-width:0;justify-self:center;width:100%;max-width:420px}
 .search-wrap svg{position:absolute;left:13px;width:15px;height:15px;color:var(--muted)}
 .search-wrap input{
   width:100%;border:1px solid var(--line);background:var(--surface);color:var(--ink);
@@ -168,6 +168,7 @@ svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .status-chip b{display:block;font-size:11.5px;color:var(--ink);font-weight:700}
 .status-chip .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.18)}
 .icon-only{position:relative;border:1px solid var(--line);background:var(--surface);border-radius:11px;width:38px;height:38px;display:grid;place-items:center;color:var(--ink)}
+.icon-plain{border:0;background:transparent;width:auto;height:auto;padding:4px}
 .icon-only .badge,.badge{position:absolute;top:-5px;right:-5px;background:#e14b4b;color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 5px;border:2px solid var(--bg)}
 .avatar-menu{position:relative}
 .avatar{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 9px 5px 5px}
