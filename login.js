@@ -5,6 +5,29 @@
   var errorEl = document.getElementById("loginError");
   var submitBtn = document.getElementById("loginSubmitBtn");
 
+  // --- mascot: eyes track email typing, cape covers eyes for password ---
+  var mascot = document.getElementById("batMascot");
+  var pupilL = document.querySelector(".bat-pupil-left");
+  var pupilR = document.querySelector(".bat-pupil-right");
+  var BASE_L_X = 118, BASE_R_X = 182, MAX_OFFSET = 7;
+
+  function updateEyes(){
+    if(!pupilL || !pupilR) return;
+    var len = emailInput.value.length;
+    var t = Math.max(-1, Math.min(1, (len - 10) / 10));
+    var dx = t * MAX_OFFSET;
+    pupilL.setAttribute("cx", BASE_L_X + dx);
+    pupilR.setAttribute("cx", BASE_R_X + dx);
+  }
+  if(emailInput && mascot){
+    emailInput.addEventListener("input", updateEyes);
+    emailInput.addEventListener("focus", function(){ mascot.classList.remove("covering"); });
+  }
+  if(passwordInput && mascot){
+    passwordInput.addEventListener("focus", function(){ mascot.classList.add("covering"); });
+    passwordInput.addEventListener("blur", function(){ mascot.classList.remove("covering"); });
+  }
+
   function showError(msg){
     errorEl.textContent = msg;
     errorEl.hidden = false;

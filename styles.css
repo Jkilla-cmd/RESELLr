@@ -57,14 +57,24 @@ svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .auth-gate code{background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
 
 .login-body{
-  background:#0e1520 url('https://media3.giphy.com/media/v1.Y2lkPTZjMDliOTUyc2FncjdsNWg1MGMyOW1qMjQ2ZTI1NW5pYnJldDM1bWNyZjR3MXdieiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xT9DPErFASWkKCaAJW/giphy.gif') center/cover no-repeat;
+  background:var(--bg);
   min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
 }
 .login-card{
-  background:rgba(255,255,255,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border:1px solid rgba(255,255,255,.4);border-radius:20px;box-shadow:0 25px 60px rgba(0,0,0,.45);
+  background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);
   padding:32px;width:min(380px,92vw);
 }
+.mascot-wrap{display:flex;justify-content:center;margin-bottom:6px}
+.mascot{width:130px;height:auto;overflow:visible}
+.bat-pupil{transition:opacity .15s ease}
+.bat-cover{
+  transition:transform .4s cubic-bezier(.34,1.4,.64,1);
+  transform:translate(var(--cx,0),var(--cy,-58px)) rotate(var(--cr,-30deg));
+}
+.bat-cover-left{--cx:-64px}
+.bat-cover-right{--cx:64px;--cr:30deg}
+.mascot.covering .bat-cover{--cx:0px;--cy:0px;--cr:0deg}
+.mascot.covering .bat-pupil{opacity:0}
 [data-theme="dark"] .login-card{background:rgba(15,25,36,.78);border-color:rgba(255,255,255,.1)}
 .login-brand{display:flex;align-items:center;gap:11px;margin-bottom:24px}
 .login-brand strong{display:block;font-size:16px;letter-spacing:-.02em;color:var(--ink)}
