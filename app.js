@@ -499,8 +499,8 @@ function renderRows(){
   const pageItems = invSorted.slice(start, start+INV_PAGE_SIZE);
 
   inventoryRows.innerHTML=pageItems.map(r=>`<tr id="row-inventory-${r.id}">
-    <td>${rowTitle(r)}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td><td class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
-    <td>${ageChip(r.addedAt, 45)}</td>
+    <td>${rowTitle(r)}</td><td data-label="Platform">${r.platform}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
+    <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")'>✎</button><button class="icon-btn" onclick="moveToHold('${r.id}')">◇</button><button class="icon-btn" onclick="markSold('${r.id}')">$</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="7" class="muted">No active inventory yet.</td></tr>`;
 
@@ -518,8 +518,8 @@ function renderRows(){
 
   holdsCountBadge.textContent = `${state.holds.length} on hold`;
   holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}">
-    <td>${rowTitle(r)}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td>
-    <td>${ageChip(r.heldAt, 14)}</td>
+    <td>${rowTitle(r)}</td><td data-label="Platform">${r.platform}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
+    <td data-label="On Hold">${ageChip(r.heldAt, 14)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick="moveHoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="6" class="muted">No items on hold.</td></tr>`;
 
@@ -531,7 +531,7 @@ function renderRows(){
   const soldPageItems = soldSorted.slice(soldStart, soldStart+SOLD_PAGE_SIZE);
 
   soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}">
-    <td>${rowTitle(r)}</td><td>${r.date||""}</td><td>${r.platform}</td><td>${money(r.price)}</td><td>${money(r.cost)}</td><td>${money(r.fees)}</td><td class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
+    <td>${rowTitle(r)}</td><td data-label="Date">${r.date||""}</td><td data-label="Platform">${r.platform}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${money(profit(r))}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")'>✎</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')">▣</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')">×</button></div></td>
   </tr>`).join("") || `<tr><td colspan="8" class="muted">No sold items match this filter.</td></tr>`;
 
