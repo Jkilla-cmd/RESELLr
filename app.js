@@ -686,13 +686,16 @@ function drawSmoothPath(ctx, pts){
   if(!pts.length) return;
   if(pts.length===1){ ctx.moveTo(pts[0].x,pts[0].y); ctx.lineTo(pts[0].x,pts[0].y); return; }
   ctx.moveTo(pts[0].x, pts[0].y);
-  for(let i=1;i<pts.length-1;i++){
-    const xMid=(pts[i].x+pts[i+1].x)/2;
-    const yMid=(pts[i].y+pts[i+1].y)/2;
-    ctx.quadraticCurveTo(pts[i].x, pts[i].y, xMid, yMid);
+  if(pts.length===2){ ctx.lineTo(pts[1].x, pts[1].y); return; }
+  for(let i=0;i<pts.length-1;i++){
+    const p0 = pts[i-1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i+1];
+    const p3 = pts[i+2] || p2;
+    const cp1x = p1.x + (p2.x-p0.x)/6, cp1y = p1.y + (p2.y-p0.y)/6;
+    const cp2x = p2.x - (p3.x-p1.x)/6, cp2y = p2.y - (p3.y-p1.y)/6;
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
   }
-  const last=pts[pts.length-1], secondLast=pts[pts.length-2];
-  ctx.quadraticCurveTo(secondLast.x, secondLast.y, last.x, last.y);
 }
 function themeVar(name, fallback){
   const v = getComputedStyle(document.documentElement).getPropertyValue(name);
