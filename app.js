@@ -866,8 +866,6 @@ function renderHeader(){
   const healthy = checkStorageHealthy();
   dbHealthText.textContent = healthy ? "Healthy" : "Unavailable";
   systemsDot.style.background = healthy ? "#22c55e" : "#dc2626";
-  autoSaveDot.style.background = healthy ? "#22c55e" : "#dc2626";
-  autoSaveText.textContent = healthy ? "On" : "Off";
 
   if(state.lastBackupAt){
     lastBackupLine.textContent = `Last exported ${timeAgo(state.lastBackupAt)}.`;
