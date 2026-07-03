@@ -28,13 +28,13 @@
         <rect x="76" y="66" width="148" height="96" rx="16" fill="#12161c"/>
         <circle cx="118" cy="114" r="27" fill="#1a1f26" stroke="#3a4552" stroke-width="4"/>
         <circle cx="182" cy="114" r="27" fill="#1a1f26" stroke="#3a4552" stroke-width="4"/>
-        <circle class="bot-pupil bot-pupil-left" cx="118" cy="114" r="12" fill="#e0a63f"/>
-        <circle class="bot-pupil bot-pupil-right" cx="182" cy="114" r="12" fill="#e0a63f"/>
+        <circle id="botPupilLeft" cx="118" cy="114" r="12" fill="#e0a63f" style="transition:opacity .15s ease"/>
+        <circle id="botPupilRight" cx="182" cy="114" r="12" fill="#e0a63f" style="transition:opacity .15s ease"/>
         <rect x="128" y="145" width="10" height="4" rx="2" fill="#3a4552"/>
         <rect x="145" y="145" width="10" height="4" rx="2" fill="#3a4552"/>
         <rect x="162" y="145" width="10" height="4" rx="2" fill="#3a4552"/>
-        <rect class="bot-shutter bot-shutter-left" x="88" y="84" width="60" height="60" rx="10" fill="#2b323c"/>
-        <rect class="bot-shutter bot-shutter-right" x="152" y="84" width="60" height="60" rx="10" fill="#2b323c"/>
+        <rect id="botShutterLeft" x="88" y="84" width="60" height="60" rx="10" fill="#2b323c" style="transform:translateY(-72px);transition:transform .35s cubic-bezier(.6,0,.4,1)"/>
+        <rect id="botShutterRight" x="152" y="84" width="60" height="60" rx="10" fill="#2b323c" style="transform:translateY(-72px);transition:transform .35s cubic-bezier(.6,0,.4,1)"/>
       </svg>
     </div>
     <div class="login-brand">

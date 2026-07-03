@@ -6,9 +6,13 @@
   var submitBtn = document.getElementById("loginSubmitBtn");
 
   // --- mascot: eyes track email typing, shutters cover eyes for password ---
+  // Controlled entirely via inline styles set here in JS, independent of styles.css,
+  // so the animation can never be broken by a stylesheet caching/version mismatch.
   var mascot = document.getElementById("robotMascot");
-  var pupilL = document.querySelector(".bot-pupil-left");
-  var pupilR = document.querySelector(".bot-pupil-right");
+  var pupilL = document.getElementById("botPupilLeft");
+  var pupilR = document.getElementById("botPupilRight");
+  var shutterL = document.getElementById("botShutterLeft");
+  var shutterR = document.getElementById("botShutterRight");
   var BASE_L_X = 118, BASE_R_X = 182, MAX_OFFSET = 8;
 
   function updateEyes(){
@@ -19,13 +23,21 @@
     pupilL.setAttribute("cx", BASE_L_X + dx);
     pupilR.setAttribute("cx", BASE_R_X + dx);
   }
+  function setCovering(isCovering){
+    if(!shutterL || !shutterR) return;
+    var sy = isCovering ? "0px" : "-72px";
+    shutterL.style.transform = "translateY(" + sy + ")";
+    shutterR.style.transform = "translateY(" + sy + ")";
+    if(pupilL) pupilL.style.opacity = isCovering ? "0" : "1";
+    if(pupilR) pupilR.style.opacity = isCovering ? "0" : "1";
+  }
   if(emailInput && mascot){
     emailInput.addEventListener("input", updateEyes);
-    emailInput.addEventListener("focus", function(){ mascot.classList.remove("covering"); });
+    emailInput.addEventListener("focus", function(){ setCovering(false); });
   }
   if(passwordInput && mascot){
-    passwordInput.addEventListener("focus", function(){ mascot.classList.add("covering"); });
-    passwordInput.addEventListener("blur", function(){ mascot.classList.remove("covering"); });
+    passwordInput.addEventListener("focus", function(){ setCovering(true); });
+    passwordInput.addEventListener("blur", function(){ setCovering(false); });
   }
 
   function showError(msg){
