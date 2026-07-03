@@ -199,6 +199,11 @@
           <div id="activityList" class="activity-list"></div>
         </article>
 
+        <article class="card">
+          <div class="card-head"><h2>Most Profitable Comic Sold</h2></div>
+          <div id="topComicCard" class="top-comic"></div>
+        </article>
+
         <article class="card wallet-card">
           <div class="card-head">
             <h2>Reinvestment Stash</h2>
@@ -231,7 +236,15 @@
       </div>
       <div class="table-card">
         <table>
-          <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>Profit</th><th>Listed</th><th>Actions</th></tr></thead>
+          <thead><tr>
+            <th data-sort="title">Item<span class="sort-arrow"></span></th>
+            <th data-sort="platform">Platform<span class="sort-arrow"></span></th>
+            <th data-sort="price">Price<span class="sort-arrow"></span></th>
+            <th data-sort="cost">Cost<span class="sort-arrow"></span></th>
+            <th data-sort="profit">Profit<span class="sort-arrow"></span></th>
+            <th data-sort="addedAt">Listed<span class="sort-arrow"></span></th>
+            <th>Actions</th>
+          </tr></thead>
           <tbody id="inventoryRows"></tbody>
         </table>
       </div>
@@ -265,7 +278,16 @@
       </div>
       <div class="table-card">
         <table>
-          <thead><tr><th>Item</th><th>Date</th><th>Platform</th><th>Sold Price</th><th>Cost</th><th>Fees</th><th>Profit</th><th>Actions</th></tr></thead>
+          <thead><tr>
+            <th data-sort="title">Item<span class="sort-arrow"></span></th>
+            <th data-sort="date">Date<span class="sort-arrow"></span></th>
+            <th data-sort="platform">Platform<span class="sort-arrow"></span></th>
+            <th data-sort="price">Sold Price<span class="sort-arrow"></span></th>
+            <th data-sort="cost">Cost<span class="sort-arrow"></span></th>
+            <th data-sort="fees">Fees<span class="sort-arrow"></span></th>
+            <th data-sort="profit">Profit<span class="sort-arrow"></span></th>
+            <th>Actions</th>
+          </tr></thead>
           <tbody id="soldRows"></tbody>
         </table>
       </div>

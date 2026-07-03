@@ -2,6 +2,8 @@
 const KEY = "resellr_v300_data";
 let state = load();
 let editing = null;
+let inventorySort = {key:"addedAt", dir:"desc"};
+let soldSort = {key:"date", dir:"desc"};
 
 /* ---------- helpers ---------- */
 function n(v){ const x = Number(v); return Number.isFinite(x) ? x : 0; }
@@ -424,6 +426,28 @@ function ensureFilters(){
 }
 growthYear.onchange = snapYear.onchange = snapMonth.onchange = monthlyYear.onchange = taxYear.onchange = render;
 soldYear.onchange = soldMonth.onchange = ()=>{ soldPage=1; render(); };
+
+function bindSortHeaders(tableId, sortState, pageResetFn){
+  document.querySelectorAll(`#${tableId} thead th[data-sort]`).forEach(th=>{
+    th.onclick=()=>{
+      const key = th.dataset.sort;
+      if(sortState.key===key){ sortState.dir = sortState.dir==="asc" ? "desc" : "asc"; }
+      else{ sortState.key=key; sortState.dir = (key==="title"||key==="platform") ? "asc" : "desc"; }
+      pageResetFn();
+      render();
+    };
+  });
+}
+function updateSortIndicators(tableId, sortState){
+  document.querySelectorAll(`#${tableId} thead th[data-sort]`).forEach(th=>{
+    const active = th.dataset.sort===sortState.key;
+    th.classList.toggle("sorted", active);
+    const arrow = th.querySelector(".sort-arrow");
+    if(arrow) arrow.textContent = active ? (sortState.dir==="asc" ? "▲" : "▼") : "";
+  });
+}
+bindSortHeaders("inventory", inventorySort, ()=>{ inventoryPage=1; });
+bindSortHeaders("sold", soldSort, ()=>{ soldPage=1; });
 globalYear.onchange = ()=>{
   growthYear.value=globalYear.value;
   if([...monthlyYear.options].some(o=>o.value===globalYear.value)) monthlyYear.value=globalYear.value;
@@ -483,7 +507,8 @@ const ROW_ICONS = {
   restore: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>',
   search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
   box: '<svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg>',
-  check: '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>'
+  check: '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01Z"/></svg>'
 };
 function emptyState(icon, title, sub, colspan){
   return `<tr><td colspan="${colspan}" class="empty-state-cell"><div class="empty-state"><div class="empty-state-icon">${ROW_ICONS[icon]}</div><b>${title}</b><p>${sub}</p></div></td></tr>`;
@@ -524,8 +549,24 @@ const INV_PAGE_SIZE = 25;
 const SOLD_PAGE_SIZE = 25;
 let inventoryPage = 1;
 let soldPage = 1;
+function sortRows(rows, sortState){
+  const {key, dir} = sortState;
+  const mult = dir==="asc" ? 1 : -1;
+  return [...rows].sort((a,b)=>{
+    let av, bv;
+    if(key==="title" || key==="platform"){
+      av=(a[key]||"").toLowerCase(); bv=(b[key]||"").toLowerCase();
+      return av<bv ? -1*mult : av>bv ? 1*mult : 0;
+    }
+    if(key==="date"){ av=parseLocalDate(a.date).getTime()||0; bv=parseLocalDate(b.date).getTime()||0; }
+    else if(key==="addedAt"){ av=a.addedAt||0; bv=b.addedAt||0; }
+    else if(key==="profit"){ av=profit(a); bv=profit(b); }
+    else { av=n(a[key]); bv=n(b[key]); }
+    return (av-bv)*mult;
+  });
+}
 function sortedInventory(){
-  return [...state.inventory].sort((a,b)=> (b.addedAt||0) - (a.addedAt||0));
+  return sortRows(state.inventory, inventorySort);
 }
 function renderRows(){
   const invSorted = sortedInventory();
@@ -552,6 +593,7 @@ function renderRows(){
   invPageSelect.value = String(inventoryPage);
   invPrevBtn.disabled = inventoryPage<=1;
   invNextBtn.disabled = inventoryPage>=totalPages;
+  updateSortIndicators("inventory", inventorySort);
 
   holdsCountBadge.textContent = `${state.holds.length} on hold`;
   holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}">
@@ -560,7 +602,7 @@ function renderRows(){
     <td><div class="row-actions"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')" title="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')" title="Delete">${ROW_ICONS.trash}</button></div></td>
   </tr>`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",6);
 
-  const soldSorted = getSoldRows().sort((a,b)=> parseLocalDate(b.date) - parseLocalDate(a.date));
+  const soldSorted = sortRows(getSoldRows(), soldSort);
   const soldTotalPages = Math.max(1, Math.ceil(soldSorted.length / SOLD_PAGE_SIZE));
   if(soldPage>soldTotalPages) soldPage=soldTotalPages;
   if(soldPage<1) soldPage=1;
@@ -583,6 +625,7 @@ function renderRows(){
   soldPageSelect.value = String(soldPage);
   soldPrevBtn.disabled = soldPage<=1;
   soldNextBtn.disabled = soldPage>=soldTotalPages;
+  updateSortIndicators("sold", soldSort);
 }
 invPrevBtn.onclick=()=>{ if(inventoryPage>1){ inventoryPage--; renderRows(); } };
 invNextBtn.onclick=()=>{ inventoryPage++; renderRows(); };
@@ -672,6 +715,23 @@ function renderWallet(){
   document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active", n(b.dataset.mode)===state.walletMode));
 }
 document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ state.walletMode=n(b.dataset.mode); save(); render(); });
+
+function renderTopComic(){
+  const comics = state.sold.filter(r=>r.category==="Comic");
+  if(!comics.length){
+    topComicCard.innerHTML = `<p class="muted">No comics sold yet — your top sale will show up here once you do.</p>`;
+    return;
+  }
+  const top = comics.reduce((best,r)=> profit(r)>profit(best) ? r : best, comics[0]);
+  const p = profit(top);
+  topComicCard.innerHTML = `
+    <div class="top-comic-icon">${ROW_ICONS.star}</div>
+    <div class="top-comic-body">
+      <div class="top-comic-title">${top.title}</div>
+      <div class="top-comic-profit ${p>=0?'profit':'loss'}">${money(p)} profit</div>
+      <div class="top-comic-meta">${top.platform} • ${top.date||""} • sold for ${money(top.price)}</div>
+    </div>`;
+}
 
 /* ---------- charts ---------- */
 function fmtShort(v){ return v>=1000 ? "$"+(v/1000).toFixed(v%1000?1:0)+"K" : "$"+Math.round(v); }
@@ -1144,6 +1204,7 @@ function render(){
   renderAlerts();
   renderCharts();
   renderWallet();
+  renderTopComic();
   renderHeader();
   save();
 }
