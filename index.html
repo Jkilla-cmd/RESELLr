@@ -349,17 +349,24 @@
           <button data-mode="50">50%</button>
           <button data-mode="70">70%</button>
         </div>
-        <p class="muted">Reinvestment mode sets what share of each sale's recovered cost + profit is treated as buying power for new inventory. The rest is held as reserved profit.</p>
+        <p class="muted">This is a planning guide — it never changes your Stash Balance. It shows what share of each new sale's cost + profit you plan to put back into buying inventory, and how much you plan to keep for yourself.</p>
       </div>
     </section>
 
     <section id="wallet" class="page">
-      <div class="table-head"><div><h2>Stash</h2><p>Your reinvestment stash at a glance.</p></div></div>
+      <div class="table-head">
+        <div><h2>Stash</h2><p>Your real cash account for this hobby — money in, money out.</p></div>
+        <div class="table-head-actions">
+          <button class="ghost" id="depositBtn">+ Deposit</button>
+          <button class="ghost" id="withdrawBtn">− Withdraw</button>
+          <button class="ghost" id="reconcileBtn" title="Enter your actual bank balance and the Stash will add an adjustment to match it">Sync to Bank</button>
+        </div>
+      </div>
       <div class="card">
         <div class="wallet-row">
           <div><small>Stash Balance</small><b id="drawerWallet">$0.00</b></div>
           <div><small>Buying Power</small><b id="drawerBuying">$0.00</b></div>
-          <div><small>Reserved (Kept)</small><b id="drawerReserved">$0.00</b></div>
+          <div><small>Plan to Keep (This Month)</small><b id="drawerReserved">$0.00</b></div>
         </div>
       </div>
       <div class="card" id="personalInvestCard" hidden>
@@ -367,7 +374,24 @@
         <p class="muted">You've spent more buying inventory than you've earned back so far — this much has come out of your own pocket, not the Stash.</p>
         <b id="drawerPersonal" class="personal-invest-amount">$0.00</b>
       </div>
+      <div class="card">
+        <div class="card-head"><h2>Deposits &amp; Withdrawals</h2></div>
+        <div id="txnList" class="txn-list"></div>
+      </div>
     </section>
+
+    <dialog id="txnModal">
+      <form method="dialog" id="txnForm">
+        <h3 id="txnModalTitle">Withdraw</h3>
+        <p class="muted" id="txnModalHint"></p>
+        <input name="amount" id="txnAmount" type="number" step="0.01" min="0.01" placeholder="Amount" required />
+        <input name="note" id="txnNote" type="text" placeholder="Note (optional)" maxlength="80" />
+        <div class="modal-actions">
+          <button type="button" id="cancelTxnModal">Cancel</button>
+          <button id="saveTxnBtn" class="primary">Save</button>
+        </div>
+      </form>
+    </dialog>
 
     <section id="importexport" class="page">
       <div class="table-head"><div><h2>Import / Export</h2><p>Back up your data or bring in a Comix Stash export.</p></div></div>

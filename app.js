@@ -41,6 +41,7 @@ function load(){
       saved.sold = saved.sold || [];
       saved.history = saved.history || [];
       saved.activity = saved.activity || [];
+      saved.transactions = saved.transactions || [];
       saved.userName = saved.userName || "";
       saved.monthlyGoal = Number.isFinite(saved.monthlyGoal) ? saved.monthlyGoal : 300;
       saved.walletMode = Number.isFinite(saved.walletMode) ? saved.walletMode : 50;
@@ -127,20 +128,37 @@ function logActivity(text, sub, color, icon){
 function totalSpentAllTime(){
   return [...state.inventory, ...state.holds, ...state.sold].reduce((a,r)=>a+n(r.cost),0);
 }
-function reinvestedAmount(){
-  return state.sold.reduce((a,r)=>a + costProfit(r)*(state.walletMode/100),0);
+function totalEarnedAllTime(){
+  // 100% of cost+profit recovered from every sale, lifetime.
+  return state.sold.reduce((a,r)=>a + costProfit(r),0);
 }
-function reservedAmount(){
-  return state.sold.reduce((a,r)=>a + costProfit(r)*(1-state.walletMode/100),0);
+function txnTotal(type){
+  return (state.transactions||[]).reduce((a,t)=> a + (t.type===type ? n(t.amount) : 0), 0);
 }
 function walletBalance(){
-  return reinvestedAmount() - totalSpentAllTime();
+  // The Stash mirrors your real hobby bank account:
+  // + every sale's cost+profit   - every item's cost
+  // + deposits you log           - withdrawals you log
+  return totalEarnedAllTime() - totalSpentAllTime() + txnTotal("deposit") - txnTotal("withdraw");
 }
 function personalInvestment(){
   return Math.max(0, -walletBalance());
 }
+/* The reinvestment % (walletMode) is purely a planning guide -- it never changes
+   the Stash Balance. It shows what share of each new sale you PLAN to put back
+   vs keep for yourself. */
+function plannedKeepThisMonth(){
+  const now = new Date();
+  const monthSales = state.sold.filter(r=>{
+    if(!r.date) return false;
+    const d = parseLocalDate(r.date);
+    return sameMonth(d, now);
+  });
+  const monthCP = monthSales.reduce((a,r)=>a + costProfit(r),0);
+  return monthCP * (1 - state.walletMode/100);
+}
 function reservedProfit(){
-  return reservedAmount();
+  return plannedKeepThisMonth();
 }
 
 /* ---------- theme ---------- */
@@ -739,6 +757,75 @@ function renderAlerts(){
 }
 
 /* ---------- wallet pages ---------- */
+/* ---------- stash transactions ---------- */
+let txnKind = "withdraw";
+function openTxnModal(kind){
+  txnKind = kind;
+  txnModalTitle.textContent = kind==="withdraw" ? "Withdraw from Stash" : "Deposit into Stash";
+  txnModalHint.textContent = kind==="withdraw"
+    ? "Money you're taking out to keep — moves from the Stash to your pocket."
+    : "Personal money you're adding to the Stash to spend on inventory.";
+  txnAmount.value = "";
+  txnNote.value = "";
+  txnModal.showModal();
+  txnAmount.focus();
+}
+depositBtn.onclick = ()=>openTxnModal("deposit");
+withdrawBtn.onclick = ()=>openTxnModal("withdraw");
+cancelTxnModal.onclick = ()=>txnModal.close();
+txnForm.onsubmit = (e)=>{
+  const amount = n(txnAmount.value);
+  if(!(amount>0)){ e.preventDefault(); return; }
+  state.transactions.push({
+    id: uid(), type: txnKind, amount,
+    note: txnNote.value.trim(), date: today(), ts: Date.now()
+  });
+  logActivity(
+    (txnKind==="withdraw" ? "Withdrew " : "Deposited ") + money(amount),
+    txnNote.value.trim() || (txnKind==="withdraw" ? "Moved to pocket" : "Personal funds added"),
+    txnKind==="withdraw" ? "peach" : "mint", "wallet"
+  );
+  save(); render();
+};
+reconcileBtn.onclick = ()=>{
+  const current = walletBalance();
+  const input = prompt(`Your Stash currently shows ${money(current)}.\n\nEnter your actual bank balance for this hobby, and I'll add one adjustment transaction to make the Stash match it exactly:`);
+  if(input===null) return;
+  const target = parseFloat(String(input).replace(/[^0-9.\-]/g,""));
+  if(!Number.isFinite(target)){ alert("That doesn't look like a number."); return; }
+  const diff = target - current;
+  if(Math.abs(diff) < 0.005){ alert("Already matching — nothing to adjust."); return; }
+  state.transactions.push({
+    id: uid(), type: diff>0 ? "deposit" : "withdraw", amount: Math.abs(diff),
+    note: "Balance sync to bank", date: today(), ts: Date.now()
+  });
+  logActivity("Synced Stash to bank balance", money(target), "sky", "wallet");
+  save(); render();
+};
+function deleteTxn(id){
+  const t = state.transactions.find(x=>x.id===id);
+  if(!t) return;
+  if(!confirm(`Delete this ${t.type} of ${money(t.amount)}? The Stash balance will change accordingly.`)) return;
+  state.transactions = state.transactions.filter(x=>x.id!==id);
+  save(); render();
+}
+function renderTxns(){
+  const txns = [...(state.transactions||[])].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!txns.length){
+    txnList.innerHTML = `<p class="muted">No deposits or withdrawals yet. Use the buttons above when you move money in or out — or "Sync to Bank" to set your starting balance.</p>`;
+    return;
+  }
+  txnList.innerHTML = txns.map(t=>`
+    <div class="txn-row">
+      <span class="txn-badge ${t.type}">${t.type==="deposit" ? "+" : "\u2212"}</span>
+      <div class="txn-body">
+        <b>${t.type==="deposit" ? "Deposit" : "Withdrawal"} \u00b7 ${money(t.amount)}</b>
+        <small>${t.date||""}${t.note ? " \u00b7 " + t.note : ""}</small>
+      </div>
+      <button class="icon-btn" onclick="deleteTxn('${t.id}')" title="Delete">${ROW_ICONS.trash}</button>
+    </div>`).join("");
+}
+
 function renderWallet(){
   const wb=walletBalance();
   const buying=Math.max(0,wb);
@@ -1165,6 +1252,7 @@ function normalizeState(raw){
     lastBackupAt: state.lastBackupAt || null,
     history: [],
     activity: state.activity || [],
+    transactions: Array.isArray(raw.transactions) ? raw.transactions : (state.transactions || []),
     inventory: convert(invSrc,"inventory"),
     holds: convert(holdSrc,"holds"),
     sold: convert(soldSrc,"sold")
@@ -1253,6 +1341,7 @@ function render(){
   renderCharts();
   renderWallet();
   renderTopComic();
+  renderTxns();
   renderHeader();
   save();
 }
