@@ -5,11 +5,11 @@
   var errorEl = document.getElementById("loginError");
   var submitBtn = document.getElementById("loginSubmitBtn");
 
-  // --- mascot: eyes track email typing, cape covers eyes for password ---
-  var mascot = document.getElementById("batMascot");
-  var pupilL = document.querySelector(".bat-pupil-left");
-  var pupilR = document.querySelector(".bat-pupil-right");
-  var BASE_L_X = 118, BASE_R_X = 182, MAX_OFFSET = 7;
+  // --- mascot: eyes track email typing, shutters cover eyes for password ---
+  var mascot = document.getElementById("robotMascot");
+  var pupilL = document.querySelector(".bot-pupil-left");
+  var pupilR = document.querySelector(".bot-pupil-right");
+  var BASE_L_X = 118, BASE_R_X = 182, MAX_OFFSET = 8;
 
   function updateEyes(){
     if(!pupilL || !pupilR) return;
