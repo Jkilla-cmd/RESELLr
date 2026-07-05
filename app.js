@@ -1131,6 +1131,23 @@ if(logoutBtn){
   };
 }
 
+/* ---------- inactivity auto-logout ---------- */
+(function(){
+  const INACTIVITY_MS = window.__INACTIVITY_MS || 5*60*1000; // 5 minutes (test hook overridable)
+  let lastActivity = Date.now();
+  function markActivity(){ lastActivity = Date.now(); }
+  ["mousemove","mousedown","keydown","touchstart","scroll","wheel"].forEach(evt=>{
+    document.addEventListener(evt, markActivity, {passive:true});
+  });
+  const checkEvery = Math.min(30000, Math.max(500, Math.floor(INACTIVITY_MS/3)));
+  setInterval(()=>{
+    if(Date.now() - lastActivity < INACTIVITY_MS) return;
+    if(typeof firebase === "undefined" || !firebase.auth){ window.location.href="signin.html"; return; }
+    firebase.auth().signOut().then(()=>{ window.location.href="signin.html"; })
+      .catch(()=>{ window.location.href="signin.html"; });
+  }, checkEvery);
+})();
+
 /* ---------- search ---------- */
 let searchHighlightTimer;
 const KIND_LABEL = {inventory:"Inventory", holds:"Holds", sold:"Sold"};
