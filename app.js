@@ -139,7 +139,14 @@ function walletBalance(){
   // The Stash mirrors your real hobby bank account:
   // + every sale's cost+profit   - every item's cost
   // + deposits you log           - withdrawals you log
-  return totalEarnedAllTime() - totalSpentAllTime() + txnTotal("deposit") - txnTotal("withdraw");
+  // - business expenses (supplies, shipping materials, subscriptions, etc.)
+  return totalEarnedAllTime() - totalSpentAllTime() + txnTotal("deposit") - txnTotal("withdraw") - txnTotal("expense");
+}
+function expensesForYear(year){
+  return (state.transactions||[]).filter(t=>{
+    if(t.type!=="expense" || !t.date) return false;
+    return year==="all" || parseLocalDate(t.date).getFullYear()===Number(year);
+  });
 }
 function personalInvestment(){
   return Math.max(0, -walletBalance());
@@ -548,7 +555,11 @@ function renderSnapshot(){
   taxIncome.textContent=money(taxRows.reduce((a,r)=>a+n(r.price),0));
   taxCost.textContent=money(taxRows.reduce((a,r)=>a+n(r.cost),0));
   taxFees.textContent=money(taxRows.reduce((a,r)=>a+n(r.fees),0));
-  taxProfit.textContent=money(taxRows.reduce((a,r)=>a+profit(r),0));
+  const grossProfit = taxRows.reduce((a,r)=>a+profit(r),0);
+  taxProfit.textContent=money(grossProfit);
+  const yearExpenses = expensesForYear(taxYear.value||"all").reduce((a,t)=>a+n(t.amount),0);
+  taxExpenses.textContent=money(yearExpenses);
+  taxNet.textContent=money(grossProfit - yearExpenses);
 }
 
 /* ---------- tables ---------- */
@@ -692,6 +703,41 @@ invPageSelect.onchange=()=>{ inventoryPage=n(invPageSelect.value)||1; renderRows
 soldPrevBtn.onclick=()=>{ if(soldPage>1){ soldPage--; renderRows(); } };
 soldNextBtn.onclick=()=>{ soldPage++; renderRows(); };
 soldPageSelect.onchange=()=>{ soldPage=n(soldPageSelect.value)||1; renderRows(); };
+function yearStats(year){
+  const rows = state.sold.filter(r=>r.date && parseLocalDate(r.date).getFullYear()===year);
+  const totalProfit = rows.reduce((a,r)=>a+profit(r),0);
+  const revenue = rows.reduce((a,r)=>a+n(r.price),0);
+  return {
+    count: rows.length,
+    profit: totalProfit,
+    revenue,
+    avgSale: rows.length ? revenue/rows.length : 0
+  };
+}
+function yoyDelta(cur, prev){
+  if(!prev) return `<small class="yoy-delta muted">\u2014</small>`;
+  const pct = Math.round(((cur-prev)/Math.abs(prev))*100);
+  const up = pct>=0;
+  return `<small class="yoy-delta ${up?'profit':'loss'}">${up?'\u2197':'\u2198'} ${Math.abs(pct)}%</small>`;
+}
+function renderYoY(){
+  const selected = taxYear.value && taxYear.value!=="all" ? n(taxYear.value) : new Date().getFullYear();
+  const prev = selected - 1;
+  const cur = yearStats(selected), last = yearStats(prev);
+  yoyTitle.textContent = `${selected} vs ${prev}`;
+  if(!cur.count && !last.count){
+    yoyBody.innerHTML = `<p class="muted">No sales in either year yet.</p>`;
+    return;
+  }
+  yoyBody.innerHTML = `
+    <div class="yoy-grid">
+      <div><small>Items Sold</small><b>${cur.count}</b>${yoyDelta(cur.count,last.count)}<span class="yoy-prev">${prev}: ${last.count}</span></div>
+      <div><small>Revenue</small><b>${money(cur.revenue)}</b>${yoyDelta(cur.revenue,last.revenue)}<span class="yoy-prev">${prev}: ${money(last.revenue)}</span></div>
+      <div><small>Profit</small><b>${money(cur.profit)}</b>${yoyDelta(cur.profit,last.profit)}<span class="yoy-prev">${prev}: ${money(last.profit)}</span></div>
+      <div><small>Avg Sale</small><b>${money(cur.avgSale)}</b>${yoyDelta(cur.avgSale,last.avgSale)}<span class="yoy-prev">${prev}: ${money(last.avgSale)}</span></div>
+    </div>`;
+}
+
 function renderCategoryBreakdown(){
   const rows = getTaxRows();
   const cats={};
@@ -761,10 +807,15 @@ function renderAlerts(){
 let txnKind = "withdraw";
 function openTxnModal(kind){
   txnKind = kind;
-  txnModalTitle.textContent = kind==="withdraw" ? "Withdraw from Stash" : "Deposit into Stash";
-  txnModalHint.textContent = kind==="withdraw"
-    ? "Money you're taking out to keep — moves from the Stash to your pocket."
-    : "Personal money you're adding to the Stash to spend on inventory.";
+  const titles = {withdraw:"Withdraw from Stash", deposit:"Deposit into Stash", expense:"Log a Business Expense"};
+  const hints = {
+    withdraw:"Money you're taking out to keep — moves from the Stash to your pocket.",
+    deposit:"Personal money you're adding to the Stash to spend on inventory.",
+    expense:"Supplies, shipping materials, subscriptions — business costs paid from the Stash. Counted in your tax report too."
+  };
+  txnModalTitle.textContent = titles[kind];
+  txnModalHint.textContent = hints[kind];
+  txnCategory.hidden = kind!=="expense";
   txnAmount.value = "";
   txnNote.value = "";
   txnModal.showModal();
@@ -772,18 +823,23 @@ function openTxnModal(kind){
 }
 depositBtn.onclick = ()=>openTxnModal("deposit");
 withdrawBtn.onclick = ()=>openTxnModal("withdraw");
+expenseBtn.onclick = ()=>openTxnModal("expense");
 cancelTxnModal.onclick = ()=>txnModal.close();
 txnForm.onsubmit = (e)=>{
   const amount = n(txnAmount.value);
   if(!(amount>0)){ e.preventDefault(); return; }
-  state.transactions.push({
+  const txn = {
     id: uid(), type: txnKind, amount,
     note: txnNote.value.trim(), date: today(), ts: Date.now()
-  });
+  };
+  if(txnKind==="expense") txn.category = txnCategory.value;
+  state.transactions.push(txn);
+  const verbs = {withdraw:"Withdrew ", deposit:"Deposited ", expense:"Expense "};
   logActivity(
-    (txnKind==="withdraw" ? "Withdrew " : "Deposited ") + money(amount),
-    txnNote.value.trim() || (txnKind==="withdraw" ? "Moved to pocket" : "Personal funds added"),
-    txnKind==="withdraw" ? "peach" : "mint", "wallet"
+    verbs[txnKind] + money(amount),
+    txnKind==="expense" ? (txnCategory.value + (txn.note ? " \u00b7 " + txn.note : ""))
+      : (txn.note || (txnKind==="withdraw" ? "Moved to pocket" : "Personal funds added")),
+    txnKind==="deposit" ? "mint" : "peach", "wallet"
   );
   save(); render();
 };
@@ -812,14 +868,15 @@ function deleteTxn(id){
 function renderTxns(){
   const txns = [...(state.transactions||[])].sort((a,b)=>(b.ts||0)-(a.ts||0));
   if(!txns.length){
-    txnList.innerHTML = `<p class="muted">No deposits or withdrawals yet. Use the buttons above when you move money in or out — or "Sync to Bank" to set your starting balance.</p>`;
+    txnList.innerHTML = `<p class="muted">No deposits, withdrawals, or expenses yet. Use the buttons above when money moves — or "Sync to Bank" to set your starting balance.</p>`;
     return;
   }
+  const labels = {deposit:"Deposit", withdraw:"Withdrawal", expense:"Expense"};
   txnList.innerHTML = txns.map(t=>`
     <div class="txn-row">
       <span class="txn-badge ${t.type}">${t.type==="deposit" ? "+" : "\u2212"}</span>
       <div class="txn-body">
-        <b>${t.type==="deposit" ? "Deposit" : "Withdrawal"} \u00b7 ${money(t.amount)}</b>
+        <b>${labels[t.type]||t.type} \u00b7 ${money(t.amount)}${t.type==="expense" && t.category ? ` \u00b7 ${t.category}` : ""}</b>
         <small>${t.date||""}${t.note ? " \u00b7 " + t.note : ""}</small>
       </div>
       <button class="icon-btn" onclick="deleteTxn('${t.id}')" title="Delete">${ROW_ICONS.trash}</button>
@@ -1131,6 +1188,13 @@ if(logoutBtn){
   };
 }
 
+/* ---------- PWA ---------- */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+
 /* ---------- inactivity auto-logout ---------- */
 (function(){
   const INACTIVITY_MS = window.__INACTIVITY_MS || 5*60*1000; // 5 minutes (test hook overridable)
@@ -1311,6 +1375,20 @@ exportXlsBtn.onclick=()=>{
   const wb = XLSX.utils.book_new();
   const label = taxYear.value==="all" ? "All Years" : taxYear.value;
   XLSX.utils.book_append_sheet(wb, ws, "Sold " + label);
+
+  const exp = expensesForYear(taxYear.value||"all").slice().sort((a,b)=> parseLocalDate(b.date) - parseLocalDate(a.date));
+  if(exp.length){
+    const expData = exp.map(t=>({
+      "Date": t.date || "",
+      "Category": t.category || "Other",
+      "Note": t.note || "",
+      "Amount": n(t.amount)
+    }));
+    expData.push({ "Date":"TOTAL", "Category":"", "Note":"", "Amount": exp.reduce((a,t)=>a+n(t.amount),0) });
+    const wsExp = XLSX.utils.json_to_sheet(expData);
+    wsExp["!cols"] = [{wch:11},{wch:16},{wch:40},{wch:11}];
+    XLSX.utils.book_append_sheet(wb, wsExp, "Expenses " + label);
+  }
   XLSX.writeFile(wb, `comix-stash-tax-report-${taxYear.value==="all"?"all-years":taxYear.value}.xlsx`);
 };
 importFile.onchange=e=>{
@@ -1353,6 +1431,7 @@ function render(){
   renderSnapshot();
   renderRows();
   renderCategoryBreakdown();
+  renderYoY();
   renderActivity();
   renderAlerts();
   renderCharts();

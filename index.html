@@ -15,6 +15,9 @@
 })();
 </script>
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#e0a63f" />
+<link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -323,7 +326,13 @@
           <div><small>Total Cost</small><b id="taxCost">$0.00</b></div>
           <div><small>Total Fees</small><b id="taxFees">$0.00</b></div>
           <div><small>Total Profit</small><b id="taxProfit">$0.00</b></div>
+          <div><small>Business Expenses</small><b id="taxExpenses">$0.00</b></div>
+          <div><small>Net (After Expenses)</small><b id="taxNet">$0.00</b></div>
         </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-head"><h2 id="yoyTitle">Year over Year</h2></div>
+        <div id="yoyBody"></div>
       </div>
       <div class="card" style="margin-top:14px">
         <div class="card-head"><h2>By Category</h2></div>
@@ -359,6 +368,7 @@
         <div class="table-head-actions">
           <button class="ghost" id="depositBtn">+ Deposit</button>
           <button class="ghost" id="withdrawBtn">− Withdraw</button>
+          <button class="ghost" id="expenseBtn">− Expense</button>
           <button class="ghost" id="reconcileBtn" title="Enter your actual bank balance and the Stash will add an adjustment to match it">Sync to Bank</button>
         </div>
       </div>
@@ -385,6 +395,13 @@
         <h3 id="txnModalTitle">Withdraw</h3>
         <p class="muted" id="txnModalHint"></p>
         <input name="amount" id="txnAmount" type="number" step="0.01" min="0.01" placeholder="Amount" required />
+        <select id="txnCategory" hidden>
+          <option>Supplies</option>
+          <option>Shipping Materials</option>
+          <option>Subscriptions</option>
+          <option>Equipment</option>
+          <option>Other</option>
+        </select>
         <input name="note" id="txnNote" type="text" placeholder="Note (optional)" maxlength="80" />
         <div class="modal-actions">
           <button type="button" id="cancelTxnModal">Cancel</button>
