@@ -359,6 +359,9 @@ td small{color:var(--muted)}
 .icon-btn:hover{background:var(--surface2);color:var(--ink)}
 .profit{color:#16a34a}.loss{color:var(--red)}
 .cat-pill{display:inline-block;margin-top:3px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.cat-pill+.cat-pill{margin-left:5px}
+.pill-givy{background:rgba(224,166,63,.18);color:#a8781f}
+[data-theme="dark"] .pill-givy{background:rgba(224,166,63,.16);color:#e0b45f}
 .margin-chip{display:inline-block;margin-left:5px;font-size:11px;font-weight:600;opacity:.75}
 @keyframes rowFlash{
   0%{background:rgba(224,166,63,.45)}

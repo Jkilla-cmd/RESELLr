@@ -586,7 +586,10 @@ function categoryPill(cat){
   };
   return `<span class="cat-pill" style="${styles[c]||styles.Other}">${c}</span>`;
 }
-function rowTitle(r){return `<strong>${r.title}</strong>${categoryPill(r.category)}`}
+function rowTitle(r){
+  const givy = n(r.cost)===0 ? `<span class="cat-pill pill-givy">Givy</span>` : "";
+  return `<strong>${r.title}</strong>${categoryPill(r.category)}${givy}`;
+}
 function marginPct(r){
   const price = n(r.price);
   if(!price) return null;
