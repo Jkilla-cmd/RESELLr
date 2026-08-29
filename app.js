@@ -23,6 +23,8 @@ function profit(r){ return n(r.price)-n(r.cost)-n(r.fees)-n(r.shipping); }
 function costProfit(r){ return n(r.cost)+profit(r); }
 function sameMonth(d,ref){ return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth(); }
 function attrSafe(obj){ return JSON.stringify(obj).replace(/'/g,"&#39;"); }
+const ESCAPE_HTML_MAP = {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"};
+function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>ESCAPE_HTML_MAP[c]); }
 function timeAgo(ts){
   const s=Math.max(0,Math.floor((Date.now()-ts)/1000));
   if(s<60) return "just now";
@@ -108,7 +110,7 @@ function demoData(){
     {text:"Moved 1 item to Holds",sub:"GPK Adam Bomb Signed Print • $150.00",color:"green",icon:"◇",ts:Date.now()-1000*60*60*5},
     {text:"Imported 8 new listings",sub:"eBay",color:"violet",icon:"⇵",ts:Date.now()-1000*60*60*7}
   ];
-  return { theme:"light", walletMode:50, userName:"", monthlyGoal:300, lastBackupAt:null, sidebarCollapsed:false, inventory, holds, sold, history, activity };
+  return { theme:"light", walletMode:50, userName:"", monthlyGoal:300, lastBackupAt:null, sidebarCollapsed:false, inventory, holds, sold, history, activity, transactions:[] };
 }
 
 /* ---------- activity log ---------- */
@@ -588,7 +590,7 @@ function categoryPill(cat){
 }
 function rowTitle(r){
   const givy = n(r.cost)===0 ? `<span class="cat-pill pill-givy">Givy</span>` : "";
-  return `<strong>${r.title}</strong>${categoryPill(r.category)}${givy}`;
+  return `<strong>${escapeHtml(r.title)}</strong>${categoryPill(r.category)}${givy}`;
 }
 function marginPct(r){
   const price = n(r.price);
@@ -644,7 +646,7 @@ function renderRows(){
   const pageItems = invSorted.slice(start, start+INV_PAGE_SIZE);
 
   inventoryRows.innerHTML=pageItems.map(r=>`<tr id="row-inventory-${r.id}">
-    <td>${rowTitle(r)}</td><td data-label="Platform">${r.platform}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
+    <td>${rowTitle(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete">${ROW_ICONS.trash}</button></div></td>
   </tr>`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",7);
@@ -670,7 +672,7 @@ function renderRows(){
   const holdsTotalValue = state.holds.reduce((a,r)=>a+n(r.price),0);
   holdsTotalsBadge.textContent = state.holds.length ? `Total cost ${money(holdsTotalCost)} \u00b7 Total value ${money(holdsTotalValue)}` : "";
   holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}">
-    <td>${rowTitle(r)}</td><td data-label="Platform">${r.platform}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
+    <td>${rowTitle(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
     <td data-label="On Hold">${ageChip(r.heldAt, 14)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')" title="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')" title="Delete">${ROW_ICONS.trash}</button></div></td>
   </tr>`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",6);
@@ -683,7 +685,7 @@ function renderRows(){
   const soldPageItems = soldSorted.slice(soldStart, soldStart+SOLD_PAGE_SIZE);
 
   soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}">
-    <td>${rowTitle(r)}</td><td data-label="Date">${r.date||""}</td><td data-label="Platform">${r.platform}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
+    <td>${rowTitle(r)}</td><td data-label="Date">${escapeHtml(r.date)||""}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")' title="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')" title="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')" title="Delete">${ROW_ICONS.trash}</button></div></td>
   </tr>`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",8);
 
@@ -754,7 +756,7 @@ function renderCategoryBreakdown(){
   categoryBreakdown.innerHTML = catOrder.length ? catOrder.map(k=>{
     const c=cats[k];
     const pct=Math.max(4,(Math.abs(c.profit)/maxProfit)*100);
-    return `<div class="cat-row"><span class="cat-name">${k}</span><span class="cat-bar"><span style="width:${pct}%;background:${c.profit>=0?'var(--green)':'var(--red)'}"></span></span><span class="cat-count">${c.count} sold • ${money(c.income)}</span><span class="cat-profit ${c.profit>=0?'profit':'loss'}">${money(c.profit)}</span></div>`;
+    return `<div class="cat-row"><span class="cat-name">${escapeHtml(k)}</span><span class="cat-bar"><span style="width:${pct}%;background:${c.profit>=0?'var(--green)':'var(--red)'}"></span></span><span class="cat-count">${c.count} sold • ${money(c.income)}</span><span class="cat-profit ${c.profit>=0?'profit':'loss'}">${money(c.profit)}</span></div>`;
   }).join("") : `<p class="muted">No sales yet to break down by category.</p>`;
 
   const plats={};
@@ -768,7 +770,7 @@ function renderCategoryBreakdown(){
   platformBreakdown.innerHTML = platOrder.length ? platOrder.map(k=>{
     const c=plats[k];
     const pct=Math.max(4,(Math.abs(c.profit)/maxP)*100);
-    return `<div class="cat-row"><span class="cat-name">${k}</span><span class="cat-bar"><span style="width:${pct}%;background:${c.profit>=0?'var(--blue)':'var(--red)'}"></span></span><span class="cat-count">${c.count} sold • ${money(c.income)}</span><span class="cat-profit ${c.profit>=0?'profit':'loss'}">${money(c.profit)}</span></div>`;
+    return `<div class="cat-row"><span class="cat-name">${escapeHtml(k)}</span><span class="cat-bar"><span style="width:${pct}%;background:${c.profit>=0?'var(--blue)':'var(--red)'}"></span></span><span class="cat-count">${c.count} sold • ${money(c.income)}</span><span class="cat-profit ${c.profit>=0?'profit':'loss'}">${money(c.profit)}</span></div>`;
   }).join("") : `<p class="muted">No sales yet to break down by platform.</p>`;
 }
 
@@ -778,7 +780,7 @@ function renderActivity(){
   activityList.innerHTML = items.length ? items.map(x=>`
     <div class="activity-item">
       <div class="activity-dot ${x.color||'gold'}">${x.icon||'•'}</div>
-      <div><strong>${x.text}</strong>${x.sub?`<small>${x.sub}</small>`:""}</div>
+      <div><strong>${escapeHtml(x.text)}</strong>${x.sub?`<small>${escapeHtml(x.sub)}</small>`:""}</div>
       <span class="when">${timeAgo(x.ts)}</span>
     </div>`).join("") : `<p class="muted">No activity yet — add or sell an item to see it here.</p>`;
 }
@@ -836,6 +838,7 @@ txnForm.onsubmit = (e)=>{
     note: txnNote.value.trim(), date: today(), ts: Date.now()
   };
   if(txnKind==="expense") txn.category = txnCategory.value;
+  state.transactions = state.transactions || [];
   state.transactions.push(txn);
   const verbs = {withdraw:"Withdrew ", deposit:"Deposited ", expense:"Expense "};
   logActivity(
@@ -854,6 +857,7 @@ reconcileBtn.onclick = ()=>{
   if(!Number.isFinite(target)){ alert("That doesn't look like a number."); return; }
   const diff = target - current;
   if(Math.abs(diff) < 0.005){ alert("Already matching — nothing to adjust."); return; }
+  state.transactions = state.transactions || [];
   state.transactions.push({
     id: uid(), type: diff>0 ? "deposit" : "withdraw", amount: Math.abs(diff),
     note: "Balance sync to bank", date: today(), ts: Date.now()
@@ -922,9 +926,9 @@ function renderTopComic(){
   topComicCard.innerHTML = `
     <div class="top-comic-icon">${ROW_ICONS.star}</div>
     <div class="top-comic-body">
-      <div class="top-comic-title">${top.title}</div>
+      <div class="top-comic-title">${escapeHtml(top.title)}</div>
       <div class="top-comic-profit ${p>=0?'profit':'loss'}">${money(p)} profit</div>
-      <div class="top-comic-meta">${top.platform} • ${top.date||""} • sold for ${money(top.price)}</div>
+      <div class="top-comic-meta">${escapeHtml(top.platform)} • ${escapeHtml(top.date)||""} • sold for ${money(top.price)}</div>
     </div>`;
 }
 
@@ -1237,7 +1241,7 @@ function jumpToItem(kind, id){
   }
   if(kind==="sold"){
     soldYear.value="all"; soldMonth.value="all";
-    const sorted = getSoldRows().sort((a,b)=> parseLocalDate(b.date) - parseLocalDate(a.date));
+    const sorted = sortRows(getSoldRows(), soldSort);
     const idx = sorted.findIndex(x=>x.id===id);
     if(idx>=0){ soldPage = Math.floor(idx/SOLD_PAGE_SIZE)+1; renderRows(); }
   }
@@ -1267,7 +1271,7 @@ function renderSearchResults(){
   const shown = matches.slice(0, SEARCH_RESULT_LIMIT);
   searchResults.innerHTML =
     `<div class="search-results-head">${matches.length} match${matches.length===1?"":"es"}</div>` +
-    shown.map(r=>`<div class="search-result-item" data-kind="${r._kind}" data-id="${r.id}"><span class="sr-kind">${KIND_LABEL[r._kind]}</span><span class="sr-title">${r.title}</span><span class="sr-price">${money(r.price)}</span></div>`).join("") +
+    shown.map(r=>`<div class="search-result-item" data-kind="${r._kind}" data-id="${r.id}"><span class="sr-kind">${KIND_LABEL[r._kind]}</span><span class="sr-title">${escapeHtml(r.title)}</span><span class="sr-price">${money(r.price)}</span></div>`).join("") +
     (matches.length>SEARCH_RESULT_LIMIT ? `<div class="search-more">+${matches.length-SEARCH_RESULT_LIMIT} more — refine your search</div>` : "");
   searchResults.hidden=false;
   searchResults.querySelectorAll(".search-result-item").forEach(el=>{
@@ -1420,7 +1424,7 @@ importFile.onchange=e=>{
 seedBtn.onclick=()=>{ state=demoData(); save(); render(); };
 clearBtn.onclick=()=>{
   if(confirm("Clear all Comix Stash data?")){
-    state={theme:state.theme,walletMode:50,userName:state.userName,monthlyGoal:state.monthlyGoal||300,lastBackupAt:state.lastBackupAt,inventory:[],holds:[],sold:[],history:[],activity:[]};
+    state={theme:state.theme,walletMode:50,userName:state.userName,monthlyGoal:state.monthlyGoal||300,lastBackupAt:state.lastBackupAt,sidebarCollapsed:state.sidebarCollapsed,inventory:[],holds:[],sold:[],history:[],activity:[],transactions:[]};
     save(); render();
   }
 };
