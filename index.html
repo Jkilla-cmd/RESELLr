@@ -455,6 +455,22 @@
   </main>
 </div>
 
+<button id="quickLookupBtn" class="quick-lookup-fab" title="Quick Price Lookup" aria-label="Quick Price Lookup">
+  <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+</button>
+
+<div id="quickLookupOverlay" class="ql-overlay" hidden>
+  <div class="ql-head">
+    <svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg>
+    <span>Quick Price Check</span>
+    <button id="quickLookupClose" class="ql-close" aria-label="Close" title="Close">✕</button>
+  </div>
+  <div class="ql-search-wrap">
+    <input id="quickLookupInput" type="text" inputmode="search" autocomplete="off" autocapitalize="words" placeholder="Type a book title…" />
+  </div>
+  <div id="quickLookupResults" class="ql-results"></div>
+</div>
+
 <footer class="status-bar" id="statusBar" hidden>
   <div class="pulse-group">
     <span class="pulse-label"><svg viewBox="0 0 24 24"><path d="M2 12h4l2-7 4 14 3-10 2 3h5"/></svg>Market Pulse</span>

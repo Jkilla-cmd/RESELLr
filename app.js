@@ -207,7 +207,7 @@ alertsBell.onclick=()=>showPage("alerts");
 customizeBtn.onclick=()=>alert("Customize layout — coming soon!");
 document.addEventListener("keydown",e=>{
   if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); globalSearch.focus(); }
-  if(e.key==="Escape") avatarDropdown.hidden=true;
+  if(e.key==="Escape"){ avatarDropdown.hidden=true; closeQuickLookup(); }
 });
 
 /* ---------- avatar dropdown ---------- */
@@ -1300,6 +1300,61 @@ globalSearch.addEventListener("keydown", e=>{
 document.addEventListener("click", e=>{
   if(!e.target.closest(".search-wrap")) searchResults.hidden=true;
 });
+
+/* ---------- quick price lookup (phone only) ----------
+   A big, glanceable search screen for checking what a book cost/sold for
+   while you're standing in front of it. Phone-only: the trigger button is
+   hidden above 720px via CSS, and this guards the same width in JS too. */
+function qlCard(r, kind){
+  const kindLabel = kind==="inventory" ? "In Stock" : kind==="holds" ? "On Hold" : "Sold";
+  const p = profit(r);
+  const meta = [];
+  if(r.platform) meta.push(r.platform);
+  if(kind==="sold" && r.date) meta.push(r.date);
+  return `<button type="button" class="ql-card" data-kind="${kind}" data-id="${r.id}">
+    <div class="ql-card-top"><span class="ql-badge ${kind}">${kindLabel}</span></div>
+    <div class="ql-card-title">${escapeHtml(r.title)}</div>
+    <div class="ql-nums">
+      <div class="ql-num-box"><span class="ql-num-label">Cost</span><span class="ql-num-val cost">${money(r.cost)}</span></div>
+      <div class="ql-num-box"><span class="ql-num-label">${kind==="sold"?"Sold For":"Price"}</span><span class="ql-num-val">${money(r.price)}</span></div>
+      <div class="ql-num-box"><span class="ql-num-label">Profit</span><span class="ql-num-val ${p>=0?'profit':'loss'}">${money(p)}</span></div>
+    </div>
+    ${meta.length?`<div class="ql-card-meta">${escapeHtml(meta.join(" • "))}</div>`:""}
+  </button>`;
+}
+function renderQuickLookup(){
+  const q = quickLookupInput.value.toLowerCase().trim();
+  if(!q){
+    quickLookupResults.innerHTML = `<p class="ql-hint">Type a title to see what you paid, listed, or sold it for — in big print.</p>`;
+    return;
+  }
+  const matches = computeMatches(q).slice(0, 12);
+  if(!matches.length){
+    quickLookupResults.innerHTML = `<p class="ql-empty">No matches for "${escapeHtml(quickLookupInput.value)}" — you haven't logged this one before.</p>`;
+    return;
+  }
+  quickLookupResults.innerHTML = matches.map(r=>qlCard(r, r._kind)).join("");
+  quickLookupResults.querySelectorAll(".ql-card").forEach(card=>{
+    card.onclick = ()=>{
+      closeQuickLookup();
+      jumpToItem(card.dataset.kind, card.dataset.id);
+    };
+  });
+}
+function openQuickLookup(){
+  if(window.innerWidth > 720) return; // phone-only feature
+  quickLookupOverlay.hidden = false;
+  quickLookupInput.value = "";
+  renderQuickLookup();
+  setTimeout(()=>quickLookupInput.focus(), 50);
+}
+function closeQuickLookup(){
+  quickLookupOverlay.hidden = true;
+}
+quickLookupBtn.onclick = openQuickLookup;
+quickLookupClose.onclick = closeQuickLookup;
+quickLookupInput.addEventListener("input", renderQuickLookup);
+quickLookupInput.addEventListener("keydown", e=>{ if(e.key==="Escape") closeQuickLookup(); });
 
 /* ---------- import / export ---------- */
 function normalizeItem(r, kind){
