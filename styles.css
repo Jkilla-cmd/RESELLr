@@ -585,7 +585,7 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
 .ql-num-box{text-align:center;min-width:0}
 .ql-num-label{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
 .ql-num-val{display:block;font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);overflow-wrap:anywhere}
-.ql-num-val.cost{color:var(--muted)}
+.ql-num-val.cost{color:var(--gold)}
 .ql-card-meta{margin-top:10px;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
 
 @media(max-width:720px){
