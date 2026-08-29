@@ -183,7 +183,9 @@ themeToggle.onclick=()=>{ setTheme(state.theme==="dark"?"light":"dark"); render(
 const appShell = document.querySelector(".app-shell");
 function applySidebarState(){
   appShell.classList.toggle("sb-collapsed", !!state.sidebarCollapsed);
-  sidebarToggle.title = state.sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar";
+  const sbLabel = state.sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar";
+  sidebarToggle.title = sbLabel;
+  sidebarToggle.setAttribute("aria-label", sbLabel);
 }
 sidebarToggle.onclick=()=>{
   state.sidebarCollapsed = !state.sidebarCollapsed;
@@ -648,7 +650,7 @@ function renderRows(){
   inventoryRows.innerHTML=pageItems.map(r=>`<tr id="row-inventory-${r.id}">
     <td>${rowTitle(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete">${ROW_ICONS.trash}</button></div></td>
+    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds" aria-label="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold" aria-label="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
   </tr>`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",7);
 
   const count = invSorted.length;
@@ -674,7 +676,7 @@ function renderRows(){
   holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}">
     <td>${rowTitle(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
     <td data-label="On Hold">${ageChip(r.heldAt, 14)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')" title="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')" title="Delete">${ROW_ICONS.trash}</button></div></td>
+    <td><div class="row-actions"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
   </tr>`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",6);
 
   const soldSorted = sortRows(getSoldRows(), soldSort);
@@ -686,7 +688,7 @@ function renderRows(){
 
   soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}">
     <td>${rowTitle(r)}</td><td data-label="Date">${escapeHtml(r.date)||""}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")' title="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')" title="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')" title="Delete">${ROW_ICONS.trash}</button></div></td>
+    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
   </tr>`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",8);
 
   const soldCount = soldSorted.length;

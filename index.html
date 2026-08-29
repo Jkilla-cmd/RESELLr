@@ -34,7 +34,7 @@
         <strong>Comix Stash</strong>
         <span>v300</span>
       </div>
-      <button id="sidebarToggle" class="sidebar-toggle" title="Collapse sidebar"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button id="sidebarToggle" class="sidebar-toggle" title="Collapse sidebar" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
     </div>
 
     <nav class="nav">
@@ -69,9 +69,9 @@
       <div class="top-status">
         <div class="status-chip" id="cloudSyncChip" hidden><span class="dot" id="cloudSyncDot"></span><div><b>Cloud Sync</b><small id="cloudSyncText">—</small></div></div>
         <div class="status-chip"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg><div><b id="dbStatusText">Database</b><small id="dbHealthText">Healthy</small></div></div>
-        <button class="icon-only icon-plain" id="alertsBell" title="Alerts"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span id="bellBadge" class="badge" hidden>0</span></button>
+        <button class="icon-only icon-plain" id="alertsBell" title="Alerts" aria-label="Alerts"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span id="bellBadge" class="badge" hidden>0</span></button>
         <div class="avatar-menu">
-          <button class="avatar" id="avatarBtn" title="Account">
+          <button class="avatar" id="avatarBtn" title="Account" aria-label="Account menu">
             <span id="avatarInitial">?</span>
             <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
           </button>
@@ -228,7 +228,7 @@
       <div class="table-head">
         <div><h2>Inventory <span id="invCountBadge" class="count-pill">0 items</span></h2><p>Active items currently available. <span id="invTotalsBadge" class="totals-badge"></span></p></div>
         <div class="table-head-actions">
-          <button id="pasteListingBtn" class="icon-only" title="Paste Listing (from Comix Stash bookmarklet)">
+          <button id="pasteListingBtn" class="icon-only" title="Paste Listing (from Comix Stash bookmarklet)" aria-label="Paste Listing">
             <svg viewBox="0 0 24 24">
               <path d="M4 20 15 9"/>
               <path d="m12.5 6.5 1.5-1.5 1.5 1.5-1.5 1.5Z"/>
@@ -257,9 +257,9 @@
       <div class="pagination" id="inventoryPagination">
         <span class="pg-info" id="invPageInfo">Showing 0 items</span>
         <div class="pg-controls">
-          <button class="icon-only" id="invPrevBtn" title="Previous page">‹</button>
+          <button class="icon-only" id="invPrevBtn" title="Previous page" aria-label="Previous page">‹</button>
           <span class="pg-page">Page <select id="invPageSelect"></select> of <span id="invPageTotal">1</span></span>
-          <button class="icon-only" id="invNextBtn" title="Next page">›</button>
+          <button class="icon-only" id="invNextBtn" title="Next page" aria-label="Next page">›</button>
         </div>
       </div>
     </section>
@@ -300,9 +300,9 @@
       <div class="pagination" id="soldPagination">
         <span class="pg-info" id="soldPageInfo">Showing 0 items</span>
         <div class="pg-controls">
-          <button class="icon-only" id="soldPrevBtn" title="Previous page">‹</button>
+          <button class="icon-only" id="soldPrevBtn" title="Previous page" aria-label="Previous page">‹</button>
           <span class="pg-page">Page <select id="soldPageSelect"></select> of <span id="soldPageTotal">1</span></span>
-          <button class="icon-only" id="soldNextBtn" title="Next page">›</button>
+          <button class="icon-only" id="soldNextBtn" title="Next page" aria-label="Next page">›</button>
         </div>
       </div>
     </section>
