@@ -592,7 +592,8 @@ function categoryPill(cat){
 }
 function rowTitle(r){
   const givy = n(r.cost)===0 ? `<span class="cat-pill pill-givy">Givy</span>` : "";
-  return `<strong>${escapeHtml(r.title)}</strong>${categoryPill(r.category)}${givy}`;
+  const synced = (r.notes||"").includes("[MERCARI-SYNC]") ? `<span class="cat-pill pill-sync" title="Added/corrected by the Mercari sync">Synced</span>` : "";
+  return `<strong>${escapeHtml(r.title)}</strong>${categoryPill(r.category)}${givy}${synced}`;
 }
 function marginPct(r){
   const price = n(r.price);

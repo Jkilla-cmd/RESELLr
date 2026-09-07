@@ -383,6 +383,7 @@ td small{color:var(--muted)}
 .cat-pill+.cat-pill{margin-left:5px}
 .pill-givy{background:rgba(224,166,63,.18);color:#a8781f}
 [data-theme="dark"] .pill-givy{background:rgba(224,166,63,.16);color:#e0b45f}
+.pill-sync{background:var(--sky-bg);color:var(--sky-ic)}
 .margin-chip{display:inline-block;margin-left:5px;font-size:11px;font-weight:600;opacity:.75}
 @keyframes rowFlash{
   0%{background:rgba(224,166,63,.45)}
