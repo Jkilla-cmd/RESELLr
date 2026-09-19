@@ -151,6 +151,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
 .main{padding:20px 26px 30px;min-width:0}
 .status-bar-normal{display:flex;align-items:center;justify-content:space-between;gap:18px;flex:1;min-width:0}
 .status-bar-bundle{display:flex;align-items:center;gap:14px;flex:1;min-width:0}
+.status-bar-normal[hidden],.status-bar-bundle[hidden]{display:none!important}
 .status-bar-bundle>span{flex:none;font-weight:700;font-size:12.5px;white-space:nowrap}
 .bundle-bar-titles{
   flex:1;min-width:0;display:flex;gap:8px;align-items:center;
