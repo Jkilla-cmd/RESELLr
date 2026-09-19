@@ -473,6 +473,9 @@ dialog::backdrop{background:rgba(15,23,42,.45);backdrop-filter:blur(6px);animati
   font-weight:600;font-family:inherit;margin-bottom:2px;
 }
 .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+.mini-label{display:block;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.mini-label input,.mini-label select,.mini-label textarea{display:block;width:100%;margin-top:4px}
+#itemForm>.mini-label{margin-top:12px}
 .date-field{margin:0 0 12px}
 .date-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
 .date-field input{width:100%}
