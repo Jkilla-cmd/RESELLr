@@ -729,10 +729,16 @@ function currentBundleKind(){
 }
 function updateBundleBar(){
   const kind = currentBundleKind();
-  const count = kind ? bundleSelection[kind].size : 0;
+  const ids = kind ? bundleSelection[kind] : null;
+  const count = ids ? ids.size : 0;
   bundleBar.hidden = count < 1;
   bundleBarCount.textContent = `${count} selected`;
   bundleBarBtn.disabled = count < 2;
+  if(!count){ bundleBarTitles.innerHTML = ""; return; }
+  const rows = state[kind].filter(r=>ids.has(r.id));
+  bundleBarTitles.innerHTML = rows.map(r=>
+    `<span class="bundle-chip">${escapeHtml(r.title.length>40?r.title.slice(0,40)+"…":r.title)}<button onclick="event.stopPropagation();toggleBundleSelect('${kind}','${r.id}')" title="Remove from selection" aria-label="Remove from selection">✕</button></span>`
+  ).join("");
 }
 function toggleBundleSelect(kind, id){
   if(bundleSelection[kind].has(id)) bundleSelection[kind].delete(id); else bundleSelection[kind].add(id);
