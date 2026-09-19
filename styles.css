@@ -351,6 +351,16 @@ button.primary,.primary{background:#161b22;color:#fff;border-color:#161b22}
 #txnForm{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:22px;width:min(360px,92vw);display:flex;flex-direction:column;gap:12px}
 #txnForm h3{font-size:17px}
 #txnForm input{border:1px solid var(--line);border-radius:11px;padding:10px 12px;font-size:14px;background:var(--surface);color:var(--ink)}
+.bundle-contents{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:22px;width:min(440px,92vw)}
+.bundle-contents h3{font-size:17px;margin-bottom:4px}
+.bundle-contents-list{display:flex;flex-direction:column;gap:2px;margin-top:14px;max-height:50vh;overflow-y:auto}
+.bundle-contents-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 2px;border-bottom:1px dashed var(--line)}
+.bundle-contents-item:last-child{border-bottom:0}
+.bundle-contents-item span:first-child{font-size:13.5px;overflow-wrap:anywhere}
+.bundle-contents-item span:last-child{flex:none;font-weight:700;font-size:13.5px}
+.bundle-contents-item small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
+.bundle-contents-total{display:flex;justify-content:space-between;font-weight:700;padding-top:10px;margin-top:8px;border-top:1px solid var(--line)}
+.bundle-contents-total[hidden]{display:none!important}
 
 .personal-invest-note{margin-top:14px;padding:10px 12px;border-radius:10px;background:var(--peach-bg);color:var(--ink);font-size:12.5px;line-height:1.5}
 .personal-invest-note b{color:var(--peach-ic)}
@@ -415,7 +425,7 @@ tr.row-selected td{background:rgba(224,166,63,.45)!important;border-color:var(--
 .pill-givy{background:rgba(224,166,63,.18);color:#a8781f}
 [data-theme="dark"] .pill-givy{background:rgba(224,166,63,.16);color:#e0b45f}
 .pill-sync{background:var(--sky-bg);color:var(--sky-ic)}
-.pill-bundle{background:var(--violet-bg);color:var(--violet-ic)}
+.pill-bundle{background:var(--violet-bg);color:var(--violet-ic);border:0;cursor:pointer}
 .margin-chip{display:inline-block;margin-left:5px;font-size:11px;font-weight:600;opacity:.75}
 @keyframes rowFlash{
   0%{background:rgba(224,166,63,.45)}
