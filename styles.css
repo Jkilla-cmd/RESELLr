@@ -405,8 +405,7 @@ td strong{
 td small{color:var(--muted)}
 .row-actions{display:flex;gap:11px;align-items:center}
 .table-card tbody tr{cursor:pointer}
-tr.row-selected td{background:rgba(224,166,63,.14)!important;box-shadow:inset 3px 0 0 var(--gold)}
-[data-theme="dark"] tr.row-selected td{background:rgba(224,166,63,.12)!important}
+tr.row-selected td{background:rgba(224,166,63,.45)!important;border-color:var(--gold)}
 tr.row-selected{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
 .icon-btn{border:0;background:transparent;padding:6px;color:var(--muted);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;transition:background .12s ease,color .12s ease}
 .icon-btn svg{width:15px;height:15px}
