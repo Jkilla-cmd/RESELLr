@@ -4,6 +4,7 @@ let state = load();
 let editing = null;
 let inventorySort = {key:"addedAt", dir:"desc"};
 let soldSort = {key:"date", dir:"desc"};
+const bundleSelection = {inventory:new Set(), holds:new Set(), sold:new Set()};
 
 /* ---------- helpers ---------- */
 function n(v){ const x = Number(v); return Number.isFinite(x) ? x : 0; }
@@ -661,7 +662,8 @@ function renderRows(){
     <td>${rowTitle(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="postToEbay('inventory','${r.id}')" title="Post to eBay" aria-label="Post to eBay">${ROW_ICONS.ebay}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds" aria-label="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold" aria-label="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-  </tr>`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",7);
+    <td data-label="Select" class="select-cell"><input type="checkbox" class="bundle-check" ${bundleSelection.inventory.has(r.id)?"checked":""} onchange="toggleBundleSelect('inventory','${r.id}',this.checked)" aria-label="Select for bundling" /></td>
+  </tr>`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",8);
 
   const count = invSorted.length;
   const bookTotal = sumQty(invSorted);
@@ -688,7 +690,8 @@ function renderRows(){
     <td>${rowTitle(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
     <td data-label="On Hold">${ageChip(r.heldAt, 14)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-  </tr>`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",6);
+    <td data-label="Select" class="select-cell"><input type="checkbox" class="bundle-check" ${bundleSelection.holds.has(r.id)?"checked":""} onchange="toggleBundleSelect('holds','${r.id}',this.checked)" aria-label="Select for bundling" /></td>
+  </tr>`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",7);
 
   const soldSorted = sortRows(getSoldRows(), soldSort);
   const soldTotalPages = Math.max(1, Math.ceil(soldSorted.length / SOLD_PAGE_SIZE));
@@ -700,7 +703,8 @@ function renderRows(){
   soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}">
     <td>${rowTitle(r)}</td><td data-label="Date">${escapeHtml(r.date)||""}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-  </tr>`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",8);
+    <td data-label="Select" class="select-cell"><input type="checkbox" class="bundle-check" ${bundleSelection.sold.has(r.id)?"checked":""} onchange="toggleBundleSelect('sold','${r.id}',this.checked)" aria-label="Select for bundling" /></td>
+  </tr>`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",9);
 
   const soldCount = soldSorted.length;
   const soldBookTotal = sumQty(soldSorted);
@@ -715,7 +719,59 @@ function renderRows(){
   soldPrevBtn.disabled = soldPage<=1;
   soldNextBtn.disabled = soldPage>=soldTotalPages;
   updateSortIndicators("sold", soldSort);
+
+  updateBundleButtons();
 }
+
+/* ---------- bundling ---------- */
+function toggleBundleSelect(kind, id, checked){
+  if(checked) bundleSelection[kind].add(id); else bundleSelection[kind].delete(id);
+  updateBundleButtons();
+}
+const BUNDLE_BTN = {inventory:()=>bundleInventoryBtn, holds:()=>bundleHoldsBtn, sold:()=>bundleSoldBtn};
+function updateBundleButtons(){
+  for(const kind of ["inventory","holds","sold"]){
+    const btn = BUNDLE_BTN[kind]();
+    const count = bundleSelection[kind].size;
+    btn.hidden = count < 2;
+    btn.textContent = `Bundle Selected (${count})`;
+  }
+}
+function bundleSelected(kind){
+  const ids = bundleSelection[kind];
+  if(ids.size < 2) return;
+  const rows = state[kind].filter(r=>ids.has(r.id));
+  if(rows.length < 2) return;
+  if(!confirm(`Combine these ${rows.length} listings into one bundle? The originals will be replaced by a single row — price, cost, fees, and shipping will be summed (edit afterward as needed).`)) return;
+
+  const titles = rows.map(r=>r.title).filter(Boolean);
+  const allSameCategory = rows.every(r=>r.category===rows[0].category);
+  const bundle = {
+    id: uid(),
+    title: `Bundle: ${titles.join(", ")}`,
+    platform: rows[0].platform,
+    category: allSameCategory ? rows[0].category : "Other",
+    price: rows.reduce((a,r)=>a+n(r.price),0),
+    cost: rows.reduce((a,r)=>a+n(r.cost),0),
+    fees: rows.reduce((a,r)=>a+n(r.fees),0),
+    shipping: rows.reduce((a,r)=>a+n(r.shipping),0),
+    notes: rows.map(r=>r.notes).filter(Boolean).join(" | "),
+    imageUrl: rows.find(r=>r.imageUrl)?.imageUrl || "",
+    qty: sumQty(rows)
+  };
+  if(kind==="inventory") bundle.addedAt = Math.min(...rows.map(r=>r.addedAt||Date.now()));
+  if(kind==="holds") bundle.heldAt = Math.min(...rows.map(r=>r.heldAt||Date.now()));
+  if(kind==="sold") bundle.date = rows.map(r=>r.date).filter(Boolean).sort()[0] || today();
+
+  state[kind] = state[kind].filter(r=>!ids.has(r.id));
+  state[kind].push(bundle);
+  ids.clear();
+  save(); render();
+}
+bundleInventoryBtn.onclick=()=>bundleSelected("inventory");
+bundleHoldsBtn.onclick=()=>bundleSelected("holds");
+bundleSoldBtn.onclick=()=>bundleSelected("sold");
+
 invPrevBtn.onclick=()=>{ if(inventoryPage>1){ inventoryPage--; renderRows(); } };
 invNextBtn.onclick=()=>{ inventoryPage++; renderRows(); };
 invPageSelect.onchange=()=>{ inventoryPage=n(invPageSelect.value)||1; renderRows(); };

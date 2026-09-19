@@ -237,6 +237,7 @@
               <path d="M3 4h2"/>
             </svg>
           </button>
+          <button id="bundleInventoryBtn" hidden>Bundle Selected</button>
           <button class="primary" id="addItemBtn2">Add Item</button>
         </div>
       </div>
@@ -250,6 +251,7 @@
             <th data-sort="profit">Profit<span class="sort-arrow"></span></th>
             <th data-sort="addedAt">Listed<span class="sort-arrow"></span></th>
             <th>Actions</th>
+            <th>Select</th>
           </tr></thead>
           <tbody id="inventoryRows"></tbody>
         </table>
@@ -265,10 +267,15 @@
     </section>
 
     <section id="holds" class="page">
-      <div class="table-head"><div><h2>Holds <span id="holdsCountBadge" class="count-pill">0 items</span></h2><p>Reserved items waiting for purchase or decision. <span id="holdsTotalsBadge" class="totals-badge"></span></p></div></div>
+      <div class="table-head">
+        <div><h2>Holds <span id="holdsCountBadge" class="count-pill">0 items</span></h2><p>Reserved items waiting for purchase or decision. <span id="holdsTotalsBadge" class="totals-badge"></span></p></div>
+        <div class="table-head-actions">
+          <button id="bundleHoldsBtn" hidden>Bundle Selected</button>
+        </div>
+      </div>
       <div class="table-card">
         <table>
-          <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>On Hold</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Item</th><th>Platform</th><th>Price</th><th>Cost</th><th>On Hold</th><th>Actions</th><th>Select</th></tr></thead>
           <tbody id="holdRows"></tbody>
         </table>
       </div>
@@ -278,6 +285,7 @@
       <div class="table-head">
         <div><h2>Sold <span id="soldCountBadge" class="count-pill">0 items</span></h2><p>Completed sales and performance.</p></div>
         <div class="table-head-actions">
+          <button id="bundleSoldBtn" hidden>Bundle Selected</button>
           <select id="soldYear"></select>
           <select id="soldMonth"></select>
         </div>
@@ -293,6 +301,7 @@
             <th data-sort="fees">Fees<span class="sort-arrow"></span></th>
             <th data-sort="profit">Profit<span class="sort-arrow"></span></th>
             <th>Actions</th>
+            <th>Select</th>
           </tr></thead>
           <tbody id="soldRows"></tbody>
         </table>
