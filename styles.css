@@ -150,22 +150,26 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
 /* MAIN */
 .main{padding:20px 26px 30px;min-width:0}
 .status-bar-normal{display:flex;align-items:center;justify-content:space-between;gap:18px;flex:1;min-width:0}
-.status-bar-bundle{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
-.bundle-bar-top{display:flex;align-items:center;justify-content:space-between;gap:14px}
-.bundle-bar-top>span{font-weight:700;font-size:13.5px}
-.bundle-bar-actions{display:flex;gap:10px;align-items:center}
+.status-bar-bundle{display:flex;align-items:center;gap:14px;flex:1;min-width:0}
+.status-bar-bundle>span{flex:none;font-weight:700;font-size:12.5px;white-space:nowrap}
+.bundle-bar-titles{
+  flex:1;min-width:0;display:flex;gap:8px;align-items:center;
+  overflow-x:auto;overflow-y:hidden;white-space:nowrap;
+  scrollbar-width:thin;-ms-overflow-style:none;
+}
+.bundle-bar-titles::-webkit-scrollbar{height:4px}
+.bundle-bar-actions{flex:none;display:flex;gap:10px;align-items:center}
 .bundle-bar-actions button{border-color:rgba(255,255,255,.2)}
 .bundle-bar-actions .icon-plain{color:rgba(255,255,255,.75);background:transparent;border:0}
 .bundle-bar-actions .icon-plain:hover{color:#fff}
 .bundle-bar-actions .primary:disabled{opacity:.45;cursor:default}
-.bundle-bar-titles{display:flex;flex-wrap:wrap;gap:8px}
 .bundle-chip{
-  display:inline-flex;align-items:center;gap:6px;
+  flex:none;display:inline-flex;align-items:center;gap:6px;
   background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);
   border-radius:999px;padding:4px 6px 4px 12px;font-size:12px;color:rgba(255,255,255,.92);
 }
 .bundle-chip button{
-  border:0;background:rgba(255,255,255,.14);color:#fff;width:18px;height:18px;border-radius:50%;
+  flex:none;border:0;background:rgba(255,255,255,.14);color:#fff;width:18px;height:18px;border-radius:50%;
   display:grid;place-items:center;font-size:10px;padding:0;cursor:pointer;line-height:1;
 }
 .bundle-chip button:hover{background:rgba(255,255,255,.28)}
@@ -510,7 +514,7 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
   .kpi-grid{grid-template-columns:1fr}
   .status-bar{flex-direction:column;align-items:flex-start;gap:6px;padding:10px 14px}
   .status-bar-normal{flex-direction:column;align-items:flex-start;gap:6px;width:100%}
-  .bundle-bar-top{flex-wrap:wrap}
+  .status-bar-bundle{width:100%}
   .snap-mini.big{grid-template-columns:1fr 1fr}
 
   /* sidebar: slimmer icon rail, bigger tap targets */
