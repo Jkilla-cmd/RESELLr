@@ -204,6 +204,7 @@ function showPage(id){
   if(el) el.classList.add("active-page");
   document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
   if(id==="dashboard"){ renderKPIs(); renderCharts(); }
+  if(typeof updateBundleBar==="function") updateBundleBar();
 }
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
 alertsBell.onclick=()=>showPage("alerts");
@@ -658,12 +659,11 @@ function renderRows(){
   const start = (inventoryPage-1)*INV_PAGE_SIZE;
   const pageItems = invSorted.slice(start, start+INV_PAGE_SIZE);
 
-  inventoryRows.innerHTML=pageItems.map(r=>`<tr id="row-inventory-${r.id}">
+  inventoryRows.innerHTML=pageItems.map(r=>`<tr id="row-inventory-${r.id}" class="${bundleSelection.inventory.has(r.id)?'row-selected':''}" onclick="toggleBundleSelect('inventory','${r.id}')">
     <td>${rowTitle(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="postToEbay('inventory','${r.id}')" title="Post to eBay" aria-label="Post to eBay">${ROW_ICONS.ebay}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds" aria-label="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold" aria-label="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-    <td data-label="Select" class="select-cell"><input type="checkbox" class="bundle-check" ${bundleSelection.inventory.has(r.id)?"checked":""} onchange="toggleBundleSelect('inventory','${r.id}',this.checked)" aria-label="Select for bundling" /></td>
-  </tr>`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",8);
+    <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="postToEbay('inventory','${r.id}')" title="Post to eBay" aria-label="Post to eBay">${ROW_ICONS.ebay}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds" aria-label="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold" aria-label="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
+  </tr>`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",7);
 
   const count = invSorted.length;
   const bookTotal = sumQty(invSorted);
@@ -686,12 +686,11 @@ function renderRows(){
   const holdsTotalCost = state.holds.reduce((a,r)=>a+n(r.cost),0);
   const holdsTotalValue = state.holds.reduce((a,r)=>a+n(r.price),0);
   holdsTotalsBadge.textContent = state.holds.length ? `Total cost ${money(holdsTotalCost)} \u00b7 Total value ${money(holdsTotalValue)}` : "";
-  holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}">
+  holdRows.innerHTML=state.holds.map(r=>`<tr id="row-holds-${r.id}" class="${bundleSelection.holds.has(r.id)?'row-selected':''}" onclick="toggleBundleSelect('holds','${r.id}')">
     <td>${rowTitle(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
     <td data-label="On Hold">${ageChip(r.heldAt, 14)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-    <td data-label="Select" class="select-cell"><input type="checkbox" class="bundle-check" ${bundleSelection.holds.has(r.id)?"checked":""} onchange="toggleBundleSelect('holds','${r.id}',this.checked)" aria-label="Select for bundling" /></td>
-  </tr>`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",7);
+    <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
+  </tr>`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",6);
 
   const soldSorted = sortRows(getSoldRows(), soldSort);
   const soldTotalPages = Math.max(1, Math.ceil(soldSorted.length / SOLD_PAGE_SIZE));
@@ -700,11 +699,10 @@ function renderRows(){
   const soldStart = (soldPage-1)*SOLD_PAGE_SIZE;
   const soldPageItems = soldSorted.slice(soldStart, soldStart+SOLD_PAGE_SIZE);
 
-  soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}">
+  soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}" class="${bundleSelection.sold.has(r.id)?'row-selected':''}" onclick="toggleBundleSelect('sold','${r.id}')">
     <td>${rowTitle(r)}</td><td data-label="Date">${escapeHtml(r.date)||""}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-    <td data-label="Select" class="select-cell"><input type="checkbox" class="bundle-check" ${bundleSelection.sold.has(r.id)?"checked":""} onchange="toggleBundleSelect('sold','${r.id}',this.checked)" aria-label="Select for bundling" /></td>
-  </tr>`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",9);
+    <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
+  </tr>`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",8);
 
   const soldCount = soldSorted.length;
   const soldBookTotal = sumQty(soldSorted);
@@ -720,23 +718,28 @@ function renderRows(){
   soldNextBtn.disabled = soldPage>=soldTotalPages;
   updateSortIndicators("sold", soldSort);
 
-  updateBundleButtons();
+  updateBundleBar();
 }
 
 /* ---------- bundling ---------- */
-function toggleBundleSelect(kind, id, checked){
-  if(checked) bundleSelection[kind].add(id); else bundleSelection[kind].delete(id);
-  updateBundleButtons();
+function currentBundleKind(){
+  const active = document.querySelector(".page.active-page");
+  const id = active && active.id;
+  return (id==="inventory"||id==="holds"||id==="sold") ? id : null;
 }
-const BUNDLE_BTN = {inventory:()=>bundleInventoryBtn, holds:()=>bundleHoldsBtn, sold:()=>bundleSoldBtn};
-function updateBundleButtons(){
-  for(const kind of ["inventory","holds","sold"]){
-    const btn = BUNDLE_BTN[kind]();
-    const count = bundleSelection[kind].size;
-    btn.hidden = count < 2;
-    btn.textContent = `Bundle Selected (${count})`;
-  }
+function updateBundleBar(){
+  const kind = currentBundleKind();
+  const count = kind ? bundleSelection[kind].size : 0;
+  bundleBar.hidden = count < 1;
+  bundleBarCount.textContent = `${count} selected`;
+  bundleBarBtn.disabled = count < 2;
 }
+function toggleBundleSelect(kind, id){
+  if(bundleSelection[kind].has(id)) bundleSelection[kind].delete(id); else bundleSelection[kind].add(id);
+  renderRows();
+}
+bundleBarBtn.onclick=()=>{ const kind=currentBundleKind(); if(kind) bundleSelected(kind); };
+bundleBarClear.onclick=()=>{ const kind=currentBundleKind(); if(kind){ bundleSelection[kind].clear(); renderRows(); } };
 function bundleSelected(kind){
   const ids = bundleSelection[kind];
   if(ids.size < 2) return;
@@ -768,10 +771,6 @@ function bundleSelected(kind){
   ids.clear();
   save(); render();
 }
-bundleInventoryBtn.onclick=()=>bundleSelected("inventory");
-bundleHoldsBtn.onclick=()=>bundleSelected("holds");
-bundleSoldBtn.onclick=()=>bundleSelected("sold");
-
 invPrevBtn.onclick=()=>{ if(inventoryPage>1){ inventoryPage--; renderRows(); } };
 invNextBtn.onclick=()=>{ inventoryPage++; renderRows(); };
 invPageSelect.onchange=()=>{ inventoryPage=n(invPageSelect.value)||1; renderRows(); };
