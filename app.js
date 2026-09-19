@@ -5,6 +5,7 @@ let editing = null;
 let inventorySort = {key:"addedAt", dir:"desc"};
 let soldSort = {key:"date", dir:"desc"};
 const bundleSelection = {inventory:new Set(), holds:new Set(), sold:new Set()};
+const expandedBundles = new Set();
 let undoSnapshot = null;
 let lastSavedSnapshot = JSON.stringify(state);
 let isRestoringUndo = false;
@@ -628,11 +629,30 @@ function categoryPill(cat){
   };
   return `<span class="cat-pill" style="${styles[c]||styles.Other}">${c}</span>`;
 }
+function getBundleItems(row){
+  if(row.items && row.items.length) return row.items;
+  return row.title.replace(/^Bundle:\s*/i, "").split(", ").filter(Boolean).map(title=>({title}));
+}
 function rowTitle(r, kind){
   const givy = n(r.cost)===0 ? `<span class="cat-pill pill-givy">Givy</span>` : "";
   const synced = (r.notes||"").includes("[MERCARI-SYNC]") ? `<span class="cat-pill pill-sync" title="Added/corrected by the Mercari sync">Synced</span>` : "";
-  const bundle = qty(r)>1 ? `<button type="button" class="cat-pill pill-bundle" onclick="event.stopPropagation();viewBundleContents('${kind}','${r.id}')" title="View the ${qty(r)} books in this bundle">Bundle ×${qty(r)}</button>` : "";
-  return `<strong title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</strong>${categoryPill(r.category)}${bundle}${givy}${synced}`;
+  const isBundle = qty(r)>1;
+  const expanded = expandedBundles.has(r.id);
+  const expandBtn = isBundle ? `<button type="button" class="bundle-expand-btn" onclick="event.stopPropagation();toggleBundleExpand('${r.id}')" title="${expanded?"Collapse":"Show"} the books in this bundle" aria-label="${expanded?"Collapse":"Show"} the books in this bundle">${expanded?"▾":"▸"}</button>` : "";
+  const bundle = isBundle ? `<button type="button" class="cat-pill pill-bundle" onclick="event.stopPropagation();viewBundleContents('${kind}','${r.id}')" title="View the ${qty(r)} books in this bundle">Bundle ×${qty(r)}</button>` : "";
+  return `${expandBtn}<strong title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</strong>${categoryPill(r.category)}${bundle}${givy}${synced}`;
+}
+function toggleBundleExpand(id){
+  if(expandedBundles.has(id)) expandedBundles.delete(id); else expandedBundles.add(id);
+  renderRows();
+}
+function bundleSubRowsHtml(row, colCount){
+  if(qty(row)<=1 || !expandedBundles.has(row.id)) return "";
+  return getBundleItems(row).map(it=>`<tr class="bundle-subrow"><td colspan="${colCount}">
+    <span class="bundle-subrow-title">${escapeHtml(it.title)}</span>
+    ${it.category?categoryPill(it.category):""}
+    ${it.price!=null?`<span class="bundle-subrow-price">${money(it.price)}${it.cost!=null?` <small>(cost ${money(it.cost)})</small>`:""}</span>`:""}
+  </td></tr>`).join("");
 }
 function marginPct(r){
   const price = n(r.price);
@@ -691,7 +711,7 @@ function renderRows(){
     <td>${rowTitle(r,'inventory')}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
     <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="postToEbay('inventory','${r.id}')" title="Post to eBay" aria-label="Post to eBay">${ROW_ICONS.ebay}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds" aria-label="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold" aria-label="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-  </tr>`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",7);
+  </tr>${bundleSubRowsHtml(r,7)}`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",7);
 
   const count = invSorted.length;
   const bookTotal = sumQty(invSorted);
@@ -718,7 +738,7 @@ function renderRows(){
     <td>${rowTitle(r,'holds')}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
     <td data-label="On Hold">${ageChip(r.heldAt, 14)}</td>
     <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-  </tr>`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",6);
+  </tr>${bundleSubRowsHtml(r,6)}`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",6);
 
   const soldSorted = sortRows(getSoldRows(), soldSort);
   const soldTotalPages = Math.max(1, Math.ceil(soldSorted.length / SOLD_PAGE_SIZE));
@@ -730,7 +750,7 @@ function renderRows(){
   soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}" class="${bundleSelection.sold.has(r.id)?'row-selected':''}" onclick="toggleBundleSelect('sold','${r.id}')">
     <td>${rowTitle(r,'sold')}</td><td data-label="Date">${escapeHtml(r.date)||""}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-  </tr>`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",8);
+  </tr>${bundleSubRowsHtml(r,8)}`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",8);
 
   const soldCount = soldSorted.length;
   const soldBookTotal = sumQty(soldSorted);
@@ -814,11 +834,7 @@ function bundleSelected(kind){
 function viewBundleContents(kind, id){
   const row = (state[kind]||[]).find(r=>r.id===id);
   if(!row) return;
-  let items = row.items;
-  if(!items || !items.length){
-    // legacy bundle made before individual books were tracked - best effort from the title string
-    items = row.title.replace(/^Bundle:\s*/i, "").split(", ").filter(Boolean).map(title=>({title}));
-  }
+  const items = getBundleItems(row);
   bundleContentsTitle.textContent = `Bundle of ${items.length} book${items.length===1?"":"s"}`;
   bundleContentsHint.textContent = row.items && row.items.length
     ? "Individual price/cost as they were before this bundle was made."
