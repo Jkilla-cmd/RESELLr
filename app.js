@@ -2,6 +2,7 @@
 const KEY = "resellr_v300_data";
 let state = load();
 let editing = null;
+let editingSubItem = null; // {kind, bundleId, itemId} when editing one book inside a bundle
 let inventorySort = {key:"addedAt", dir:"desc"};
 let soldSort = {key:"date", dir:"desc"};
 const bundleSelection = {inventory:new Set(), holds:new Set(), sold:new Set()};
@@ -265,11 +266,13 @@ document.addEventListener("click",(e)=>{
 let modalKind = "inventory";
 function openModal(item=null, kind="inventory", opts={}){
   editing = item ? {id:item.id, kind, moveFrom:opts.moveFrom||null} : null;
+  editingSubItem = null;
   modalKind = kind;
   const form = document.getElementById("itemForm");
   form.reset();
   const isSaleFlow = kind==="sold";
   dateField.style.display = isSaleFlow ? "" : "none";
+  form.qty.disabled = false;
   document.getElementById("modalTitle").textContent = !item ? "Add Item" : (opts.moveFrom ? "Mark as Sold" : "Edit Item");
   if(item){
     form.title.value=item.title||"";
@@ -292,6 +295,31 @@ function openModal(item=null, kind="inventory", opts={}){
 }
 document.getElementById("addItemBtn2").onclick=()=>openModal();
 document.getElementById("cancelModal").onclick=()=>document.getElementById("itemModal").close();
+function editBundleItem(kind, bundleId, itemId){
+  const bundleRow = (state[kind]||[]).find(r=>r.id===bundleId);
+  const item = bundleRow && (bundleRow.items||[]).find(it=>it.id===itemId);
+  if(!item) return;
+  editing = null;
+  editingSubItem = {kind, bundleId, itemId};
+  modalKind = kind;
+  const form = document.getElementById("itemForm");
+  form.reset();
+  dateField.style.display = "none";
+  document.getElementById("modalTitle").textContent = "Edit Book in Bundle";
+  form.title.value = item.title||"";
+  form.platform.value = item.platform||"Mercari";
+  form.category.value = item.category||"Comic";
+  form.price.value = item.price||"";
+  form.cost.value = item.cost||"";
+  form.fees.value = item.fees||"";
+  form.shipping.value = item.shipping||"";
+  form.notes.value = item.notes||"";
+  form.imageUrl.value = item.imageUrl||"";
+  form.qty.value = 1;
+  form.qty.disabled = true;
+  stashWarning.hidden = true;
+  document.getElementById("itemModal").showModal();
+}
 function updateStashWarning(){
   // Only relevant when logging a brand-new purchase into Inventory --
   // editing an existing item or marking something sold doesn't spend fresh cash.
@@ -347,6 +375,34 @@ document.getElementById("pasteListingBtn2").onclick=pasteListing;
 document.getElementById("itemForm").onsubmit=(e)=>{
   e.preventDefault();
   const fd = new FormData(e.target);
+  if(editingSubItem){
+    const {kind, bundleId, itemId} = editingSubItem;
+    const bundleRow = (state[kind]||[]).find(r=>r.id===bundleId);
+    const idx = bundleRow ? (bundleRow.items||[]).findIndex(it=>it.id===itemId) : -1;
+    if(bundleRow && idx>=0){
+      bundleRow.items[idx] = {
+        id: itemId,
+        title: String(fd.get("title")||"").trim(),
+        platform: fd.get("platform"),
+        category: fd.get("category"),
+        price: n(fd.get("price")),
+        cost: n(fd.get("cost")),
+        fees: n(fd.get("fees")),
+        shipping: n(fd.get("shipping")),
+        notes: fd.get("notes")||"",
+        imageUrl: String(fd.get("imageUrl")||"").trim()
+      };
+      bundleRow.title = `Bundle: ${bundleRow.items.map(it=>it.title).filter(Boolean).join(", ")}`;
+      bundleRow.price = bundleRow.items.reduce((a,it)=>a+n(it.price),0);
+      bundleRow.cost = bundleRow.items.reduce((a,it)=>a+n(it.cost),0);
+      bundleRow.fees = bundleRow.items.reduce((a,it)=>a+n(it.fees),0);
+      bundleRow.shipping = bundleRow.items.reduce((a,it)=>a+n(it.shipping),0);
+      bundleRow.qty = bundleRow.items.length;
+    }
+    editingSubItem = null;
+    save(); document.getElementById("itemModal").close(); render();
+    return;
+  }
   const item = {
     id: editing?.id || uid(),
     title: String(fd.get("title")||"").trim(),
@@ -638,21 +694,34 @@ function rowTitle(r, kind){
   const synced = (r.notes||"").includes("[MERCARI-SYNC]") ? `<span class="cat-pill pill-sync" title="Added/corrected by the Mercari sync">Synced</span>` : "";
   const isBundle = qty(r)>1;
   const expanded = expandedBundles.has(r.id);
-  const expandBtn = isBundle ? `<button type="button" class="bundle-expand-btn" onclick="event.stopPropagation();toggleBundleExpand('${r.id}')" title="${expanded?"Collapse":"Show"} the books in this bundle" aria-label="${expanded?"Collapse":"Show"} the books in this bundle">${expanded?"▾":"▸"}</button>` : "";
-  const bundle = isBundle ? `<button type="button" class="cat-pill pill-bundle" onclick="event.stopPropagation();viewBundleContents('${kind}','${r.id}')" title="View the ${qty(r)} books in this bundle">Bundle ×${qty(r)}</button>` : "";
-  return `${expandBtn}<strong title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</strong>${categoryPill(r.category)}${bundle}${givy}${synced}`;
+  const bundle = isBundle ? `<button type="button" class="cat-pill pill-bundle" onclick="event.stopPropagation();toggleBundleExpand('${r.id}')" title="${expanded?"Hide":"Show"} the books in this bundle" aria-label="${expanded?"Hide":"Show"} the books in this bundle">Bundle ×${qty(r)}</button>` : "";
+  return `<strong title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</strong>${categoryPill(r.category)}${bundle}${givy}${synced}`;
 }
 function toggleBundleExpand(id){
   if(expandedBundles.has(id)) expandedBundles.delete(id); else expandedBundles.add(id);
   renderRows();
 }
-function bundleSubRowsHtml(row, colCount){
+function bundleSubRowsHtml(row, kind){
   if(qty(row)<=1 || !expandedBundles.has(row.id)) return "";
-  return getBundleItems(row).map(it=>`<tr class="bundle-subrow"><td colspan="${colCount}">
-    <span class="bundle-subrow-title">${escapeHtml(it.title)}</span>
-    ${it.category?categoryPill(it.category):""}
-    ${it.price!=null?`<span class="bundle-subrow-price">${money(it.price)}${it.cost!=null?` <small>(cost ${money(it.cost)})</small>`:""}</span>`:""}
-  </td></tr>`).join("");
+  return getBundleItems(row).map(it=>{
+    const editable = !!it.id;
+    const itemCell = `<td>${escapeHtml(it.title)}${it.category?categoryPill(it.category):""}</td>`;
+    const platformCell = `<td data-label="Platform">${it.platform?escapeHtml(it.platform):"—"}</td>`;
+    const priceCell = `<td data-label="Price">${it.price!=null?money(it.price):"—"}</td>`;
+    const costCell = `<td data-label="Cost">${it.cost!=null?money(it.cost):"—"}</td>`;
+    const profitTd = editable
+      ? `<td data-label="Profit" class="${profit(it)>=0?'profit':'loss'}">${profitCell(it)}</td>`
+      : `<td data-label="Profit">—</td>`;
+    const actionsCell = `<td><div class="row-actions" onclick="event.stopPropagation()">${editable?`<button class="icon-btn" onclick="editBundleItem('${kind}','${row.id}','${it.id}')" title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button>`:""}</div></td>`;
+    if(kind==="holds"){
+      return `<tr class="bundle-subrow">${itemCell}${platformCell}${priceCell}${costCell}<td data-label="On Hold">—</td>${actionsCell}</tr>`;
+    }
+    if(kind==="sold"){
+      const feesCell = `<td data-label="Fees">${it.fees!=null?money(it.fees):"—"}</td>`;
+      return `<tr class="bundle-subrow">${itemCell}<td data-label="Date">—</td>${platformCell}${priceCell}${costCell}${feesCell}${profitTd}${actionsCell}</tr>`;
+    }
+    return `<tr class="bundle-subrow">${itemCell}${platformCell}${priceCell}${costCell}${profitTd}<td data-label="Listed">—</td>${actionsCell}</tr>`;
+  }).join("");
 }
 function marginPct(r){
   const price = n(r.price);
@@ -711,7 +780,7 @@ function renderRows(){
     <td>${rowTitle(r,'inventory')}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
     <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="postToEbay('inventory','${r.id}')" title="Post to eBay" aria-label="Post to eBay">${ROW_ICONS.ebay}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds" aria-label="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold" aria-label="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-  </tr>${bundleSubRowsHtml(r,7)}`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",7);
+  </tr>${bundleSubRowsHtml(r,'inventory')}`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",7);
 
   const count = invSorted.length;
   const bookTotal = sumQty(invSorted);
@@ -738,7 +807,7 @@ function renderRows(){
     <td>${rowTitle(r,'holds')}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
     <td data-label="On Hold">${ageChip(r.heldAt, 14)}</td>
     <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick="checkComps('holds','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveHoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('holds','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-  </tr>${bundleSubRowsHtml(r,6)}`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",6);
+  </tr>${bundleSubRowsHtml(r,'holds')}`).join("") || emptyState("hold","Nothing on hold","Items you set aside for a buyer's decision will show up here.",6);
 
   const soldSorted = sortRows(getSoldRows(), soldSort);
   const soldTotalPages = Math.max(1, Math.ceil(soldSorted.length / SOLD_PAGE_SIZE));
@@ -750,7 +819,7 @@ function renderRows(){
   soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}" class="${bundleSelection.sold.has(r.id)?'row-selected':''}" onclick="toggleBundleSelect('sold','${r.id}')">
     <td>${rowTitle(r,'sold')}</td><td data-label="Date">${escapeHtml(r.date)||""}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-  </tr>${bundleSubRowsHtml(r,8)}`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",8);
+  </tr>${bundleSubRowsHtml(r,'sold')}`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",8);
 
   const soldCount = soldSorted.length;
   const soldBookTotal = sumQty(soldSorted);
@@ -813,9 +882,6 @@ function bundleSelected(kind){
     </div>`).join("");
   bundleContentsTotal.hidden = false;
   bundleContentsTotal.innerHTML = `<span>Combined total</span><span>${money(rows.reduce((a,r)=>a+n(r.price),0))}</span>`;
-  closeBundleContentsModal.hidden = true;
-  cancelBundleConfirm.hidden = false;
-  confirmBundleBtn.hidden = false;
   bundleContentsModal.showModal();
 }
 confirmBundleBtn.onclick=()=>{
@@ -833,8 +899,11 @@ function performBundleMerge(kind){
   const titles = rows.map(r=>r.title).filter(Boolean);
   const allSameCategory = rows.every(r=>r.category===rows[0].category);
   // flatten so bundling an existing bundle with something else still lists every real book, not a nested bundle row
-  const items = rows.flatMap(r => r.items && r.items.length ? r.items :
-    [{title:r.title, price:n(r.price), cost:n(r.cost), fees:n(r.fees), shipping:n(r.shipping), category:r.category}]);
+  const items = rows.flatMap(r => r.items && r.items.length ? r.items : [{
+    id: uid(), title:r.title, platform:r.platform, category:r.category,
+    price:n(r.price), cost:n(r.cost), fees:n(r.fees), shipping:n(r.shipping),
+    notes:r.notes||"", imageUrl:r.imageUrl||""
+  }]);
   const bundle = {
     id: uid(),
     title: `Bundle: ${titles.join(", ")}`,
@@ -858,31 +927,6 @@ function performBundleMerge(kind){
   ids.clear();
   save(); render();
 }
-function viewBundleContents(kind, id){
-  const row = (state[kind]||[]).find(r=>r.id===id);
-  if(!row) return;
-  const items = getBundleItems(row);
-  bundleContentsTitle.textContent = `Bundle of ${items.length} book${items.length===1?"":"s"}`;
-  bundleContentsHint.textContent = row.items && row.items.length
-    ? "Individual price/cost as they were before this bundle was made."
-    : "This bundle was made before per-book details were tracked — titles only.";
-  bundleContentsList.innerHTML = items.map(it=>`
-    <div class="bundle-contents-item">
-      <span>${escapeHtml(it.title)}${it.category?`<small>${escapeHtml(it.category)}</small>`:""}</span>
-      ${it.price!=null ? `<span>${money(it.price)}</span>` : ""}
-    </div>`).join("");
-  const hasNums = items.some(it=>it.price!=null);
-  bundleContentsTotal.hidden = !hasNums;
-  if(hasNums){
-    bundleContentsTotal.innerHTML = `<span>Bundle total</span><span>${money(row.price)}</span>`;
-  }
-  closeBundleContentsModal.hidden = false;
-  cancelBundleConfirm.hidden = true;
-  confirmBundleBtn.hidden = true;
-  bundleContentsModal.showModal();
-}
-closeBundleContentsModal.onclick=()=>bundleContentsModal.close();
-
 invPrevBtn.onclick=()=>{ if(inventoryPage>1){ inventoryPage--; renderRows(); } };
 invNextBtn.onclick=()=>{ inventoryPage++; renderRows(); };
 invPageSelect.onchange=()=>{ inventoryPage=n(invPageSelect.value)||1; renderRows(); };
