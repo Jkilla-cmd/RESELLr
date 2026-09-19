@@ -796,12 +796,39 @@ function toggleBundleSelect(kind, id){
 bundleBarBtn.onclick=()=>{ const kind=currentBundleKind(); if(kind) bundleSelected(kind); };
 bundleBarClear.onclick=()=>{ const kind=currentBundleKind(); if(kind){ bundleSelection[kind].clear(); renderRows(); } };
 undoBtn.onclick=performUndo;
+let pendingBundleKind = null;
 function bundleSelected(kind){
   const ids = bundleSelection[kind];
   if(ids.size < 2) return;
   const rows = state[kind].filter(r=>ids.has(r.id));
   if(rows.length < 2) return;
-  if(!confirm(`Combine these ${rows.length} listings into one bundle? The originals will be replaced by a single row — price, cost, fees, and shipping will be summed (edit afterward as needed).`)) return;
+
+  pendingBundleKind = kind;
+  bundleContentsTitle.textContent = `Bundle these ${rows.length} listings?`;
+  bundleContentsHint.textContent = "These are the actual listings being combined — price, cost, fees, and shipping will be summed into one row (you can always expand it afterward, or hit Undo).";
+  bundleContentsList.innerHTML = rows.map(r=>`
+    <div class="bundle-contents-item">
+      <span>${escapeHtml(r.title)}${r.category?`<small>${escapeHtml(r.category)}</small>`:""}</span>
+      <span>${money(r.price)}<small>cost ${money(r.cost)}</small></span>
+    </div>`).join("");
+  bundleContentsTotal.hidden = false;
+  bundleContentsTotal.innerHTML = `<span>Combined total</span><span>${money(rows.reduce((a,r)=>a+n(r.price),0))}</span>`;
+  closeBundleContentsModal.hidden = true;
+  cancelBundleConfirm.hidden = false;
+  confirmBundleBtn.hidden = false;
+  bundleContentsModal.showModal();
+}
+confirmBundleBtn.onclick=()=>{
+  if(pendingBundleKind) performBundleMerge(pendingBundleKind);
+  bundleContentsModal.close();
+};
+cancelBundleConfirm.onclick=()=>bundleContentsModal.close();
+bundleContentsModal.addEventListener("close", ()=>{ pendingBundleKind = null; });
+
+function performBundleMerge(kind){
+  const ids = bundleSelection[kind];
+  const rows = state[kind].filter(r=>ids.has(r.id));
+  if(rows.length < 2) return;
 
   const titles = rows.map(r=>r.title).filter(Boolean);
   const allSameCategory = rows.every(r=>r.category===rows[0].category);
@@ -849,6 +876,9 @@ function viewBundleContents(kind, id){
   if(hasNums){
     bundleContentsTotal.innerHTML = `<span>Bundle total</span><span>${money(row.price)}</span>`;
   }
+  closeBundleContentsModal.hidden = false;
+  cancelBundleConfirm.hidden = true;
+  confirmBundleBtn.hidden = true;
   bundleContentsModal.showModal();
 }
 closeBundleContentsModal.onclick=()=>bundleContentsModal.close();
