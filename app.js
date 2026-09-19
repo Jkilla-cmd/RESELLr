@@ -320,6 +320,48 @@ function editBundleItem(kind, bundleId, itemId){
   stashWarning.hidden = true;
   document.getElementById("itemModal").showModal();
 }
+const BUNDLE_TIMESTAMP_FIELD = {inventory:"addedAt", holds:"heldAt", sold:"date"};
+function removeBundleItem(kind, bundleId, itemId){
+  const arr = state[kind];
+  const bundleRow = arr.find(r=>r.id===bundleId);
+  if(!bundleRow || !bundleRow.items) return;
+  const idx = bundleRow.items.findIndex(it=>it.id===itemId);
+  if(idx<0) return;
+  const [extracted] = bundleRow.items.splice(idx,1);
+
+  const standalone = {
+    id: extracted.id, title: extracted.title, platform: extracted.platform, category: extracted.category,
+    price: n(extracted.price), cost: n(extracted.cost), fees: n(extracted.fees), shipping: n(extracted.shipping),
+    notes: extracted.notes||"", imageUrl: extracted.imageUrl||"", qty: 1
+  };
+  const tsField = BUNDLE_TIMESTAMP_FIELD[kind];
+  standalone[tsField] = bundleRow[tsField] || (kind==="sold" ? today() : Date.now());
+  arr.push(standalone);
+
+  if(bundleRow.items.length <= 1){
+    // down to one (or zero) books - a "bundle" of one doesn't make sense, so dissolve it
+    if(bundleRow.items.length === 1){
+      const last = bundleRow.items[0];
+      arr.push({
+        id: last.id, title: last.title, platform: last.platform, category: last.category,
+        price: n(last.price), cost: n(last.cost), fees: n(last.fees), shipping: n(last.shipping),
+        notes: last.notes||"", imageUrl: last.imageUrl||"", qty: 1,
+        [tsField]: bundleRow[tsField] || (kind==="sold" ? today() : Date.now())
+      });
+    }
+    const i = arr.findIndex(r=>r.id===bundleId);
+    if(i>=0) arr.splice(i,1);
+    expandedBundles.delete(bundleId);
+  }else{
+    bundleRow.title = `Bundle: ${bundleRow.items.map(it=>it.title).filter(Boolean).join(", ")}`;
+    bundleRow.price = bundleRow.items.reduce((a,it)=>a+n(it.price),0);
+    bundleRow.cost = bundleRow.items.reduce((a,it)=>a+n(it.cost),0);
+    bundleRow.fees = bundleRow.items.reduce((a,it)=>a+n(it.fees),0);
+    bundleRow.shipping = bundleRow.items.reduce((a,it)=>a+n(it.shipping),0);
+    bundleRow.qty = bundleRow.items.length;
+  }
+  save(); render();
+}
 function updateStashWarning(){
   // Only relevant when logging a brand-new purchase into Inventory --
   // editing an existing item or marking something sold doesn't spend fresh cash.
@@ -712,7 +754,7 @@ function bundleSubRowsHtml(row, kind){
     const profitTd = editable
       ? `<td data-label="Profit" class="${profit(it)>=0?'profit':'loss'}">${profitCell(it)}</td>`
       : `<td data-label="Profit">—</td>`;
-    const actionsCell = `<td><div class="row-actions" onclick="event.stopPropagation()">${editable?`<button class="icon-btn" onclick="editBundleItem('${kind}','${row.id}','${it.id}')" title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button>`:""}</div></td>`;
+    const actionsCell = `<td><div class="row-actions" onclick="event.stopPropagation()">${editable?`<button class="icon-btn" onclick="editBundleItem('${kind}','${row.id}','${it.id}')" title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="removeBundleItem('${kind}','${row.id}','${it.id}')" title="Remove from bundle (becomes its own listing again)" aria-label="Remove from bundle">${ROW_ICONS.trash}</button>`:""}</div></td>`;
     if(kind==="holds"){
       return `<tr class="bundle-subrow">${itemCell}${platformCell}${priceCell}${costCell}<td data-label="On Hold">—</td>${actionsCell}</tr>`;
     }
