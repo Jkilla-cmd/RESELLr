@@ -19,6 +19,8 @@ function parseLocalDate(dateStr){
   return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
 }
 function uid(){ return "id_" + Date.now() + "_" + Math.random().toString(16).slice(2); }
+function qty(r){ return Math.max(1, Math.round(n(r.qty)) || 1); }
+function sumQty(rows){ return rows.reduce((a,r)=>a+qty(r),0); }
 function profit(r){ return n(r.price)-n(r.cost)-n(r.fees)-n(r.shipping); }
 function costProfit(r){ return n(r.cost)+profit(r); }
 function sameMonth(d,ref){ return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth(); }
@@ -247,6 +249,8 @@ function openModal(item=null, kind="inventory", opts={}){
     form.fees.value=item.fees||"";
     form.shipping.value=item.shipping||"";
     form.notes.value=item.notes||"";
+    form.imageUrl.value=item.imageUrl||"";
+    form.qty.value=item.qty||1;
     if(isSaleFlow) form.date.value = item.date || today();
   } else if(isSaleFlow){
     form.date.value = today();
@@ -321,7 +325,9 @@ document.getElementById("itemForm").onsubmit=(e)=>{
     cost: n(fd.get("cost")),
     fees: n(fd.get("fees")),
     shipping: n(fd.get("shipping")),
-    notes: fd.get("notes")||""
+    notes: fd.get("notes")||"",
+    imageUrl: String(fd.get("imageUrl")||"").trim(),
+    qty: Math.max(1, Math.round(n(fd.get("qty"))) || 1)
   };
   if(modalKind==="sold") item.date = fd.get("date") || today();
 
@@ -444,10 +450,11 @@ function renderKPIs(){
   const wb=walletBalance();
 
   kpiInventoryValue.textContent=money(invValue);
-  kpiInventoryCount.textContent=`${state.inventory.length} item${state.inventory.length===1?"":"s"}`;
+  const invBookCount=sumQty(state.inventory);
+  kpiInventoryCount.textContent=`${invBookCount} item${invBookCount===1?"":"s"}`;
   kpiCostProfit.textContent=money(cp);
   kpiWallet.textContent=money(wb);
-  kpiSalesYear.textContent=yr.length;
+  kpiSalesYear.textContent=sumQty(yr);
   kpiProfitYear.textContent=`${money(yrProfit)} profit`;
 
   const hist=state.history||[];
@@ -537,7 +544,7 @@ function renderSnapshot(){
   if(snapMonth.value && snapMonth.value!=="all") rows=rows.filter(r=>parseLocalDate(r.date).getMonth()===n(snapMonth.value));
   const income=rows.reduce((a,r)=>a+n(r.price),0);
   const totalProfit=rows.reduce((a,r)=>a+profit(r),0);
-  snapItems.textContent=rows.length;
+  snapItems.textContent=sumQty(rows);
   snapIncome.textContent=money(income);
   snapCP.textContent=money(rows.reduce((a,r)=>a+costProfit(r),0));
   snapProfit.textContent=money(totalProfit);
@@ -547,9 +554,9 @@ function renderSnapshot(){
   const groups={Mercari:{c:0,v:0},eBay:{c:0,v:0},Private:{c:0,v:0},Other:{c:0,v:0}};
   rows.forEach(r=>{
     const key = /mercari/i.test(r.platform)?"Mercari": /ebay/i.test(r.platform)?"eBay": /private/i.test(r.platform)?"Private":"Other";
-    groups[key].c++; groups[key].v+=n(r.price);
+    groups[key].c+=qty(r); groups[key].v+=n(r.price);
   });
-  const total=rows.length||1;
+  const total=sumQty(rows)||1;
   const colorMap={Mercari:"var(--orange)",eBay:"var(--blue)",Private:"var(--green)",Other:"#a1a8b3"};
   const order=["Mercari","eBay","Private","Other"].filter(k=>groups[k].c>0);
   platformStack.innerHTML = order.length ? order.map(k=>`<span title="${k}: ${groups[k].c} item${groups[k].c===1?'':'s'} (${(groups[k].c/total*100).toFixed(1)}%) • ${money(groups[k].v)}" style="width:${(groups[k].c/total*100).toFixed(2)}%;background:${colorMap[k]}"></span>`).join("") : `<span style="width:100%;background:var(--line)"></span>`;
@@ -576,7 +583,8 @@ const ROW_ICONS = {
   search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
   box: '<svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg>',
   check: '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>',
-  star: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01Z"/></svg>'
+  star: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01Z"/></svg>',
+  ebay: '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>'
 };
 function emptyState(icon, title, sub, colspan){
   return `<tr><td colspan="${colspan}" class="empty-state-cell"><div class="empty-state"><div class="empty-state-icon">${ROW_ICONS[icon]}</div><b>${title}</b><p>${sub}</p></div></td></tr>`;
@@ -593,7 +601,8 @@ function categoryPill(cat){
 function rowTitle(r){
   const givy = n(r.cost)===0 ? `<span class="cat-pill pill-givy">Givy</span>` : "";
   const synced = (r.notes||"").includes("[MERCARI-SYNC]") ? `<span class="cat-pill pill-sync" title="Added/corrected by the Mercari sync">Synced</span>` : "";
-  return `<strong>${escapeHtml(r.title)}</strong>${categoryPill(r.category)}${givy}${synced}`;
+  const bundle = qty(r)>1 ? `<span class="cat-pill pill-bundle" title="Bundle of ${qty(r)} books">Bundle ×${qty(r)}</span>` : "";
+  return `<strong>${escapeHtml(r.title)}</strong>${categoryPill(r.category)}${bundle}${givy}${synced}`;
 }
 function marginPct(r){
   const price = n(r.price);
@@ -651,15 +660,16 @@ function renderRows(){
   inventoryRows.innerHTML=pageItems.map(r=>`<tr id="row-inventory-${r.id}">
     <td>${rowTitle(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
     <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds" aria-label="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold" aria-label="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
+    <td><div class="row-actions"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="postToEbay('inventory','${r.id}')" title="Post to eBay" aria-label="Post to eBay">${ROW_ICONS.ebay}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds" aria-label="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold" aria-label="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
   </tr>`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",7);
 
   const count = invSorted.length;
+  const bookTotal = sumQty(invSorted);
   const shownStart = count ? start+1 : 0;
   const shownEnd = Math.min(count, start+INV_PAGE_SIZE);
-  invPageInfo.textContent = count ? `Showing ${shownStart}\u2013${shownEnd} of ${count} items` : "No items";
+  invPageInfo.textContent = count ? `Showing ${shownStart}\u2013${shownEnd} of ${count} listing${count===1?"":"s"}` : "No items";
   invPageTotal.textContent = totalPages;
-  invCountBadge.textContent = `${count} item${count===1?"":"s"}`;
+  invCountBadge.textContent = `${bookTotal} item${bookTotal===1?"":"s"}`;
   const invTotalCost = invSorted.reduce((a,r)=>a+n(r.cost),0);
   const invTotalValue = invSorted.reduce((a,r)=>a+n(r.price),0);
   invTotalsBadge.textContent = count ? `Total cost ${money(invTotalCost)} \u00b7 Total value ${money(invTotalValue)}` : "";
@@ -670,7 +680,7 @@ function renderRows(){
   invNextBtn.disabled = inventoryPage>=totalPages;
   updateSortIndicators("inventory", inventorySort);
 
-  holdsCountBadge.textContent = `${state.holds.length} on hold`;
+  holdsCountBadge.textContent = `${sumQty(state.holds)} on hold`;
   const holdsTotalCost = state.holds.reduce((a,r)=>a+n(r.cost),0);
   const holdsTotalValue = state.holds.reduce((a,r)=>a+n(r.price),0);
   holdsTotalsBadge.textContent = state.holds.length ? `Total cost ${money(holdsTotalCost)} \u00b7 Total value ${money(holdsTotalValue)}` : "";
@@ -693,10 +703,11 @@ function renderRows(){
   </tr>`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",8);
 
   const soldCount = soldSorted.length;
+  const soldBookTotal = sumQty(soldSorted);
   const soldShownStart = soldCount ? soldStart+1 : 0;
   const soldShownEnd = Math.min(soldCount, soldStart+SOLD_PAGE_SIZE);
-  soldPageInfo.textContent = soldCount ? `Showing ${soldShownStart}\u2013${soldShownEnd} of ${soldCount} items` : "No items";
-  soldCountBadge.textContent = `${soldCount} item${soldCount===1?"":"s"} sold`;
+  soldPageInfo.textContent = soldCount ? `Showing ${soldShownStart}\u2013${soldShownEnd} of ${soldCount} listing${soldCount===1?"":"s"}` : "No items";
+  soldCountBadge.textContent = `${soldBookTotal} item${soldBookTotal===1?"":"s"} sold`;
   soldPageTotal.textContent = soldTotalPages;
   const soldOptsHtml = Array.from({length:soldTotalPages},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
   if(soldPageSelect.innerHTML!==soldOptsHtml) soldPageSelect.innerHTML=soldOptsHtml;
@@ -716,7 +727,7 @@ function yearStats(year){
   const totalProfit = rows.reduce((a,r)=>a+profit(r),0);
   const revenue = rows.reduce((a,r)=>a+n(r.price),0);
   return {
-    count: rows.length,
+    count: sumQty(rows),
     profit: totalProfit,
     revenue,
     avgSale: rows.length ? revenue/rows.length : 0
@@ -752,7 +763,7 @@ function renderCategoryBreakdown(){
   rows.forEach(r=>{
     const key=r.category||"Other";
     cats[key]=cats[key]||{count:0,profit:0,income:0};
-    cats[key].count++; cats[key].profit+=profit(r); cats[key].income+=n(r.price);
+    cats[key].count+=qty(r); cats[key].profit+=profit(r); cats[key].income+=n(r.price);
   });
   const maxProfit=Math.max(1,...Object.values(cats).map(c=>Math.abs(c.profit)));
   const catOrder=Object.keys(cats).sort((a,b)=>cats[b].profit-cats[a].profit);
@@ -766,7 +777,7 @@ function renderCategoryBreakdown(){
   rows.forEach(r=>{
     const key = /mercari/i.test(r.platform)?"Mercari": /ebay/i.test(r.platform)?"eBay": /private/i.test(r.platform)?"Private Sale":(r.platform||"Other");
     plats[key]=plats[key]||{count:0,profit:0,income:0};
-    plats[key].count++; plats[key].profit+=profit(r); plats[key].income+=n(r.price);
+    plats[key].count+=qty(r); plats[key].profit+=profit(r); plats[key].income+=n(r.price);
   });
   const maxP=Math.max(1,...Object.values(plats).map(c=>Math.abs(c.profit)));
   const platOrder=Object.keys(plats).sort((a,b)=>plats[b].income-plats[a].income);
@@ -1356,6 +1367,88 @@ quickLookupBtn.onclick = openQuickLookup;
 quickLookupClose.onclick = closeQuickLookup;
 quickLookupInput.addEventListener("input", renderQuickLookup);
 quickLookupInput.addEventListener("keydown", e=>{ if(e.key==="Escape") closeQuickLookup(); });
+
+/* ---------- eBay integration ---------- */
+function ebayFn(name){
+  return firebase.functions().httpsCallable(name);
+}
+async function refreshEbayStatus(){
+  if(!ebayStatusLine) return;
+  try{
+    const res = await ebayFn("ebayConnectionStatus")();
+    if(res.data && res.data.connected){
+      ebayStatusLine.textContent = `Connected (${res.data.env === "PRODUCTION" ? "live" : "sandbox"} mode).`;
+      ebayConnectBtn.textContent = "Reconnect eBay Account";
+    }else{
+      ebayStatusLine.textContent = "Not connected yet.";
+      ebayConnectBtn.textContent = "Connect eBay Account";
+    }
+  }catch(e){
+    ebayStatusLine.textContent = "Couldn't check connection status.";
+  }
+  try{
+    const settings = (await ebayFn("ebaySettingsGet")()).data || {};
+    ebayCategoryId.value = settings.categoryId || "";
+    ebayPaymentPolicyId.value = settings.paymentPolicyId || "";
+    ebayReturnPolicyId.value = settings.returnPolicyId || "";
+    ebayFulfillmentPolicyId.value = settings.fulfillmentPolicyId || "";
+    ebayMerchantLocationKey.value = settings.merchantLocationKey || "";
+    if(settings.defaultCondition) ebayDefaultCondition.value = settings.defaultCondition;
+  }catch(e){}
+}
+ebayConnectBtn.onclick = async () => {
+  ebayConnectBtn.disabled = true;
+  try{
+    const res = await ebayFn("ebayAuthUrl")();
+    window.open(res.data.url, "_blank", "noopener");
+    ebayStatusLine.textContent = "Finish connecting in the tab that just opened, then come back here.";
+  }catch(e){
+    alert("Couldn't start the eBay connection: " + (e.message || e));
+  }
+  ebayConnectBtn.disabled = false;
+};
+ebaySettingsSaveBtn.onclick = async () => {
+  ebaySettingsSaveBtn.disabled = true;
+  try{
+    await ebayFn("ebaySettingsSet")({
+      categoryId: ebayCategoryId.value.trim(),
+      paymentPolicyId: ebayPaymentPolicyId.value.trim(),
+      returnPolicyId: ebayReturnPolicyId.value.trim(),
+      fulfillmentPolicyId: ebayFulfillmentPolicyId.value.trim(),
+      merchantLocationKey: ebayMerchantLocationKey.value.trim(),
+      defaultCondition: ebayDefaultCondition.value
+    });
+    ebaySettingsSaveBtn.textContent = "Saved!";
+    setTimeout(()=>ebaySettingsSaveBtn.textContent="Save eBay Defaults", 1500);
+  }catch(e){
+    alert("Couldn't save eBay defaults: " + (e.message || e));
+  }
+  ebaySettingsSaveBtn.disabled = false;
+};
+
+async function postToEbay(kind, id){
+  const item = (state[kind]||[]).find(x=>x.id===id);
+  if(!item) return;
+  if(!item.imageUrl){
+    alert("Add a Photo URL to this item first (Edit → Photo URL) — eBay requires at least one image.");
+    return;
+  }
+  if(!confirm(`Post "${item.title}" to eBay for ${money(item.price)}? This creates a real listing.`)) return;
+  try{
+    const res = await ebayFn("postToEbay")({ item: {
+      id: item.id, title: item.title, price: item.price, notes: item.notes,
+      category: item.category, imageUrl: item.imageUrl, condition: item.condition
+    }});
+    item.notes = (item.notes ? item.notes + " | " : "") + `Posted to eBay: ${res.data.listingUrl}`;
+    save(); render();
+    alert(`Posted! ${res.data.listingUrl}`);
+  }catch(e){
+    alert("Couldn't post to eBay: " + (e.message || e));
+  }
+}
+try{
+  firebase.auth().onAuthStateChanged(user => { if(user) refreshEbayStatus(); });
+}catch(e){}
 
 /* ---------- import / export ---------- */
 function normalizeItem(r, kind){
