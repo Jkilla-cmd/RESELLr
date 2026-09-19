@@ -5,6 +5,9 @@ let editing = null;
 let inventorySort = {key:"addedAt", dir:"desc"};
 let soldSort = {key:"date", dir:"desc"};
 const bundleSelection = {inventory:new Set(), holds:new Set(), sold:new Set()};
+let undoSnapshot = null;
+let lastSavedSnapshot = JSON.stringify(state);
+let isRestoringUndo = false;
 
 /* ---------- helpers ---------- */
 function n(v){ const x = Number(v); return Number.isFinite(x) ? x : 0; }
@@ -57,7 +60,32 @@ function load(){
   }catch(e){}
   return demoData();
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+function save(){
+  try{
+    const json = JSON.stringify(state);
+    if(!isRestoringUndo && json !== lastSavedSnapshot){
+      undoSnapshot = lastSavedSnapshot;
+    }
+    lastSavedSnapshot = json;
+    localStorage.setItem(KEY, json);
+  }catch(e){}
+  updateUndoButton();
+}
+function updateUndoButton(){
+  if(typeof undoBtn === "undefined") return;
+  undoBtn.hidden = !undoSnapshot;
+}
+function performUndo(){
+  if(!undoSnapshot) return;
+  try{
+    isRestoringUndo = true;
+    state = JSON.parse(undoSnapshot);
+    undoSnapshot = null;
+    save();
+    render();
+  }catch(e){}
+  finally{ isRestoringUndo = false; }
+}
 
 function synthHistory(final, days, startRatio){
   const start = final*startRatio;
@@ -747,6 +775,7 @@ function toggleBundleSelect(kind, id){
 }
 bundleBarBtn.onclick=()=>{ const kind=currentBundleKind(); if(kind) bundleSelected(kind); };
 bundleBarClear.onclick=()=>{ const kind=currentBundleKind(); if(kind){ bundleSelection[kind].clear(); renderRows(); } };
+undoBtn.onclick=performUndo;
 function bundleSelected(kind){
   const ids = bundleSelection[kind];
   if(ids.size < 2) return;
