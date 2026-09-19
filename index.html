@@ -55,17 +55,6 @@
 
   <main class="main">
 
-    <div id="bundleBar" class="bundle-bar" hidden>
-      <div class="bundle-bar-top">
-        <span id="bundleBarCount">0 selected</span>
-        <div class="bundle-bar-actions">
-          <button id="bundleBarClear" class="icon-plain">Clear</button>
-          <button id="bundleBarBtn" class="primary">Bundle Selected</button>
-        </div>
-      </div>
-      <div id="bundleBarTitles" class="bundle-bar-titles"></div>
-    </div>
-
     <header class="topbar">
       <div class="greet">
         <h1 id="greeting">Good Evening.</h1>
@@ -510,18 +499,30 @@
 </div>
 
 <footer class="status-bar" id="statusBar" hidden>
-  <div class="pulse-group">
-    <span class="pulse-label"><svg viewBox="0 0 24 24"><path d="M2 12h4l2-7 4 14 3-10 2 3h5"/></svg>Market Pulse</span>
-    <span id="pulseMC" class="pulse-item">MC —</span>
-    <span id="pulseEBAY" class="pulse-item">EBAY —</span>
-    <span id="pulsePRVT" class="pulse-item">PRVT —</span>
+  <div id="statusBarNormal" class="status-bar-normal">
+    <div class="pulse-group">
+      <span class="pulse-label"><svg viewBox="0 0 24 24"><path d="M2 12h4l2-7 4 14 3-10 2 3h5"/></svg>Market Pulse</span>
+      <span id="pulseMC" class="pulse-item">MC —</span>
+      <span id="pulseEBAY" class="pulse-item">EBAY —</span>
+      <span id="pulsePRVT" class="pulse-item">PRVT —</span>
+    </div>
+    <div class="status-mid">
+      <span id="lastBackupFooter">Last Backup: —</span>
+      <span class="status-chip small"><span class="dot" id="systemsDot"></span>All systems operational</span>
+    </div>
+    <div class="status-right">
+      <span id="footerClock">—</span>
+    </div>
   </div>
-  <div class="status-mid">
-    <span id="lastBackupFooter">Last Backup: —</span>
-    <span class="status-chip small"><span class="dot" id="systemsDot"></span>All systems operational</span>
-  </div>
-  <div class="status-right">
-    <span id="footerClock">—</span>
+  <div id="statusBarBundle" class="status-bar-bundle" hidden>
+    <div class="bundle-bar-top">
+      <span id="bundleBarCount">0 selected</span>
+      <div class="bundle-bar-actions">
+        <button id="bundleBarClear" class="icon-plain">Clear</button>
+        <button id="bundleBarBtn" class="primary">Bundle Selected</button>
+      </div>
+    </div>
+    <div id="bundleBarTitles" class="bundle-bar-titles"></div>
   </div>
 </footer>
 

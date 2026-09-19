@@ -731,7 +731,8 @@ function updateBundleBar(){
   const kind = currentBundleKind();
   const ids = kind ? bundleSelection[kind] : null;
   const count = ids ? ids.size : 0;
-  bundleBar.hidden = count < 1;
+  statusBarNormal.hidden = count >= 1;
+  statusBarBundle.hidden = count < 1;
   bundleBarCount.textContent = `${count} selected`;
   bundleBarBtn.disabled = count < 2;
   if(!count){ bundleBarTitles.innerHTML = ""; return; }
