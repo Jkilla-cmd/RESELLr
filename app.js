@@ -604,7 +604,7 @@ function rowTitle(r){
   const givy = n(r.cost)===0 ? `<span class="cat-pill pill-givy">Givy</span>` : "";
   const synced = (r.notes||"").includes("[MERCARI-SYNC]") ? `<span class="cat-pill pill-sync" title="Added/corrected by the Mercari sync">Synced</span>` : "";
   const bundle = qty(r)>1 ? `<span class="cat-pill pill-bundle" title="Bundle of ${qty(r)} books">Bundle ×${qty(r)}</span>` : "";
-  return `<strong>${escapeHtml(r.title)}</strong>${categoryPill(r.category)}${bundle}${givy}${synced}`;
+  return `<strong title="${escapeHtml(r.title)}">${escapeHtml(r.title)}</strong>${categoryPill(r.category)}${bundle}${givy}${synced}`;
 }
 function marginPct(r){
   const price = n(r.price);
