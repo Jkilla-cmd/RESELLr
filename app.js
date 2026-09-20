@@ -272,8 +272,9 @@ function openModal(item=null, kind="inventory", opts={}){
   form.reset();
   const isSaleFlow = kind==="sold";
   dateField.style.display = isSaleFlow ? "" : "none";
-  form.qty.disabled = false;
+  [form.qty, form.price, form.cost, form.fees, form.shipping].forEach(f=>f.disabled=false);
   document.getElementById("modalTitle").textContent = !item ? "Add Item" : (opts.moveFrom ? "Mark as Sold" : "Edit Item");
+  const isBundleRow = !!(item && item.items && item.items.length>0);
   if(item){
     form.title.value=item.title||"";
     form.platform.value=item.platform||"Mercari";
@@ -286,12 +287,19 @@ function openModal(item=null, kind="inventory", opts={}){
     form.imageUrl.value=item.imageUrl||"";
     form.qty.value=item.qty||1;
     if(isSaleFlow) form.date.value = item.date || today();
+    if(isBundleRow){
+      [form.price, form.cost, form.fees, form.shipping, form.qty].forEach(f=>f.disabled=true);
+    }
   } else if(isSaleFlow){
     form.date.value = today();
   }
   stashWarning.hidden = true;
   document.getElementById("itemModal").showModal();
   updateStashWarning();
+  if(isBundleRow){
+    stashWarning.hidden = false;
+    stashWarning.textContent = "This is a bundle — price, cost, fees, shipping, and book count are totaled from the books inside it. Expand the row to edit or remove individual books instead.";
+  }
 }
 document.getElementById("addItemBtn2").onclick=()=>openModal();
 document.getElementById("cancelModal").onclick=()=>document.getElementById("itemModal").close();
@@ -460,6 +468,15 @@ document.getElementById("itemForm").onsubmit=(e)=>{
   };
   if(modalKind==="sold") item.date = fd.get("date") || today();
 
+  if(editing){
+    // price/cost/fees/shipping/qty on a bundle are derived from its books, not
+    // directly editable - the form disables those fields, so don't let their
+    // now-empty FormData values (which default to 0) clobber the real totals.
+    const existingRow = state[editing.moveFrom||editing.kind]?.find(x=>x.id===editing.id);
+    if(existingRow && existingRow.items && existingRow.items.length){
+      delete item.price; delete item.cost; delete item.fees; delete item.shipping; delete item.qty;
+    }
+  }
   if(editing){
     if(editing.moveFrom && editing.moveFrom!==editing.kind){
       const src = state[editing.moveFrom];
