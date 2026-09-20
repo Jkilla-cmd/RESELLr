@@ -288,7 +288,7 @@ function openModal(item=null, kind="inventory", opts={}){
     form.qty.value=item.qty||1;
     if(isSaleFlow) form.date.value = item.date || today();
     if(isBundleRow){
-      [form.price, form.cost, form.fees, form.shipping, form.qty].forEach(f=>f.disabled=true);
+      [form.cost, form.qty].forEach(f=>f.disabled=true);
     }
   } else if(isSaleFlow){
     form.date.value = today();
@@ -298,7 +298,7 @@ function openModal(item=null, kind="inventory", opts={}){
   updateStashWarning();
   if(isBundleRow){
     stashWarning.hidden = false;
-    stashWarning.textContent = "This is a bundle — price, cost, fees, shipping, and book count are totaled from the books inside it. Expand the row to edit or remove individual books instead.";
+    stashWarning.textContent = "This is a bundle — price, fees, and shipping are for the whole sale, so edit them here. Cost and book count are totaled from the books inside it — expand the row to edit or remove individual books to change those.";
   }
 }
 document.getElementById("addItemBtn2").onclick=()=>openModal();
@@ -362,11 +362,10 @@ function removeBundleItem(kind, bundleId, itemId){
     if(i>=0) arr.splice(i,1);
     expandedBundles.delete(bundleId);
   }else{
+    // only cost and book count roll up automatically - price/fees/shipping are the
+    // whole sale's real numbers and are left as whatever they were on the bundle.
     bundleRow.title = `Bundle: ${bundleRow.items.map(it=>it.title).filter(Boolean).join(", ")}`;
-    bundleRow.price = bundleRow.items.reduce((a,it)=>a+n(it.price),0);
     bundleRow.cost = bundleRow.items.reduce((a,it)=>a+n(it.cost),0);
-    bundleRow.fees = bundleRow.items.reduce((a,it)=>a+n(it.fees),0);
-    bundleRow.shipping = bundleRow.items.reduce((a,it)=>a+n(it.shipping),0);
     bundleRow.qty = bundleRow.items.length;
   }
   save(); render();
@@ -443,11 +442,10 @@ document.getElementById("itemForm").onsubmit=(e)=>{
         notes: fd.get("notes")||"",
         imageUrl: String(fd.get("imageUrl")||"").trim()
       };
+      // only cost and book count roll up automatically - price/fees/shipping are
+      // the whole sale's real numbers, edited directly on the bundle itself.
       bundleRow.title = `Bundle: ${bundleRow.items.map(it=>it.title).filter(Boolean).join(", ")}`;
-      bundleRow.price = bundleRow.items.reduce((a,it)=>a+n(it.price),0);
       bundleRow.cost = bundleRow.items.reduce((a,it)=>a+n(it.cost),0);
-      bundleRow.fees = bundleRow.items.reduce((a,it)=>a+n(it.fees),0);
-      bundleRow.shipping = bundleRow.items.reduce((a,it)=>a+n(it.shipping),0);
       bundleRow.qty = bundleRow.items.length;
     }
     editingSubItem = null;
@@ -470,12 +468,14 @@ document.getElementById("itemForm").onsubmit=(e)=>{
   if(modalKind==="sold") item.date = fd.get("date") || today();
 
   if(editing){
-    // price/cost/fees/shipping/qty on a bundle are derived from its books, not
-    // directly editable - the form disables those fields, so don't let their
+    // cost and book count on a bundle are totaled from its books, not directly
+    // editable - the form disables those two fields, so don't let their
     // now-empty FormData values (which default to 0) clobber the real totals.
+    // Price/fees/shipping ARE directly editable on a bundle (the whole sale's
+    // real price/fees/postage), so those are left alone here.
     const existingRow = state[editing.moveFrom||editing.kind]?.find(x=>x.id===editing.id);
     if(existingRow && existingRow.items && existingRow.items.length){
-      delete item.price; delete item.cost; delete item.fees; delete item.shipping; delete item.qty;
+      delete item.cost; delete item.qty;
     }
   }
   if(editing){
