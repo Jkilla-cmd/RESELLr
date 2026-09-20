@@ -313,6 +313,7 @@ function editBundleItem(kind, bundleId, itemId){
   const form = document.getElementById("itemForm");
   form.reset();
   dateField.style.display = "none";
+  [form.price, form.cost, form.fees, form.shipping].forEach(f=>f.disabled=false);
   document.getElementById("modalTitle").textContent = "Edit Book in Bundle";
   form.title.value = item.title||"";
   form.platform.value = item.platform||"Mercari";
