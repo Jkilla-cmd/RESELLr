@@ -27,6 +27,19 @@ function parseLocalDate(dateStr){
 function uid(){ return "id_" + Date.now() + "_" + Math.random().toString(16).slice(2); }
 function qty(r){ return Math.max(1, Math.round(n(r.qty)) || 1); }
 function sumQty(rows){ return rows.reduce((a,r)=>a+qty(r),0); }
+function splitEvenly(total, count){
+  // whole-cent split that always adds back up to exactly `total`, no floating-point drift
+  const totalCents = Math.round(n(total)*100);
+  const base = Math.floor(totalCents/count);
+  let remainder = totalCents - base*count;
+  const shares = [];
+  for(let i=0;i<count;i++){
+    let cents = base;
+    if(remainder>0){ cents++; remainder--; }
+    shares.push(cents/100);
+  }
+  return shares;
+}
 function profit(r){ return n(r.price)-n(r.cost)-n(r.fees)-n(r.shipping); }
 function costProfit(r){ return n(r.cost)+profit(r); }
 function sameMonth(d,ref){ return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth(); }
@@ -476,6 +489,13 @@ document.getElementById("itemForm").onsubmit=(e)=>{
     const existingRow = state[editing.moveFrom||editing.kind]?.find(x=>x.id===editing.id);
     if(existingRow && existingRow.items && existingRow.items.length){
       delete item.cost; delete item.qty;
+      // push the bundle's real sold price back down onto the books inside it, split
+      // evenly (to the cent) so each book's own price stays meaningful and the
+      // books' prices always add back up to exactly what the bundle sold for.
+      if(item.price!=null && n(item.price)!==n(existingRow.price)){
+        const shares = splitEvenly(n(item.price), existingRow.items.length);
+        existingRow.items = existingRow.items.map((it,i)=>({...it, price:shares[i]}));
+      }
     }
   }
   if(editing){
