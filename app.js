@@ -220,13 +220,15 @@ function reservedProfit(){
 function setTheme(t){
   state.theme=t;
   document.documentElement.dataset.theme=t;
-  const span=themeToggle.querySelector("span");
-  if(span) span.textContent = t==="dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
-  if(typeof avatarThemeLabel!=="undefined" && avatarThemeLabel) avatarThemeLabel.textContent = t==="dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
 }
-themeToggle.onclick=()=>{ setTheme(state.theme==="dark"?"light":"dark"); render(); };
+function chooseTheme(t){
+  setTheme(t);
+  save();
+  render();
+}
+themeToggle.onclick=()=>showPage("settings");
 if(typeof avatarThemeItem!=="undefined" && avatarThemeItem){
-  avatarThemeItem.onclick=()=>{ avatarDropdown.hidden=true; setTheme(state.theme==="dark"?"light":"dark"); render(); };
+  avatarThemeItem.onclick=()=>{ avatarDropdown.hidden=true; showPage("settings"); };
 }
 
 /* ---------- sidebar collapse ---------- */
@@ -1477,6 +1479,7 @@ function renderHeader(){
   avatarDropdownName.textContent = name || "Account";
   if(document.activeElement!==userNameInput) userNameInput.value = state.userName||"";
   if(document.activeElement!==goalInput) goalInput.value = state.monthlyGoal||300;
+  document.querySelectorAll(".theme-swatch").forEach(b=>b.classList.toggle("active", b.dataset.themeId===(state.theme||"light")));
 
   const healthy = checkStorageHealthy();
   dbHealthText.textContent = healthy ? "Healthy" : "Unavailable";

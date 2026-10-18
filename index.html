@@ -18,6 +18,9 @@
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#e0a63f" />
 <link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bangers&family=Orbitron:wght@600;800&family=Playfair+Display:wght@700;800&display=swap" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -50,7 +53,7 @@
       <button data-page="settings" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1Z"/></svg><em>Settings</em></button>
     </nav>
 
-    <button id="themeToggle" class="theme-toggle" title="Toggle dark mode"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><span>Switch to Dark Mode</span></button>
+    <button id="themeToggle" class="theme-toggle" title="Change theme"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10 7 7 0 0 1-7-7 7 7 0 0 1 .3-2"/><circle cx="7.5" cy="10.5" r="1.3"/><circle cx="11.5" cy="7" r="1.3"/><circle cx="16" cy="9" r="1.3"/><circle cx="16.5" cy="14" r="1.3"/></svg><span>Theme</span></button>
   </aside>
 
   <main class="main">
@@ -85,8 +88,8 @@
               Settings
             </button>
             <button id="avatarThemeItem" class="avatar-dropdown-item">
-              <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
-              <span id="avatarThemeLabel">Switch to Dark Mode</span>
+              <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10 7 7 0 0 1-7-7 7 7 0 0 1 .3-2"/><circle cx="7.5" cy="10.5" r="1.3"/><circle cx="11.5" cy="7" r="1.3"/><circle cx="16" cy="9" r="1.3"/><circle cx="16.5" cy="14" r="1.3"/></svg>
+              Theme
             </button>
             <button id="logoutMenuBtn" class="avatar-dropdown-item danger-item">
               <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
@@ -463,6 +466,37 @@
       <div class="card">
         <label class="field-label">Your name<input id="userNameInput" placeholder="e.g. Jacob" /></label>
         <label class="field-label">Monthly profit goal<input id="goalInput" type="number" step="1" placeholder="300" /></label>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-head"><h2>Appearance</h2></div>
+        <p class="muted" style="margin-bottom:14px">Pick a theme — colors, fonts, and panel style all change together.</p>
+        <div class="theme-grid" id="themeGrid">
+          <button type="button" class="theme-swatch" data-theme-id="light" onclick="chooseTheme('light')">
+            <span class="swatch-check">✓</span>
+            <div class="swatch-preview"><span style="background:#131a22"></span><span style="background:#f4f6f9"></span><span style="background:#e0a63f"></span></div>
+            <b>Classic Gold</b><small>Clean &amp; bright, gold accent</small>
+          </button>
+          <button type="button" class="theme-swatch" data-theme-id="dark" onclick="chooseTheme('dark')">
+            <span class="swatch-check">✓</span>
+            <div class="swatch-preview"><span style="background:#0c1116"></span><span style="background:#131b24"></span><span style="background:#e0a63f"></span></div>
+            <b>Midnight</b><small>Dark mode, gold accent</small>
+          </button>
+          <button type="button" class="theme-swatch" data-theme-id="newsprint" onclick="chooseTheme('newsprint')">
+            <span class="swatch-check">✓</span>
+            <div class="swatch-preview"><span style="background:#1c1410"></span><span style="background:#f1e9d7"></span><span style="background:#b3301f"></span></div>
+            <b>Newsprint</b><small>Pulp comic ink &amp; cream, Bangers font</small>
+          </button>
+          <button type="button" class="theme-swatch" data-theme-id="neon" onclick="chooseTheme('neon')">
+            <span class="swatch-check">✓</span>
+            <div class="swatch-preview"><span style="background:#06030d"></span><span style="background:#140e24"></span><span style="background:#ff2ec4"></span></div>
+            <b>Neon Arcade</b><small>Dark &amp; vibrant, Orbitron font</small>
+          </button>
+          <button type="button" class="theme-swatch" data-theme-id="vintage" onclick="chooseTheme('vintage')">
+            <span class="swatch-check">✓</span>
+            <div class="swatch-preview"><span style="background:#2e2317"></span><span style="background:#ece2d0"></span><span style="background:#9c6b2e"></span></div>
+            <b>Vintage Vault</b><small>Warm sepia, Playfair Display font</small>
+          </button>
+        </div>
       </div>
       <div class="card" style="margin-top:14px">
         <div class="card-head"><h2>Account</h2></div>
