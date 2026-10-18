@@ -738,7 +738,7 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
     border-bottom:1px dashed var(--line)!important;
   }
   .table-card tr>td:last-child{grid-column:1/-1}
-  .table-card .row-actions{width:100%;justify-content:flex-end;gap:16px;padding-top:10px;margin-top:5px;border-top:1px dashed var(--line)}
+  .table-card .row-actions{width:100%;justify-content:center;gap:16px;padding-top:10px;margin-top:5px;border-top:1px dashed var(--line)}
   .table-card .row-actions .icon-btn{padding:8px}
   .table-card td.select-cell{padding-top:6px!important}
 
