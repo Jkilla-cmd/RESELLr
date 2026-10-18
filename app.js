@@ -3,7 +3,7 @@ const KEY = "resellr_v300_data";
 let state = load();
 let editing = null;
 let editingSubItem = null; // {kind, bundleId, itemId} when editing one book inside a bundle
-let inventorySort = {key:"addedAt", dir:"desc"};
+let inventorySort = {key:"mercariOrder", dir:"asc"};
 let soldSort = {key:"date", dir:"desc"};
 const bundleSelection = {inventory:new Set(), holds:new Set(), sold:new Set()};
 const expandedBundles = new Set();
@@ -861,6 +861,7 @@ function sortRows(rows, sortState){
     }
     if(key==="date"){ av=parseLocalDate(a.date).getTime()||0; bv=parseLocalDate(b.date).getTime()||0; }
     else if(key==="addedAt"){ av=a.addedAt||0; bv=b.addedAt||0; }
+    else if(key==="mercariOrder"){ av=a.mercariOrder??Infinity; bv=b.mercariOrder??Infinity; }
     else if(key==="profit"){ av=profit(a); bv=profit(b); }
     else { av=n(a[key]); bv=n(b[key]); }
     return (av-bv)*mult;
@@ -1783,6 +1784,7 @@ function normalizeItem(r, kind){
   if(r.imageUrl) out.imageUrl = r.imageUrl;
   if(r.qty!=null) out.qty = Math.max(1, Math.round(n(r.qty)) || 1);
   if(Array.isArray(r.items) && r.items.length) out.items = r.items.map(it=>({...it}));
+  if(r.mercariOrder!=null) out.mercariOrder = n(r.mercariOrder);
   return out;
 }
 function normalizeState(raw){
