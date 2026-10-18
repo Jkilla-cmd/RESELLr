@@ -1758,6 +1758,9 @@ function normalizeItem(r, kind){
   }
   if(r.addedAt) out.addedAt = typeof r.addedAt==="number" ? r.addedAt : Date.parse(r.addedAt) || Date.now();
   if(r.heldAt) out.heldAt = typeof r.heldAt==="number" ? r.heldAt : Date.parse(r.heldAt) || Date.now();
+  if(r.imageUrl) out.imageUrl = r.imageUrl;
+  if(r.qty!=null) out.qty = Math.max(1, Math.round(n(r.qty)) || 1);
+  if(Array.isArray(r.items) && r.items.length) out.items = r.items.map(it=>({...it}));
   return out;
 }
 function normalizeState(raw){
