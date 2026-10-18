@@ -58,6 +58,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
 #appShell[hidden]{display:none}
 #statusBar[hidden]{display:none}
 #authGate[hidden]{display:none}
+.bottom-nav,.more-backdrop,.more-sheet{display:none}
 
 .auth-gate{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9999}
 .auth-gate-spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:authspin .8s linear infinite}
@@ -227,6 +228,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
 @media(hover:hover){.avatar-dropdown-item:hover{background:var(--surface2)}}
 .avatar-dropdown-item.danger-item{color:var(--red)}
 .avatar-dropdown-item.danger-item svg{color:var(--red)}
+#avatarThemeItem{display:none}
 .avatar #avatarInitial{width:28px;height:28px;border-radius:50%;background:var(--gold);color:#171308;font-weight:800;font-size:12px;display:grid;place-items:center}
 .avatar .chev{width:14px;height:14px;color:var(--muted)}
 
@@ -526,41 +528,90 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
 }
 
 @media(max-width:720px){
-  .main{padding:14px 12px 90px}
-  .kpi-grid{grid-template-columns:1fr}
-  .status-bar{flex-direction:column;align-items:flex-start;gap:6px;padding:10px 14px}
-  .status-bar-normal{flex-direction:column;align-items:flex-start;gap:6px;width:100%}
-  .status-bar-bundle{width:100%}
+  :root{--radius:14px}
+  .main{padding:10px 10px calc(78px + env(safe-area-inset-bottom,0px))}
   .snap-mini.big{grid-template-columns:1fr 1fr}
 
-  /* sidebar: slimmer icon rail, bigger tap targets */
-  .app-shell{grid-template-columns:60px 1fr}
-  .sidebar{padding:14px 8px 50px}
-  .brand{padding-bottom:10px}
-  .brand-mark{width:32px;height:auto}
-  .sidebar-toggle{display:none}
-  .nav button{padding:12px 0;justify-content:center}
-  .nav-badge{position:absolute;top:2px;right:6px;width:8px;height:8px;padding:0;font-size:0}
-  .theme-toggle{padding:12px 6px}
+  /* sidebar replaced by bottom-nav on phone */
+  .app-shell{grid-template-columns:1fr}
+  .sidebar{display:none}
 
-  /* header */
-  .greet h1{font-size:19px}
+  /* bottom tab bar */
+  .bottom-nav{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
+    background:linear-gradient(180deg,var(--sidebar),var(--sidebar2));
+    border-top:1px solid rgba(255,255,255,.08);
+    padding:5px 2px calc(5px + env(safe-area-inset-bottom,0px));
+    box-shadow:0 -8px 24px rgba(0,0,0,.2);
+  }
+  .bottom-nav button{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+    border:0;background:transparent;color:rgba(255,255,255,.55);
+    padding:6px 2px;border-radius:12px;font-size:10px;position:relative;min-width:0;
+  }
+  .bottom-nav button svg{width:20px;height:20px;flex:none}
+  .bottom-nav button em{font-style:normal;font-size:10px;font-weight:600;letter-spacing:-.01em}
+  .bottom-nav button.active{color:var(--gold)}
+
+  /* "More" sheet */
+  .more-backdrop{display:block;position:fixed;inset:0;z-index:125;background:rgba(6,10,15,.5)}
+  .more-backdrop[hidden]{display:none!important}
+  .more-sheet{
+    display:block;position:fixed;left:0;right:0;bottom:0;z-index:130;
+    background:var(--surface);border-radius:20px 20px 0 0;
+    padding:10px 14px calc(18px + env(safe-area-inset-bottom,0px));
+    box-shadow:0 -10px 30px rgba(0,0,0,.25);
+  }
+  .more-sheet[hidden]{display:none!important}
+  .more-sheet-grab{width:36px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 14px}
+  .more-sheet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .more-sheet-grid button{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    border:1px solid var(--line);background:var(--surface2);color:var(--ink);
+    padding:14px 4px;border-radius:14px;font-size:11px;text-align:center;
+  }
+  .more-sheet-grid svg{width:19px;height:19px;color:var(--gold)}
+
+  /* header: trim to essentials */
+  .topbar{margin-bottom:10px;gap:10px}
+  .greet h1{font-size:17px}
   .greet p{display:none}
   .search-wrap kbd{display:none}
-  .top-status{gap:8px}
+  .search-wrap input{padding:9px 38px;font-size:13px}
+  .top-status{gap:6px}
+  #dbStatusChip{display:none}
   .status-chip small{display:none}
   .status-chip b{font-size:10px}
-  .avatar-dropdown{left:0;right:auto;min-width:180px;max-width:calc(100vw - 24px)}
+  .icon-only{width:34px;height:34px}
+  .avatar{padding:4px}
+  .avatar #avatarInitial{width:26px;height:26px}
+  .avatar .chev{display:none}
+  .avatar-dropdown{left:auto;right:0;min-width:180px;max-width:calc(100vw - 24px)}
+  #avatarThemeItem{display:flex}
 
-  .range-row{justify-content:flex-start;flex-wrap:wrap}
+  .range-row{margin-bottom:10px}
+  #customizeBtn{display:none}
+  #globalYear{font-size:12.5px;padding:7px 10px}
 
-  /* cards & KPIs */
-  .kpi{padding:15px}
-  .card{padding:14px}
-  .chart-card canvas{height:210px}
+  /* cards & KPIs: tighter, 2-up on phone */
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  .kpi{padding:11px}
+  .kpi-top{margin-bottom:6px}
+  .kpi-icon{width:28px;height:28px;border-radius:9px}
+  .kpi-icon svg{width:14px;height:14px}
+  .spark{width:52px;height:24px}
+  .kpi span{font-size:9.5px}
+  .kpi b{font-size:17px;margin-top:4px}
+  .kpi small{font-size:10px;margin-top:2px}
+  .trend{font-size:10.5px;margin-top:5px}
+  .dash-grid{gap:8px}
+  .card{padding:11px}
+  .card-head{margin-bottom:9px}
+  .chart-card canvas{height:180px}
+  .snap-hero>div:first-child b{font-size:26px}
 
   /* table-head rows: stack actions under title on narrow screens */
-  .table-head{flex-direction:column;align-items:stretch;gap:10px}
+  .table-head{flex-direction:column;align-items:stretch;gap:8px}
   .table-head-actions{flex-wrap:wrap}
   .filters{flex-wrap:wrap}
 
@@ -571,7 +622,7 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
   .table-card tbody{display:block}
   .table-card tr{
     display:block;background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px;
+    box-shadow:var(--shadow);padding:12px 14px;margin-bottom:8px;
   }
   .table-card td{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -614,12 +665,28 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
   .snap-mini{justify-content:flex-start}
   .wallet-row,.snap-mini.big{grid-template-columns:1fr 1fr}
 
-  .search-results{left:-12px;right:-12px}
+  .search-results{left:-10px;right:-10px}
+
+  /* footer status bar: just Undo when available, or the bundle bar — nothing else.
+     Sits above the bottom-nav, and collapses to nothing when there's nothing to show. */
+  .status-bar{
+    position:fixed;left:0;right:0;bottom:calc(52px + env(safe-area-inset-bottom,0px));
+    padding:7px 14px;z-index:110;
+  }
+  .pulse-group,.status-mid{display:none}
+  .status-bar-normal{justify-content:flex-end}
+  .status-bar-bundle{width:100%}
+  .status-bar:has(#undoBtn[hidden]):has(.status-bar-bundle[hidden]){display:none}
+
+  /* quick lookup FAB sits above the bottom-nav, or higher still when the status bar is showing */
+  .quick-lookup-fab{bottom:calc(68px + env(safe-area-inset-bottom,0px))!important}
+  body:has(.status-bar:not([hidden]):not(:has(#undoBtn[hidden]):has(.status-bar-bundle[hidden]))) .quick-lookup-fab{
+    bottom:calc(112px + env(safe-area-inset-bottom,0px))!important;
+  }
 }
 
 @media(max-width:420px){
-  .kpi-top{flex-wrap:wrap}
-  .spark{width:64px}
+  .kpi-grid{grid-template-columns:1fr}
   .wallet-row,.snap-mini.big{grid-template-columns:1fr}
 }
 

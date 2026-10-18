@@ -222,8 +222,12 @@ function setTheme(t){
   document.documentElement.dataset.theme=t;
   const span=themeToggle.querySelector("span");
   if(span) span.textContent = t==="dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
+  if(typeof avatarThemeLabel!=="undefined" && avatarThemeLabel) avatarThemeLabel.textContent = t==="dark" ? "Switch to Light Mode" : "Switch to Dark Mode";
 }
 themeToggle.onclick=()=>{ setTheme(state.theme==="dark"?"light":"dark"); render(); };
+if(typeof avatarThemeItem!=="undefined" && avatarThemeItem){
+  avatarThemeItem.onclick=()=>{ avatarDropdown.hidden=true; setTheme(state.theme==="dark"?"light":"dark"); render(); };
+}
 
 /* ---------- sidebar collapse ---------- */
 const appShell = document.querySelector(".app-shell");
@@ -245,16 +249,33 @@ function showPage(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active-page"));
   const el=document.getElementById(id);
   if(el) el.classList.add("active-page");
-  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
+  document.querySelectorAll(".nav button,.bottom-nav button[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
   if(id==="dashboard"){ renderKPIs(); renderCharts(); }
   if(typeof updateBundleBar==="function") updateBundleBar();
+  if(typeof moreSheet!=="undefined" && moreSheet){
+    moreSheet.hidden=true; moreBackdrop.hidden=true;
+    const inMore = ["holds","analytics","reinvest","wallet","importexport","settings"].includes(id);
+    moreNavBtn.classList.toggle("active", inMore);
+  }
 }
 document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>showPage(b.dataset.page));
 alertsBell.onclick=()=>showPage("alerts");
+
+/* ---------- mobile: bottom nav "more" sheet ---------- */
+if(typeof moreNavBtn!=="undefined" && moreNavBtn){
+  moreNavBtn.onclick=(e)=>{
+    e.stopPropagation();
+    const open = moreSheet.hidden;
+    moreSheet.hidden = !open;
+    moreBackdrop.hidden = !open;
+    moreNavBtn.classList.toggle("active", open);
+  };
+  moreBackdrop.onclick=()=>{ moreSheet.hidden=true; moreBackdrop.hidden=true; moreNavBtn.classList.remove("active"); };
+}
 customizeBtn.onclick=()=>alert("Customize layout — coming soon!");
 document.addEventListener("keydown",e=>{
   if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); globalSearch.focus(); }
-  if(e.key==="Escape"){ avatarDropdown.hidden=true; closeQuickLookup(); }
+  if(e.key==="Escape"){ avatarDropdown.hidden=true; closeQuickLookup(); if(typeof moreSheet!=="undefined" && moreSheet){ moreSheet.hidden=true; moreBackdrop.hidden=true; moreNavBtn.classList.remove("active"); } }
 });
 
 /* ---------- avatar dropdown ---------- */
@@ -1109,6 +1130,7 @@ function renderAlerts(){
   const active=list.filter(a=>a.level!=="ok");
   alertBadge.hidden = active.length===0; alertBadge.textContent=active.length;
   bellBadge.hidden = active.length===0; bellBadge.textContent=active.length;
+  if(typeof bottomNavAlertBadge!=="undefined" && bottomNavAlertBadge){ bottomNavAlertBadge.hidden = active.length===0; bottomNavAlertBadge.textContent=active.length; }
   alertsList.innerHTML=list.map(a=>`<div class="alert-row ${a.level}"><div class="a-icon">${a.level==="warn"?"!":a.level==="ok"?"✓":"i"}</div><div><b>${a.title}</b><p>${a.text}</p></div></div>`).join("");
 }
 
