@@ -111,13 +111,16 @@
   --font-display:"Playfair Display",serif;
 }
 *{box-sizing:border-box}
+html,body{overflow-x:hidden;max-width:100%}
 body{
   margin:0;
   font-family:var(--font-body);
   background:var(--bg);
   color:var(--ink);
   min-height:100vh;
+  width:100%;
 }
+.app-shell,.main{min-width:0;max-width:100%}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 h1,h2,h3,p{margin:0}
@@ -422,7 +425,7 @@ button.primary,.primary{background:var(--primary-bg);color:var(--primary-fg);bor
 .yoy-grid b{display:block;font-size:19px;margin-top:3px}
 .yoy-delta{font-weight:700;font-size:12px!important;text-transform:none!important;letter-spacing:0!important;margin-top:2px}
 .yoy-prev{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
-@media(max-width:720px){.yoy-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:720px){.yoy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .txn-body{flex:1;min-width:0}
 .txn-body b{display:block;font-size:13.5px}
 .txn-body small{color:var(--muted);font-size:11.5px}
@@ -579,7 +582,7 @@ dialog::backdrop{background:rgba(15,23,42,.45);backdrop-filter:blur(6px);animati
   width:100%;resize:vertical;min-height:64px;font-size:16px;line-height:1.4;
   font-weight:600;font-family:inherit;margin-bottom:2px;
 }
-.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
 .mini-label{display:block;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
 .mini-label input,.mini-label select,.mini-label textarea{display:block;width:100%;margin-top:4px}
 #itemForm>.mini-label{margin-top:12px}
@@ -616,7 +619,7 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
   .brand strong,.brand span,.nav em,.theme-toggle span{display:none}
   .brand{justify-content:center}
   .dash-grid{grid-template-columns:1fr}
-  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .topbar{grid-template-columns:1fr;row-gap:12px}
   .top-status{justify-self:start}
 }
@@ -658,11 +661,11 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
   }
   .more-sheet[hidden]{display:none!important}
   .more-sheet-grab{width:36px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 14px}
-  .more-sheet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .more-sheet-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
   .more-sheet-grid button{
-    display:flex;flex-direction:column;align-items:center;gap:6px;
+    display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;
     border:1px solid var(--line);background:var(--surface2);color:var(--ink);
-    padding:14px 4px;border-radius:14px;font-size:11px;text-align:center;
+    padding:14px 4px;border-radius:14px;font-size:11px;text-align:center;overflow-wrap:anywhere;
   }
   .more-sheet-grid svg{width:19px;height:19px;color:var(--gold)}
 
@@ -688,7 +691,7 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
   #globalYear{font-size:12.5px;padding:7px 10px}
 
   /* cards & KPIs: tighter, 2-up on phone */
-  .kpi-grid{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  .kpi-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px}
   .kpi{padding:11px}
   .kpi-top{margin-bottom:6px}
   .kpi-icon{width:28px;height:28px;border-radius:9px}
@@ -759,7 +762,7 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
   .cat-row .cat-count{grid-area:count;text-align:left;white-space:normal}
 
   .snap-mini{justify-content:flex-start}
-  .wallet-row,.snap-mini.big{grid-template-columns:1fr 1fr}
+  .wallet-row,.snap-mini.big{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 
   .search-results{left:-10px;right:-10px}
 
@@ -819,7 +822,7 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
 .ql-badge.holds{background:var(--violet-bg);color:var(--violet-ic)}
 .ql-badge.sold{background:var(--mint-bg);color:var(--mint-ic)}
 .ql-card-title{font-weight:700;font-size:15.5px;line-height:1.35;overflow-wrap:anywhere}
-.ql-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.ql-nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
 .ql-num-box{text-align:center;min-width:0}
 .ql-num-label{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
 .ql-num-val{display:block;font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);overflow-wrap:anywhere}
