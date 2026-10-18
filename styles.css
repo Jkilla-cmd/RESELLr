@@ -621,25 +621,27 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
   .table-card thead{display:none}
   .table-card tbody{display:block}
   .table-card tr{
-    display:block;background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    box-shadow:var(--shadow);padding:12px 14px;margin-bottom:8px;
+    display:grid;grid-template-columns:1fr 1fr;gap:0 14px;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);padding:10px 14px;margin-bottom:6px;
   }
   .table-card td{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:5px 0!important;border:0!important;background:transparent!important;
-    border-radius:0!important;font-size:13px;text-align:right;overflow-wrap:anywhere;
+    display:flex;align-items:center;justify-content:space-between;gap:6px;
+    padding:3px 0!important;border:0!important;background:transparent!important;
+    border-radius:0!important;font-size:12px;text-align:right;overflow-wrap:anywhere;min-width:0;
   }
-  .table-card td.empty-state-cell{display:block!important;text-align:center;padding:30px 10px!important}
+  .table-card td.empty-state-cell{display:block!important;text-align:center;padding:30px 10px!important;grid-column:1/-1}
   .table-card td.empty-state-cell::before{content:none}
   .table-card td[data-label]::before{
-    content:attr(data-label);color:var(--muted);font-size:10.5px;text-transform:uppercase;
-    letter-spacing:.05em;text-align:left;flex:none;
+    content:attr(data-label);color:var(--muted);font-size:9px;text-transform:uppercase;
+    letter-spacing:.04em;text-align:left;flex:none;
   }
   .table-card td:first-child{
-    display:block;text-align:left;padding-bottom:8px!important;margin-bottom:6px;
+    grid-column:1/-1;display:block;text-align:left;padding-bottom:7px!important;margin-bottom:5px;
     border-bottom:1px dashed var(--line)!important;
   }
-  .table-card .row-actions{width:100%;justify-content:flex-end;padding-top:6px;margin-top:2px;border-top:1px dashed var(--line)}
+  .table-card tr>td:last-child{grid-column:1/-1}
+  .table-card .row-actions{width:100%;justify-content:flex-end;padding-top:6px;margin-top:3px;border-top:1px dashed var(--line)}
   .table-card td.select-cell{padding-top:6px!important}
 
   /* pagination */
