@@ -718,28 +718,28 @@ menu{display:flex;justify-content:flex-end;gap:10px;padding:0;margin:14px 0 0}
   .table-card thead{display:none}
   .table-card tbody{display:block}
   .table-card tr{
-    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 16px;
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 16px;
     background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    box-shadow:var(--shadow);padding:12px 14px;margin-bottom:8px;
+    box-shadow:var(--shadow);padding:10px 14px;margin-bottom:7px;
   }
   .table-card td{
     display:block;
     padding:0!important;border:0!important;background:transparent!important;
-    border-radius:0!important;font-size:13.5px;font-weight:600;text-align:left;overflow-wrap:anywhere;min-width:0;
+    border-radius:0!important;font-size:13px;font-weight:600;text-align:left;overflow-wrap:anywhere;min-width:0;
   }
   .table-card td.empty-state-cell{display:block!important;text-align:center;padding:30px 10px!important;grid-column:1/-1}
   .table-card td.empty-state-cell::before{content:none}
   .table-card td[data-label]::before{
-    content:attr(data-label);display:block;color:var(--muted);font-size:9px;font-weight:600;text-transform:uppercase;
-    letter-spacing:.05em;margin-bottom:3px;
+    content:attr(data-label);display:block;color:var(--muted);font-size:8.5px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.05em;margin-bottom:1px;
   }
   .table-card td:first-child{
-    grid-column:1/-1;display:block;text-align:left;font-weight:700;padding-bottom:9px!important;margin-bottom:7px;
+    grid-column:1/-1;display:block;text-align:left;font-weight:700;padding-bottom:7px!important;margin-bottom:5px;
     border-bottom:1px dashed var(--line)!important;
   }
   .table-card tr>td:last-child{grid-column:1/-1}
-  .table-card .row-actions{width:100%;justify-content:center;gap:16px;padding-top:10px;margin-top:5px;border-top:1px dashed var(--line)}
-  .table-card .row-actions .icon-btn{padding:8px}
+  .table-card .row-actions{width:100%;justify-content:center;gap:16px;padding-top:7px;margin-top:3px;border-top:1px dashed var(--line)}
+  .table-card .row-actions .icon-btn{padding:7px}
   .table-card td.select-cell{padding-top:6px!important}
 
   /* pagination */
