@@ -275,24 +275,9 @@ if(typeof moreNavBtn!=="undefined" && moreNavBtn){
   moreBackdrop.onclick=()=>{ moreSheet.hidden=true; moreBackdrop.hidden=true; moreNavBtn.classList.remove("active"); };
 }
 customizeBtn.onclick=()=>alert("Customize layout — coming soon!");
-
-/* ---------- island widget expand/collapse ---------- */
-function setIslandExpanded(open){
-  islandWidget.classList.toggle("expanded", open);
-  islandWidget.setAttribute("aria-expanded", open?"true":"false");
-  islandWidget.querySelector(".island-expanded").hidden = !open;
-}
-islandWidget.addEventListener("click",()=>setIslandExpanded(!islandWidget.classList.contains("expanded")));
-islandWidget.addEventListener("keydown",e=>{
-  if(e.key==="Enter" || e.key===" "){ e.preventDefault(); setIslandExpanded(!islandWidget.classList.contains("expanded")); }
-});
-document.addEventListener("click",(e)=>{
-  if(islandWidget.classList.contains("expanded") && !e.target.closest("#islandWidget")) setIslandExpanded(false);
-});
-
 document.addEventListener("keydown",e=>{
   if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); globalSearch.focus(); }
-  if(e.key==="Escape"){ avatarDropdown.hidden=true; closeQuickLookup(); setIslandExpanded(false); if(typeof moreSheet!=="undefined" && moreSheet){ moreSheet.hidden=true; moreBackdrop.hidden=true; moreNavBtn.classList.remove("active"); } }
+  if(e.key==="Escape"){ avatarDropdown.hidden=true; closeQuickLookup(); if(typeof moreSheet!=="undefined" && moreSheet){ moreSheet.hidden=true; moreBackdrop.hidden=true; moreNavBtn.classList.remove("active"); } }
 });
 
 /* ---------- avatar dropdown ---------- */
@@ -672,20 +657,6 @@ function renderKPIs(){
   renderTrend(trendCP, computeTrend("costProfit",30), "vs last 30 days");
   renderTrend(trendWallet, computeTrend("wallet",30), "vs last 30 days");
   renderTrend(trendSales, computeTrend("sales",365), "vs last year");
-}
-
-/* ---------- island widget ---------- */
-function renderIsland(){
-  if(typeof islandWidget==="undefined" || !islandWidget) return;
-  islandInvValue.textContent = kpiInventoryValue.textContent;
-  islandProfit.textContent = kpiCostProfit.textContent;
-  islandInvValueFull.textContent = kpiInventoryValue.textContent;
-  islandProfitFull.textContent = kpiCostProfit.textContent;
-  islandWalletFull.textContent = kpiWallet.textContent;
-  islandSalesFull.textContent = kpiSalesYear.textContent;
-  const alertCount = parseInt(bellBadge.textContent, 10) || 0;
-  islandAlertDot.hidden = alertCount===0;
-  islandAlertsFull.textContent = alertCount;
 }
 
 /* ---------- filters / year selects ---------- */
@@ -1947,7 +1918,6 @@ function render(){
   renderTopComic();
   renderTxns();
   renderHeader();
-  renderIsland();
   save();
 }
 let resizeTimer;
