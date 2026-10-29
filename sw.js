@@ -3,7 +3,7 @@
    We always try the live server first so you never get stuck on an old version
    (this app has been bitten by stale caches before). The cache is only used as
    a fallback when you're fully offline. */
-const CACHE = "comix-stash-v1";
+const CACHE = "comix-stash-v2";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
@@ -24,7 +24,7 @@ self.addEventListener("fetch", (e) => {
   if (url.origin !== self.location.origin) return;
 
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: "no-store" })
       .then(resp => {
         const copy = resp.clone();
         caches.open(CACHE).then(c => c.put(e.request, copy)).catch(()=>{});
