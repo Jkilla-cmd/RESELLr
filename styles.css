@@ -689,7 +689,7 @@ menu{
   .greet p{display:none}
   .search-wrap kbd{display:none}
   .search-wrap input{padding:9px 38px;font-size:13px}
-  .top-status{gap:6px}
+  .top-status{gap:6px;justify-self:end;margin-left:auto}
   #dbStatusChip{display:none}
   .status-chip small{display:none}
   .status-chip b{font-size:10px}
@@ -785,9 +785,10 @@ menu{
   .search-results{left:-10px;right:-10px}
 
   /* footer status bar: just Undo when available, or the bundle bar — nothing else.
-     Sits above the bottom-nav, and collapses to nothing when there's nothing to show. */
+     Sits above the bottom-nav (measured ~59px tall), and collapses to nothing when
+     there's nothing to show. */
   .status-bar{
-    position:fixed;left:0;right:0;bottom:calc(52px + env(safe-area-inset-bottom,0px));
+    position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));
     padding:7px 14px;z-index:110;
   }
   .pulse-group,.status-mid{display:none}
@@ -796,9 +797,9 @@ menu{
   .status-bar:has(#undoBtn[hidden]):has(.status-bar-bundle[hidden]){display:none}
 
   /* quick lookup FAB sits above the bottom-nav, or higher still when the status bar is showing */
-  .quick-lookup-fab{bottom:calc(68px + env(safe-area-inset-bottom,0px))!important}
+  .quick-lookup-fab{bottom:calc(80px + env(safe-area-inset-bottom,0px))!important}
   body:has(.status-bar:not([hidden]):not(:has(#undoBtn[hidden]):has(.status-bar-bundle[hidden]))) .quick-lookup-fab{
-    bottom:calc(112px + env(safe-area-inset-bottom,0px))!important;
+    bottom:calc(128px + env(safe-area-inset-bottom,0px))!important;
   }
 }
 
