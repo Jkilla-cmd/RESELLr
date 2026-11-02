@@ -740,6 +740,10 @@ function renderSnapshot(){
   snapProfit.textContent=money(totalProfit);
   snapAvg.textContent=money(rows.length ? income/rows.length : 0);
   snapMargin.textContent = income>0 ? `${((totalProfit/income)*100).toFixed(1)}%` : "0%";
+  const dtsVals = rows.map(r=>daysToSell(r)).filter(d=>d!==null);
+  snapDaysToSell.textContent = dtsVals.length ? `${Math.round(dtsVals.reduce((a,d)=>a+d,0)/dtsVals.length)}d` : "—";
+  const totalCostForRoi = rows.reduce((a,r)=>a+n(r.cost),0);
+  snapRoi.textContent = totalCostForRoi>0 ? `${Math.round((totalProfit/totalCostForRoi)*100)}%` : "—";
 
   const groups={Mercari:{c:0,v:0},eBay:{c:0,v:0},Private:{c:0,v:0},Other:{c:0,v:0}};
   rows.forEach(r=>{
@@ -761,6 +765,8 @@ function renderSnapshot(){
   const yearExpenses = expensesForYear(taxYear.value||"all").reduce((a,t)=>a+n(t.amount),0);
   taxExpenses.textContent=money(yearExpenses);
   taxNet.textContent=money(grossProfit - yearExpenses);
+  const taxTotalCost = taxRows.reduce((a,r)=>a+n(r.cost),0);
+  taxRoi.textContent = taxTotalCost>0 ? `${Math.round((grossProfit/taxTotalCost)*100)}%` : "—";
 }
 
 /* ---------- tables ---------- */
@@ -793,7 +799,8 @@ function getBundleItems(row){
   return row.title.replace(/^Bundle:\s*/i, "").split(", ").filter(Boolean).map(title=>({title}));
 }
 function rowTitle(r, kind){
-  const givy = n(r.cost)===0 ? `<span class="cat-pill pill-givy">Givy</span>` : "";
+  const costNotEntered = (r.notes||"").toLowerCase().includes("cost not entered yet");
+  const givy = (n(r.cost)===0 && !costNotEntered) ? `<span class="cat-pill pill-givy">Givy</span>` : "";
   const synced = (r.notes||"").includes("[MERCARI-SYNC]") ? `<span class="cat-pill pill-sync" title="Added/corrected by the Mercari sync">Synced</span>` : "";
   const isBundle = qty(r)>1;
   const expanded = expandedBundles.has(r.id);
@@ -821,9 +828,9 @@ function bundleSubRowsHtml(row, kind){
     }
     if(kind==="sold"){
       const feesCell = `<td data-label="Fees">${it.fees!=null?money(it.fees):"—"}</td>`;
-      return `<tr class="bundle-subrow">${itemCell}<td data-label="Date">—</td>${platformCell}${priceCell}${costCell}${feesCell}${profitTd}${actionsCell}</tr>`;
+      return `<tr class="bundle-subrow">${itemCell}<td data-label="Date">—</td>${platformCell}${priceCell}${costCell}${feesCell}${profitTd}<td data-label="ROI">—</td>${actionsCell}</tr>`;
     }
-    return `<tr class="bundle-subrow">${itemCell}${platformCell}${priceCell}${costCell}${profitTd}<td data-label="Listed">—</td>${actionsCell}</tr>`;
+    return `<tr class="bundle-subrow">${itemCell}${platformCell}${priceCell}${costCell}${profitTd}<td data-label="ROI">—</td><td data-label="Listed">—</td>${actionsCell}</tr>`;
   }).join("");
 }
 function marginPct(r){
@@ -834,6 +841,28 @@ function marginPct(r){
 function profitCell(r){
   const m = marginPct(r);
   return `${money(profit(r))}${m!==null?`<small class="margin-chip">${m}%</small>`:""}`;
+}
+function roiPct(r){
+  const cost = n(r.cost);
+  if(!cost) return null;
+  return Math.round((profit(r)/cost)*100);
+}
+function roiCell(r){
+  const roi = roiPct(r);
+  return roi===null ? "—" : `<span class="${roi>=0?'profit':'loss'}">${roi}%</span>`;
+}
+function daysToSell(r){
+  if(!r.addedAt || !r.date) return null;
+  const sold = parseLocalDate(r.date).getTime();
+  if(!sold) return null;
+  const days = Math.round((sold-r.addedAt)/86400000);
+  return days>=0 ? days : null;
+}
+function daysToSellLabel(r){
+  const d = daysToSell(r);
+  if(d===null) return "";
+  const text = d===0 ? "Sold same day" : d===1 ? "1 day to sell" : `${d} days to sell`;
+  return `<div class="days-to-sell">${text}</div>`;
 }
 function checkComps(kind, id){
   const item = (state[kind]||[]).find(x=>x.id===id);
@@ -865,6 +894,7 @@ function sortRows(rows, sortState){
     else if(key==="addedAt"){ av=a.addedAt||0; bv=b.addedAt||0; }
     else if(key==="mercariOrder"){ av=a.mercariOrder??Infinity; bv=b.mercariOrder??Infinity; }
     else if(key==="profit"){ av=profit(a); bv=profit(b); }
+    else if(key==="roi"){ av=roiPct(a); av=av===null?-Infinity:av; bv=roiPct(b); bv=bv===null?-Infinity:bv; }
     else { av=n(a[key]); bv=n(b[key]); }
     return (av-bv)*mult;
   });
@@ -882,9 +912,10 @@ function renderRows(){
 
   inventoryRows.innerHTML=pageItems.map(r=>`<tr id="row-inventory-${r.id}" class="${bundleSelection.inventory.has(r.id)?'row-selected':''}" onclick="toggleBundleSelect('inventory','${r.id}')">
     <td>${rowTitle(r,'inventory')}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
+    <td data-label="ROI">${roiCell(r)}</td>
     <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
     <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="postToEbay('inventory','${r.id}')" title="Post to eBay" aria-label="Post to eBay">${ROW_ICONS.ebay}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds" aria-label="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold" aria-label="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-  </tr>${bundleSubRowsHtml(r,'inventory')}`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",7);
+  </tr>${bundleSubRowsHtml(r,'inventory')}`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",8);
 
   const count = invSorted.length;
   const bookTotal = sumQty(invSorted);
@@ -921,9 +952,10 @@ function renderRows(){
   const soldPageItems = soldSorted.slice(soldStart, soldStart+SOLD_PAGE_SIZE);
 
   soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}" class="${bundleSelection.sold.has(r.id)?'row-selected':''}" onclick="toggleBundleSelect('sold','${r.id}')">
-    <td>${rowTitle(r,'sold')}</td><td data-label="Date">${escapeHtml(r.date)||""}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
+    <td>${rowTitle(r,'sold')}</td><td data-label="Date">${escapeHtml(r.date)||""}${daysToSellLabel(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
+    <td data-label="ROI">${roiCell(r)}</td>
     <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
-  </tr>${bundleSubRowsHtml(r,'sold')}`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",8);
+  </tr>${bundleSubRowsHtml(r,'sold')}`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",9);
 
   const soldCount = soldSorted.length;
   const soldBookTotal = sumQty(soldSorted);
@@ -1077,29 +1109,31 @@ function renderCategoryBreakdown(){
   const cats={};
   rows.forEach(r=>{
     const key=r.category||"Other";
-    cats[key]=cats[key]||{count:0,profit:0,income:0};
-    cats[key].count+=qty(r); cats[key].profit+=profit(r); cats[key].income+=n(r.price);
+    cats[key]=cats[key]||{count:0,profit:0,income:0,cost:0};
+    cats[key].count+=qty(r); cats[key].profit+=profit(r); cats[key].income+=n(r.price); cats[key].cost+=n(r.cost);
   });
   const maxProfit=Math.max(1,...Object.values(cats).map(c=>Math.abs(c.profit)));
   const catOrder=Object.keys(cats).sort((a,b)=>cats[b].profit-cats[a].profit);
   categoryBreakdown.innerHTML = catOrder.length ? catOrder.map(k=>{
     const c=cats[k];
     const pct=Math.max(4,(Math.abs(c.profit)/maxProfit)*100);
-    return `<div class="cat-row"><span class="cat-name">${escapeHtml(k)}</span><span class="cat-bar"><span style="width:${pct}%;background:${c.profit>=0?'var(--green)':'var(--red)'}"></span></span><span class="cat-count">${c.count} sold • ${money(c.income)}</span><span class="cat-profit ${c.profit>=0?'profit':'loss'}">${money(c.profit)}</span></div>`;
+    const roi = c.cost>0 ? `${Math.round((c.profit/c.cost)*100)}% ROI` : null;
+    return `<div class="cat-row"><span class="cat-name">${escapeHtml(k)}</span><span class="cat-bar"><span style="width:${pct}%;background:${c.profit>=0?'var(--green)':'var(--red)'}"></span></span><span class="cat-count">${c.count} sold • ${money(c.income)}${roi?` • ${roi}`:""}</span><span class="cat-profit ${c.profit>=0?'profit':'loss'}">${money(c.profit)}</span></div>`;
   }).join("") : `<p class="muted">No sales yet to break down by category.</p>`;
 
   const plats={};
   rows.forEach(r=>{
     const key = /mercari/i.test(r.platform)?"Mercari": /ebay/i.test(r.platform)?"eBay": /private/i.test(r.platform)?"Private Sale":(r.platform||"Other");
-    plats[key]=plats[key]||{count:0,profit:0,income:0};
-    plats[key].count+=qty(r); plats[key].profit+=profit(r); plats[key].income+=n(r.price);
+    plats[key]=plats[key]||{count:0,profit:0,income:0,cost:0};
+    plats[key].count+=qty(r); plats[key].profit+=profit(r); plats[key].income+=n(r.price); plats[key].cost+=n(r.cost);
   });
   const maxP=Math.max(1,...Object.values(plats).map(c=>Math.abs(c.profit)));
   const platOrder=Object.keys(plats).sort((a,b)=>plats[b].income-plats[a].income);
   platformBreakdown.innerHTML = platOrder.length ? platOrder.map(k=>{
     const c=plats[k];
     const pct=Math.max(4,(Math.abs(c.profit)/maxP)*100);
-    return `<div class="cat-row"><span class="cat-name">${escapeHtml(k)}</span><span class="cat-bar"><span style="width:${pct}%;background:${c.profit>=0?'var(--blue)':'var(--red)'}"></span></span><span class="cat-count">${c.count} sold • ${money(c.income)}</span><span class="cat-profit ${c.profit>=0?'profit':'loss'}">${money(c.profit)}</span></div>`;
+    const roi = c.cost>0 ? `${Math.round((c.profit/c.cost)*100)}% ROI` : null;
+    return `<div class="cat-row"><span class="cat-name">${escapeHtml(k)}</span><span class="cat-bar"><span style="width:${pct}%;background:${c.profit>=0?'var(--blue)':'var(--red)'}"></span></span><span class="cat-count">${c.count} sold • ${money(c.income)}${roi?` • ${roi}`:""}</span><span class="cat-profit ${c.profit>=0?'profit':'loss'}">${money(c.profit)}</span></div>`;
   }).join("") : `<p class="muted">No sales yet to break down by platform.</p>`;
 }
 
@@ -1121,6 +1155,8 @@ function computeAlerts(){
   if(wb<0) list.push({level:"warn",title:"Stash balance is negative",text:`Your stash is at ${money(wb)}. Adjust your reinvestment mode or sell held inventory to recover.`});
   const staleHolds = state.holds.filter(h=>h.heldAt && (Date.now()-h.heldAt)/86400000>14);
   if(staleHolds.length) list.push({level:"warn",title:`${staleHolds.length} item${staleHolds.length===1?"":"s"} on hold over 14 days`,text:"Revisit these holds — move them back to inventory or make a decision."});
+  const staleInv = state.inventory.filter(r=>r.addedAt && ageDays(r.addedAt)>90);
+  if(staleInv.length) list.push({level:"warn",title:`${staleInv.length} item${staleInv.length===1?"":"s"} listed over 90 days with no sale`,text:"These have been sitting a while — consider a price drop, a bundle, or better photos to get them moving."});
   const zeroCost = state.inventory.filter(r=>!n(r.cost)).length;
   if(zeroCost) list.push({level:"info",title:`${zeroCost} inventory item${zeroCost===1?"":"s"} missing a cost`,text:"Add cost data so profit and wallet math stay accurate."});
   const zeroCostSold = state.sold.filter(r=>!n(r.cost)).length;
