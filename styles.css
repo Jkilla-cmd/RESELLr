@@ -29,15 +29,16 @@
   --font-display:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 [data-theme="dark"]{
-  --bg:#07080b;
-  --surface:#15181f;
-  --surface2:#1c2029;
+  --bg:#060607;
+  --surface:#141416;
+  --surface2:#1b1b1e;
   --ink:#f5f6f8;
-  --muted:#8b909c;
+  --muted:#8e8e93;
   --line:rgba(255,255,255,.08);
   --line-soft:rgba(255,255,255,.05);
-  --gold-ink:#1b1206;
-  --peach-bg:#3a2c15; --peach-ic:#f0b854;
+  --gold:#e8303f;
+  --gold-ink:#ffffff;
+  --peach-bg:#3a1618; --peach-ic:#ff5a5f;
   --violet-bg:#241f3d; --violet-ic:#a08bff;
   --mint-bg:#153327; --mint-ic:#4fd487;
   --sky-bg:#152a42; --sky-ic:#6fa8ff;
@@ -45,7 +46,7 @@
   --shadow:0 1px 3px rgba(0,0,0,.3), 0 14px 28px -6px rgba(0,0,0,.45);
   --shadow-lg:0 2px 6px rgba(0,0,0,.35), 0 24px 48px -8px rgba(0,0,0,.55);
   --primary-bg:var(--gold);
-  --primary-fg:#15100a;
+  --primary-fg:#ffffff;
 }
 [data-theme="newsprint"]{
   --bg:#f1e9d7;
@@ -220,6 +221,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
 .nav button svg{width:17px;height:17px;flex:none}
 @media(hover:hover){.nav button:hover{background:rgba(255,255,255,.07);color:#fff}}
 .nav button.active{background:var(--gold);color:#1a1206;box-shadow:0 4px 14px -2px rgba(224,146,58,.4)}
+[data-theme="dark"] .nav button.active{color:#fff;box-shadow:0 4px 14px -2px rgba(232,48,63,.45)}
 .nav-badge{margin-left:auto;background:#e14b4b;color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 6px}
 .theme-toggle{
   border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:rgba(255,255,255,.8);
@@ -343,7 +345,7 @@ button:active{transform:scale(.96)}
 }
 @media(hover:hover){.file-btn:hover{background:var(--surface2)}}
 button.primary,.primary{background:var(--primary-bg);color:var(--primary-fg);border-color:var(--primary-bg);box-shadow:0 4px 14px -2px rgba(20,22,28,.3)}
-[data-theme="dark"] button.primary,[data-theme="dark"] .primary{box-shadow:0 4px 14px -2px rgba(224,146,58,.35)}
+[data-theme="dark"] button.primary,[data-theme="dark"] .primary{box-shadow:0 4px 14px -2px rgba(232,48,63,.35)}
 @media(hover:hover){button.primary:hover,.primary:hover{filter:brightness(1.08)}}
 .danger{color:var(--red)}
 .link-btn{border:0;background:transparent;color:var(--gold);font-weight:600;font-size:12.5px;padding:0}
@@ -661,9 +663,14 @@ menu{
   .app-shell{grid-template-columns:1fr}
   .sidebar{display:none}
 
-  /* bottom tab bar */
+  /* bottom dock: status bar + tab bar stack naturally, so the status bar can
+     never overlap or hide behind the nav no matter how tall either one renders */
+  .bottom-dock{
+    position:fixed;left:0;right:0;bottom:0;z-index:120;
+    display:flex;flex-direction:column;
+  }
   .bottom-nav{
-    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:120;
+    display:flex;flex:none;
     background:linear-gradient(180deg,rgba(19,22,29,.92),rgba(11,13,18,.97));
     backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);
     border-top:1px solid rgba(255,255,255,.08);
@@ -802,20 +809,24 @@ menu{
   .search-results{left:-10px;right:-10px}
 
   /* footer status bar: just Undo when available, or the bundle bar — nothing else.
-     Sits above the bottom-nav (measured ~59px tall), and collapses to nothing when
-     there's nothing to show. */
+     Lives in .bottom-dock directly above the bottom-nav (flex column, so it can
+     never overlap the nav no matter how tall either one renders), and collapses
+     to nothing when there's nothing to show. */
   .status-bar{
-    position:fixed;left:0;right:0;bottom:calc(74px + env(safe-area-inset-bottom,0px));
-    padding:7px 14px;z-index:110;
+    position:static;flex:none;
+    padding:9px 14px;
   }
   .pulse-group,.status-mid{display:none}
   .status-bar-normal{justify-content:flex-end}
   .status-bar-bundle{width:100%}
   .status-bar:has(#undoBtn[hidden]):has(.status-bar-bundle[hidden]){display:none}
 
-  /* quick lookup FAB sits above the bottom-nav, or higher still when the status bar is showing */
+  /* quick lookup FAB sits above the bottom-nav, or higher still when the status bar is showing.
+     (Note: a :has() argument can't itself contain :has(), so this checks the two real
+     visibility drivers directly instead of nesting.) */
   .quick-lookup-fab{bottom:calc(88px + env(safe-area-inset-bottom,0px))!important}
-  body:has(.status-bar:not([hidden]):not(:has(#undoBtn[hidden]):has(.status-bar-bundle[hidden]))) .quick-lookup-fab{
+  body:has(.status-bar #undoBtn:not([hidden])) .quick-lookup-fab,
+  body:has(.status-bar .status-bar-bundle:not([hidden])) .quick-lookup-fab{
     bottom:calc(140px + env(safe-area-inset-bottom,0px))!important;
   }
 }
