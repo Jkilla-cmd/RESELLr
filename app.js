@@ -247,12 +247,41 @@ sidebarToggle.onclick=()=>{
 applySidebarState();
 
 /* ---------- navigation ---------- */
+const PAGE_META = {
+  inventory:{title:"Inventory", subtitle:()=> [invCountBadge.textContent, invTotalsBadge.textContent].filter(Boolean).join(" · ")},
+  holds:{title:"Holds", subtitle:()=> [holdsCountBadge.textContent, holdsTotalsBadge.textContent].filter(Boolean).join(" · ")},
+  sold:{title:"Sold", subtitle:()=> soldCountBadge.textContent || "Completed sales and performance."},
+  alerts:{title:"Alerts", subtitle:"Things worth a look, generated from your live data."},
+  analytics:{title:"Analytics & Tax Reports", subtitle:"Totals for the selected year, across every sale on record."},
+  reinvest:{title:"Reinvest", subtitle:"Choose how much of every sale's cost + profit feeds back into buying power."},
+  wallet:{title:"Stash", subtitle:"Your real cash account for this hobby — money in, money out."},
+  importexport:{title:"Import / Export", subtitle:"Back up your data or bring in a Comix Stash export."},
+  settings:{title:"Settings", subtitle:"Personalize Comix Stash."}
+};
+function updatePageHeader(id){
+  // the page-name-in-topbar treatment only applies on the phone layout, where the
+  // per-page title block is hidden in favor of this shared bar; on desktop there's
+  // room for both, so the topbar keeps the dashboard greeting regardless of page.
+  if(id==="dashboard" || window.innerWidth>720){
+    const h=new Date().getHours();
+    const part = h<12?"Morning":h<18?"Afternoon":"Evening";
+    const name=(state.userName||"").trim();
+    greeting.textContent = `Good ${part}${name?`, ${name}.`:"."}`;
+    greetSubtitle.textContent = "Here's what's happening with your business today.";
+    return;
+  }
+  const meta = PAGE_META[id];
+  if(!meta) return;
+  greeting.textContent = meta.title;
+  greetSubtitle.textContent = typeof meta.subtitle==="function" ? meta.subtitle() : meta.subtitle;
+}
 function showPage(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active-page"));
   const el=document.getElementById(id);
   if(el) el.classList.add("active-page");
   document.querySelectorAll(".nav button,.bottom-nav button[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
   if(id==="dashboard"){ renderKPIs(); renderCharts(); }
+  updatePageHeader(id);
   if(typeof updateBundleBar==="function") updateBundleBar();
   if(typeof moreSheet!=="undefined" && moreSheet){
     moreSheet.hidden=true; moreBackdrop.hidden=true;
@@ -2011,6 +2040,8 @@ function render(){
   renderTopComic();
   renderTxns();
   renderHeader();
+  const activePage = document.querySelector(".page.active-page");
+  updatePageHeader(activePage ? activePage.id : "dashboard");
   save();
 }
 let resizeTimer;

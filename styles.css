@@ -718,13 +718,23 @@ menu{
   }
   .more-sheet-grid svg{width:19px;height:19px;color:var(--gold)}
 
-  /* header: trim to essentials */
-  .topbar{margin-bottom:10px;gap:8px}
+  /* header: one persistent bar per page -- page name/greeting, status row, then search.
+     Sticky so it's always visible; the per-page title block further down (.table-head)
+     is hidden since this bar already shows the page name + its subtitle info. */
+  .topbar{
+    display:flex;flex-direction:column;gap:8px;
+    position:sticky;top:0;z-index:95;
+    background:var(--bg);
+    margin:0 -12px 10px;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;
+  }
+  .greet{order:1}
+  .top-status{order:2;justify-content:flex-start;gap:6px;width:100%}
+  .search-wrap{order:3}
   .greet h1{font-size:18px}
-  .greet p{display:none}
+  .greet p{display:block;font-size:11.5px;margin-top:1px}
   .search-wrap kbd{display:none}
   .search-wrap input{padding:12px 38px;font-size:14px}
-  .top-status{gap:6px;justify-self:end;margin-left:auto}
+  .table-head>div:first-child{display:none}
   #dbStatusChip{display:none}
   .status-chip small{display:none}
   .status-chip b{font-size:10px}
