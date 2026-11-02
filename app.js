@@ -724,6 +724,9 @@ function getSoldRows(){
   let rows=[...state.sold];
   if(soldYear.value && soldYear.value!=="all") rows=rows.filter(r=>parseLocalDate(r.date).getFullYear()===n(soldYear.value));
   if(soldMonth.value && soldMonth.value!=="all") rows=rows.filter(r=>parseLocalDate(r.date).getMonth()===n(soldMonth.value));
+  if(soldFilter==="nocost") rows=rows.filter(r=>!n(r.cost));
+  if(soldFilter==="losses") rows=rows.filter(r=>profit(r)<0);
+  if(soldFilter==="thismonth") rows=rows.filter(r=>sameMonth(parseLocalDate(r.date), new Date()));
   return rows;
 }
 
@@ -820,17 +823,18 @@ function bundleSubRowsHtml(row, kind){
     const priceCell = `<td data-label="Price">${it.price!=null?money(it.price):"—"}</td>`;
     const costCell = `<td data-label="Cost">${it.cost!=null?money(it.cost):"—"}</td>`;
     const profitTd = editable
-      ? `<td data-label="Profit" class="${profit(it)>=0?'profit':'loss'}">${profitCell(it)}</td>`
-      : `<td data-label="Profit">—</td>`;
+      ? `<td data-label="Profit" class="emphasis ${profit(it)>=0?'profit':'loss'}">${profitCell(it)}</td>`
+      : `<td data-label="Profit" class="emphasis">—</td>`;
+    const roiTd = `<td data-label="ROI" class="emphasis">${editable?roiCell(it):"—"}</td>`;
     const actionsCell = `<td><div class="row-actions" onclick="event.stopPropagation()">${editable?`<button class="icon-btn" onclick="editBundleItem('${kind}','${row.id}','${it.id}')" title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="removeBundleItem('${kind}','${row.id}','${it.id}')" title="Remove from bundle (becomes its own listing again)" aria-label="Remove from bundle">${ROW_ICONS.trash}</button>`:""}</div></td>`;
     if(kind==="holds"){
       return `<tr class="bundle-subrow">${itemCell}${platformCell}${priceCell}${costCell}<td data-label="On Hold">—</td>${actionsCell}</tr>`;
     }
     if(kind==="sold"){
       const feesCell = `<td data-label="Fees">${it.fees!=null?money(it.fees):"—"}</td>`;
-      return `<tr class="bundle-subrow">${itemCell}<td data-label="Date">—</td>${platformCell}${priceCell}${costCell}${feesCell}${profitTd}<td data-label="ROI">—</td>${actionsCell}</tr>`;
+      return `<tr class="bundle-subrow">${itemCell}${profitTd}${roiTd}<td data-label="Date">—</td>${platformCell}${priceCell}${costCell}${feesCell}${actionsCell}</tr>`;
     }
-    return `<tr class="bundle-subrow">${itemCell}${platformCell}${priceCell}${costCell}${profitTd}<td data-label="ROI">—</td><td data-label="Listed">—</td>${actionsCell}</tr>`;
+    return `<tr class="bundle-subrow">${itemCell}${profitTd}${roiTd}${platformCell}${priceCell}${costCell}<td data-label="Listed">—</td>${actionsCell}</tr>`;
   }).join("");
 }
 function marginPct(r){
@@ -881,6 +885,26 @@ const INV_PAGE_SIZE = 25;
 const SOLD_PAGE_SIZE = 25;
 let inventoryPage = 1;
 let soldPage = 1;
+let inventoryFilter = "all";
+let soldFilter = "all";
+function applyInventoryFilter(rows){
+  if(inventoryFilter==="nocost") return rows.filter(r=>!n(r.cost));
+  if(inventoryFilter==="stale") return rows.filter(r=>r.addedAt && ageDays(r.addedAt)>90);
+  if(inventoryFilter==="highroi") return rows.filter(r=>{ const roi=roiPct(r); return roi!==null && roi>=100; });
+  return rows;
+}
+function setInventoryFilter(f){
+  inventoryFilter = f; inventoryPage = 1;
+  inventoryFilterChips.querySelectorAll(".chip").forEach(c=>c.classList.toggle("active", c.dataset.filter===f));
+  renderRows();
+}
+inventoryFilterChips.querySelectorAll(".chip").forEach(c=>c.onclick=()=>setInventoryFilter(c.dataset.filter));
+function setSoldFilter(f){
+  soldFilter = f; soldPage = 1;
+  soldFilterChips.querySelectorAll(".chip").forEach(c=>c.classList.toggle("active", c.dataset.filter===f));
+  renderRows();
+}
+soldFilterChips.querySelectorAll(".chip").forEach(c=>c.onclick=()=>setSoldFilter(c.dataset.filter));
 function sortRows(rows, sortState){
   const {key, dir} = sortState;
   const mult = dir==="asc" ? 1 : -1;
@@ -900,7 +924,7 @@ function sortRows(rows, sortState){
   });
 }
 function sortedInventory(){
-  return sortRows(state.inventory, inventorySort);
+  return sortRows(applyInventoryFilter(state.inventory), inventorySort);
 }
 function renderRows(){
   const invSorted = sortedInventory();
@@ -911,8 +935,10 @@ function renderRows(){
   const pageItems = invSorted.slice(start, start+INV_PAGE_SIZE);
 
   inventoryRows.innerHTML=pageItems.map(r=>`<tr id="row-inventory-${r.id}" class="${bundleSelection.inventory.has(r.id)?'row-selected':''}" onclick="toggleBundleSelect('inventory','${r.id}')">
-    <td>${rowTitle(r,'inventory')}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
-    <td data-label="ROI">${roiCell(r)}</td>
+    <td>${rowTitle(r,'inventory')}</td>
+    <td data-label="Profit" class="emphasis ${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
+    <td data-label="ROI" class="emphasis">${roiCell(r)}</td>
+    <td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td>
     <td data-label="Listed">${ageChip(r.addedAt, 45)}</td>
     <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"inventory")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="checkComps('inventory','${r.id}')" title="Check eBay sold comps" aria-label="Check eBay sold comps">${ROW_ICONS.search}</button><button class="icon-btn" onclick="postToEbay('inventory','${r.id}')" title="Post to eBay" aria-label="Post to eBay">${ROW_ICONS.ebay}</button><button class="icon-btn" onclick="moveToHold('${r.id}')" title="Move to Holds" aria-label="Move to Holds">${ROW_ICONS.hold}</button><button class="icon-btn" onclick="markSold('${r.id}')" title="Mark Sold" aria-label="Mark Sold">${ROW_ICONS.sell}</button><button class="icon-btn" onclick="delFrom('inventory','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
   </tr>${bundleSubRowsHtml(r,'inventory')}`).join("") || emptyState("box","No active inventory yet","Add your first item or paste a listing from the bookmarklet to get started.",8);
@@ -952,8 +978,10 @@ function renderRows(){
   const soldPageItems = soldSorted.slice(soldStart, soldStart+SOLD_PAGE_SIZE);
 
   soldRows.innerHTML=soldPageItems.map(r=>`<tr id="row-sold-${r.id}" class="${bundleSelection.sold.has(r.id)?'row-selected':''}" onclick="toggleBundleSelect('sold','${r.id}')">
-    <td>${rowTitle(r,'sold')}</td><td data-label="Date">${escapeHtml(r.date)||""}${daysToSellLabel(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td><td data-label="Profit" class="${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
-    <td data-label="ROI">${roiCell(r)}</td>
+    <td>${rowTitle(r,'sold')}</td>
+    <td data-label="Profit" class="emphasis ${profit(r)>=0?'profit':'loss'}">${profitCell(r)}</td>
+    <td data-label="ROI" class="emphasis">${roiCell(r)}</td>
+    <td data-label="Date">${escapeHtml(r.date)||""}${daysToSellLabel(r)}</td><td data-label="Platform">${escapeHtml(r.platform)}</td><td data-label="Sold Price">${money(r.price)}</td><td data-label="Cost">${money(r.cost)}</td><td data-label="Fees">${money(r.fees)}</td>
     <td><div class="row-actions" onclick="event.stopPropagation()"><button class="icon-btn" onclick='openModal(${attrSafe(r)},"sold")' title="Edit" aria-label="Edit">${ROW_ICONS.edit}</button><button class="icon-btn" onclick="moveSoldBack('${r.id}')" title="Move back to Inventory" aria-label="Move back to Inventory">${ROW_ICONS.restore}</button><button class="icon-btn" onclick="delFrom('sold','${r.id}')" title="Delete" aria-label="Delete">${ROW_ICONS.trash}</button></div></td>
   </tr>${bundleSubRowsHtml(r,'sold')}`).join("") || emptyState("check","No sold items match this filter","Once you mark something sold, it'll show up here.",9);
 
@@ -1163,6 +1191,32 @@ function computeAlerts(){
   if(zeroCostSold) list.push({level:"info",title:`${zeroCostSold} sold item${zeroCostSold===1?"":"s"} missing a cost`,text:"Missing cost data can understate your tax report totals."});
   if(!list.length) list.push({level:"ok",title:"Everything looks good",text:"No alerts right now — keep listing!"});
   return list;
+}
+function goToFilter(page, filter){
+  if(filter){
+    if(page==="inventory") setInventoryFilter(filter);
+    if(page==="sold") setSoldFilter(filter);
+  }
+  showPage(page);
+}
+function renderNeedsAttention(){
+  const rows=[];
+  const wb=walletBalance();
+  if(wb<0) rows.push({level:"warn",title:"Stash balance is negative",text:`At ${money(wb)} — adjust reinvestment mode or sell held inventory.`,page:"wallet",filter:null});
+  const staleInv = state.inventory.filter(r=>r.addedAt && ageDays(r.addedAt)>90);
+  if(staleInv.length) rows.push({level:"warn",title:`${staleInv.length} item${staleInv.length===1?"":"s"} listed over 90 days`,text:"Consider a price drop, a bundle, or better photos.",page:"inventory",filter:"stale"});
+  const zeroCost = state.inventory.filter(r=>!n(r.cost)).length;
+  if(zeroCost) rows.push({level:"info",title:`${zeroCost} inventory item${zeroCost===1?"":"s"} missing a cost`,text:"Affects profit accuracy and tax totals.",page:"inventory",filter:"nocost"});
+  const zeroCostSold = state.sold.filter(r=>!n(r.cost)).length;
+  if(zeroCostSold) rows.push({level:"info",title:`${zeroCostSold} sold item${zeroCostSold===1?"":"s"} missing a cost`,text:"Understates your tax report totals.",page:"sold",filter:"nocost"});
+  const staleHolds = state.holds.filter(h=>h.heldAt && (Date.now()-h.heldAt)/86400000>14);
+  if(staleHolds.length) rows.push({level:"warn",title:`${staleHolds.length} item${staleHolds.length===1?"":"s"} on hold over 14 days`,text:"Move these back to inventory or make a decision.",page:"holds",filter:null});
+
+  if(!rows.length){
+    attentionList.innerHTML = `<div class="alert-row ok"><div class="a-icon">✓</div><div><b>Nothing needs attention</b><p>Everything looks healthy right now.</p></div></div>`;
+    return;
+  }
+  attentionList.innerHTML = rows.map(a=>`<div class="alert-row ${a.level} clickable" onclick="goToFilter('${a.page}',${a.filter?`'${a.filter}'`:"null"})"><div class="a-icon">${a.level==="warn"?"!":"i"}</div><div><b>${escapeHtml(a.title)}</b><p>${escapeHtml(a.text)}</p></div><span class="chev">›</span></div>`).join("");
 }
 function renderAlerts(){
   const list=computeAlerts();
@@ -1602,12 +1656,14 @@ function jumpToItem(kind, id){
   const item = (state[kind]||[]).find(x=>x.id===id);
   if(!item) return;
   if(kind==="inventory"){
+    setInventoryFilter("all");
     const sorted = sortedInventory();
     const idx = sorted.findIndex(x=>x.id===id);
     if(idx>=0){ inventoryPage = Math.floor(idx/INV_PAGE_SIZE)+1; renderRows(); }
   }
   if(kind==="sold"){
     soldYear.value="all"; soldMonth.value="all";
+    setSoldFilter("all");
     const sorted = sortRows(getSoldRows(), soldSort);
     const idx = sorted.findIndex(x=>x.id===id);
     if(idx>=0){ soldPage = Math.floor(idx/SOLD_PAGE_SIZE)+1; renderRows(); }
@@ -1949,6 +2005,7 @@ function render(){
   renderYoY();
   renderActivity();
   renderAlerts();
+  renderNeedsAttention();
   renderCharts();
   renderWallet();
   renderTopComic();

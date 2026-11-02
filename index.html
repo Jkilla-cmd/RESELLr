@@ -150,6 +150,11 @@
         </article>
       </div>
 
+      <article class="card" id="attentionCard" style="margin-bottom:10px">
+        <div class="card-head"><h2>Needs Attention</h2></div>
+        <div id="attentionList" class="attention-list"></div>
+      </article>
+
       <div class="dash-grid">
         <article class="card chart-card">
           <div class="card-head">
@@ -249,15 +254,21 @@
           <button class="primary" id="addItemBtn2">Add Item</button>
         </div>
       </div>
+      <div class="filter-chips" id="inventoryFilterChips">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="nocost">No Cost</button>
+        <button class="chip" data-filter="stale">Stale 90+ Days</button>
+        <button class="chip" data-filter="highroi">High ROI</button>
+      </div>
       <div class="table-card">
         <table>
           <thead><tr>
             <th data-sort="title">Item<span class="sort-arrow"></span></th>
+            <th data-sort="profit">Profit<span class="sort-arrow"></span></th>
+            <th data-sort="roi">ROI<span class="sort-arrow"></span></th>
             <th data-sort="platform">Platform<span class="sort-arrow"></span></th>
             <th data-sort="price">Price<span class="sort-arrow"></span></th>
             <th data-sort="cost">Cost<span class="sort-arrow"></span></th>
-            <th data-sort="profit">Profit<span class="sort-arrow"></span></th>
-            <th data-sort="roi">ROI<span class="sort-arrow"></span></th>
             <th data-sort="addedAt">Listed<span class="sort-arrow"></span></th>
             <th>Actions</th>
           </tr></thead>
@@ -294,17 +305,23 @@
           <select id="soldMonth"></select>
         </div>
       </div>
+      <div class="filter-chips" id="soldFilterChips">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="thismonth">This Month</button>
+        <button class="chip" data-filter="nocost">No Cost</button>
+        <button class="chip" data-filter="losses">Losses</button>
+      </div>
       <div class="table-card">
         <table>
           <thead><tr>
             <th data-sort="title">Item<span class="sort-arrow"></span></th>
+            <th data-sort="profit">Profit<span class="sort-arrow"></span></th>
+            <th data-sort="roi">ROI<span class="sort-arrow"></span></th>
             <th data-sort="date">Date<span class="sort-arrow"></span></th>
             <th data-sort="platform">Platform<span class="sort-arrow"></span></th>
             <th data-sort="price">Sold Price<span class="sort-arrow"></span></th>
             <th data-sort="cost">Cost<span class="sort-arrow"></span></th>
             <th data-sort="fees">Fees<span class="sort-arrow"></span></th>
-            <th data-sort="profit">Profit<span class="sort-arrow"></span></th>
-            <th data-sort="roi">ROI<span class="sort-arrow"></span></th>
             <th>Actions</th>
           </tr></thead>
           <tbody id="soldRows"></tbody>
